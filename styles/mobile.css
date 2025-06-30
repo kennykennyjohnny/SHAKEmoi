@@ -1,0 +1,145 @@
+/* ===== MOBILE OPTIMIZATIONS ===== */
+
+/* Safe area pour iPhone avec encoche */
+.app-container {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.view-header {
+  padding-top: calc(var(--space-lg) + env(safe-area-inset-top));
+}
+
+.bottom-nav {
+  padding-bottom: calc(var(--space-sm) + env(safe-area-inset-bottom));
+}
+
+/* Optimisations tactiles */
+.nav-item,
+.mood-btn,
+.action-btn,
+.friend-item,
+.story-item,
+.music-card {
+  min-height: 44px; /* Taille minimum recommandée iOS */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Scroll physics iOS */
+.view,
+.story-bar {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Landscape mode */
+@media (orientation: landscape) and (max-height: 500px) {
+  .view-header {
+    padding: var(--space-md);
+  }
+  
+  .view-title {
+    font-size: 1.5rem;
+  }
+  
+  .bottom-nav {
+    padding: var(--space-xs) var(--space-md);
+  }
+  
+  .nav-item span {
+    display: none;
+  }
+  
+  .nav-icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Large phones */
+@media (min-width: 414px) {
+  .discover-categories {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .profile-stats {
+    gap: var(--space-lg);
+  }
+}
+
+/* Tablets */
+@media (min-width: 768px) {
+  .story-bar {
+    justify-content: center;
+  }
+  
+  .feed-posts {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  .discover-categories {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .friends-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .app-container {
+    box-shadow: var(--shadow-xl);
+    background: var(--dark-card);
+  }
+  
+  .view {
+    background: var(--dark-bg);
+  }
+}
+
+/* Interactions avancées (hover, etc.) */
+@media (hover: hover) and (pointer: fine) {
+  .music-card:hover .music-artwork {
+    transform: scale(1.05);
+  }
+  
+  .story-item:hover .story-avatar {
+    transform: scale(1.1);
+  }
+  
+  .category-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+  }
+}
+
+/* Mode économie batterie */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .wave-bar {
+    animation: none;
+    height: 40px;
+  }
+}
+
+/* High DPI / Retina */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .music-artwork,
+  .profile-avatar,
+  .friend-avatar,
+  .story-avatar {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHAKEMOI</title>
+    
+    <!-- Préconnexions pour performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://api.spotify.com">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/mobile.css">
+    
+    <!-- Meta pour partage social -->
+    <meta property="og:title" content="SHAKEMOI - L'app musicale sociale">
+    <meta property="og:description" content="Découvre ce qu'écoutent tes amis en temps réel">
+    <meta property="og:image" content="assets/images/og-image.jpg">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2D1B69">
+</head>
+
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="logo-container">
+            <div class="logo-wave">
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+            </div>
+            <h1 class="logo-text">SHAKEMOI</h1>
+        </div>
+    </div>
+
+    <!-- App Container -->
+    <div id="app" class="app-container">
+        
+        <!-- Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-view="feed">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                </svg>
+                <span>Feed</span>
+            </button>
+            
+            <button class="nav-item" data-view="discover">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                <span>Discover</span>
+            </button>
+            
+            <button class="nav-item share-btn" data-view="share">
+                <div class="share-icon-container">
+                    <svg class="nav-icon" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                </div>
+                <span>Share</span>
+            </button>
+            
+            <button class="nav-item" data-view="friends">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.997 1.997 0 0 0 18.05 7c-.8 0-1.54.5-1.85 1.26l-1.22 3.65 2.24 6.74c.05.15.1.29.18.43.21.3.52.5.87.5.83 0 1.5-.67 1.5-1.5z"/>
+                </svg>
+                <span>Friends</span>
+            </button>
+            
+            <button class="nav-item" data-view="profile">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                </svg>
+                <span>Profil</span>
+            </button>
+        </nav>
+
+        <!-- Views Container -->
+        <main class="views-container">
+            
+            <!-- Feed View -->
+            <section id="feed-view" class="view active">
+                <header class="view-header">
+                    <h2 class="view-title">Maintenant</h2>
+                    <div class="mood-selector">
+                        <button class="mood-btn active" data-mood="all">Tout</button>
+                        <button class="mood-btn" data-mood="chill">Chill</button>
+                        <button class="mood-btn" data-mood="hype">Hype</button>
+                        <button class="mood-btn" data-mood="focus">Focus</button>
+                    </div>
+                </header>
+                
+                <div class="feed-container">
+                    <div class="story-bar">
+                        <div class="story-item add-story">
+                            <div class="story-avatar">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                                </svg>
+                            </div>
+                            <span>Partager</span>
+                        </div>
+                        <!-- Stories d'amis générées dynamiquement -->
+                    </div>
+                    
+                    <div class="feed-posts">
+                        <!-- Posts générés dynamiquement -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Discover View -->
+            <section id="discover-view" class="view">
+                <header class="view-header">
+                    <h2 class="view-title">Découvrir</h2>
+                    <div class="search-container">
+                        <input type="text" placeholder="Rechercher..." class="search-input">
+                        <svg class="search-icon" viewBox="0 0 24 24">
+                            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                    </div>
+                </header>
+                
+                <div class="discover-content">
+                    <div class="discover-categories">
+                        <div class="category-card trending">
+                            <h3>Tendances</h3>
+                            <p>Ce que tes amis écoutent</p>
+                        </div>
+                        <div class="category-card genres">
+                            <h3>Par Genre</h3>
+                            <p>Hip-hop, Jazz, Électro...</p>
+                        </div>
+                        <div class="category-card moods">
+                            <h3>Par Mood</h3>
+                            <p>Workout, Study, Party...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Share View -->
+            <section id="share-view" class="view">
+                <header class="view-header">
+                    <h2 class="view-title">Partager</h2>
+                    <button class="close-btn">✕</button>
+                </header>
+                
+                <div class="share-content">
+                    <div class="currently-playing">
+                        <!-- Contenu généré dynamiquement -->
+                    </div>
+                    
+                    <div class="share-options">
+                        <button class="share-option quick-share">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+                            </svg>
+                            <span>Partage rapide</span>
+                        </button>
+                        
+                        <button class="share-option story-share">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                            <span>Story musicale</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Friends View -->
+            <section id="friends-view" class="view">
+                <header class="view-header">
+                    <h2 class="view-title">Amis</h2>
+                    <button class="add-friend-btn">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V8c0-.55-.45-1-1-1s-1 .45-1 1v2H2c-.55 0-1 .45-1 1s.45 1 1 1h2v2c0 .55.45 1 1 1s1-.45 1-1v-2h2c.55 0 1-.45 1-1s-.45-1-1-1H6z"/>
+                        </svg>
+                    </button>
+                </header>
+                
+                <div class="friends-content">
+                    <div class="online-friends">
+                        <h3>En ligne maintenant</h3>
+                        <div class="friends-list online">
+                            <!-- Amis en ligne générés dynamiquement -->
+                        </div>
+                    </div>
+                    
+                    <div class="all-friends">
+                        <h3>Tous mes amis</h3>
+                        <div class="friends-list all">
+                            <!-- Tous les amis générés dynamiquement -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profile View -->
+            <section id="profile-view" class="view">
+                <header class="view-header">
+                    <h2 class="view-title">Mon Profil</h2>
+                    <button class="settings-btn">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                        </svg>
+                    </button>
+                </header>
+                
+                <div class="profile-content">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <img src="assets/images/default-avatar.jpg" alt="Mon avatar" id="user-avatar">
+                        </div>
+                        <h3 id="user-name">Ton Nom</h3>
+                        <p id="user-platform">Connecté via Spotify</p>
+                    </div>
+                    
+                    <div class="profile-stats">
+                        <div class="stat">
+                            <span class="stat-number" id="shares-count">0</span>
+                            <span class="stat-label">Partages</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number" id="friends-count">0</span>
+                            <span class="stat-label">Amis</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number" id="discoveries-count">0</span>
+                            <span class="stat-label">Découvertes</span>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-actions">
+                        <button class="profile-btn connect-spotify">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 14.5c-.17 0-.33-.08-.44-.2-.29-.32-.66-.52-1.07-.52-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5c.41 0 .78-.2 1.07-.52.11-.12.27-.2.44-.2.33 0 .6.27.6.6 0 .14-.05.27-.15.37-.5.56-1.21.92-2.01.92-1.49 0-2.7-1.21-2.7-2.7s1.21-2.7 2.7-2.7c.8 0 1.51.36 2.01.92.1.1.15.23.15.37-.05.33-.32.6-.65.6z"/>
+                            </svg>
+                            Connecter Spotify
+                        </button>
+                        
+                        <button class="profile-btn invite-friends">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V8c0-.55-.45-1-1-1s-1 .45-1 1v2H2c-.55 0-1 .45-1 1s.45 1 1 1h2v2c0 .55.45 1 1 1s1-.45 1-1v-2h2c.55 0 1-.45 1-1s-.45-1-1-1H6z"/>
+                            </svg>
+                            Inviter des amis
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="scripts/utils.js"></script>
+    <script src="scripts/spotify.js"></script>
+    <script src="scripts/social.js"></script>
+    <script src="scripts/app.js"></script>
+    
+    <!-- Service Worker pour PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+</body>
+</html>
