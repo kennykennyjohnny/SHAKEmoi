@@ -121,8 +121,8 @@ async function createPost(trackName, artist, coverUrl, text = '') {
       .insert([{
         user_id: user.id,
         track_name: trackName,
-        artist_name: artist,
-        album_cover: coverUrl,
+        artist: artist,
+        cover_url: coverUrl,
         text: text,
         likes_count: 0,
         comments_count: 0,
@@ -160,8 +160,8 @@ async function reshakePost(originalPostId) {
       .insert([{
         user_id: user.id,
         track_name: originalPost.track_name,
-        artist_name: originalPost.artist_name,
-        album_cover: originalPost.album_cover,
+        artist: originalPost.artist,
+        cover_url: originalPost.cover_url,
         text: originalPost.text,
         likes_count: 0,
         comments_count: 0,
@@ -469,7 +469,7 @@ async function searchPosts(query) {
         *,
         user:users_profile(id, username, color)
       `)
-      .or(`track_name.ilike.%${query}%,artist_name.ilike.%${query}%`)
+      .or(`track_name.ilike.%${query}%,artist.ilike.%${query}%`)
       .order('created_at', { ascending: false })
       .limit(20);
 

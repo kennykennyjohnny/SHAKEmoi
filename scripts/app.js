@@ -174,10 +174,10 @@ function renderPost(post) {
         </div>
       </div>
       <div class="post-content">
-        <img src="${post.album_cover}" class="track-cover" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
+        <img src="${post.cover_url}" class="track-cover" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
         <div class="track-info">
           <h3 class="track-title">${escapeHtml(post.track_name)}</h3>
-          <p class="track-artist">${escapeHtml(post.artist_name)}</p>
+          <p class="track-artist">${escapeHtml(post.artist)}</p>
         </div>
         ${post.text ? `<p class="post-text">${escapeHtml(post.text)}</p>` : ''}
       </div>
@@ -466,7 +466,7 @@ async function loadProfileTab(tab) {
         <div class="profile-grid">
           ${posts.map(post => `
             <div class="profile-post">
-              <img src="${post.album_cover}" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
+              <img src="${post.cover_url}" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
               <div class="profile-post-overlay">
                 <div class="profile-post-title">${escapeHtml(post.track_name)}</div>
                 <div class="profile-post-stats">
