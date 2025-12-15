@@ -61,8 +61,9 @@ serve(async (req) => {
     // Router selon l'action demandée
     switch(action) {
       case 'top100':
-        // Playlist officielle Top 100 France
-        url = 'https://api.spotify.com/v1/playlists/37i9dQZEVXbIPWwFssbupI/tracks?limit=100';
+        // Utiliser la recherche pour les tracks populaires en France
+        // Car les playlists peuvent changer d'ID
+        url = 'https://api.spotify.com/v1/search?q=year:2024&type=track&market=FR&limit=50';
         break;
 
       case 'search':
