@@ -1,5 +1,644 @@
-// SHAKEMOI - Application principale
+// SHAKEMOI - App Logic
 
-console.log('SHAKEMOI initialized');
+// State
+let currentUser = null;
+let currentProfile = null;
+let currentView = 'shake';
+let searchMode = 'tracks';
+let selectedTrackForShake = null;
+let selectedPostForComment = null;
 
-// Code de l'application ici
+// Initialize app
+document.addEventListener('DOMContentLoaded', async () => {
+  await checkAuthAndInit();
+});
+
+// Check auth and initialize
+async function checkAuthAndInit() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      // Not logged in, redirect to login page
+      window.location.href = 'index.html';
+      return;
+    }
+
+    currentUser = session.user;
+    currentProfile = await getUserProfile(currentUser.id);
+
+    if (!currentProfile) {
+      alert('Erreur de chargement du profil');
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+      return;
+    }
+
+    // Setup app
+    setupEventListeners();
+    await loadView('shake');
+
+  } catch (error) {
+    console.error('Init error:', error);
+    window.location.href = 'index.html';
+  }
+}
+
+// Setup all event listeners
+function setupEventListeners() {
+  // Logout
+  document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+  // Navigation
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const view = btn.dataset.view;
+      loadView(view);
+    });
+  });
+
+  // Search toggle
+  document.querySelectorAll('#search-view .toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      searchMode = btn.dataset.mode;
+      document.querySelectorAll('#search-view .toggle-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === searchMode);
+      });
+      document.getElementById('search-results').innerHTML = '<div class="empty-state"><p>Tape quelque chose pour rechercher</p></div>';
+    });
+  });
+
+  // Search input
+  let searchTimeout;
+  document.getElementById('search-input').addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      handleSearch(e.target.value);
+    }, 300);
+  });
+
+  // Profile tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+      });
+      loadProfileTab(tab);
+    });
+  });
+
+  // Modal events
+  document.getElementById('cancel-comment').addEventListener('click', closeCommentModal);
+  document.getElementById('submit-comment').addEventListener('click', submitComment);
+  document.getElementById('cancel-shake').addEventListener('click', closeShakeModal);
+  document.getElementById('submit-shake').addEventListener('click', submitShake);
+}
+
+// Logout
+async function handleLogout() {
+  if (confirm('Se déconnecter ?')) {
+    await supabase.auth.signOut();
+    window.location.href = 'index.html';
+  }
+}
+
+// Load a view
+async function loadView(viewName) {
+  currentView = viewName;
+
+  // Update nav
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === viewName);
+  });
+
+  // Hide all views
+  document.querySelectorAll('.view').forEach(view => {
+    view.classList.remove('active');
+  });
+
+  // Show current view
+  document.getElementById(`${viewName}-view`).classList.add('active');
+
+  // Load view data
+  switch (viewName) {
+    case 'shake':
+      await loadFeed();
+      break;
+    case 'top':
+      await loadTop100();
+      break;
+    case 'search':
+      document.getElementById('search-input').value = '';
+      document.getElementById('search-results').innerHTML = '<div class="empty-state"><p>Tape quelque chose pour rechercher</p></div>';
+      break;
+    case 'profile':
+      await loadProfile();
+      break;
+  }
+}
+
+// ==================== SHAKE (FEED) ====================
+
+async function loadFeed() {
+  const container = document.getElementById('feed-container');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du feed...</p></div>';
+
+  try {
+    const posts = await getFeed();
+
+    if (posts.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>Ton feed est vide ! Commence par "feel" des personnes dans l\'onglet Recherche.</p></div>';
+      return;
+    }
+
+    container.innerHTML = posts.map(post => renderPost(post)).join('');
+    attachPostListeners();
+
+  } catch (error) {
+    console.error('Error loading feed:', error);
+    container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
+  }
+}
+
+function renderPost(post) {
+  const timeAgo = getTimeAgo(post.created_at);
+
+  return `
+    <article class="post" data-post-id="${post.id}">
+      <div class="post-header">
+        <div class="user-note" style="background: ${post.user.color}">♪</div>
+        <div class="post-info">
+          <span class="username">@${post.user.username}</span>
+          <span class="timestamp">${timeAgo}</span>
+        </div>
+      </div>
+      <div class="post-content">
+        <img src="${post.album_cover}" class="track-cover" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
+        <div class="track-info">
+          <h3 class="track-title">${escapeHtml(post.track_name)}</h3>
+          <p class="track-artist">${escapeHtml(post.artist_name)}</p>
+        </div>
+        ${post.text ? `<p class="post-text">${escapeHtml(post.text)}</p>` : ''}
+      </div>
+      <div class="post-actions">
+        <button class="action-btn like-btn" data-post-id="${post.id}">
+          <span class="icon">❤️</span>
+          <span class="count">${post.likes_count || 0}</span>
+        </button>
+        <button class="action-btn comment-btn" data-post-id="${post.id}">
+          <span class="icon">💬</span>
+          <span class="count">${post.comments_count || 0}</span>
+        </button>
+        <button class="action-btn reshake-btn" data-post-id="${post.id}">
+          <span class="icon">🔄</span>
+        </button>
+      </div>
+    </article>
+  `;
+}
+
+function attachPostListeners() {
+  // Like buttons
+  document.querySelectorAll('.like-btn').forEach(btn => {
+    const postId = btn.dataset.postId;
+
+    // Check if already liked
+    hasLikedPost(postId).then(liked => {
+      if (liked) {
+        btn.classList.add('liked');
+      }
+    });
+
+    btn.addEventListener('click', async () => {
+      const isLiked = btn.classList.contains('liked');
+
+      if (isLiked) {
+        const result = await unlikePost(postId);
+        if (result.success) {
+          btn.classList.remove('liked');
+          const count = parseInt(btn.querySelector('.count').textContent);
+          btn.querySelector('.count').textContent = Math.max(0, count - 1);
+        }
+      } else {
+        const result = await likePost(postId);
+        if (result.success) {
+          btn.classList.add('liked');
+          const count = parseInt(btn.querySelector('.count').textContent);
+          btn.querySelector('.count').textContent = count + 1;
+        }
+      }
+    });
+  });
+
+  // Comment buttons
+  document.querySelectorAll('.comment-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedPostForComment = btn.dataset.postId;
+      openCommentModal();
+    });
+  });
+
+  // Re-shake buttons
+  document.querySelectorAll('.reshake-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (confirm('Re-shake ce post ?')) {
+        const result = await reshakePost(btn.dataset.postId);
+        if (result.success) {
+          alert('Re-shake publié ! 🔄');
+          await loadFeed();
+        } else {
+          alert('Erreur: ' + result.error);
+        }
+      }
+    });
+  });
+}
+
+// ==================== TOP 100 ====================
+
+async function loadTop100() {
+  const container = document.getElementById('top-container');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du Top 100...</p></div>';
+
+  try {
+    const tracks = await getTop100();
+
+    if (tracks.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>Impossible de charger le Top 100</p></div>';
+      return;
+    }
+
+    container.innerHTML = tracks.map(track => renderTopTrack(track)).join('');
+    attachTopTrackListeners();
+
+  } catch (error) {
+    console.error('Error loading Top 100:', error);
+    container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
+  }
+}
+
+function renderTopTrack(track) {
+  return `
+    <div class="top-track" data-track='${JSON.stringify(track)}'>
+      <div class="track-rank">#${track.rank}</div>
+      <img src="${track.cover}" class="track-cover" alt="${track.name}" onerror="this.src='https://via.placeholder.com/60x60?text=No+Cover'">
+      <div class="track-info">
+        <h3 class="track-title">${escapeHtml(track.name)}</h3>
+        <p class="track-artist">${escapeHtml(track.artist)}</p>
+      </div>
+      <div class="track-actions">
+        <button class="action-btn shake-btn" title="Shake ce morceau">
+          <span class="icon">❤️</span>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function attachTopTrackListeners() {
+  document.querySelectorAll('.shake-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const trackElement = btn.closest('.top-track');
+      const track = JSON.parse(trackElement.dataset.track);
+      selectedTrackForShake = track;
+      openShakeModal(track);
+    });
+  });
+}
+
+// ==================== SEARCH ====================
+
+async function handleSearch(query) {
+  const container = document.getElementById('search-results');
+
+  if (!query || query.trim().length < 2) {
+    container.innerHTML = '<div class="empty-state"><p>Tape au moins 2 caractères</p></div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Recherche...</p></div>';
+
+  try {
+    if (searchMode === 'tracks') {
+      const tracks = await searchTracks(query);
+
+      if (tracks.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Aucun morceau trouvé</p></div>';
+        return;
+      }
+
+      container.innerHTML = tracks.map(track => renderSearchTrack(track)).join('');
+      attachSearchTrackListeners();
+
+    } else {
+      const users = await searchUsers(query);
+
+      if (users.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Aucun utilisateur trouvé</p></div>';
+        return;
+      }
+
+      container.innerHTML = users.map(user => renderSearchUser(user)).join('');
+      attachSearchUserListeners();
+    }
+  } catch (error) {
+    console.error('Search error:', error);
+    container.innerHTML = '<div class="empty-state"><p>Erreur de recherche</p></div>';
+  }
+}
+
+function renderSearchTrack(track) {
+  return `
+    <div class="top-track" data-track='${JSON.stringify(track)}'>
+      <img src="${track.cover}" class="track-cover" alt="${track.name}" onerror="this.src='https://via.placeholder.com/60x60?text=No+Cover'">
+      <div class="track-info">
+        <h3 class="track-title">${escapeHtml(track.name)}</h3>
+        <p class="track-artist">${escapeHtml(track.artist)}</p>
+      </div>
+      <div class="track-actions">
+        <button class="action-btn shake-btn" title="Shake ce morceau">
+          <span class="icon">❤️</span>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderSearchUser(user) {
+  return `
+    <div class="user-result" data-user-id="${user.id}">
+      <div class="user-avatar" style="background: ${user.color}">♪</div>
+      <div class="user-info">
+        <div class="user-name">@${escapeHtml(user.username)}</div>
+        <div class="user-stats">${user.feelings_count || 0} feelings</div>
+      </div>
+      <button class="btn-follow" data-user-id="${user.id}">Feel</button>
+    </div>
+  `;
+}
+
+function attachSearchTrackListeners() {
+  document.querySelectorAll('.shake-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const trackElement = btn.closest('.top-track');
+      const track = JSON.parse(trackElement.dataset.track);
+      selectedTrackForShake = track;
+      openShakeModal(track);
+    });
+  });
+}
+
+function attachSearchUserListeners() {
+  document.querySelectorAll('.btn-follow').forEach(async btn => {
+    const userId = btn.dataset.userId;
+
+    // Don't show follow button for self
+    if (userId === currentUser.id) {
+      btn.textContent = 'Toi';
+      btn.disabled = true;
+      return;
+    }
+
+    // Check if already following
+    const following = await isFollowing(userId);
+    if (following) {
+      btn.textContent = 'Unfeel';
+      btn.classList.add('following');
+    }
+
+    btn.addEventListener('click', async () => {
+      const isFollowing = btn.classList.contains('following');
+
+      if (isFollowing) {
+        const result = await unfollowUser(userId);
+        if (result.success) {
+          btn.textContent = 'Feel';
+          btn.classList.remove('following');
+        }
+      } else {
+        const result = await followUser(userId);
+        if (result.success) {
+          btn.textContent = 'Unfeel';
+          btn.classList.add('following');
+        } else {
+          alert(result.error);
+        }
+      }
+    });
+  });
+}
+
+// ==================== PROFILE ====================
+
+async function loadProfile() {
+  try {
+    // Update header
+    document.getElementById('user-note').style.background = currentProfile.color;
+    document.getElementById('user-username').textContent = `@${currentProfile.username}`;
+
+    const stats = await getUserStats(currentUser.id);
+    document.getElementById('feels-count').textContent = stats.feels;
+    document.getElementById('feelings-count').textContent = stats.feelings;
+
+    // Load posts
+    await loadProfileTab('shakes');
+
+  } catch (error) {
+    console.error('Error loading profile:', error);
+  }
+}
+
+async function loadProfileTab(tab) {
+  const container = document.getElementById('profile-content');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement...</p></div>';
+
+  try {
+    if (tab === 'shakes') {
+      const posts = await getUserLikedPosts(currentUser.id);
+
+      if (posts.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Aucun shake pour le moment</p></div>';
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="profile-grid">
+          ${posts.map(post => `
+            <div class="profile-post">
+              <img src="${post.album_cover}" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
+              <div class="profile-post-overlay">
+                <div class="profile-post-title">${escapeHtml(post.track_name)}</div>
+                <div class="profile-post-stats">
+                  <span>❤️ ${post.likes_count || 0}</span>
+                  <span>💬 ${post.comments_count || 0}</span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+    } else {
+      const comments = await getUserComments(currentUser.id);
+
+      if (comments.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Aucun commentaire pour le moment</p></div>';
+        return;
+      }
+
+      container.innerHTML = comments.map(comment => `
+        <div class="post" style="margin-bottom: 1rem;">
+          <div class="post-text">${escapeHtml(comment.text)}</div>
+          <small style="color: var(--text-secondary)">Sur: ${escapeHtml(comment.post.track_name)}</small>
+        </div>
+      `).join('');
+    }
+
+  } catch (error) {
+    console.error('Error loading profile tab:', error);
+    container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
+  }
+}
+
+// ==================== MODALS ====================
+
+function openShakeModal(track) {
+  const modal = document.getElementById('shake-modal');
+  const trackInfo = document.getElementById('shake-track-info');
+
+  trackInfo.innerHTML = `
+    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+      <img src="${track.cover}" style="width: 60px; height: 60px; border-radius: 8px;" alt="${track.name}">
+      <div>
+        <div style="font-weight: 600;">${escapeHtml(track.name)}</div>
+        <div style="color: var(--text-secondary); font-size: 0.875rem;">${escapeHtml(track.artist)}</div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('shake-text').value = '';
+  modal.classList.add('active');
+}
+
+function closeShakeModal() {
+  document.getElementById('shake-modal').classList.remove('active');
+  selectedTrackForShake = null;
+}
+
+async function submitShake() {
+  if (!selectedTrackForShake) return;
+
+  const text = document.getElementById('shake-text').value.trim();
+  const submitBtn = document.getElementById('submit-shake');
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Publication...';
+
+  try {
+    const result = await createPost(
+      selectedTrackForShake.name,
+      selectedTrackForShake.artist,
+      selectedTrackForShake.cover,
+      text
+    );
+
+    if (result.success) {
+      alert('Shake publié ! 🎵');
+      closeShakeModal();
+      if (currentView === 'shake') {
+        await loadFeed();
+      }
+    } else {
+      alert('Erreur: ' + result.error);
+    }
+  } catch (error) {
+    alert('Erreur lors de la publication');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Shake !';
+  }
+}
+
+function openCommentModal() {
+  const modal = document.getElementById('comment-modal');
+  document.getElementById('comment-text').value = '';
+  modal.classList.add('active');
+}
+
+function closeCommentModal() {
+  document.getElementById('comment-modal').classList.remove('active');
+  selectedPostForComment = null;
+}
+
+async function submitComment() {
+  if (!selectedPostForComment) return;
+
+  const text = document.getElementById('comment-text').value.trim();
+
+  if (!text) {
+    alert('Écris quelque chose !');
+    return;
+  }
+
+  const submitBtn = document.getElementById('submit-comment');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Publication...';
+
+  try {
+    const result = await addComment(selectedPostForComment, text);
+
+    if (result.success) {
+      alert('Commentaire publié ! 💬');
+      closeCommentModal();
+      if (currentView === 'shake') {
+        await loadFeed();
+      }
+    } else {
+      alert('Erreur: ' + result.error);
+    }
+  } catch (error) {
+    alert('Erreur lors de la publication');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Publier';
+  }
+}
+
+// Close modals on background click
+document.querySelectorAll('.modal').forEach(modal => {
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.remove('active');
+    }
+  });
+});
+
+// ==================== UTILITIES ====================
+
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function getTimeAgo(timestamp) {
+  const now = new Date();
+  const past = new Date(timestamp);
+  const diffInSeconds = Math.floor((now - past) / 1000);
+
+  if (diffInSeconds < 60) return 'À l\'instant';
+  if (diffInSeconds < 3600) return `Il y a ${Math.floor(diffInSeconds / 60)} min`;
+  if (diffInSeconds < 86400) return `Il y a ${Math.floor(diffInSeconds / 3600)} h`;
+  if (diffInSeconds < 604800) return `Il y a ${Math.floor(diffInSeconds / 86400)} j`;
+
+  return past.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short'
+  });
+}
