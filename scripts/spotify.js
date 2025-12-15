@@ -1,176 +1,102 @@
 // ============================================
-// SPOTIFY API - CLIENT CREDENTIALS
+// SPOTIFY API via Supabase Edge Function
 // ============================================
 
-const SPOTIFY_CLIENT_ID = 'c26941b671a940ef93bd386d6f4c8c82';
+const EDGE_FUNCTION_URL = 'https://vbjmhtwrfboqziwibsut.supabase.co/functions/v1/spotify-proxy';
 
 class SpotifyAPI {
   constructor() {
-    this.accessToken = null;
-    this.tokenExpiry = null;
+    this.supabase = supabase; // Instance Supabase globale
   }
 
-  // Obtenir un access token (client credentials)
-  async getAccessToken() {
-    // Si token encore valide, le réutiliser
-    if (this.accessToken && this.tokenExpiry > Date.now()) {
-      return this.accessToken;
-    }
-
+  // Appeler l'Edge Function
+  async callEdgeFunction(action, params = {}) {
     try {
-      // Demander un nouveau token
-      const response = await fetch('https://accounts.spotify.com/api/token', {
+      const response = await fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         },
-        body: `grant_type=client_credentials&client_id=${SPOTIFY_CLIENT_ID}`
+        body: JSON.stringify({ action, ...params })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get Spotify access token');
+        throw new Error(`Edge Function error: ${response.status}`);
       }
 
-      const data = await response.json();
-      this.accessToken = data.access_token;
-      this.tokenExpiry = Date.now() + (data.expires_in * 1000);
+      return await response.json();
 
-      console.log('✅ Spotify access token obtained');
-      return this.accessToken;
     } catch (error) {
-      console.error('❌ Error getting Spotify token:', error);
+      console.error('Spotify API error:', error);
       throw error;
     }
   }
 
   // Récupérer le Top 100 France
   async getTop100France() {
-    try {
-      const token = await this.getAccessToken();
+    const data = await this.callEdgeFunction('top100');
 
-      // Playlist Top 100 France officielle Spotify
-      const playlistId = '37i9dQZEVXbIPWwFssbupI';
-
-      const response = await fetch(
-        `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`,
-        {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch Top 100');
-      }
-
-      const data = await response.json();
-
-      return data.items.map((item, index) => ({
-        rank: index + 1,
-        id: item.track.id,
-        name: item.track.name,
-        artist: item.track.artists[0].name,
-        artists: item.track.artists.map(a => a.name).join(', '),
-        artistId: item.track.artists[0].id,
-        cover: item.track.album.images[0]?.url || 'https://via.placeholder.com/300x300?text=No+Cover',
-        preview_url: item.track.preview_url,
-        spotify_url: item.track.external_urls.spotify
-      }));
-    } catch (error) {
-      console.error('❌ Error fetching Top 100:', error);
-      return [];
-    }
+    return data.items.map((item, index) => ({
+      rank: index + 1,
+      id: item.track.id,
+      name: item.track.name,
+      artist: item.track.artists[0].name,
+      artists: item.track.artists.map(a => a.name).join(', '),
+      album: item.track.album.name,
+      cover: item.track.album.images[0]?.url,
+      coverMedium: item.track.album.images[1]?.url,
+      coverSmall: item.track.album.images[2]?.url,
+      preview_url: item.track.preview_url,
+      spotify_url: item.track.external_urls.spotify,
+      duration_ms: item.track.duration_ms
+    }));
   }
 
   // Rechercher des tracks
   async searchTracks(query) {
-    try {
-      const token = await this.getAccessToken();
+    if (!query || query.length < 2) return [];
 
-      const response = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=20&market=FR`,
-        {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }
-      );
+    const data = await this.callEdgeFunction('search', { query });
 
-      if (!response.ok) {
-        throw new Error('Failed to search tracks');
-      }
+    if (!data.tracks || !data.tracks.items) return [];
 
-      const data = await response.json();
-
-      return data.tracks.items.map(track => ({
-        id: track.id,
-        name: track.name,
-        artist: track.artists[0].name,
-        artists: track.artists.map(a => a.name).join(', '),
-        artistId: track.artists[0].id,
-        cover: track.album.images[1]?.url || track.album.images[0]?.url || 'https://via.placeholder.com/300x300?text=No+Cover',
-        preview_url: track.preview_url,
-        spotify_url: track.external_urls.spotify
-      }));
-    } catch (error) {
-      console.error('❌ Error searching tracks:', error);
-      return [];
-    }
+    return data.tracks.items.map(track => ({
+      id: track.id,
+      name: track.name,
+      artist: track.artists[0].name,
+      artists: track.artists.map(a => a.name).join(', '),
+      album: track.album.name,
+      cover: track.album.images[1]?.url || track.album.images[0]?.url,
+      preview_url: track.preview_url,
+      spotify_url: track.external_urls.spotify
+    }));
   }
 
   // Récupérer infos d'un artiste
   async getArtist(artistId) {
-    try {
-      const token = await this.getAccessToken();
-
-      const response = await fetch(
-        `https://api.spotify.com/v1/artists/${artistId}`,
-        {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch artist info');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('❌ Error getting artist:', error);
-      return null;
-    }
+    return await this.callEdgeFunction('artist', { artistId });
   }
 
   // Récupérer top tracks d'un artiste
   async getArtistTopTracks(artistId) {
-    try {
-      const token = await this.getAccessToken();
+    const data = await this.callEdgeFunction('artist-top', { artistId });
 
-      const response = await fetch(
-        `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=FR`,
-        {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }
-      );
+    return data.tracks.map(track => ({
+      id: track.id,
+      name: track.name,
+      artist: track.artists[0].name,
+      cover: track.album.images[1]?.url,
+      preview_url: track.preview_url
+    }));
+  }
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch artist top tracks');
-      }
-
-      const data = await response.json();
-
-      return data.tracks.map(track => ({
-        id: track.id,
-        name: track.name,
-        artist: track.artists[0].name,
-        cover: track.album.images[1]?.url || track.album.images[0]?.url,
-        preview_url: track.preview_url,
-        spotify_url: track.external_urls.spotify
-      }));
-    } catch (error) {
-      console.error('❌ Error getting artist top tracks:', error);
-      return [];
-    }
+  // Récupérer infos d'une track
+  async getTrack(trackId) {
+    return await this.callEdgeFunction('track', { query: trackId });
   }
 }
 
-// Initialiser
+// Initialiser l'API Spotify
 const spotify = new SpotifyAPI();
-console.log('🎵 Spotify API initialized');
+console.log('🎵 Spotify API initialized (via Edge Function)');
