@@ -38,6 +38,12 @@ async function checkAuthAndInit() {
     setupEventListeners();
     await loadView('shake');
 
+    // Initialiser les notifications
+    if (typeof notifManager !== 'undefined') {
+      await notifManager.loadNotifications();
+      notifManager.subscribeToNotifications();
+    }
+
   } catch (error) {
     console.error('Init error:', error);
     window.location.href = 'index.html';
@@ -259,10 +265,11 @@ function attachPostListeners() {
 
 async function loadTop100() {
   const container = document.getElementById('top-container');
-  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du Top 100...</p></div>';
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du Top 100 France...</p></div>';
 
   try {
-    const tracks = await getTop100();
+    // Utiliser Spotify au lieu de Last.fm
+    const tracks = await spotify.getTop100France();
 
     if (tracks.length === 0) {
       container.innerHTML = '<div class="empty-state"><p>Impossible de charger le Top 100</p></div>';
@@ -279,8 +286,11 @@ async function loadTop100() {
 }
 
 function renderTopTrack(track) {
+  // Escape JSON pour éviter les problèmes avec les quotes
+  const trackData = JSON.stringify(track).replace(/'/g, '&apos;');
+
   return `
-    <div class="top-track" data-track='${JSON.stringify(track)}'>
+    <div class="top-track" data-track='${trackData}'>
       <div class="track-rank">#${track.rank}</div>
       <img src="${track.cover}" class="track-cover" alt="${track.name}" onerror="this.src='https://via.placeholder.com/60x60?text=No+Cover'">
       <div class="track-info">
@@ -291,6 +301,11 @@ function renderTopTrack(track) {
         <button class="action-btn shake-btn" title="Shake ce morceau">
           <span class="icon">❤️</span>
         </button>
+        ${track.preview_url ? `
+          <button class="action-btn preview-btn" title="Écouter 30s" onclick="playPreview('${track.preview_url}', this)">
+            <span class="icon">▶️</span>
+          </button>
+        ` : ''}
       </div>
     </div>
   `;
@@ -321,7 +336,8 @@ async function handleSearch(query) {
 
   try {
     if (searchMode === 'tracks') {
-      const tracks = await searchTracks(query);
+      // Utiliser Spotify au lieu de Last.fm
+      const tracks = await spotify.searchTracks(query);
 
       if (tracks.length === 0) {
         container.innerHTML = '<div class="empty-state"><p>Aucun morceau trouvé</p></div>';
@@ -349,8 +365,11 @@ async function handleSearch(query) {
 }
 
 function renderSearchTrack(track) {
+  // Escape JSON pour éviter les problèmes avec les quotes
+  const trackData = JSON.stringify(track).replace(/'/g, '&apos;');
+
   return `
-    <div class="top-track" data-track='${JSON.stringify(track)}'>
+    <div class="top-track" data-track='${trackData}'>
       <img src="${track.cover}" class="track-cover" alt="${track.name}" onerror="this.src='https://via.placeholder.com/60x60?text=No+Cover'">
       <div class="track-info">
         <h3 class="track-title">${escapeHtml(track.name)}</h3>
@@ -360,6 +379,11 @@ function renderSearchTrack(track) {
         <button class="action-btn shake-btn" title="Shake ce morceau">
           <span class="icon">❤️</span>
         </button>
+        ${track.preview_url ? `
+          <button class="action-btn preview-btn" title="Écouter 30s" onclick="playPreview('${track.preview_url}', this)">
+            <span class="icon">▶️</span>
+          </button>
+        ` : ''}
       </div>
     </div>
   `;
@@ -641,4 +665,45 @@ function getTimeAgo(timestamp) {
     day: 'numeric',
     month: 'short'
   });
+}
+
+// ==================== AUDIO PREVIEW ====================
+
+let currentAudio = null;
+let currentPlayButton = null;
+
+function playPreview(previewUrl, button) {
+  // Si on clique sur le même bouton, arrêter la lecture
+  if (currentAudio && currentPlayButton === button) {
+    currentAudio.pause();
+    currentAudio = null;
+    button.querySelector('.icon').textContent = '▶️';
+    currentPlayButton = null;
+    return;
+  }
+
+  // Arrêter l'audio précédent s'il existe
+  if (currentAudio) {
+    currentAudio.pause();
+    if (currentPlayButton) {
+      currentPlayButton.querySelector('.icon').textContent = '▶️';
+    }
+  }
+
+  // Jouer le nouveau preview
+  currentAudio = new Audio(previewUrl);
+  currentPlayButton = button;
+  button.querySelector('.icon').textContent = '⏸️';
+
+  currentAudio.play().catch(error => {
+    console.error('Error playing preview:', error);
+    button.querySelector('.icon').textContent = '▶️';
+  });
+
+  // Quand l'audio se termine
+  currentAudio.onended = () => {
+    button.querySelector('.icon').textContent = '▶️';
+    currentAudio = null;
+    currentPlayButton = null;
+  };
 }
