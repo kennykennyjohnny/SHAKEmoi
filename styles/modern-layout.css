@@ -340,10 +340,34 @@
 }
 
 /* =====================================================
-   RESPONSIVE MOBILE
+   RESPONSIVE
    ===================================================== */
 
-@media (max-width: 600px) {
+/* Sur PC - Layout horizontal parfait */
+@media (min-width: 769px) {
+  .post-content {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 16px !important;
+  }
+
+  .track-cover-container {
+    flex-shrink: 0 !important;
+  }
+
+  .track-cover {
+    width: 100px !important;
+    height: 100px !important;
+  }
+
+  .post-info-right {
+    flex: 1 !important;
+  }
+}
+
+/* Sur mobile - Stack vertical */
+@media (max-width: 768px) {
   .post {
     flex-direction: column !important;
     align-items: flex-start !important;
@@ -351,6 +375,7 @@
 
   .post-content {
     width: 100% !important;
+    flex-direction: row !important;
   }
 
   .track-cover {
@@ -364,6 +389,22 @@
     padding: 6px 10px !important;
     font-size: 0.75rem !important;
   }
+}
+
+/* =====================================================
+   MENTIONS CLIQUABLES
+   ===================================================== */
+
+.mention {
+  color: #FF6B9D;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.mention:hover {
+  color: #FF5088;
+  text-decoration: underline;
 }
 
 /* =====================================================

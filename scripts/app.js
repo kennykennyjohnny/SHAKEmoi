@@ -248,7 +248,7 @@ function renderPost(post) {
             <p class="track-artist">${escapeHtml(post.artist)}</p>
           </div>
 
-          ${post.text ? `<p class="post-text">${escapeHtml(post.text)}</p>` : ''}
+          ${post.text ? `<p class="post-text">${makeUsernamesClickable(post.text)}</p>` : ''}
 
           <!-- Actions -->
           <div class="post-actions">
@@ -581,20 +581,45 @@ async function loadProfileTab(tab) {
         </div>
       `;
 
-    } else {
-      const comments = await getUserComments(currentUser.id);
+    } else if (tab === 'reshakes') {
+      // Charger les reshakes de l'utilisateur
+      const { data: reshakes, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          user:users_profile(id, username, color)
+        `)
+        .eq('user_id', currentUser.id)
+        .eq('is_reshake', true)
+        .order('created_at', { ascending: false });
 
-      if (comments.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>Aucun commentaire pour le moment</p></div>';
+      if (error) {
+        console.error('Error loading reshakes:', error);
+        container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
         return;
       }
 
-      container.innerHTML = comments.map(comment => `
-        <div class="post" style="margin-bottom: 1rem;">
-          <div class="post-text">${escapeHtml(comment.text)}</div>
-          <small style="color: var(--text-secondary)">Sur: ${escapeHtml(comment.post.track_name)}</small>
+      if (!reshakes || reshakes.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Aucun re-shake pour le moment.<br><small>Reshake des posts pour les voir ici !</small></p></div>';
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="profile-grid">
+          ${reshakes.map(post => `
+            <div class="profile-post">
+              <img src="${post.cover_url}" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
+              <div class="profile-post-overlay">
+                <div class="profile-post-title">${escapeHtml(post.track_name)}</div>
+                <div class="profile-post-stats">
+                  <span>❤️ ${post.likes_count || 0}</span>
+                  <span>💬 ${post.comments_count || 0}</span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
         </div>
-      `).join('');
+      `;
     }
 
   } catch (error) {
@@ -730,6 +755,40 @@ function escapeHtml(text) {
   return text.replace(/[&<>"']/g, m => map[m]);
 }
 
+// Fonction pour rendre les @username cliquables
+function makeUsernamesClickable(text) {
+  if (!text) return '';
+
+  // Escape HTML d'abord
+  const escaped = escapeHtml(text);
+
+  // Remplacer @username par un span cliquable
+  return escaped.replace(/@(\w+)/g, (match, username) => {
+    return `<span class="mention" onclick="searchAndOpenProfile('${username}')">@${username}</span>`;
+  });
+}
+
+// Fonction pour rechercher et ouvrir un profil par username
+window.searchAndOpenProfile = async function(username) {
+  try {
+    const { data, error } = await supabase
+      .from('users_profile')
+      .select('id')
+      .eq('username', username)
+      .single();
+
+    if (error || !data) {
+      alert(`Utilisateur @${username} introuvable`);
+      return;
+    }
+
+    openUserProfile(data.id);
+  } catch (error) {
+    console.error('Error finding user:', error);
+    alert(`Erreur lors de la recherche de @${username}`);
+  }
+}
+
 function getTimeAgo(timestamp) {
   const now = new Date();
   const past = new Date(timestamp);
@@ -751,19 +810,27 @@ function getTimeAgo(timestamp) {
 let currentAudio = null;
 let currentPostId = null;
 
-function togglePlayPreview(previewUrl, postId) {
+// Fonction GLOBALE pour le player
+window.togglePlayPreview = function(previewUrl, postId) {
+  console.log('🎵 Play clicked:', postId, previewUrl);
+
+  if (!previewUrl || previewUrl === 'null') {
+    alert('Pas de preview disponible pour ce morceau 😢');
+    return;
+  }
+
   const coverElement = document.getElementById(`cover-${postId}`);
   const playOverlay = document.getElementById(`play-${postId}`);
 
   if (!coverElement || !playOverlay) {
-    console.error('Elements not found for post', postId);
+    console.error('❌ Elements not found for post', postId);
     return;
   }
 
   // Si on clique sur le même post
   if (currentAudio && currentPostId === postId) {
     if (currentAudio.paused) {
-      // Reprendre la lecture
+      // Reprendre
       currentAudio.play();
       coverElement.classList.add('playing');
       playOverlay.classList.add('playing');
@@ -796,28 +863,27 @@ function togglePlayPreview(previewUrl, postId) {
   currentAudio = new Audio(previewUrl);
   currentPostId = postId;
 
+  console.log('▶️ Playing audio...');
+
   currentAudio.play().then(() => {
+    console.log('✅ Audio playing!');
     coverElement.classList.add('playing');
     playOverlay.classList.add('playing');
     playOverlay.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>';
   }).catch(error => {
-    console.error('Error playing audio:', error);
-    alert('Impossible de lire ce morceau (preview non disponible)');
+    console.error('❌ Error playing audio:', error);
+    alert('Impossible de lire ce morceau (preview Spotify non disponible)');
   });
 
   // Quand le son se termine
   currentAudio.onended = () => {
+    console.log('⏹️ Audio ended');
     coverElement.classList.remove('playing');
     playOverlay.classList.remove('playing');
     playOverlay.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
     currentAudio = null;
     currentPostId = null;
   };
-}
-
-// Legacy function pour compatibilité
-function playPreview(previewUrl, button) {
-  console.warn('playPreview is deprecated, use togglePlayPreview');
 }
 
 // ==================== USER PROFILE MODAL ====================
