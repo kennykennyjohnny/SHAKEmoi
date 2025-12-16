@@ -240,7 +240,10 @@ function renderPost(post) {
   const postId = post.id;
   const hasPreview = post.preview_url && post.preview_url !== 'null';
 
-  // Si c'est un reshake, afficher l'info
+  // Si c'est un reshake, utiliser l'auteur original pour le corps du post
+  const originalAuthor = post.is_reshake && post.original_post?.user ? post.original_post.user : post.user;
+
+  // Si c'est un reshake, afficher l'info avec l'utilisateur qui a reshake
   const reshakeHeader = post.is_reshake ? `
     <div class="reshake-header">
       <span class="reshake-icon">↻</span>
@@ -273,10 +276,10 @@ function renderPost(post) {
 
         <!-- Infos à droite -->
         <div class="post-info-right">
-          <!-- User + timestamp -->
+          <!-- User + timestamp (auteur original si reshake) -->
           <div class="post-header-inline">
-            <div class="user-note" style="background: ${post.user.color}; cursor: pointer;" onclick="openUserProfile('${post.user.id}')">♪</div>
-            <span class="username-inline" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span>
+            <div class="user-note" style="background: ${originalAuthor.color}; cursor: pointer;" onclick="openUserProfile('${originalAuthor.id}')">♪</div>
+            <span class="username-inline" onclick="openUserProfile('${originalAuthor.id}')">@${originalAuthor.username}</span>
             <span class="timestamp-inline">${timeAgo}</span>
           </div>
 
@@ -510,7 +513,7 @@ function renderSearchUser(user) {
       <div class="user-avatar" style="background: ${user.color}; cursor: pointer;" onclick="openUserProfile('${user.id}')">♪</div>
       <div class="user-info" style="cursor: pointer;" onclick="openUserProfile('${user.id}')">
         <div class="user-name">@${escapeHtml(user.username)}</div>
-        <div class="user-stats">${user.feelings_count || 0} feelings</div>
+        <div class="user-stats">${user.feels_count || 0} shakeurs</div>
       </div>
       <button class="btn-follow" data-user-id="${user.id}">Feel</button>
     </div>
@@ -578,16 +581,12 @@ async function loadProfile() {
 
     const stats = await getUserStats(currentUser.id);
     const feelsElement = document.getElementById('feels-count');
-    const feelingsElement = document.getElementById('feelings-count');
 
     feelsElement.textContent = stats.feels;
-    feelingsElement.textContent = stats.feelings;
 
-    // Make stats clickable
+    // Make stats clickable - only shows people who follow you (Shakeurs)
     feelsElement.style.cursor = 'pointer';
-    feelingsElement.style.cursor = 'pointer';
-    feelsElement.onclick = () => showFollowersList('feels');
-    feelingsElement.onclick = () => showFollowingsList();
+    feelsElement.onclick = () => showFollowersList('shakeurs');
 
     // Load posts
     await loadProfileTab('shakes');
@@ -643,7 +642,7 @@ async function loadProfileTab(tab) {
         .from('posts')
         .select(`
           *,
-          user:users_profile(id, username, color)
+          user:users_profile!posts_user_id_fkey(id, username, color)
         `)
         .eq('user_id', currentUser.id)
         .eq('is_reshake', true)
@@ -969,7 +968,6 @@ async function openUserProfile(userId) {
 
     const stats = await getUserStats(userId);
     document.getElementById('modal-feels-count').textContent = stats.feels;
-    document.getElementById('modal-feelings-count').textContent = stats.feelings;
 
     // Gérer le bouton follow
     const followBtn = document.getElementById('modal-follow-btn');
@@ -1070,32 +1068,18 @@ window.showAllComments = async function(postId) {
   if (showMoreBtn) showMoreBtn.remove();
 }
 
-// Make Feels/Feelings clickable - Show followers list
+// Make Shakeurs clickable - Show followers list
 window.showFollowersList = async function(type) {
   if (!currentUser) return;
 
   const users = await getUserFollowers(currentUser.id);
 
   if (users.length === 0) {
-    alert('Personne ne te feel pour le moment 🎵');
+    alert('Personne ne te shake pour le moment 🎵');
     return;
   }
 
-  showUsersListModal('Personnes qui te feel', users);
-}
-
-// Show following list
-window.showFollowingsList = async function() {
-  if (!currentUser) return;
-
-  const users = await getUserFollowing(currentUser.id);
-
-  if (users.length === 0) {
-    alert('Tu ne feel personne pour le moment. Va dans l\'onglet Recherche ! 🎵');
-    return;
-  }
-
-  showUsersListModal('Personnes que tu feel', users);
+  showUsersListModal('Tes Shakeurs', users);
 }
 
 // Show modal with users list
@@ -1117,7 +1101,7 @@ function showUsersListModal(title, users) {
           <div class="user-avatar" style="background: ${user.color}; cursor: pointer;" onclick="closeUsersListModal(); openUserProfile('${user.id}')">♪</div>
           <div class="user-info" style="flex: 1; cursor: pointer;" onclick="closeUsersListModal(); openUserProfile('${user.id}')">
             <div class="user-name">@${escapeHtml(user.username)}</div>
-            <div class="user-stats" style="font-size: 0.875rem; color: var(--text-secondary);">${user.feels_count || 0} feels · ${user.feelings_count || 0} feelings</div>
+            <div class="user-stats" style="font-size: 0.875rem; color: var(--text-secondary);">${user.feels_count || 0} shakeurs</div>
           </div>
         </div>
       `).join('')}

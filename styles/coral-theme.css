@@ -1,0 +1,262 @@
+/* ============================================
+   SHAKEMOI - THÈME CORAIL
+   Nouvelle palette de couleurs harmonieuse
+   ============================================ */
+
+:root {
+  /* Couleurs principales - Corail */
+  --primary: #FF6B6B;
+  --primary-hover: #EE5A6F;
+  --primary-light: #FF8E8E;
+  --primary-dark: #D65454;
+
+  /* Couleurs secondaires */
+  --secondary: #4ECDC4;
+  --secondary-hover: #45B8B0;
+  --accent: #FFE66D;
+  --accent-hover: #FFD93D;
+
+  /* Couleurs de fond */
+  --bg-dark: #2C3E50;
+  --bg-medium: #34495E;
+  --bg-light: #ECF0F1;
+  --bg-card: rgba(255, 255, 255, 0.05);
+
+  /* Couleurs de texte */
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
+  --gradient-secondary: linear-gradient(90deg, #FF6B6B, #EE5A6F, #4ECDC4);
+  --gradient-accent: linear-gradient(135deg, #FFE66D 0%, #FF6B6B 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(255, 107, 107, 0.1);
+  --shadow-md: 0 4px 16px rgba(255, 107, 107, 0.2);
+  --shadow-lg: 0 8px 32px rgba(255, 107, 107, 0.3);
+
+  /* Borders */
+  --border-radius: 12px;
+  --border-radius-lg: 16px;
+  --border-color: rgba(255, 107, 107, 0.2);
+}
+
+/* Background principal avec gradient corail */
+body {
+  background: var(--gradient-primary);
+  background-attachment: fixed;
+}
+
+/* App wrapper avec nouveau style */
+.app-wrapper {
+  background: linear-gradient(135deg,
+    rgba(255, 107, 107, 0.1) 0%,
+    rgba(78, 205, 196, 0.1) 100%
+  );
+}
+
+/* Header avec gradient corail */
+.app-header {
+  background: rgba(44, 62, 80, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Boutons principaux */
+.btn-primary,
+.btn-follow,
+.action-btn.liked {
+  background: var(--gradient-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover,
+.btn-follow:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Navigation */
+.nav-btn.active {
+  color: var(--primary);
+}
+
+.nav-btn.active .nav-icon {
+  fill: var(--primary);
+}
+
+/* Posts */
+.post {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.post:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+/* Action buttons */
+.action-btn:hover {
+  color: var(--primary);
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.like-btn.liked .icon {
+  color: var(--primary);
+}
+
+/* Reshake header */
+.reshake-header {
+  background: linear-gradient(90deg,
+    rgba(78, 205, 196, 0.1) 0%,
+    rgba(255, 107, 107, 0.1) 100%
+  );
+  border-left: 3px solid var(--secondary);
+}
+
+.reshake-icon {
+  color: var(--secondary);
+}
+
+/* Username mentions */
+.username,
+.mention {
+  color: var(--primary);
+}
+
+.username:hover,
+.mention:hover {
+  color: var(--primary-hover);
+}
+
+/* Modales */
+.modal-content {
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Profile */
+.profile-header {
+  background: var(--gradient-primary);
+}
+
+.stat-value {
+  color: var(--primary);
+}
+
+/* Notifications */
+.notif-badge {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px var(--bg-dark);
+}
+
+.notif-item.unread {
+  background: rgba(255, 107, 107, 0.1);
+  border-left: 3px solid var(--primary);
+}
+
+/* Search */
+.search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+}
+
+.toggle-btn.active {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+/* Feelback button */
+.btn-feelback {
+  background: var(--gradient-primary) !important;
+  transition: all 0.3s ease;
+}
+
+.btn-feelback:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-feelback.following {
+  background: linear-gradient(135deg, #666 0%, #888 100%) !important;
+}
+
+/* Amélioration pour desktop */
+@media (min-width: 768px) {
+  .app-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
+  }
+
+  .main-content {
+    padding: 1.5rem;
+  }
+
+  .post {
+    margin-bottom: 1.5rem;
+    border-radius: var(--border-radius);
+  }
+
+  .feed-container {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-container {
+    max-width: 700px;
+  }
+
+  /* Layout 2 colonnes pour la grille de profil */
+  .profile-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.notif-badge {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Scrollbar personnalisée */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-medium);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
+}
