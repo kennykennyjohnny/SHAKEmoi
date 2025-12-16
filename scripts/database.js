@@ -74,7 +74,7 @@ async function getFeed(limit = 20) {
       .from('posts')
       .select(`
         *,
-        user:users_profile(id, username, color)
+        user:users_profile!posts_user_id_fkey(id, username, color)
       `)
       .in('user_id', followingIds)
       .order('created_at', { ascending: false })
@@ -118,7 +118,7 @@ async function getUserPosts(userId, limit = 50) {
       .from('posts')
       .select(`
         *,
-        user:users_profile(id, username, color)
+        user:users_profile!posts_user_id_fkey(id, username, color)
       `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
@@ -324,7 +324,7 @@ async function getUserLikedPosts(userId, limit = 50) {
       .select(`
         post:posts(
           *,
-          user:users_profile(id, username, color)
+          user:users_profile!posts_user_id_fkey(id, username, color)
         )
       `)
       .eq('user_id', userId)
@@ -385,7 +385,7 @@ async function getPostComments(postId) {
       .from('comments')
       .select(`
         *,
-        user:users_profile(id, username, color)
+        user:users_profile!posts_user_id_fkey(id, username, color)
       `)
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
@@ -407,7 +407,7 @@ async function getUserComments(userId, limit = 50) {
         *,
         post:posts(
           *,
-          user:users_profile(id, username, color)
+          user:users_profile!posts_user_id_fkey(id, username, color)
         )
       `)
       .eq('user_id', userId)
@@ -543,7 +543,7 @@ async function searchPosts(query) {
       .from('posts')
       .select(`
         *,
-        user:users_profile(id, username, color)
+        user:users_profile!posts_user_id_fkey(id, username, color)
       `)
       .or(`track_name.ilike.%${query}%,artist.ilike.%${query}%`)
       .order('created_at', { ascending: false })
