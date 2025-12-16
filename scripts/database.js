@@ -69,12 +69,20 @@ async function getFeed(limit = 20) {
     // Include own posts too
     followingIds.push(user.id);
 
-    // Get posts from followed users
+    // Get posts from followed users WITH COMMENTS
     const { data: posts, error } = await supabase
       .from('posts')
       .select(`
         *,
-        user:users_profile(id, username, color)
+        user:users_profile(id, username, color),
+        comments(
+          id,
+          text,
+          created_at,
+          interaction:interactions(
+            user:users_profile(username, color)
+          )
+        )
       `)
       .in('user_id', followingIds)
       .order('created_at', { ascending: false })

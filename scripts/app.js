@@ -68,6 +68,12 @@ async function checkAuthAndInit() {
 
 // Setup all event listeners
 function setupEventListeners() {
+  // Logo cliquable - retour au feed
+  document.querySelector('.logo').addEventListener('click', () => {
+    loadView('shake');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
   // Logout
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
 
@@ -163,6 +169,45 @@ async function loadView(viewName) {
 
 // ==================== SHAKE (FEED) ====================
 
+// Fonction pour afficher les commentaires
+function renderComments(comments) {
+  if (!comments || comments.length === 0) {
+    return '';
+  }
+
+  // Limiter à 2 commentaires visibles au départ
+  const visibleComments = comments.slice(0, 2);
+  const hasMore = comments.length > 2;
+
+  const commentsHtml = visibleComments.map(comment => {
+    const user = comment.interaction?.user;
+    if (!user) return '';
+
+    return `
+      <div class="comment-item">
+        <div class="comment-avatar" style="background: ${user.color}">♪</div>
+        <div class="comment-content">
+          <span class="comment-username">@${escapeHtml(user.username)}</span>
+          <p class="comment-text">${escapeHtml(comment.text)}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="comments-section">
+      <div class="comments-preview">
+        ${commentsHtml}
+      </div>
+      ${hasMore ? `
+        <button class="show-all-comments" onclick="alert('Fonctionnalité à venir : voir tous les ${comments.length} commentaires')">
+          Voir les ${comments.length} commentaires
+        </button>
+      ` : ''}
+    </div>
+  `;
+}
+
 async function loadFeed() {
   const container = document.getElementById('feed-container');
   container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du feed...</p></div>';
@@ -229,12 +274,14 @@ function renderPost(post) {
         </button>
         <button class="action-btn comment-btn" data-post-id="${post.id}">
           <span class="icon">💬</span>
-          <span class="count">${post.comments_count || 0}</span>
+          <span class="count">${post.comments?.length || 0}</span>
         </button>
         <button class="action-btn reshake-btn" data-post-id="${post.id}">
           <span class="icon">🔄</span>
         </button>
       </div>
+
+      ${renderComments(post.comments || [])}
     </article>
   `;
 }
