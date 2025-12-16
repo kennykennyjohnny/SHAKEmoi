@@ -1,0 +1,486 @@
+/* =====================================================
+   SHAKEMOI - DESIGN ULTRA-MODERNE 2025
+   Animations fluides, glassmorphism avancé, micro-interactions
+   ===================================================== */
+
+/* =====================================================
+   VARIABLES MODERNES
+   ===================================================== */
+
+:root {
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --glow-primary: 0 0 20px rgba(124, 58, 237, 0.4), 0 0 40px rgba(124, 58, 237, 0.2);
+  --glow-pink: 0 0 20px rgba(255, 107, 157, 0.4), 0 0 40px rgba(255, 107, 157, 0.2);
+  --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* =====================================================
+   POSTS - DESIGN MODERNE AVEC EFFETS 3D
+   ===================================================== */
+
+.post {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(26, 26, 36, 0.95) 0%,
+    rgba(40, 40, 56, 0.9) 100%
+  ) !important;
+  backdrop-filter: blur(30px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.3) inset !important;
+  transition: var(--transition-smooth) !important;
+  transform-style: preserve-3d;
+  overflow: hidden;
+}
+
+.post::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(124, 58, 237, 0.5) 25%,
+    rgba(255, 107, 157, 0.5) 75%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.post:hover {
+  transform: translateY(-4px) scale(1.01) !important;
+  border-color: rgba(124, 58, 237, 0.5) !important;
+  box-shadow:
+    0 20px 60px rgba(124, 58, 237, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.1) inset !important;
+}
+
+.post:hover::before {
+  opacity: 1;
+}
+
+/* Animation d'entrée améliorée */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* =====================================================
+   POCHETTE ALBUM - EFFETS MODERNES
+   ===================================================== */
+
+.track-cover-container {
+  position: relative;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.track-cover {
+  transition: var(--transition-smooth) !important;
+  filter: brightness(0.95) saturate(1.1);
+}
+
+.track-cover:hover {
+  transform: scale(1.08) rotate(2deg) !important;
+  filter: brightness(1.05) saturate(1.3);
+  box-shadow: 0 12px 40px rgba(255, 107, 157, 0.4) !important;
+}
+
+/* Play overlay moderne */
+.play-overlay {
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  width: 48px !important;
+  height: 48px !important;
+  transition: var(--transition-bounce) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.play-overlay:hover {
+  transform: translate(-50%, -50%) scale(1.15) !important;
+  background: rgba(255, 107, 157, 0.3) !important;
+  border-color: rgba(255, 107, 157, 0.6);
+  box-shadow: var(--glow-pink);
+}
+
+.play-overlay.playing {
+  background: linear-gradient(135deg, #FF6B9D 0%, #C44569 100%) !important;
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: var(--glow-pink);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 107, 157, 0.4), 0 0 40px rgba(255, 107, 157, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 107, 157, 0.6), 0 0 60px rgba(255, 107, 157, 0.4);
+  }
+}
+
+/* Vinyle spinning amélioré */
+.track-cover.playing {
+  animation: vinyl-spin 3s linear infinite, vinyl-glow 2s ease-in-out infinite !important;
+  border-radius: 50% !important;
+}
+
+@keyframes vinyl-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(255, 107, 157, 0.6),
+      0 0 40px rgba(255, 107, 157, 0.3),
+      0 0 60px rgba(255, 107, 157, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(255, 107, 157, 0.8),
+      0 0 60px rgba(255, 107, 157, 0.5),
+      0 0 90px rgba(255, 107, 157, 0.3);
+  }
+}
+
+/* =====================================================
+   BOUTONS D'ACTION - DESIGN FUTURISTE
+   ===================================================== */
+
+.action-btn {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+  transition: var(--transition-smooth) !important;
+  overflow: hidden;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.action-btn:hover::before {
+  width: 200%;
+  height: 200%;
+}
+
+.action-btn:active {
+  transform: scale(0.95) !important;
+}
+
+/* Like button moderne */
+.like-btn {
+  position: relative;
+  overflow: visible !important;
+}
+
+.like-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.15), rgba(255, 107, 157, 0.05)) !important;
+  border-color: rgba(255, 107, 157, 0.4) !important;
+  color: #FF6B9D !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+}
+
+.like-btn.liked {
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.2), rgba(255, 107, 157, 0.1)) !important;
+  border-color: #FF6B9D !important;
+  color: #FF6B9D !important;
+  box-shadow: 0 4px 16px rgba(255, 107, 157, 0.4);
+}
+
+.like-btn.liked .icon {
+  animation: heart-beat 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  filter: drop-shadow(0 0 8px rgba(255, 107, 157, 0.8));
+}
+
+@keyframes heart-beat {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.3) rotate(-10deg); }
+  50% { transform: scale(0.9) rotate(10deg); }
+  75% { transform: scale(1.2) rotate(-5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* Comment button */
+.comment-btn:hover {
+  background: linear-gradient(135deg, rgba(74, 144, 226, 0.15), rgba(74, 144, 226, 0.05)) !important;
+  border-color: rgba(74, 144, 226, 0.4) !important;
+  color: #4A90E2 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+/* Reshake button */
+.reshake-btn:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: #10B981 !important;
+  transform: translateY(-2px) rotate(180deg) !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* =====================================================
+   USERNAME ET TEXTE - AMÉLIORATIONS VISUELLES
+   ===================================================== */
+
+.username-inline {
+  position: relative;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700 !important;
+  transition: var(--transition-smooth);
+}
+
+.username-inline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  transition: width 0.3s ease;
+}
+
+.username-inline:hover::after {
+  width: 100%;
+}
+
+.user-note {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 0 0 3px rgba(255, 255, 255, 0.1) !important;
+  transition: var(--transition-bounce) !important;
+  font-size: 0.85rem !important;
+}
+
+.user-note:hover {
+  transform: scale(1.15) rotate(5deg) !important;
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.4),
+    0 0 0 3px rgba(255, 255, 255, 0.2),
+    0 0 20px currentColor !important;
+}
+
+/* =====================================================
+   COMMENTAIRES - DESIGN MODERNE
+   ===================================================== */
+
+.comments-section {
+  margin-top: 16px !important;
+  padding-top: 16px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  animation: fade-in 0.4s ease;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.comment-item {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.01) 100%
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px !important;
+  transition: var(--transition-smooth) !important;
+  backdrop-filter: blur(10px);
+}
+
+.comment-item:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  ) !important;
+  border-color: rgba(124, 58, 237, 0.2);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.comment-avatar {
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.3),
+    0 0 0 2px rgba(255, 255, 255, 0.1) !important;
+  transition: var(--transition-smooth);
+}
+
+.comment-avatar:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 0 2px rgba(255, 255, 255, 0.2),
+    0 0 16px currentColor !important;
+}
+
+.comment-username {
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #FF6B9D, #C44569);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.show-more-comments {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  transition: var(--transition-smooth) !important;
+  backdrop-filter: blur(10px);
+}
+
+.show-more-comments:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(124, 58, 237, 0.05)) !important;
+  border-color: rgba(124, 58, 237, 0.3) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+}
+
+/* =====================================================
+   RESHAKE HEADER - STYLE MODERNE
+   ===================================================== */
+
+.reshake-header {
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.08) 0%,
+    rgba(16, 185, 129, 0.03) 100%
+  ) !important;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.3) !important;
+  backdrop-filter: blur(10px);
+  padding: 10px 16px !important;
+  margin: -16px -16px 12px -16px !important;
+  border-radius: 20px 20px 0 0 !important;
+}
+
+.reshake-icon {
+  display: inline-block;
+  animation: rotate-icon 0.6s ease;
+  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.6));
+}
+
+@keyframes rotate-icon {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* =====================================================
+   SCROLLBAR ULTRA-MODERNE
+   ===================================================== */
+
+.comments-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.comments-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(124, 58, 237, 0.6), rgba(124, 58, 237, 0.3));
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.3s ease;
+}
+
+.comments-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(124, 58, 237, 0.8), rgba(124, 58, 237, 0.5));
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.4);
+}
+
+/* =====================================================
+   MENTIONS - STYLE MODERNE
+   ===================================================== */
+
+.mention {
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.15), rgba(255, 107, 157, 0.05));
+  border-radius: 4px;
+  padding: 2px 6px;
+  border: 1px solid rgba(255, 107, 157, 0.3);
+  transition: var(--transition-smooth);
+  display: inline-block;
+}
+
+.mention:hover {
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.25), rgba(255, 107, 157, 0.15));
+  border-color: rgba(255, 107, 157, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+}
+
+/* =====================================================
+   LOADING SPINNER MODERNE
+   ===================================================== */
+
+.spinner {
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =====================================================
+   RESPONSIVE - AMÉLIORATION MOBILE
+   ===================================================== */
+
+@media (max-width: 768px) {
+  .post {
+    border-radius: 16px !important;
+  }
+
+  .post:hover {
+    transform: translateY(-2px) scale(1.005) !important;
+  }
+
+  .action-btn {
+    padding: 8px 12px !important;
+  }
+}

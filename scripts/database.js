@@ -66,10 +66,10 @@ async function getFeed(limit = 20) {
 
     const followingIds = follows ? follows.map(f => f.following_id) : [];
 
-    // Include own posts too
-    followingIds.push(user.id);
+    // Ne PAS inclure ses propres posts dans le feed
+    // Les posts de l'utilisateur sont visibles uniquement sur son profil
 
-    // Get posts from followed users (simple, sans commentaires pour l'instant)
+    // Get posts from followed users only
     const { data: posts, error } = await supabase
       .from('posts')
       .select(`
