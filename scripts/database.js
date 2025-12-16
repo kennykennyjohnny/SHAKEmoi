@@ -264,8 +264,17 @@ async function getUserLikedPosts(userId, limit = 50) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (error) throw error;
-    return data ? data.map(item => item.post).filter(post => post !== null) : [];
+    if (error) {
+      console.error('Erreur lors de la récupération des posts likés:', error);
+      throw error;
+    }
+
+    console.log('Données brutes des likes:', data);
+
+    const posts = data ? data.map(item => item.post).filter(post => post !== null) : [];
+    console.log('Posts likés filtrés:', posts);
+
+    return posts;
   } catch (error) {
     console.error('Error getting liked posts:', error);
     return [];

@@ -498,14 +498,24 @@ async function loadProfileTab(tab) {
     if (tab === 'shakes') {
       const posts = await getUserLikedPosts(currentUser.id);
 
+      console.log('Posts likés récupérés:', posts.length, posts);
+
       if (posts.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>Aucun shake pour le moment</p></div>';
+        container.innerHTML = '<div class="empty-state"><p>Aucun shake pour le moment.<br><small>Like des posts pour les voir ici !</small></p></div>';
+        return;
+      }
+
+      // Filtrer les posts null ou invalides
+      const validPosts = posts.filter(post => post && post.cover_url && post.track_name);
+
+      if (validPosts.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Erreur de chargement des posts</p></div>';
         return;
       }
 
       container.innerHTML = `
         <div class="profile-grid">
-          ${posts.map(post => `
+          ${validPosts.map(post => `
             <div class="profile-post">
               <img src="${post.cover_url}" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
               <div class="profile-post-overlay">
