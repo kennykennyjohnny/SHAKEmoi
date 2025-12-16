@@ -169,11 +169,42 @@ async function loadView(viewName) {
 
 // ==================== SHAKE (FEED) ====================
 
-// Fonction pour afficher les commentaires (simplifié)
-function renderComments(comments) {
-  // Pour l'instant, on ne charge pas les commentaires automatiquement
-  // Ils seront chargés quand on clique sur le bouton commentaire
-  return '';
+// Fonction pour afficher les commentaires
+async function renderComments(postId, commentsCount) {
+  if (!commentsCount || commentsCount === 0) {
+    return '';
+  }
+
+  // Charger les 3 premiers commentaires
+  const comments = await getPostComments(postId);
+
+  if (!comments || comments.length === 0) {
+    return '';
+  }
+
+  const previewComments = comments.slice(0, 3);
+  const hasMore = comments.length > 3;
+
+  return `
+    <div class="comments-section" id="comments-${postId}">
+      <div class="comments-list">
+        ${previewComments.map(comment => `
+          <div class="comment-item">
+            <div class="comment-avatar" style="background: ${comment.user.color}">♪</div>
+            <div class="comment-content">
+              <span class="comment-username" onclick="openUserProfile('${comment.user.id}')">@${comment.user.username}</span>
+              <p class="comment-text">${makeUsernamesClickable(comment.text)}</p>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      ${hasMore ? `
+        <button class="show-more-comments" onclick="showAllComments('${postId}')">
+          Voir les ${comments.length - 3} autres commentaires
+        </button>
+      ` : ''}
+    </div>
+  `;
 }
 
 async function loadFeed() {
@@ -188,7 +219,14 @@ async function loadFeed() {
       return;
     }
 
-    container.innerHTML = posts.map(post => renderPost(post)).join('');
+    // Render posts with comments
+    const postsHtml = await Promise.all(posts.map(async post => {
+      const postHtml = renderPost(post);
+      const commentsHtml = await renderComments(post.id, post.comments_count);
+      return postHtml.replace('</article>', `${commentsHtml}</article>`);
+    }));
+
+    container.innerHTML = postsHtml.join('');
     attachPostListeners();
 
   } catch (error) {
@@ -267,7 +305,6 @@ function renderPost(post) {
         </div>
       </div>
 
-      ${renderComments(post.comments || [])}
     </article>
   `;
 }
@@ -305,11 +342,21 @@ function attachPostListeners() {
     });
   });
 
-  // Comment buttons
+  // Comment buttons - Toggle comments visibility or add new
   document.querySelectorAll('.comment-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedPostForComment = btn.dataset.postId;
-      openCommentModal();
+    btn.addEventListener('click', async () => {
+      const postId = btn.dataset.postId;
+      const commentsSection = document.getElementById(`comments-${postId}`);
+
+      // Si les commentaires sont déjà visibles, ouvrir la modal pour en ajouter
+      if (commentsSection) {
+        selectedPostForComment = postId;
+        openCommentModal();
+      } else {
+        // Sinon, charger et afficher les commentaires
+        selectedPostForComment = postId;
+        openCommentModal();
+      }
     });
   });
 
@@ -530,8 +577,17 @@ async function loadProfile() {
     document.getElementById('user-username').textContent = `@${currentProfile.username}`;
 
     const stats = await getUserStats(currentUser.id);
-    document.getElementById('feels-count').textContent = stats.feels;
-    document.getElementById('feelings-count').textContent = stats.feelings;
+    const feelsElement = document.getElementById('feels-count');
+    const feelingsElement = document.getElementById('feelings-count');
+
+    feelsElement.textContent = stats.feels;
+    feelingsElement.textContent = stats.feelings;
+
+    // Make stats clickable
+    feelsElement.style.cursor = 'pointer';
+    feelingsElement.style.cursor = 'pointer';
+    feelsElement.onclick = () => showFollowersList('feels');
+    feelingsElement.onclick = () => showFollowingsList();
 
     // Load posts
     await loadProfileTab('shakes');
@@ -989,4 +1045,38 @@ async function openUserProfile(userId) {
 function closeUserProfile() {
   document.getElementById('user-profile-modal').classList.remove('active');
   selectedUserId = null;
+}
+
+// Show all comments for a post
+window.showAllComments = async function(postId) {
+  const commentsSection = document.getElementById(`comments-${postId}`);
+  if (!commentsSection) return;
+
+  const allComments = await getPostComments(postId);
+  if (!allComments || allComments.length === 0) return;
+
+  commentsSection.querySelector('.comments-list').innerHTML = allComments.map(comment => `
+    <div class="comment-item">
+      <div class="comment-avatar" style="background: ${comment.user.color}">♪</div>
+      <div class="comment-content">
+        <span class="comment-username" onclick="openUserProfile('${comment.user.id}')">@${comment.user.username}</span>
+        <p class="comment-text">${makeUsernamesClickable(comment.text)}</p>
+      </div>
+    </div>
+  `).join('');
+
+  // Remove "show more" button
+  const showMoreBtn = commentsSection.querySelector('.show-more-comments');
+  if (showMoreBtn) showMoreBtn.remove();
+}
+
+// Make Feels/Feelings clickable
+window.showFollowersList = async function(type) {
+  alert(`Liste des ${type} à venir ! 🎵`);
+  // TODO: Implement modal to show followers/following
+}
+
+window.showFollowingsList = async function() {
+  alert('Liste des Feelings à venir ! 🎵');
+  // TODO: Implement modal to show following list
 }
