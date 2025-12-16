@@ -169,43 +169,11 @@ async function loadView(viewName) {
 
 // ==================== SHAKE (FEED) ====================
 
-// Fonction pour afficher les commentaires
+// Fonction pour afficher les commentaires (simplifié)
 function renderComments(comments) {
-  if (!comments || comments.length === 0) {
-    return '';
-  }
-
-  console.log('Rendering comments:', comments); // Debug
-
-  const commentsHtml = comments.map(comment => {
-    // Gérer différentes structures possibles
-    const user = comment.interaction?.user || comment.user;
-
-    if (!user) {
-      console.warn('Comment without user:', comment);
-      return '';
-    }
-
-    return `
-      <div class="comment-item">
-        <div class="comment-avatar" style="background: ${user.color || '#7c3aed'}">♪</div>
-        <div class="comment-content">
-          <span class="comment-username" onclick="openUserProfile('${user.id || ''}')">@${escapeHtml(user.username || 'Anonymous')}</span>
-          <p class="comment-text">${escapeHtml(comment.text || '')}</p>
-        </div>
-      </div>
-    `;
-  }).filter(html => html !== '').join('');
-
-  if (!commentsHtml) return '';
-
-  return `
-    <div class="comments-section">
-      <div class="comments-list">
-        ${commentsHtml}
-      </div>
-    </div>
-  `;
+  // Pour l'instant, on ne charge pas les commentaires automatiquement
+  // Ils seront chargés quand on clique sur le bouton commentaire
+  return '';
 }
 
 async function loadFeed() {
@@ -290,7 +258,7 @@ function renderPost(post) {
             </button>
             <button class="action-btn comment-btn" data-post-id="${postId}">
               <span class="icon">💬</span>
-              <span class="count">${post.comments?.length || 0}</span>
+              <span class="count">${post.comments_count || 0}</span>
             </button>
             <button class="action-btn reshake-btn" data-post-id="${postId}">
               <span class="icon">🔄</span>

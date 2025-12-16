@@ -69,26 +69,40 @@ async function getFeed(limit = 20) {
     // Include own posts too
     followingIds.push(user.id);
 
-    // Get posts from followed users WITH COMMENTS
+    // Get posts from followed users (simple, sans commentaires pour l'instant)
     const { data: posts, error } = await supabase
       .from('posts')
       .select(`
         *,
-        user:users_profile(id, username, color),
-        comments(
-          id,
-          text,
-          created_at,
-          interaction:interactions(
-            user:users_profile(username, color)
-          )
-        )
+        user:users_profile(id, username, color)
       `)
       .in('user_id', followingIds)
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching feed:', error);
+      throw error;
+    }
+
+    // Pour chaque post, compter les commentaires
+    if (posts && posts.length > 0) {
+      const postsWithComments = await Promise.all(posts.map(async (post) => {
+        // Compter les commentaires
+        const { count } = await supabase
+          .from('comments')
+          .select('*', { count: 'exact', head: true })
+          .eq('post_id', post.id);
+
+        return {
+          ...post,
+          comments_count: count || 0,
+          comments: [] // On chargera les commentaires à la demande
+        };
+      }));
+
+      return postsWithComments;
+    }
 
     return posts || [];
   } catch (error) {
