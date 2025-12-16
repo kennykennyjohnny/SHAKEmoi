@@ -882,6 +882,7 @@ body {
     align-items: flex-start;
     justify-content: center;
     padding: var(--spacing-lg) 0;
+    min-height: 100vh;
   }
 
   .app-container {
@@ -889,26 +890,30 @@ body {
     max-width: 600px;
     min-height: calc(100vh - var(--spacing-lg) * 2);
     border-radius: 24px;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 0 50px rgba(124, 58, 237, 0.3);
+    position: relative;
   }
 
   .app-header {
     border-radius: 24px 24px 0 0;
+    position: sticky;
   }
 
   .bottom-nav {
-    position: fixed;
+    position: absolute;
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 66%;
-    max-width: 600px;
+    left: 0;
+    right: 0;
+    width: 100%;
     border-radius: 0 0 24px 24px;
+    border-top: 1px solid var(--border-color);
   }
 
   .main-content {
     padding-bottom: var(--nav-height);
+    overflow-y: auto;
+    max-height: calc(100vh - var(--header-height) - var(--nav-height) - var(--spacing-lg) * 2);
   }
 
   .profile-grid {
