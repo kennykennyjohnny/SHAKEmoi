@@ -175,35 +175,35 @@ function renderComments(comments) {
     return '';
   }
 
-  // Limiter à 2 commentaires visibles au départ
-  const visibleComments = comments.slice(0, 2);
-  const hasMore = comments.length > 2;
+  console.log('Rendering comments:', comments); // Debug
 
-  const commentsHtml = visibleComments.map(comment => {
-    const user = comment.interaction?.user;
-    if (!user) return '';
+  const commentsHtml = comments.map(comment => {
+    // Gérer différentes structures possibles
+    const user = comment.interaction?.user || comment.user;
+
+    if (!user) {
+      console.warn('Comment without user:', comment);
+      return '';
+    }
 
     return `
       <div class="comment-item">
-        <div class="comment-avatar" style="background: ${user.color}">♪</div>
+        <div class="comment-avatar" style="background: ${user.color || '#7c3aed'}">♪</div>
         <div class="comment-content">
-          <span class="comment-username">@${escapeHtml(user.username)}</span>
-          <p class="comment-text">${escapeHtml(comment.text)}</p>
+          <span class="comment-username" onclick="openUserProfile('${user.id || ''}')">@${escapeHtml(user.username || 'Anonymous')}</span>
+          <p class="comment-text">${escapeHtml(comment.text || '')}</p>
         </div>
       </div>
     `;
-  }).join('');
+  }).filter(html => html !== '').join('');
+
+  if (!commentsHtml) return '';
 
   return `
     <div class="comments-section">
-      <div class="comments-preview">
+      <div class="comments-list">
         ${commentsHtml}
       </div>
-      ${hasMore ? `
-        <button class="show-all-comments" onclick="alert('Fonctionnalité à venir : voir tous les ${comments.length} commentaires')">
-          Voir les ${comments.length} commentaires
-        </button>
-      ` : ''}
     </div>
   `;
 }
@@ -231,6 +231,8 @@ async function loadFeed() {
 
 function renderPost(post) {
   const timeAgo = getTimeAgo(post.created_at);
+  const postId = post.id;
+  const hasPreview = post.preview_url && post.preview_url !== 'null';
 
   // Si c'est un reshake, afficher l'info
   const reshakeHeader = post.is_reshake ? `
@@ -243,42 +245,58 @@ function renderPost(post) {
   ` : '';
 
   return `
-    <article class="post" data-post-id="${post.id}">
+    <article class="post post-with-comments" data-post-id="${postId}">
       ${reshakeHeader}
-      <div class="post-header">
-        <div class="user-note" style="background: ${post.user.color}; cursor: pointer;" onclick="openUserProfile('${post.user.id}')">♪</div>
-        <div class="post-info">
-          <span class="username" style="cursor: pointer;" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span>
-          <span class="timestamp">${timeAgo}</span>
-        </div>
-      </div>
+
       <div class="post-content">
-        <div style="position: relative;">
-          <img src="${post.cover_url}" class="track-cover" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
-          ${post.preview_url ? `
-            <button class="preview-play-btn" onclick="playPreview('${post.preview_url}', this)" title="Écouter 30s">
-              <span class="icon">▶️</span>
-            </button>
+        <!-- Pochette à gauche avec play button -->
+        <div class="track-cover-container">
+          <img src="${post.cover_url}"
+               class="track-cover"
+               id="cover-${postId}"
+               alt="${post.track_name}"
+               onerror="this.src='https://via.placeholder.com/100x100?text=No+Cover'">
+          ${hasPreview ? `
+            <div class="play-overlay" id="play-${postId}" onclick="togglePlayPreview('${post.preview_url}', '${postId}')">
+              <svg viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
           ` : ''}
         </div>
-        <div class="track-info">
-          <h3 class="track-title">${escapeHtml(post.track_name)}</h3>
-          <p class="track-artist">${escapeHtml(post.artist)}</p>
+
+        <!-- Infos à droite -->
+        <div class="post-info-right">
+          <!-- User + timestamp -->
+          <div class="post-header-inline">
+            <div class="user-note" style="background: ${post.user.color}; cursor: pointer;" onclick="openUserProfile('${post.user.id}')">♪</div>
+            <span class="username-inline" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span>
+            <span class="timestamp-inline">${timeAgo}</span>
+          </div>
+
+          <!-- Track info -->
+          <div class="track-info-compact">
+            <h3 class="track-title">${escapeHtml(post.track_name)}</h3>
+            <p class="track-artist">${escapeHtml(post.artist)}</p>
+          </div>
+
+          ${post.text ? `<p class="post-text">${escapeHtml(post.text)}</p>` : ''}
+
+          <!-- Actions -->
+          <div class="post-actions">
+            <button class="action-btn like-btn" data-post-id="${postId}">
+              <span class="icon">❤️</span>
+              <span class="count">${post.likes_count || 0}</span>
+            </button>
+            <button class="action-btn comment-btn" data-post-id="${postId}">
+              <span class="icon">💬</span>
+              <span class="count">${post.comments?.length || 0}</span>
+            </button>
+            <button class="action-btn reshake-btn" data-post-id="${postId}">
+              <span class="icon">🔄</span>
+            </button>
+          </div>
         </div>
-        ${post.text ? `<p class="post-text">${escapeHtml(post.text)}</p>` : ''}
-      </div>
-      <div class="post-actions">
-        <button class="action-btn like-btn" data-post-id="${post.id}">
-          <span class="icon">❤️</span>
-          <span class="count">${post.likes_count || 0}</span>
-        </button>
-        <button class="action-btn comment-btn" data-post-id="${post.id}">
-          <span class="icon">💬</span>
-          <span class="count">${post.comments?.length || 0}</span>
-        </button>
-        <button class="action-btn reshake-btn" data-post-id="${post.id}">
-          <span class="icon">🔄</span>
-        </button>
       </div>
 
       ${renderComments(post.comments || [])}
@@ -760,45 +778,78 @@ function getTimeAgo(timestamp) {
   });
 }
 
-// ==================== AUDIO PREVIEW ====================
+// ==================== AUDIO PREVIEW AVEC ANIMATIONS ====================
 
 let currentAudio = null;
-let currentPlayButton = null;
+let currentPostId = null;
 
-function playPreview(previewUrl, button) {
-  // Si on clique sur le même bouton, arrêter la lecture
-  if (currentAudio && currentPlayButton === button) {
-    currentAudio.pause();
-    currentAudio = null;
-    button.querySelector('.icon').textContent = '▶️';
-    currentPlayButton = null;
+function togglePlayPreview(previewUrl, postId) {
+  const coverElement = document.getElementById(`cover-${postId}`);
+  const playOverlay = document.getElementById(`play-${postId}`);
+
+  if (!coverElement || !playOverlay) {
+    console.error('Elements not found for post', postId);
     return;
   }
 
-  // Arrêter l'audio précédent s'il existe
+  // Si on clique sur le même post
+  if (currentAudio && currentPostId === postId) {
+    if (currentAudio.paused) {
+      // Reprendre la lecture
+      currentAudio.play();
+      coverElement.classList.add('playing');
+      playOverlay.classList.add('playing');
+      playOverlay.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>';
+    } else {
+      // Pause
+      currentAudio.pause();
+      coverElement.classList.remove('playing');
+      playOverlay.classList.remove('playing');
+      playOverlay.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    }
+    return;
+  }
+
+  // Arrêter l'audio précédent
   if (currentAudio) {
     currentAudio.pause();
-    if (currentPlayButton) {
-      currentPlayButton.querySelector('.icon').textContent = '▶️';
+    if (currentPostId) {
+      const oldCover = document.getElementById(`cover-${currentPostId}`);
+      const oldOverlay = document.getElementById(`play-${currentPostId}`);
+      if (oldCover) oldCover.classList.remove('playing');
+      if (oldOverlay) {
+        oldOverlay.classList.remove('playing');
+        oldOverlay.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+      }
     }
   }
 
-  // Jouer le nouveau preview
+  // Créer et jouer le nouveau son
   currentAudio = new Audio(previewUrl);
-  currentPlayButton = button;
-  button.querySelector('.icon').textContent = '⏸️';
+  currentPostId = postId;
 
-  currentAudio.play().catch(error => {
-    console.error('Error playing preview:', error);
-    button.querySelector('.icon').textContent = '▶️';
+  currentAudio.play().then(() => {
+    coverElement.classList.add('playing');
+    playOverlay.classList.add('playing');
+    playOverlay.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>';
+  }).catch(error => {
+    console.error('Error playing audio:', error);
+    alert('Impossible de lire ce morceau (preview non disponible)');
   });
 
-  // Quand l'audio se termine
+  // Quand le son se termine
   currentAudio.onended = () => {
-    button.querySelector('.icon').textContent = '▶️';
+    coverElement.classList.remove('playing');
+    playOverlay.classList.remove('playing');
+    playOverlay.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
     currentAudio = null;
-    currentPlayButton = null;
+    currentPostId = null;
   };
+}
+
+// Legacy function pour compatibilité
+function playPreview(previewUrl, button) {
+  console.warn('playPreview is deprecated, use togglePlayPreview');
 }
 
 // ==================== USER PROFILE MODAL ====================
