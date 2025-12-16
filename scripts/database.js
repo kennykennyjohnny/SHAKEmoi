@@ -211,21 +211,39 @@ async function likePost(postId) {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    const { error } = await supabase
+    console.log('👍 Liking post:', postId);
+
+    // 1. Insert like
+    const { data: likeData, error: likeError } = await supabase
       .from('likes')
       .insert([{
         post_id: postId,
         user_id: user.id
-      }]);
+      }])
+      .select();
 
-    if (error) throw error;
+    if (likeError) {
+      console.error('❌ Error inserting like:', likeError);
+      throw likeError;
+    }
 
-    // Increment likes_count
-    await supabase.rpc('increment_likes', { post_id: postId });
+    console.log('✅ Like inserted:', likeData);
+
+    // 2. Increment likes_count via RPC
+    const { data: rpcData, error: rpcError } = await supabase.rpc('increment_likes', {
+      post_id: postId
+    });
+
+    if (rpcError) {
+      console.error('⚠️ Warning: RPC increment failed:', rpcError);
+      // Don't fail completely, the like was inserted
+    } else {
+      console.log('✅ Likes count incremented');
+    }
 
     return { success: true };
   } catch (error) {
-    console.error('Error liking post:', error);
+    console.error('💥 Error liking post:', error);
     return { success: false, error: error.message };
   }
 }
@@ -236,20 +254,38 @@ async function unlikePost(postId) {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    const { error } = await supabase
+    console.log('👎 Unliking post:', postId);
+
+    // 1. Delete like
+    const { data: deleteData, error: deleteError } = await supabase
       .from('likes')
       .delete()
       .eq('post_id', postId)
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .select();
 
-    if (error) throw error;
+    if (deleteError) {
+      console.error('❌ Error deleting like:', deleteError);
+      throw deleteError;
+    }
 
-    // Decrement likes_count
-    await supabase.rpc('decrement_likes', { post_id: postId });
+    console.log('✅ Like deleted:', deleteData);
+
+    // 2. Decrement likes_count via RPC
+    const { data: rpcData, error: rpcError } = await supabase.rpc('decrement_likes', {
+      post_id: postId
+    });
+
+    if (rpcError) {
+      console.error('⚠️ Warning: RPC decrement failed:', rpcError);
+      // Don't fail completely, the like was deleted
+    } else {
+      console.log('✅ Likes count decremented');
+    }
 
     return { success: true };
   } catch (error) {
-    console.error('Error unliking post:', error);
+    console.error('💥 Error unliking post:', error);
     return { success: false, error: error.message };
   }
 }
@@ -265,10 +301,17 @@ async function hasLikedPost(postId) {
       .select('id')
       .eq('post_id', postId)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no row
+
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 = no rows returned, which is OK
+      console.error('Error checking like status:', error);
+      return false;
+    }
 
     return !!data;
   } catch (error) {
+    console.error('Error in hasLikedPost:', error);
     return false;
   }
 }
