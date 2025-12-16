@@ -187,29 +187,44 @@ async function loadFeed() {
 function renderPost(post) {
   const timeAgo = getTimeAgo(post.created_at);
 
+  // Si c'est un reshake, afficher l'info du reshake
+  const reshakeHeader = post.is_reshake ? `
+    <div class="reshake-header">
+      <span class="reshake-icon">🔄</span>
+      <span class="reshake-text">
+        <span class="username" style="cursor: pointer;" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span> a reshake
+      </span>
+    </div>
+  ` : '';
+
+  // Pour les reshakes, utiliser les infos du post original
+  const displayUser = post.is_reshake && post.original_post ? post.original_post.user : post.user;
+  const displayData = post.is_reshake && post.original_post ? post.original_post : post;
+
   return `
     <article class="post" data-post-id="${post.id}">
+      ${reshakeHeader}
       <div class="post-header">
-        <div class="user-note" style="background: ${post.user.color}; cursor: pointer;" onclick="openUserProfile('${post.user.id}')">♪</div>
+        <div class="user-note" style="background: ${displayUser.color}; cursor: pointer;" onclick="openUserProfile('${displayUser.id}')">♪</div>
         <div class="post-info">
-          <span class="username" style="cursor: pointer;" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span>
+          <span class="username" style="cursor: pointer;" onclick="openUserProfile('${displayUser.id}')">@${displayUser.username}</span>
           <span class="timestamp">${timeAgo}</span>
         </div>
       </div>
       <div class="post-content">
         <div style="position: relative;">
-          <img src="${post.cover_url}" class="track-cover" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
-          ${post.preview_url ? `
-            <button class="preview-play-btn" onclick="playPreview('${post.preview_url}', this)" title="Écouter 30s">
+          <img src="${displayData.cover_url}" class="track-cover" alt="${displayData.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
+          ${displayData.preview_url ? `
+            <button class="preview-play-btn" onclick="playPreview('${displayData.preview_url}', this)" title="Écouter 30s">
               <span class="icon">▶️</span>
             </button>
           ` : ''}
         </div>
         <div class="track-info">
-          <h3 class="track-title">${escapeHtml(post.track_name)}</h3>
-          <p class="track-artist">${escapeHtml(post.artist)}</p>
+          <h3 class="track-title">${escapeHtml(displayData.track_name)}</h3>
+          <p class="track-artist">${escapeHtml(displayData.artist)}</p>
         </div>
-        ${post.text ? `<p class="post-text">${escapeHtml(post.text)}</p>` : ''}
+        ${displayData.text ? `<p class="post-text">${escapeHtml(displayData.text)}</p>` : ''}
       </div>
       <div class="post-actions">
         <button class="action-btn like-btn" data-post-id="${post.id}">
