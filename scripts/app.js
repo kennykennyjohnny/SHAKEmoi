@@ -187,6 +187,21 @@ async function loadFeed() {
 function renderPost(post) {
   const timeAgo = getTimeAgo(post.created_at);
 
+  // Vérifier la validité du post
+  if (!post || !post.user) {
+    console.error('Post invalide:', post);
+    return '';
+  }
+
+  // Pour les reshakes, utiliser les infos du post original si disponibles
+  const displayUser = (post.is_reshake && post.original_post && post.original_post.user)
+    ? post.original_post.user
+    : post.user;
+
+  const displayData = (post.is_reshake && post.original_post)
+    ? post.original_post
+    : post;
+
   // Si c'est un reshake, afficher l'info du reshake
   const reshakeHeader = post.is_reshake ? `
     <div class="reshake-header">
@@ -197,17 +212,13 @@ function renderPost(post) {
     </div>
   ` : '';
 
-  // Pour les reshakes, utiliser les infos du post original
-  const displayUser = post.is_reshake && post.original_post ? post.original_post.user : post.user;
-  const displayData = post.is_reshake && post.original_post ? post.original_post : post;
-
   return `
     <article class="post" data-post-id="${post.id}">
       ${reshakeHeader}
       <div class="post-header">
-        <div class="user-note" style="background: ${displayUser.color}; cursor: pointer;" onclick="openUserProfile('${displayUser.id}')">♪</div>
+        <div class="user-note" style="background: ${displayUser.color || '#7c3aed'}; cursor: pointer;" onclick="openUserProfile('${displayUser.id}')">♪</div>
         <div class="post-info">
-          <span class="username" style="cursor: pointer;" onclick="openUserProfile('${displayUser.id}')">@${displayUser.username}</span>
+          <span class="username" style="cursor: pointer;" onclick="openUserProfile('${displayUser.id}')">@${displayUser.username || 'unknown'}</span>
           <span class="timestamp">${timeAgo}</span>
         </div>
       </div>

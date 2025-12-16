@@ -74,11 +74,7 @@ async function getFeed(limit = 20) {
       .from('posts')
       .select(`
         *,
-        user:users_profile(id, username, color),
-        original_post:posts!original_post_id(
-          *,
-          user:users_profile(id, username, color)
-        )
+        user:users_profile(id, username, color)
       `)
       .in('user_id', followingIds)
       .order('created_at', { ascending: false })
