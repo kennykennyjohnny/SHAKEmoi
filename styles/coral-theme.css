@@ -14,14 +14,14 @@
   --secondary-hover: #3DBDB3;
 
   /* Couleurs de fond */
-  --bg-dark: #1A1A1A;
-  --bg-medium: #2A2A2A;
+  --bg-dark: #FF6B6B;
+  --bg-medium: #FFFFFF;
   --bg-light: #FFFFFF;
-  --bg-card: #2A2A2A;
+  --bg-card: #FFFFFF;
 
   /* Couleurs de texte */
-  --text-primary: #FFFFFF;
-  --text-secondary: #B0B0B0;
+  --text-primary: #1A1A1A;
+  --text-secondary: #4A4A4A;
   --text-muted: #808080;
 
   /* Shadows */
@@ -30,7 +30,7 @@
 
   /* Borders */
   --border-radius: 8px;
-  --border-color: #3A3A3A;
+  --border-color: #FFD4D4;
 }
 
 /* Background simple */
@@ -53,29 +53,40 @@ body {
 }
 
 .logo-moi {
-  color: var(--text-primary);
+  color: #1A1A1A;
 }
 
 /* Boutons principaux - couleur unie */
 .btn-primary,
 .btn-follow {
-  background: var(--primary);
+  background: #1A1A1A;
+  color: white;
   box-shadow: none;
 }
 
 .btn-primary:hover,
 .btn-follow:hover {
-  background: var(--primary-hover);
+  background: #2A2A2A;
   transform: none;
 }
 
 /* Navigation */
+.nav-btn {
+  color: white;
+}
+
 .nav-btn.active {
-  color: var(--primary);
+  color: #1A1A1A;
+  background: white;
+  border-radius: 12px;
 }
 
 .nav-btn.active .nav-icon {
-  fill: var(--primary);
+  fill: #1A1A1A;
+}
+
+.nav-icon {
+  fill: white;
 }
 
 /* Posts */
@@ -99,71 +110,79 @@ body {
 
 /* Reshake header */
 .reshake-header {
-  background: var(--bg-medium);
-  border-left: 3px solid var(--primary);
+  background: #FFF5F5;
+  border-left: 3px solid #1A1A1A;
 }
 
 .reshake-icon {
-  color: var(--primary);
+  color: #1A1A1A;
 }
 
 /* Username mentions */
 .username,
 .mention {
-  color: var(--primary);
+  color: #1A1A1A;
+  font-weight: 600;
 }
 
 .username:hover,
 .mention:hover {
-  color: var(--primary-hover);
+  color: #2A2A2A;
 }
 
 /* Modales */
 .modal-content {
-  background: var(--bg-medium);
+  background: white;
   border: 1px solid var(--border-color);
 }
 
 /* Profile */
 .profile-header {
-  background: var(--bg-card);
+  background: white;
 }
 
 .stat-value {
-  color: var(--primary);
+  color: #1A1A1A;
+  font-weight: 700;
 }
 
 /* Notifications */
 .notif-badge {
-  background: var(--primary);
+  background: #1A1A1A;
+  color: white;
+}
+
+.notif-item {
+  color: #1A1A1A;
 }
 
 .notif-item.unread {
-  background: rgba(255, 107, 107, 0.15);
-  border-left: 3px solid var(--primary);
+  background: #FFF5F5;
+  border-left: 3px solid #1A1A1A;
 }
 
 /* Search */
 .search-input:focus {
-  border-color: var(--primary);
+  border-color: #1A1A1A;
 }
 
 .toggle-btn.active {
-  background: var(--primary);
+  background: #1A1A1A;
   color: white;
 }
 
 /* Feelback button */
 .btn-feelback {
-  background: var(--primary) !important;
+  background: #1A1A1A !important;
+  color: white !important;
 }
 
 .btn-feelback:hover {
-  background: var(--primary-hover) !important;
+  background: #2A2A2A !important;
 }
 
 .btn-feelback.following {
-  background: #666 !important;
+  background: #4ECDC4 !important;
 }
 
 /* Amélioration pour desktop */
