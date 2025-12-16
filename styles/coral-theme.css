@@ -1,88 +1,72 @@
 /* ============================================
-   SHAKEMOI - THÈME CORAIL
-   Nouvelle palette de couleurs harmonieuse
+   SHAKEMOI - THÈME CORAIL SIMPLE
+   Design épuré et clair
    ============================================ */
 
 :root {
   /* Couleurs principales - Corail */
   --primary: #FF6B6B;
-  --primary-hover: #EE5A6F;
-  --primary-light: #FF8E8E;
-  --primary-dark: #D65454;
+  --primary-hover: #FF5252;
+  --primary-light: #FFE5E5;
 
   /* Couleurs secondaires */
   --secondary: #4ECDC4;
-  --secondary-hover: #45B8B0;
-  --accent: #FFE66D;
-  --accent-hover: #FFD93D;
+  --secondary-hover: #3DBDB3;
 
   /* Couleurs de fond */
-  --bg-dark: #2C3E50;
-  --bg-medium: #34495E;
-  --bg-light: #ECF0F1;
-  --bg-card: rgba(255, 255, 255, 0.05);
+  --bg-dark: #1A1A1A;
+  --bg-medium: #2A2A2A;
+  --bg-light: #FFFFFF;
+  --bg-card: #2A2A2A;
 
   /* Couleurs de texte */
   --text-primary: #FFFFFF;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.5);
-
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
-  --gradient-secondary: linear-gradient(90deg, #FF6B6B, #EE5A6F, #4ECDC4);
-  --gradient-accent: linear-gradient(135deg, #FFE66D 0%, #FF6B6B 100%);
+  --text-secondary: #B0B0B0;
+  --text-muted: #808080;
 
   /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(255, 107, 107, 0.1);
-  --shadow-md: 0 4px 16px rgba(255, 107, 107, 0.2);
-  --shadow-lg: 0 8px 32px rgba(255, 107, 107, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
 
   /* Borders */
-  --border-radius: 12px;
-  --border-radius-lg: 16px;
-  --border-color: rgba(255, 107, 107, 0.2);
+  --border-radius: 8px;
+  --border-color: #3A3A3A;
 }
 
-/* Background principal avec gradient corail */
+/* Background simple */
 body {
-  background: var(--gradient-primary);
-  background-attachment: fixed;
+  background: var(--bg-dark);
 }
 
-/* App wrapper avec nouveau style */
 .app-wrapper {
-  background: linear-gradient(135deg,
-    rgba(255, 107, 107, 0.1) 0%,
-    rgba(78, 205, 196, 0.1) 100%
-  );
+  background: var(--bg-dark);
 }
 
-/* Header avec gradient corail */
+/* Header simple */
 .app-header {
-  background: rgba(44, 62, 80, 0.95);
-  backdrop-filter: blur(20px);
+  background: var(--bg-medium);
   border-bottom: 1px solid var(--border-color);
 }
 
 .logo {
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--primary);
 }
 
-/* Boutons principaux */
+.logo-moi {
+  color: var(--text-primary);
+}
+
+/* Boutons principaux - couleur unie */
 .btn-primary,
-.btn-follow,
-.action-btn.liked {
-  background: var(--gradient-primary);
-  box-shadow: var(--shadow-md);
+.btn-follow {
+  background: var(--primary);
+  box-shadow: none;
 }
 
 .btn-primary:hover,
 .btn-follow:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  background: var(--primary-hover);
+  transform: none;
 }
 
 /* Navigation */
@@ -98,18 +82,15 @@ body {
 .post {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
 }
 
 .post:hover {
-  border-color: var(--primary);
-  box-shadow: var(--shadow-md);
+  border-color: #4A4A4A;
 }
 
 /* Action buttons */
 .action-btn:hover {
   color: var(--primary);
-  background: rgba(255, 107, 107, 0.1);
 }
 
 .like-btn.liked .icon {
@@ -118,15 +99,12 @@ body {
 
 /* Reshake header */
 .reshake-header {
-  background: linear-gradient(90deg,
-    rgba(78, 205, 196, 0.1) 0%,
-    rgba(255, 107, 107, 0.1) 100%
-  );
-  border-left: 3px solid var(--secondary);
+  background: var(--bg-medium);
+  border-left: 3px solid var(--primary);
 }
 
 .reshake-icon {
-  color: var(--secondary);
+  color: var(--primary);
 }
 
 /* Username mentions */
@@ -142,14 +120,13 @@ body {
 
 /* Modales */
 .modal-content {
-  background: var(--bg-dark);
+  background: var(--bg-medium);
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-lg);
 }
 
 /* Profile */
 .profile-header {
-  background: var(--gradient-primary);
+  background: var(--bg-card);
 }
 
 .stat-value {
@@ -159,47 +136,41 @@ body {
 /* Notifications */
 .notif-badge {
   background: var(--primary);
-  box-shadow: 0 0 0 3px var(--bg-dark);
 }
 
 .notif-item.unread {
-  background: rgba(255, 107, 107, 0.1);
+  background: rgba(255, 107, 107, 0.15);
   border-left: 3px solid var(--primary);
 }
 
 /* Search */
 .search-input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
 }
 
 .toggle-btn.active {
-  background: var(--gradient-primary);
+  background: var(--primary);
   color: white;
 }
 
 /* Feelback button */
 .btn-feelback {
-  background: var(--gradient-primary) !important;
-  transition: all 0.3s ease;
+  background: var(--primary) !important;
 }
 
 .btn-feelback:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  background: var(--primary-hover) !important;
 }
 
 .btn-feelback.following {
-  background: linear-gradient(135deg, #666 0%, #888 100%) !important;
+  background: #666 !important;
 }
 
 /* Amélioration pour desktop */
 @media (min-width: 768px) {
   .app-container {
     max-width: 600px;
-    margin: 2rem auto;
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-lg);
+    margin: 1rem auto;
     border: 1px solid var(--border-color);
   }
 
@@ -208,55 +179,35 @@ body {
   }
 
   .post {
-    margin-bottom: 1.5rem;
-    border-radius: var(--border-radius);
-  }
-
-  .feed-container {
-    max-width: 100%;
+    margin-bottom: 1rem;
   }
 }
 
 @media (min-width: 1024px) {
   .app-container {
-    max-width: 700px;
+    max-width: 650px;
   }
 
-  /* Layout 2 colonnes pour la grille de profil */
   .profile-grid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    gap: 1rem;
   }
 }
 
-/* Animations */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
-}
-
-.notif-badge {
-  animation: pulse 2s ease-in-out infinite;
-}
-
-/* Scrollbar personnalisée */
+/* Scrollbar simple */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-medium);
+  background: var(--bg-dark);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary);
+  background: #4A4A4A;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-hover);
+  background: #5A5A5A;
 }
