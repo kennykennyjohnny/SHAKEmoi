@@ -187,6 +187,37 @@
     </div>
   </div>
 
+  <!-- Modal pour profil utilisateur -->
+  <div id="user-profile-modal" class="modal">
+    <div class="modal-content user-profile-modal">
+      <button class="modal-close" onclick="closeUserProfile()">✕</button>
+      <div class="profile-header">
+        <div class="music-note" id="modal-user-note">♪</div>
+        <h2 class="username" id="modal-user-username">@username</h2>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value" id="modal-feels-count">0</span>
+            <span class="stat-label">Feels</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="modal-feelings-count">0</span>
+            <span class="stat-label">Feelings</span>
+          </div>
+        </div>
+        <button class="btn-follow modal-follow-btn" id="modal-follow-btn">Feel</button>
+      </div>
+      <div class="profile-tabs">
+        <button class="tab-btn active" data-tab="shakes">Shakes</button>
+      </div>
+      <div id="modal-profile-content" class="profile-content">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Chargement...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="scripts/config.js"></script>
   <script src="scripts/database.js"></script>
   <script src="scripts/spotify.js"></script>

@@ -190,14 +190,21 @@ function renderPost(post) {
   return `
     <article class="post" data-post-id="${post.id}">
       <div class="post-header">
-        <div class="user-note" style="background: ${post.user.color}">♪</div>
+        <div class="user-note" style="background: ${post.user.color}; cursor: pointer;" onclick="openUserProfile('${post.user.id}')">♪</div>
         <div class="post-info">
-          <span class="username">@${post.user.username}</span>
+          <span class="username" style="cursor: pointer;" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span>
           <span class="timestamp">${timeAgo}</span>
         </div>
       </div>
       <div class="post-content">
-        <img src="${post.cover_url}" class="track-cover" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
+        <div style="position: relative;">
+          <img src="${post.cover_url}" class="track-cover" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
+          ${post.preview_url ? `
+            <button class="preview-play-btn" onclick="playPreview('${post.preview_url}', this)" title="Écouter 30s">
+              <span class="icon">▶️</span>
+            </button>
+          ` : ''}
+        </div>
         <div class="track-info">
           <h3 class="track-title">${escapeHtml(post.track_name)}</h3>
           <p class="track-artist">${escapeHtml(post.artist)}</p>
@@ -409,8 +416,8 @@ function renderSearchTrack(track) {
 function renderSearchUser(user) {
   return `
     <div class="user-result" data-user-id="${user.id}">
-      <div class="user-avatar" style="background: ${user.color}">♪</div>
-      <div class="user-info">
+      <div class="user-avatar" style="background: ${user.color}; cursor: pointer;" onclick="openUserProfile('${user.id}')">♪</div>
+      <div class="user-info" style="cursor: pointer;" onclick="openUserProfile('${user.id}')">
         <div class="user-name">@${escapeHtml(user.username)}</div>
         <div class="user-stats">${user.feelings_count || 0} feelings</div>
       </div>
@@ -591,7 +598,8 @@ async function submitShake() {
       selectedTrackForShake.name,
       selectedTrackForShake.artist,
       selectedTrackForShake.cover,
-      text
+      text,
+      selectedTrackForShake.preview_url || null
     );
 
     if (result.success) {
@@ -733,4 +741,109 @@ function playPreview(previewUrl, button) {
     currentAudio = null;
     currentPlayButton = null;
   };
+}
+
+// ==================== USER PROFILE MODAL ====================
+
+let selectedUserId = null;
+
+async function openUserProfile(userId) {
+  selectedUserId = userId;
+  const modal = document.getElementById('user-profile-modal');
+  const container = document.getElementById('modal-profile-content');
+
+  // Afficher modal avec loading
+  modal.classList.add('active');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement...</p></div>';
+
+  try {
+    // Récupérer le profil de l'utilisateur
+    const userProfile = await getUserProfile(userId);
+    if (!userProfile) {
+      container.innerHTML = '<div class="empty-state"><p>Utilisateur introuvable</p></div>';
+      return;
+    }
+
+    // Mise à jour du header
+    document.getElementById('modal-user-note').style.background = userProfile.color;
+    document.getElementById('modal-user-username').textContent = `@${userProfile.username}`;
+
+    const stats = await getUserStats(userId);
+    document.getElementById('modal-feels-count').textContent = stats.feels;
+    document.getElementById('modal-feelings-count').textContent = stats.feelings;
+
+    // Gérer le bouton follow
+    const followBtn = document.getElementById('modal-follow-btn');
+
+    if (userId === currentUser.id) {
+      followBtn.textContent = 'Toi';
+      followBtn.disabled = true;
+      followBtn.style.opacity = '0.5';
+    } else {
+      followBtn.disabled = false;
+      followBtn.style.opacity = '1';
+
+      const following = await isFollowing(userId);
+      if (following) {
+        followBtn.textContent = 'Unfeel';
+        followBtn.classList.add('following');
+      } else {
+        followBtn.textContent = 'Feel';
+        followBtn.classList.remove('following');
+      }
+
+      followBtn.onclick = async () => {
+        const isFollowing = followBtn.classList.contains('following');
+        if (isFollowing) {
+          const result = await unfollowUser(userId);
+          if (result.success) {
+            followBtn.textContent = 'Feel';
+            followBtn.classList.remove('following');
+          }
+        } else {
+          const result = await followUser(userId);
+          if (result.success) {
+            followBtn.textContent = 'Unfeel';
+            followBtn.classList.add('following');
+          } else {
+            alert(result.error);
+          }
+        }
+      };
+    }
+
+    // Charger les posts de l'utilisateur
+    const posts = await getUserPosts(userId);
+
+    if (posts.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>Aucun shake pour le moment</p></div>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="profile-grid">
+        ${posts.map(post => `
+          <div class="profile-post">
+            <img src="${post.cover_url}" alt="${post.track_name}" onerror="this.src='https://via.placeholder.com/300x300?text=No+Cover'">
+            <div class="profile-post-overlay">
+              <div class="profile-post-title">${escapeHtml(post.track_name)}</div>
+              <div class="profile-post-stats">
+                <span>❤️ ${post.likes_count || 0}</span>
+                <span>💬 ${post.comments_count || 0}</span>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+  } catch (error) {
+    console.error('Error loading user profile:', error);
+    container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
+  }
+}
+
+function closeUserProfile() {
+  document.getElementById('user-profile-modal').classList.remove('active');
+  selectedUserId = null;
 }

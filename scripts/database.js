@@ -111,7 +111,7 @@ async function getUserPosts(userId, limit = 50) {
 }
 
 // Create post (shake a track)
-async function createPost(trackName, artist, coverUrl, text = '') {
+async function createPost(trackName, artist, coverUrl, text = '', previewUrl = null) {
   try {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
@@ -124,6 +124,7 @@ async function createPost(trackName, artist, coverUrl, text = '') {
         artist: artist,
         cover_url: coverUrl,
         text: text,
+        preview_url: previewUrl,
         likes_count: 0,
         comments_count: 0,
         is_reshake: false
@@ -163,6 +164,7 @@ async function reshakePost(originalPostId) {
         artist: originalPost.artist,
         cover_url: originalPost.cover_url,
         text: originalPost.text,
+        preview_url: originalPost.preview_url,
         likes_count: 0,
         comments_count: 0,
         is_reshake: true,
