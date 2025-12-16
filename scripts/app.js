@@ -16,10 +16,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Check auth and initialize
 async function checkAuthAndInit() {
   try {
+    // Protection anti-boucle
+    const redirectCount = parseInt(sessionStorage.getItem('authRedirectCount') || '0');
+    if (redirectCount > 3) {
+      console.error('⚠️ Trop de redirections détectées. Arrêt pour éviter la boucle.');
+      sessionStorage.removeItem('authRedirectCount');
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+      return;
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
       // Not logged in, redirect to login page
+      sessionStorage.setItem('authRedirectCount', String(redirectCount + 1));
       window.location.href = 'index.html';
       return;
     }
@@ -30,9 +41,13 @@ async function checkAuthAndInit() {
     if (!currentProfile) {
       alert('Erreur de chargement du profil');
       await supabase.auth.signOut();
+      sessionStorage.removeItem('authRedirectCount');
       window.location.href = 'index.html';
       return;
     }
+
+    // Authentification réussie, réinitialiser le compteur
+    sessionStorage.removeItem('authRedirectCount');
 
     // Setup app
     setupEventListeners();
@@ -46,6 +61,7 @@ async function checkAuthAndInit() {
 
   } catch (error) {
     console.error('Init error:', error);
+    sessionStorage.removeItem('authRedirectCount');
     window.location.href = 'index.html';
   }
 }
@@ -105,6 +121,7 @@ function setupEventListeners() {
 async function handleLogout() {
   if (confirm('Se déconnecter ?')) {
     await supabase.auth.signOut();
+    sessionStorage.removeItem('authRedirectCount');
     window.location.href = 'index.html';
   }
 }

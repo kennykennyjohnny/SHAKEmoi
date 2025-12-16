@@ -66,14 +66,28 @@ function switchMode(mode) {
 // Check if user is already logged in
 async function checkAuth() {
   try {
+    // Protection anti-boucle
+    const redirectCount = parseInt(sessionStorage.getItem('authRedirectCount') || '0');
+    if (redirectCount > 3) {
+      console.error('⚠️ Trop de redirections détectées. Arrêt pour éviter la boucle.');
+      sessionStorage.removeItem('authRedirectCount');
+      await supabase.auth.signOut();
+      return;
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
 
     if (session) {
       // User is logged in, redirect to app
+      sessionStorage.setItem('authRedirectCount', String(redirectCount + 1));
       window.location.href = 'app.html';
+    } else {
+      // Réinitialiser le compteur si pas de session
+      sessionStorage.removeItem('authRedirectCount');
     }
   } catch (error) {
     console.error('Error checking auth:', error);
+    sessionStorage.removeItem('authRedirectCount');
   }
 }
 
@@ -108,6 +122,7 @@ async function handleLogin(e) {
     if (error) throw error;
 
     // Success - redirect to app
+    sessionStorage.removeItem('authRedirectCount');
     window.location.href = 'app.html';
 
   } catch (error) {
@@ -199,6 +214,7 @@ async function handleSignup(e) {
     }
 
     // Success - redirect to app
+    sessionStorage.removeItem('authRedirectCount');
     alert('Compte créé avec succès ! Bienvenue sur SHAKEMOI 🎵');
     window.location.href = 'app.html';
 
