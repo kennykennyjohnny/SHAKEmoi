@@ -8,10 +8,10 @@
   --bg-card: rgba(255, 255, 255, 0.03);
 
   /* Colors */
-  --primary: #7c3aed;
-  --primary-hover: #6d28d9;
-  --text-primary: #FFFFFF;
-  --text-secondary: #9CA3AF;
+  --primary: #8b5cf6;
+  --primary-hover: #7c3aed;
+  --text-primary: #F9FAFB;
+  --text-secondary: #D1D5DB;
   --border-color: rgba(255, 255, 255, 0.1);
   --error: #EF4444;
   --success: #10B981;
@@ -403,8 +403,8 @@ body {
 }
 
 .top-track .track-cover {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: 6px;
   object-fit: cover;
   flex-shrink: 0;

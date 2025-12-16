@@ -22,34 +22,18 @@
   z-index: 1000 !important;
 }
 
-/* Logo animé */
+/* Logo sobre */
 .logo {
   font-size: 1.75rem !important;
   font-weight: 900 !important;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #FF6B9D 100%) !important;
-  background-size: 200% 200% !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
+  color: #8b5cf6 !important;
   letter-spacing: -1.5px !important;
-  position: relative;
-  animation: gradient-shift 3s ease infinite;
-  filter: drop-shadow(0 0 20px rgba(124, 58, 237, 0.3));
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
-}
-
-@keyframes gradient-shift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
+  cursor: pointer !important;
+  transition: opacity 0.3s ease !important;
 }
 
 .logo:hover {
-  transform: scale(1.08) rotate(-2deg) !important;
-  filter: drop-shadow(0 0 30px rgba(124, 58, 237, 0.6));
+  opacity: 0.8 !important;
 }
 
 .logo:active {

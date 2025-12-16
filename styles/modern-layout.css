@@ -45,9 +45,9 @@
 }
 
 .track-cover {
-  width: 100px !important;
-  height: 100px !important;
-  max-width: 100px !important;
+  width: 70px !important;
+  height: 70px !important;
+  max-width: 70px !important;
   border-radius: 8px !important;
   object-fit: cover !important;
   margin: 0 !important;
@@ -357,8 +357,8 @@
   }
 
   .track-cover {
-    width: 100px !important;
-    height: 100px !important;
+    width: 70px !important;
+    height: 70px !important;
   }
 
   .post-info-right {
@@ -379,9 +379,9 @@
   }
 
   .track-cover {
-    width: 80px !important;
-    height: 80px !important;
-    max-width: 80px !important;
+    width: 60px !important;
+    height: 60px !important;
+    max-width: 60px !important;
   }
 
   .action-btn {

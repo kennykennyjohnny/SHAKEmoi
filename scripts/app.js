@@ -243,7 +243,7 @@ function renderPost(post) {
   // Si c'est un reshake, afficher l'info
   const reshakeHeader = post.is_reshake ? `
     <div class="reshake-header">
-      <span class="reshake-icon">🔄</span>
+      <span class="reshake-icon">↻</span>
       <span class="reshake-text">
         <span class="username" style="cursor: pointer;" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span> a reshake
       </span>
@@ -291,15 +291,15 @@ function renderPost(post) {
           <!-- Actions -->
           <div class="post-actions">
             <button class="action-btn like-btn" data-post-id="${postId}">
-              <span class="icon">❤️</span>
+              <span class="icon">♥</span>
               <span class="count">${post.likes_count || 0}</span>
             </button>
             <button class="action-btn comment-btn" data-post-id="${postId}">
-              <span class="icon">💬</span>
+              <span class="icon">💭</span>
               <span class="count">${post.comments_count || 0}</span>
             </button>
             <button class="action-btn reshake-btn" data-post-id="${postId}">
-              <span class="icon">🔄</span>
+              <span class="icon">↻</span>
             </button>
           </div>
         </div>
@@ -414,11 +414,11 @@ function renderTopTrack(track) {
       </div>
       <div class="track-actions">
         <button class="action-btn shake-btn" title="Shake ce morceau">
-          <span class="icon">❤️</span>
+          <span class="icon">♥</span>
         </button>
         ${track.preview_url ? `
           <button class="action-btn preview-btn" title="Écouter 30s" onclick="playPreview('${track.preview_url}', this)">
-            <span class="icon">▶️</span>
+            <span class="icon">▶</span>
           </button>
         ` : ''}
       </div>
@@ -492,11 +492,11 @@ function renderSearchTrack(track) {
       </div>
       <div class="track-actions">
         <button class="action-btn shake-btn" title="Shake ce morceau">
-          <span class="icon">❤️</span>
+          <span class="icon">♥</span>
         </button>
         ${track.preview_url ? `
           <button class="action-btn preview-btn" title="Écouter 30s" onclick="playPreview('${track.preview_url}', this)">
-            <span class="icon">▶️</span>
+            <span class="icon">▶</span>
           </button>
         ` : ''}
       </div>
@@ -628,8 +628,8 @@ async function loadProfileTab(tab) {
               <div class="profile-post-overlay">
                 <div class="profile-post-title">${escapeHtml(post.track_name)}</div>
                 <div class="profile-post-stats">
-                  <span>❤️ ${post.likes_count || 0}</span>
-                  <span>💬 ${post.comments_count || 0}</span>
+                  <span>♥ ${post.likes_count || 0}</span>
+                  <span>💭 ${post.comments_count || 0}</span>
                 </div>
               </div>
             </div>
@@ -668,8 +668,8 @@ async function loadProfileTab(tab) {
               <div class="profile-post-overlay">
                 <div class="profile-post-title">${escapeHtml(post.track_name)}</div>
                 <div class="profile-post-stats">
-                  <span>❤️ ${post.likes_count || 0}</span>
-                  <span>💬 ${post.comments_count || 0}</span>
+                  <span>♥ ${post.likes_count || 0}</span>
+                  <span>💭 ${post.comments_count || 0}</span>
                 </div>
               </div>
             </div>
