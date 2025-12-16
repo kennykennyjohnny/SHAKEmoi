@@ -74,19 +74,36 @@ class NotificationManager {
 
     const html = this.notifications.map(notif => `
       <div class="notif-item ${notif.is_read ? '' : 'unread'}" data-notif-id="${notif.id}">
-        <div class="notif-user-note" style="background: ${notif.from_user.color}">♪</div>
+        <div class="notif-user-note" style="background: ${notif.from_user.color}; cursor: pointer;" onclick="openUserProfile('${notif.from_user_id}')">♪</div>
         <div class="notif-content">
           <p class="notif-text">
-            <strong>@${notif.from_user.username}</strong>
+            <strong style="cursor: pointer;" onclick="openUserProfile('${notif.from_user_id}')">@${notif.from_user.username}</strong>
             ${this.getNotifText(notif)}
           </p>
           <span class="notif-time">${this.formatTime(notif.created_at)}</span>
         </div>
+        ${notif.type === 'feel' ? `
+          <button class="btn-feelback" onclick="handleFeelback('${notif.from_user_id}', this)" style="margin-left: auto; padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; white-space: nowrap;">
+            Feelback
+          </button>
+        ` : ''}
         ${!notif.is_read ? '<div class="notif-dot"></div>' : ''}
       </div>
     `).join('');
 
     container.innerHTML = html;
+
+    // Vérifier pour chaque notification de type "feel" si on suit déjà la personne
+    this.notifications.forEach(async notif => {
+      if (notif.type === 'feel') {
+        const following = await isFollowing(notif.from_user_id);
+        const btn = document.querySelector(`button[onclick="handleFeelback('${notif.from_user_id}', this)"]`);
+        if (btn && following) {
+          btn.textContent = 'Unfeel';
+          btn.classList.add('following');
+        }
+      }
+    });
   }
 
   // Texte de la notification selon le type
@@ -220,5 +237,46 @@ document.addEventListener('click', (e) => {
     menu.style.display = 'none';
   }
 });
+
+// Fonction globale pour gérer le feelback depuis les notifications
+window.handleFeelback = async function(userId, buttonElement) {
+  if (!userId || !buttonElement) return;
+
+  const isFollowing = buttonElement.classList.contains('following');
+
+  buttonElement.disabled = true;
+  const originalText = buttonElement.textContent;
+  buttonElement.textContent = '...';
+
+  try {
+    if (isFollowing) {
+      const result = await unfollowUser(userId);
+      if (result.success) {
+        buttonElement.textContent = 'Feelback';
+        buttonElement.classList.remove('following');
+        buttonElement.style.background = 'var(--primary)';
+      } else {
+        buttonElement.textContent = originalText;
+        alert('Erreur: ' + result.error);
+      }
+    } else {
+      const result = await followUser(userId);
+      if (result.success) {
+        buttonElement.textContent = 'Unfeel';
+        buttonElement.classList.add('following');
+        buttonElement.style.background = '#666';
+      } else {
+        buttonElement.textContent = originalText;
+        alert('Erreur: ' + result.error);
+      }
+    }
+  } catch (error) {
+    console.error('Erreur feelback:', error);
+    buttonElement.textContent = originalText;
+    alert('Une erreur est survenue');
+  } finally {
+    buttonElement.disabled = false;
+  }
+}
 
 console.log('🔔 Notification Manager initialized');

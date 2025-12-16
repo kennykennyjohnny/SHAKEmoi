@@ -1070,13 +1070,74 @@ window.showAllComments = async function(postId) {
   if (showMoreBtn) showMoreBtn.remove();
 }
 
-// Make Feels/Feelings clickable
+// Make Feels/Feelings clickable - Show followers list
 window.showFollowersList = async function(type) {
-  alert(`Liste des ${type} à venir ! 🎵`);
-  // TODO: Implement modal to show followers/following
+  if (!currentUser) return;
+
+  const users = await getUserFollowers(currentUser.id);
+
+  if (users.length === 0) {
+    alert('Personne ne te feel pour le moment 🎵');
+    return;
+  }
+
+  showUsersListModal('Personnes qui te feel', users);
 }
 
+// Show following list
 window.showFollowingsList = async function() {
-  alert('Liste des Feelings à venir ! 🎵');
-  // TODO: Implement modal to show following list
+  if (!currentUser) return;
+
+  const users = await getUserFollowing(currentUser.id);
+
+  if (users.length === 0) {
+    alert('Tu ne feel personne pour le moment. Va dans l\'onglet Recherche ! 🎵');
+    return;
+  }
+
+  showUsersListModal('Personnes que tu feel', users);
+}
+
+// Show modal with users list
+function showUsersListModal(title, users) {
+  const modal = document.getElementById('user-profile-modal');
+  const content = modal.querySelector('.modal-content');
+
+  // Sauvegarder le contenu original
+  const originalContent = content.innerHTML;
+
+  content.innerHTML = `
+    <button class="modal-close" onclick="closeUsersListModal()">✕</button>
+    <div class="profile-header">
+      <h2 style="margin: 1rem 0;">${title}</h2>
+    </div>
+    <div class="users-list-container" style="padding: 1rem; max-height: 60vh; overflow-y: auto;">
+      ${users.map(user => `
+        <div class="user-result" style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+          <div class="user-avatar" style="background: ${user.color}; cursor: pointer;" onclick="closeUsersListModal(); openUserProfile('${user.id}')">♪</div>
+          <div class="user-info" style="flex: 1; cursor: pointer;" onclick="closeUsersListModal(); openUserProfile('${user.id}')">
+            <div class="user-name">@${escapeHtml(user.username)}</div>
+            <div class="user-stats" style="font-size: 0.875rem; color: var(--text-secondary);">${user.feels_count || 0} feels · ${user.feelings_count || 0} feelings</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  modal.classList.add('active');
+
+  // Restaurer le contenu original quand on ferme
+  modal.dataset.originalContent = originalContent;
+}
+
+function closeUsersListModal() {
+  const modal = document.getElementById('user-profile-modal');
+  const content = modal.querySelector('.modal-content');
+
+  if (modal.dataset.originalContent) {
+    content.innerHTML = modal.dataset.originalContent;
+    delete modal.dataset.originalContent;
+  }
+
+  modal.classList.remove('active');
 }

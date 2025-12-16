@@ -170,11 +170,10 @@
   padding: 16px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   position: relative;
   transition: background 0.2s ease;
-  cursor: pointer;
 }
 
 .notif-item:hover {

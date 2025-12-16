@@ -517,6 +517,46 @@ async function isFollowing(targetUserId) {
   }
 }
 
+// Get user's followers (who feels them)
+async function getUserFollowers(userId, limit = 100) {
+  try {
+    const { data, error } = await supabase
+      .from('follows')
+      .select(`
+        follower:users_profile!follows_follower_id_fkey(id, username, color, feels_count, feelings_count)
+      `)
+      .eq('following_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data ? data.map(item => item.follower).filter(user => user !== null) : [];
+  } catch (error) {
+    console.error('Error getting followers:', error);
+    return [];
+  }
+}
+
+// Get user's following (who they feel)
+async function getUserFollowing(userId, limit = 100) {
+  try {
+    const { data, error } = await supabase
+      .from('follows')
+      .select(`
+        following:users_profile!follows_following_id_fkey(id, username, color, feels_count, feelings_count)
+      `)
+      .eq('follower_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data ? data.map(item => item.following).filter(user => user !== null) : [];
+  } catch (error) {
+    console.error('Error getting following:', error);
+    return [];
+  }
+}
+
 // ==================== SEARCH ====================
 
 // Search users
