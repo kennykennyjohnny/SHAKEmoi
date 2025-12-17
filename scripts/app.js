@@ -169,7 +169,7 @@ async function loadView(viewName) {
 
 // ==================== SHAKE (FEED) ====================
 
-// Fonction pour afficher les commentaires
+// Fonction pour afficher les commentaires (initialement cachés)
 async function renderComments(postId, commentsCount) {
   if (!commentsCount || commentsCount === 0) {
     return '';
@@ -186,7 +186,7 @@ async function renderComments(postId, commentsCount) {
   const hasMore = comments.length > 3;
 
   return `
-    <div class="comments-section" id="comments-${postId}">
+    <div class="comments-section" id="comments-${postId}" style="display: none;">
       <div class="comments-list">
         ${previewComments.map(comment => `
           <div class="comment-item">
@@ -205,6 +205,77 @@ async function renderComments(postId, commentsCount) {
       ` : ''}
     </div>
   `;
+}
+
+// Fonction pour afficher les commentaires avec input (style Instagram)
+async function renderCommentsWithInput(postId, comments) {
+  const commentsList = comments && comments.length > 0 ? comments.map(comment => `
+    <div class="comment-item">
+      <div class="comment-avatar" style="background: ${comment.user.color}">♪</div>
+      <div class="comment-content">
+        <span class="comment-username" onclick="openUserProfile('${comment.user.id}')">@${comment.user.username}</span>
+        <p class="comment-text">${makeUsernamesClickable(comment.text)}</p>
+      </div>
+    </div>
+  `).join('') : '<p class="no-comments">Aucun commentaire</p>';
+
+  return `
+    <div class="comments-section" id="comments-${postId}">
+      <div class="comments-list">
+        ${commentsList}
+      </div>
+      <div class="comment-input-container">
+        <input type="text"
+               class="comment-input"
+               id="comment-input-${postId}"
+               placeholder="Ajoute un commentaire...">
+        <button class="comment-submit-btn" data-post-id="${postId}">Publier</button>
+      </div>
+    </div>
+  `;
+}
+
+// Fonction pour attacher le listener à l'input de commentaire
+function attachCommentInputListener(postId) {
+  const submitBtn = document.querySelector(`.comment-submit-btn[data-post-id="${postId}"]`);
+  const input = document.getElementById(`comment-input-${postId}`);
+
+  if (submitBtn && input) {
+    submitBtn.addEventListener('click', async () => {
+      const text = input.value.trim();
+      if (!text) return;
+
+      const result = await addComment(postId, text);
+      if (result.success) {
+        input.value = '';
+        // Recharger les commentaires
+        const comments = await getPostComments(postId);
+        const commentsList = document.querySelector(`#comments-${postId} .comments-list`);
+        commentsList.innerHTML = comments.map(comment => `
+          <div class="comment-item">
+            <div class="comment-avatar" style="background: ${comment.user.color}">♪</div>
+            <div class="comment-content">
+              <span class="comment-username" onclick="openUserProfile('${comment.user.id}')">@${comment.user.username}</span>
+              <p class="comment-text">${makeUsernamesClickable(comment.text)}</p>
+            </div>
+          </div>
+        `).join('');
+        // Mettre à jour le compteur
+        const btn = document.querySelector(`.comment-btn[data-post-id="${postId}"]`);
+        if (btn) {
+          const count = parseInt(btn.querySelector('.count').textContent);
+          btn.querySelector('.count').textContent = count + 1;
+        }
+      }
+    });
+
+    // Submit on Enter
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        submitBtn.click();
+      }
+    });
+  }
 }
 
 async function loadFeed() {
@@ -345,20 +416,23 @@ function attachPostListeners() {
     });
   });
 
-  // Comment buttons - Toggle comments visibility or add new
+  // Comment buttons - Toggle comments visibility (style Instagram)
   document.querySelectorAll('.comment-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const postId = btn.dataset.postId;
-      const commentsSection = document.getElementById(`comments-${postId}`);
+      const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+      let commentsSection = postElement.querySelector('.comments-section');
 
-      // Si les commentaires sont déjà visibles, ouvrir la modal pour en ajouter
+      // Toggle visibility des commentaires
       if (commentsSection) {
-        selectedPostForComment = postId;
-        openCommentModal();
+        const isHidden = commentsSection.style.display === 'none';
+        commentsSection.style.display = isHidden ? 'block' : 'none';
       } else {
-        // Sinon, charger et afficher les commentaires
-        selectedPostForComment = postId;
-        openCommentModal();
+        // Créer et afficher la section commentaires si elle n'existe pas
+        const comments = await getPostComments(postId);
+        const commentsHtml = await renderCommentsWithInput(postId, comments);
+        postElement.insertAdjacentHTML('beforeend', commentsHtml);
+        attachCommentInputListener(postId);
       }
     });
   });
