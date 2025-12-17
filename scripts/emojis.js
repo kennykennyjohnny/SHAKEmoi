@@ -94,16 +94,9 @@ if (document.readyState === 'loading') {
   updateEmojis();
 }
 
-// Observer pour détecter nouveaux éléments ajoutés dynamiquement
-const observer = new MutationObserver(() => {
-  updateEmojis();
-});
-
-observer.observe(document.body, {
-  childList: true,
-  subtree: true
-});
-
 // Export pour utilisation ailleurs
 window.SHAKEMOI_EMOJIS = SHAKEMOI_EMOJIS;
 window.updateEmojis = updateEmojis;
+
+// Appliquer après chargement initial
+setTimeout(updateEmojis, 100);
