@@ -75,12 +75,11 @@ body {
 .logo {
   font-size: 1.5rem;
   font-weight: 900;
-  color: var(--primary) !important;
+  background: linear-gradient(135deg, #FF6F61, #FFB3A7, #FF8E80) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
   letter-spacing: -1px;
-}
-
-.logo-moi {
-  color: #FFFFFF !important;
 }
 
 .logout-btn {

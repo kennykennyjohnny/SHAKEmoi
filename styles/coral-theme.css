@@ -156,16 +156,17 @@ body {
   color: var(--secondary);
 }
 
-/* Username mentions */
+/* Username mentions - CORAIL PARTOUT */
 .username,
 .mention {
-  color: var(--primary);
+  color: #FF6F61 !important;
   font-weight: 600;
+  transition: color 0.2s ease;
 }
 
 .username:hover,
 .mention:hover {
-  color: var(--primary-hover);
+  color: #FF5A4A !important;
   text-decoration: underline;
 }
 

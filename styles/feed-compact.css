@@ -113,6 +113,12 @@
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
+  color: #FF6F61 !important;
+  transition: color 0.2s ease;
+}
+
+.username-inline:hover {
+  color: #FF5A4A !important;
 }
 
 .timestamp-inline {
@@ -165,7 +171,7 @@
 
 .action-btn {
   background: none;
-  border: none;
+  border: 1px solid transparent !important;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -186,21 +192,37 @@
 }
 
 /* Touches de corail dans les détails */
+.action-btn:hover {
+  border-color: #FF6F61 !important;
+  color: #FF6F61 !important;
+  background: rgba(255, 111, 97, 0.05) !important;
+}
+
 .action-btn:hover .icon {
   transform: scale(1.15);
   transition: transform 0.2s;
+  filter: drop-shadow(0 0 4px rgba(255, 111, 97, 0.5));
+}
+
+.like-btn.liked {
+  border-color: #FF6F61 !important;
+  color: #FF6F61 !important;
+  background: rgba(255, 111, 97, 0.1) !important;
 }
 
 .like-btn:hover {
-  color: var(--primary);
+  color: #FF6F61 !important;
+  border-color: #FF6F61 !important;
 }
 
 .comment-btn:hover {
-  color: var(--primary);
+  color: #FF6F61 !important;
+  border-color: #FF6F61 !important;
 }
 
 .reshake-btn:hover {
-  color: var(--secondary);
+  color: #FFD166 !important;
+  border-color: #FFD166 !important;
 }
 
 /* Animation cover en lecture */
@@ -254,7 +276,12 @@
   font-weight: 600;
   font-size: 0.8rem;
   cursor: pointer;
-  color: var(--primary);
+  color: #FF6F61 !important;
+  transition: color 0.2s ease;
+}
+
+.comment-username:hover {
+  color: #FF5A4A !important;
 }
 
 .comment-text {
@@ -267,15 +294,17 @@
 .show-more-comments {
   background: none;
   border: none;
-  color: var(--primary);
+  color: #FF6F61 !important;
   font-size: 0.75rem;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 .show-more-comments:hover {
   text-decoration: underline;
+  color: #FF5A4A !important;
 }
 
 /* Responsive */
