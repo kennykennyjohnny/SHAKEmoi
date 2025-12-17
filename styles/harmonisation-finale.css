@@ -1,0 +1,254 @@
+/* ============================================
+   SHAKEMOI - HARMONISATION FINALE
+   Garantit la cohérence totale Rose Corail / Gris
+   ============================================ */
+
+/* === PALETTE DE COULEURS === */
+:root {
+  --coral-primary: #FF6F61;
+  --coral-hover: #FF5A4A;
+  --coral-light: #FF8E80;
+  --gray-dark: #293133;
+  --gray-medium: #3A4245;
+}
+
+/* === POSTS === */
+.post {
+  background: var(--gray-medium) !important;
+  border: 1.5px solid var(--coral-primary) !important;
+}
+
+.post:hover {
+  border-color: var(--coral-hover) !important;
+  box-shadow: 0 4px 12px rgba(255, 111, 97, 0.2) !important;
+}
+
+/* === TOUS LES TEXTES EN ROSE CORAIL === */
+.username,
+.username-inline {
+  color: var(--coral-primary) !important;
+}
+
+.username:hover,
+.username-inline:hover {
+  color: var(--coral-hover) !important;
+}
+
+.track-title {
+  color: var(--coral-primary) !important;
+}
+
+.track-artist {
+  color: var(--coral-light) !important;
+}
+
+.post-text {
+  color: var(--coral-light) !important;
+}
+
+.post-timestamp-bottom {
+  color: var(--coral-primary) !important;
+}
+
+/* === BOUTONS D'ACTION === */
+.action-btn {
+  border-color: var(--coral-primary) !important;
+  color: var(--coral-primary) !important;
+}
+
+.action-btn .count {
+  color: var(--coral-primary) !important;
+}
+
+.action-btn:hover {
+  border-color: var(--coral-hover) !important;
+  color: var(--coral-hover) !important;
+  background: rgba(255, 111, 97, 0.15) !important;
+}
+
+.action-btn:hover .count {
+  color: var(--coral-hover) !important;
+}
+
+/* === TOP 100 === */
+.top-track {
+  background: var(--gray-medium) !important;
+  border: 1.5px solid var(--coral-primary) !important;
+}
+
+.top-track:hover {
+  border-color: var(--coral-hover) !important;
+}
+
+.top-track .track-title {
+  color: var(--coral-primary) !important;
+}
+
+.top-track .track-artist {
+  color: var(--coral-light) !important;
+}
+
+/* === RECHERCHE === */
+.search-input {
+  background: var(--gray-medium) !important;
+  border: 1.5px solid var(--coral-primary) !important;
+  color: #FFFFFF !important;
+}
+
+.search-input:focus {
+  border-color: var(--coral-hover) !important;
+}
+
+.search-toggle {
+  background: var(--gray-medium) !important;
+}
+
+.user-result {
+  background: var(--gray-medium) !important;
+  border: 1.5px solid var(--coral-primary) !important;
+}
+
+.user-result:hover {
+  border-color: var(--coral-hover) !important;
+}
+
+/* === PROFIL === */
+.profile-header {
+  background: var(--gray-dark) !important;
+  border-bottom: 2px solid var(--coral-primary) !important;
+}
+
+.music-note {
+  background: linear-gradient(135deg, var(--coral-primary) 0%, var(--coral-light) 100%) !important;
+  box-shadow: 0 4px 12px rgba(255, 111, 97, 0.3);
+}
+
+.stat-value {
+  color: var(--coral-primary) !important;
+}
+
+/* === MODALES === */
+.modal {
+  background: rgba(0, 0, 0, 0.85) !important;
+  backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  background: var(--gray-medium) !important;
+  border: 2px solid var(--coral-primary) !important;
+}
+
+.user-profile-modal {
+  background: var(--gray-medium) !important;
+}
+
+.user-profile-modal .profile-header {
+  background: var(--gray-medium) !important;
+  border-bottom: 2px solid var(--coral-primary) !important;
+}
+
+/* === BOUTONS === */
+.btn-primary {
+  background: linear-gradient(135deg, var(--coral-primary) 0%, var(--coral-light) 100%) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--coral-hover) 0%, var(--coral-primary) 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 111, 97, 0.3);
+}
+
+.btn-secondary {
+  background: var(--gray-dark) !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid var(--coral-primary) !important;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 111, 97, 0.1) !important;
+  border-color: var(--coral-hover) !important;
+}
+
+.btn-follow {
+  background: linear-gradient(135deg, var(--coral-primary) 0%, var(--coral-light) 100%) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.btn-follow:hover {
+  background: linear-gradient(135deg, var(--coral-hover) 0%, var(--coral-primary) 100%) !important;
+}
+
+.btn-follow.following {
+  background: transparent !important;
+  border: 1.5px solid var(--coral-primary) !important;
+  color: var(--coral-primary) !important;
+}
+
+/* === TABS === */
+.tab-btn.active {
+  color: var(--coral-primary) !important;
+  border-bottom-color: var(--coral-primary) !important;
+}
+
+/* === RESHAKE HEADER === */
+.reshake-header {
+  background: rgba(255, 111, 97, 0.1) !important;
+  border-left: 3px solid var(--coral-primary) !important;
+}
+
+.reshake-icon {
+  color: var(--coral-primary) !important;
+}
+
+/* === COMMENTS === */
+.comment-username {
+  color: var(--coral-primary) !important;
+}
+
+.comment-username:hover {
+  color: var(--coral-hover) !important;
+}
+
+.comment-input:focus {
+  border-color: var(--coral-primary) !important;
+}
+
+.comment-submit-btn {
+  background: var(--coral-primary) !important;
+}
+
+.comment-submit-btn:hover {
+  background: var(--coral-hover) !important;
+}
+
+/* === NAVIGATION === */
+.nav-btn.active {
+  color: var(--coral-primary) !important;
+  background: rgba(255, 111, 97, 0.15) !important;
+}
+
+.nav-btn:hover {
+  color: var(--coral-primary) !important;
+}
+
+/* === VIEW HEADERS === */
+.view-header h2 {
+  color: #FFFFFF !important;
+}
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar-thumb {
+  background: var(--coral-primary) !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--coral-hover) !important;
+}
+
+/* === SPINNER === */
+.spinner {
+  border-top-color: var(--coral-primary) !important;
+}

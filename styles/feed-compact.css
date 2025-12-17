@@ -135,14 +135,14 @@
   display: none; /* Caché, on le met en bas à droite */
 }
 
-/* Timestamp en bas à droite de la bulle, discret */
+/* Timestamp en bas à droite de la bulle, discret en rose corail */
 .post-timestamp-bottom {
   position: absolute;
   bottom: 0.4rem;
   right: 0.5rem;
   font-size: 0.65rem;
-  color: #ADB5BD;
-  opacity: 0.6;
+  color: #FF6F61;
+  opacity: 0.5;
   font-weight: 400;
 }
 
@@ -157,7 +157,7 @@
   font-weight: 700;
   margin: 0;
   line-height: 1.25;
-  color: #FFFFFF !important;
+  color: #FF6F61 !important;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -167,7 +167,7 @@
 
 .track-artist {
   font-size: 0.875rem;
-  color: #ADB5BD !important;
+  color: #FF8E80 !important;
   margin: 0.15rem 0 0 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -175,12 +175,12 @@
   font-weight: 500;
 }
 
-/* Post text - couleur normale sur fond gris */
+/* Post text - TOUT en rose corail */
 .post-text {
   font-size: 0.9rem;
   line-height: 1.4;
   margin: 0.2rem 0 0 0;
-  color: #FFFFFF !important;
+  color: #FF8E80 !important;
 }
 
 /* Actions: coeur haut, reshake+comment bas */
@@ -245,36 +245,48 @@
 
 /* Touches de corail dans les détails */
 .action-btn:hover {
-  border-color: #FF6F61 !important;
-  color: #FF6F61 !important;
-  background: rgba(255, 111, 97, 0.05) !important;
+  border-color: #FF5A4A !important;
+  color: #FF5A4A !important;
+  background: rgba(255, 111, 97, 0.15) !important;
 }
 
 .action-btn:hover .icon {
-  transform: scale(1.15);
+  transform: scale(1.1);
   transition: transform 0.2s;
-  filter: drop-shadow(0 0 4px rgba(255, 111, 97, 0.5));
+}
+
+.action-btn:hover .count {
+  color: #FF5A4A !important;
 }
 
 .like-btn.liked {
   border-color: #FF6F61 !important;
   color: #FF6F61 !important;
-  background: rgba(255, 111, 97, 0.1) !important;
+  background: rgba(255, 111, 97, 0.2) !important;
 }
 
 .like-btn:hover {
-  color: #FF6F61 !important;
-  border-color: #FF6F61 !important;
+  color: #FF5A4A !important;
+  border-color: #FF5A4A !important;
 }
 
 .comment-btn:hover {
-  color: #FF6F61 !important;
-  border-color: #FF6F61 !important;
+  color: #FF5A4A !important;
+  border-color: #FF5A4A !important;
 }
 
 .reshake-btn:hover {
-  color: #FFD166 !important;
-  border-color: #FFD166 !important;
+  color: #FF5A4A !important;
+  border-color: #FF5A4A !important;
+}
+
+.menu-btn {
+  min-width: 38px !important;
+}
+
+.menu-btn:hover {
+  color: #FF5A4A !important;
+  border-color: #FF5A4A !important;
 }
 
 /* Animation cover en lecture */

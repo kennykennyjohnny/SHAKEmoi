@@ -366,7 +366,7 @@ body {
   font-size: 1rem;
 }
 
-/* Top Container */
+/* Top Container - Style rose corail harmonieux */
 .top-container {
   padding: var(--spacing-sm);
   display: flex;
@@ -375,9 +375,8 @@ body {
 }
 
 .top-track {
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
+  background: #3A4245;
+  border: 1.5px solid #FF6F61;
   border-radius: 10px;
   padding: var(--spacing-xs);
   display: flex;
@@ -387,21 +386,23 @@ body {
 }
 
 .top-track:hover {
-  border-color: rgba(124, 58, 237, 0.3);
+  border-color: #FF5A4A;
   transform: translateX(2px);
+  box-shadow: 0 4px 12px rgba(255, 111, 97, 0.2);
 }
 
 .track-rank {
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  background: var(--primary);
+  background: linear-gradient(135deg, #FF6F61 0%, #FF8E80 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.875rem;
   flex-shrink: 0;
+  color: white;
 }
 
 .top-track .track-cover {
@@ -424,10 +425,13 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #FF6F61 !important;
+  font-weight: 700;
 }
 
 .top-track .track-artist {
   font-size: 0.8rem;
+  color: #FF8E80 !important;
 }
 
 .track-actions {
@@ -442,19 +446,19 @@ body {
   min-width: 36px;
 }
 
-/* Search */
+/* Search - Harmonisé rose corail/gris */
 .search-header {
   padding: var(--spacing-md);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(255, 111, 97, 0.2);
 }
 
 .search-input {
   width: 100%;
   padding: var(--spacing-sm);
-  background: var(--bg-glass);
-  border: 1px solid var(--border-color);
+  background: #3A4245;
+  border: 1.5px solid #FF6F61;
   border-radius: 12px;
-  color: var(--text-primary);
+  color: #FFFFFF;
   font-size: 1rem;
   margin-bottom: var(--spacing-sm);
   transition: all 0.3s ease;
@@ -462,14 +466,15 @@ body {
 
 .search-input:focus {
   outline: none;
-  border-color: var(--primary);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: #FF5A4A;
+  box-shadow: 0 0 0 3px rgba(255, 111, 97, 0.15);
 }
 
 .search-toggle {
   display: flex;
   gap: var(--spacing-xs);
-  background: var(--bg-glass);
+  background: #3A4245;
+  border: 1px solid rgba(255, 111, 97, 0.3);
   border-radius: 8px;
   padding: 4px;
 }
@@ -479,7 +484,7 @@ body {
   padding: var(--spacing-xs) var(--spacing-sm);
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: #ADB5BD;
   font-size: 0.875rem;
   font-weight: 600;
   border-radius: 6px;
@@ -488,8 +493,8 @@ body {
 }
 
 .toggle-btn.active {
-  background: var(--primary);
-  color: var(--text-primary);
+  background: linear-gradient(135deg, #FF6F61 0%, #FF8E80 100%);
+  color: white;
 }
 
 .search-results {
@@ -500,14 +505,19 @@ body {
 }
 
 .user-result {
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
+  background: #3A4245;
+  border: 1.5px solid #FF6F61;
   border-radius: 10px;
   padding: var(--spacing-xs);
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+  transition: all 0.2s ease;
+}
+
+.user-result:hover {
+  border-color: #FF5A4A;
+  box-shadow: 0 4px 12px rgba(255, 111, 97, 0.2);
 }
 
 .user-avatar {
@@ -539,10 +549,10 @@ body {
 
 .btn-follow {
   padding: var(--spacing-xs) var(--spacing-md);
-  background: var(--primary);
-  border: 1px solid var(--primary);
+  background: linear-gradient(135deg, #FF6F61 0%, #FF8E80 100%);
+  border: none;
   border-radius: 8px;
-  color: var(--text-primary);
+  color: white;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -551,12 +561,15 @@ body {
 }
 
 .btn-follow:hover {
-  background: var(--primary-hover);
+  background: linear-gradient(135deg, #FF5A4A 0%, #FF6F61 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 111, 97, 0.3);
 }
 
 .btn-follow.following {
   background: transparent;
-  color: var(--primary);
+  color: #FF6F61;
+  border: 1.5px solid #FF6F61;
 }
 
 .btn-follow:disabled {
