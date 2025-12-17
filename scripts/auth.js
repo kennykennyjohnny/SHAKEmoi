@@ -79,8 +79,12 @@ async function checkAuth() {
 
     if (session) {
       // User is logged in, redirect to app
-      sessionStorage.setItem('authRedirectCount', String(redirectCount + 1));
-      window.location.href = 'app.html';
+      // Reset redirect counter (no increment) to avoid redirect loops
+      sessionStorage.removeItem('authRedirectCount');
+      // Only redirect if not already on app page
+      if (!window.location.pathname.endsWith('app.html')) {
+        window.location.href = 'app.html';
+      }
     } else {
       // Réinitialiser le compteur si pas de session
       sessionStorage.removeItem('authRedirectCount');
