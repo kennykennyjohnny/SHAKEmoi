@@ -564,23 +564,26 @@ body {
   cursor: not-allowed;
 }
 
-/* Profile */
+/* Profile - fond gris uniforme, pas de photo de couverture */
 .profile-header {
-  padding: var(--spacing-md);
+  padding: var(--spacing-xl);
   text-align: center;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 2px solid #FF6F61;
+  background: var(--bg-primary) !important;
 }
 
 .music-note {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 2rem;
   margin: 0 auto var(--spacing-sm);
-  background: var(--primary);
+  background: linear-gradient(135deg, #FF6F61 0%, #FF8E80 100%);
+  box-shadow: 0 4px 12px rgba(255, 111, 97, 0.3);
+  color: white;
 }
 
 .username {
@@ -739,16 +742,17 @@ body {
   font-weight: 600;
 }
 
-/* Modal */
+/* Modal - fond gris uniforme */
 .modal {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
   z-index: 1000;
   align-items: center;
   justify-content: center;
   padding: var(--spacing-md);
+  backdrop-filter: blur(8px);
 }
 
 .modal.active {
@@ -756,8 +760,8 @@ body {
 }
 
 .modal-content {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: var(--bg-secondary) !important;
+  border: 2px solid #FF6F61;
   border-radius: 16px;
   padding: var(--spacing-lg);
   max-width: 500px;
@@ -799,6 +803,12 @@ body {
   max-height: 80vh;
   overflow-y: auto;
   position: relative;
+  background: var(--bg-secondary) !important;
+}
+
+.user-profile-modal .profile-header {
+  background: var(--bg-secondary) !important;
+  border-bottom: 2px solid #FF6F61 !important;
 }
 
 .modal-close {
