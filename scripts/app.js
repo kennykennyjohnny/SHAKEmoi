@@ -584,8 +584,8 @@ function attachPostListeners() {
 let currentTopTab = 'france';
 
 async function loadTop100() {
-  // Charger l'onglet par défaut (France)
-  await loadTopTab('france');
+  // Charger l'onglet par défaut (Spotify)
+  await loadTopTab('spotify');
   attachTopTabListeners();
 }
 
@@ -609,37 +609,19 @@ async function loadTopTab(tabName) {
   const container = document.getElementById('top-container');
 
   switch(tabName) {
-    case 'france':
-      await loadTopFrance(container);
-      break;
     case 'spotify':
       await loadTopSpotify(container);
       break;
-    case 'friends':
-      await loadTopFriends(container);
+    case 'shakemoi':
+      await loadTopShakemoi(container);
+      break;
+    case 'reco':
+      await loadTopReco(container);
       break;
   }
 }
 
-async function loadTopFrance(container) {
-  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du Top France...</p></div>';
-
-  try {
-    const tracks = await spotify.getTop100France();
-
-    if (tracks.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>Impossible de charger le Top France</p></div>';
-      return;
-    }
-
-    container.innerHTML = tracks.map(track => renderTopTrack(track)).join('');
-    attachTopTrackListeners();
-
-  } catch (error) {
-    console.error('Error loading Top France:', error);
-    container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
-  }
-}
+// Fonction loadTopFrance supprimée - non utilisée
 
 async function loadTopSpotify(container) {
   container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du Top Spotify...</p></div>';
@@ -662,66 +644,91 @@ async function loadTopSpotify(container) {
   }
 }
 
-async function loadTopFriends(container) {
-  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du Top de mes Shakes...</p></div>';
+async function loadTopShakemoi(container) {
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du Top Shakemoi...</p></div>';
 
   try {
-    // Récupérer les posts des personnes qu'on suit
-    const following = await getUserFollowing(currentUser.id);
+    // Récupérer tous les posts triés par likes_count
+    const { data: posts, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        user:users_profile!posts_user_id_fkey(id, username, color)
+      `)
+      .order('likes_count', { ascending: false })
+      .limit(50);
 
-    if (following.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>Tu ne suis personne encore ! Commence par Shake quelques profils.</p></div>';
+    if (error) throw error;
+
+    if (!posts || posts.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>Aucun son dans le Top Shakemoi pour le moment</p></div>';
       return;
     }
 
-    // Récupérer tous les posts des personnes suivies
-    const followingIds = following.map(f => f.following_id);
-    const posts = await getPostsByUserIds(followingIds);
+    // Transformer en format track
+    const tracks = posts.map((post, index) => ({
+      rank: index + 1,
+      name: post.track_name,
+      artist: post.artist,
+      cover: post.cover_url,
+      spotify_url: post.spotify_url,
+      track_id: post.track_id,
+      shakeCount: post.likes_count,
+      preview_url: post.preview_url
+    }));
 
-    if (posts.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>Aucun Shake de tes amis pour le moment</p></div>';
-      return;
-    }
-
-    // Compter les morceaux les plus partagés
-    const trackCounts = {};
-    posts.forEach(post => {
-      const key = post.track_id;
-      if (!trackCounts[key]) {
-        trackCounts[key] = {
-          count: 0,
-          track: {
-            name: post.track_name,
-            artist: post.artist,
-            cover: post.cover_url,
-            spotify_url: post.spotify_url,
-            track_id: post.track_id
-          }
-        };
-      }
-      trackCounts[key].count++;
-    });
-
-    // Trier par popularité
-    const sortedTracks = Object.values(trackCounts)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 50)
-      .map((item, index) => ({
-        ...item.track,
-        rank: index + 1,
-        shakeCount: item.count
-      }));
-
-    if (sortedTracks.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>Aucun Shake de tes amis pour le moment</p></div>';
-      return;
-    }
-
-    container.innerHTML = sortedTracks.map(track => renderTopTrack(track, true)).join('');
+    container.innerHTML = tracks.map(track => renderTopTrack(track, true)).join('');
     attachTopTrackListeners();
 
   } catch (error) {
-    console.error('Error loading Top Friends:', error);
+    console.error('Error loading Top Shakemoi:', error);
+    container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
+  }
+}
+
+async function loadTopReco(container) {
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement des recommandations...</p></div>';
+
+  try {
+    // Récupérer les posts likés par l'utilisateur pour analyser ses goûts
+    const likedPosts = await getUserLikedPosts(currentUser.id);
+
+    if (likedPosts.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>Like des morceaux pour recevoir des recommandations personnalisées !</p></div>';
+      return;
+    }
+
+    // Extraire les artistes des posts likés
+    const likedArtists = likedPosts.map(post => post.artist).filter(Boolean);
+
+    // Si on a des artistes, chercher des morceaux similaires via Spotify
+    if (likedArtists.length > 0) {
+      // Prendre un artiste aléatoire parmi les préférés
+      const randomArtist = likedArtists[Math.floor(Math.random() * likedArtists.length)];
+
+      // Chercher des morceaux similaires
+      const recoTracks = await spotify.searchTracks(`artist:${randomArtist}`);
+
+      if (recoTracks.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Impossible de charger les recommandations</p></div>';
+        return;
+      }
+
+      // Ajouter un rang aux tracks
+      const tracksWithRank = recoTracks.slice(0, 30).map((track, index) => ({
+        ...track,
+        rank: index + 1
+      }));
+
+      container.innerHTML = tracksWithRank.map(track => renderTopTrack(track)).join('');
+      attachTopTrackListeners();
+    } else {
+      // Fallback : afficher le Top Spotify
+      await loadTopSpotify(container);
+    }
+
+  } catch (error) {
+    console.error('Error loading recommendations:', error);
     container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
   }
 }
@@ -982,12 +989,13 @@ async function loadProfileTab(tab) {
 
   try {
     if (tab === 'shakes') {
-      const posts = await getUserLikedPosts(currentUser.id);
+      // Charger les posts réellement partagés par l'utilisateur (pas les likes)
+      const posts = await getUserPosts(currentUser.id);
 
-      console.log('Posts likés récupérés:', posts.length, posts);
+      console.log('Posts partagés récupérés:', posts.length, posts);
 
       if (posts.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>Aucun shake pour le moment.<br><small>Like des posts pour les voir ici !</small></p></div>';
+        container.innerHTML = '<div class="empty-state"><p>Aucun shake pour le moment.<br><small>Partage des morceaux pour les voir ici !</small></p></div>';
         return;
       }
 

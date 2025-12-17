@@ -1,0 +1,104 @@
+/* =====================================================
+   CORRECTIONS FEED - Hauteur fixe, actions en haut
+   ===================================================== */
+
+/* Post container - hauteur fixe = hauteur pochette */
+.post {
+  min-height: 96px !important; /* 72px pochette + 24px padding */
+  max-height: 96px !important;
+}
+
+/* Post content - hauteur fixe pour contenir la pochette */
+.post-content {
+  height: 72px !important;
+  align-items: stretch !important;
+}
+
+/* Infos à droite - reorganisées avec actions en haut */
+.post-info-right {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  grid-template-rows: auto 1fr auto !important;
+  gap: 4px !important;
+  height: 100% !important;
+}
+
+/* Header en haut à gauche */
+.post-header-inline {
+  grid-column: 1 / 2 !important;
+  grid-row: 1 / 2 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Actions en haut à droite */
+.post-actions {
+  grid-column: 2 / 3 !important;
+  grid-row: 1 / 3 !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  margin-top: 0 !important;
+  padding-bottom: 0 !important;
+  justify-content: flex-start !important;
+  align-items: flex-end !important;
+}
+
+/* Track info au milieu à gauche */
+.track-info-compact {
+  grid-column: 1 / 2 !important;
+  grid-row: 2 / 3 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Post text en bas si présent */
+.post-text {
+  grid-column: 1 / 2 !important;
+  grid-row: 3 / 4 !important;
+  margin: 0 !important;
+  font-size: 0.75rem !important;
+  -webkit-line-clamp: 1 !important;
+}
+
+/* Username toujours en corail */
+.username-inline {
+  color: var(--coral-500, #FF7668) !important;
+}
+
+/* Actions buttons - plus compacts */
+.action-btn {
+  padding: 2px 4px !important;
+  font-size: 0.7rem !important;
+  min-width: 40px !important;
+}
+
+.action-btn .icon {
+  font-size: 0.8rem !important;
+}
+
+.action-btn .count {
+  font-size: 0.7rem !important;
+}
+
+/* Responsive - pochette plus petite sur mobile */
+@media (max-width: 480px) {
+  .post {
+    min-height: 88px !important;
+    max-height: 88px !important;
+  }
+
+  .post-content {
+    height: 64px !important;
+  }
+
+  .action-btn {
+    padding: 2px 3px !important;
+    font-size: 0.65rem !important;
+    min-width: 36px !important;
+  }
+}
+
+/* Supprimer complètement le bouton musique du feed s'il reste */
+.post-music-container,
+.post-music-btn,
+.spotify-post-btn {
+  display: none !important;
+}

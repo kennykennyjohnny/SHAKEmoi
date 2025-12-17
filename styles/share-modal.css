@@ -17,7 +17,28 @@
 .share-btn .note-icon {
   font-size: 1.5rem;
   color: var(--primary);
-  animation: vibrate 0.8s ease-in-out infinite;
+  animation: vibrate-interval 10s ease-in-out infinite;
+}
+
+@keyframes vibrate-interval {
+  0%, 92% {
+    transform: translateX(0) rotate(0deg);
+  }
+  92.5%, 94.5% {
+    transform: translateX(-2px) rotate(-5deg);
+  }
+  93%, 94% {
+    transform: translateX(2px) rotate(5deg);
+  }
+  93.5%, 95% {
+    transform: translateX(-2px) rotate(-5deg);
+  }
+  95.5%, 97% {
+    transform: translateX(2px) rotate(5deg);
+  }
+  97.5%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
 }
 
 .share-btn:hover {
