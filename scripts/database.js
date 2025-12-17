@@ -181,6 +181,12 @@ async function reshakePost(originalPostId) {
 
     if (!originalPost) throw new Error('Post not found');
 
+    // Si le post est déjà un reshake, utiliser son original_post_id
+    // Cela garantit qu'on remonte toujours au vrai post original
+    const trueOriginalPostId = originalPost.is_reshake && originalPost.original_post_id
+      ? originalPost.original_post_id
+      : originalPostId;
+
     // Create re-shake
     const { data, error } = await supabase
       .from('posts')
@@ -191,10 +197,12 @@ async function reshakePost(originalPostId) {
         cover_url: originalPost.cover_url,
         text: originalPost.text,
         preview_url: originalPost.preview_url,
+        spotify_url: originalPost.spotify_url,
+        track_id: originalPost.track_id,
         likes_count: 0,
         comments_count: 0,
         is_reshake: true,
-        original_post_id: originalPostId
+        original_post_id: trueOriginalPostId
       }])
       .select()
       .single();

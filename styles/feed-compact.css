@@ -70,24 +70,29 @@
   margin: 0;
 }
 
-/* Cover à gauche - taille fixe */
+/* Cover à gauche - taille fixe et bien alignée */
 .track-cover-container {
   flex-shrink: 0;
   width: 55px;
   height: 55px;
   position: relative;
   align-self: flex-start;
+  overflow: hidden;
+  border-radius: 8px;
 }
 
 .track-cover {
-  width: 55px;
-  height: 55px;
+  width: 100% !important;
+  height: 100% !important;
   border-radius: 8px;
-  object-fit: cover;
-  object-position: center;
+  object-fit: cover !important;
+  object-position: center !important;
   border: 1.5px solid rgba(255, 111, 97, 0.3);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-  display: block;
+  display: block !important;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 /* Play overlay adapté */
