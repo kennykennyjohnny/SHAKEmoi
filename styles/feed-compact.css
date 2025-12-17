@@ -119,13 +119,13 @@
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
-  color: #FFB8B0 !important; /* Corail pastel */
+  color: #FF6F61 !important;
   transition: color 0.2s ease;
   line-height: 1.2;
 }
 
 .username-inline:hover {
-  color: #FF6F61 !important;
+  color: #FF5A4A !important;
 }
 
 .timestamp-inline {
@@ -354,12 +354,12 @@
   font-weight: 600;
   font-size: 0.8rem;
   cursor: pointer;
-  color: #FFB8B0 !important; /* Corail pastel */
+  color: #FF6F61 !important;
   transition: color 0.2s ease;
 }
 
 .comment-username:hover {
-  color: #FF6F61 !important;
+  color: #FF5A4A !important;
 }
 
 .comment-text {
