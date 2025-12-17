@@ -300,6 +300,11 @@ async function loadFeed() {
     container.innerHTML = postsHtml.join('');
     attachPostListeners();
 
+    // Appliquer les émojis après rendu
+    if (window.updateEmojis) {
+      window.updateEmojis();
+    }
+
   } catch (error) {
     console.error('Error loading feed:', error);
     container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
