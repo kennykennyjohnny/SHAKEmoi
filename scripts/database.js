@@ -74,10 +74,10 @@ async function getFeed(limit = 20) {
       .from('posts')
       .select(`
         *,
-        user:users_profile!posts_user_id_fkey(id, username, color),
+        user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color),
         original_post:posts!original_post_id(
           user_id,
-          user:users_profile!posts_user_id_fkey(id, username, color)
+          user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color)
         )
       `)
       .in('user_id', followingIds)
@@ -122,7 +122,7 @@ async function getUserPosts(userId, limit = 50) {
       .from('posts')
       .select(`
         *,
-        user:users_profile!posts_user_id_fkey(id, username, color)
+        user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color)
       `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
@@ -328,7 +328,7 @@ async function getUserLikedPosts(userId, limit = 50) {
       .select(`
         post:posts(
           *,
-          user:users_profile!posts_user_id_fkey(id, username, color)
+          user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color)
         )
       `)
       .eq('user_id', userId)

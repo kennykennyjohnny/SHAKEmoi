@@ -3,6 +3,66 @@
 /* Profile header doit avoir position relative pour le bouton absolu */
 .profile-header {
   position: relative;
+  overflow: hidden; /* Pour contenir les notes décoratives */
+}
+
+/* Notes de musique décoratives */
+.decorative-notes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.decorative-notes .note {
+  position: absolute;
+  font-size: 1.5rem;
+  opacity: 0.15;
+  animation: float 3s ease-in-out infinite;
+}
+
+.decorative-notes .note-1 {
+  left: 10%;
+  top: 20%;
+  animation-delay: 0s;
+}
+
+.decorative-notes .note-2 {
+  right: 15%;
+  top: 10%;
+  animation-delay: 0.5s;
+  font-size: 2rem;
+}
+
+.decorative-notes .note-3 {
+  left: 80%;
+  top: 60%;
+  animation-delay: 1s;
+}
+
+.decorative-notes .note-4 {
+  left: 5%;
+  bottom: 20%;
+  animation-delay: 1.5s;
+  font-size: 1.8rem;
+}
+
+.decorative-notes .note-5 {
+  right: 10%;
+  bottom: 30%;
+  animation-delay: 2s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(5deg);
+  }
 }
 
 /* Bouton Modifier */

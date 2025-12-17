@@ -329,12 +329,12 @@ function renderPost(post) {
   // Si c'est un reshake, utiliser l'auteur original pour le corps du post
   const originalAuthor = post.is_reshake && post.original_post?.user ? post.original_post.user : post.user;
 
-  // Si c'est un reshake, afficher l'info avec l'utilisateur qui a reshake
-  const reshakeHeader = post.is_reshake ? `
+  // Si c'est un reshake, afficher l'info avec l'utilisateur qui a reshake et l'auteur original
+  const reshakeHeader = post.is_reshake && post.original_post?.user ? `
     <div class="reshake-header">
       <span class="reshake-icon">↻</span>
       <span class="reshake-text">
-        <span class="username" style="cursor: pointer;" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span> a reshake
+        <span class="username" style="cursor: pointer;" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span> a reshake le post de <span class="username" style="cursor: pointer;" onclick="openUserProfile('${originalAuthor.id}')">@${originalAuthor.username}</span>
       </span>
     </div>
   ` : '';
@@ -364,7 +364,7 @@ function renderPost(post) {
         <div class="post-info-right">
           <!-- User + timestamp (auteur original si reshake) -->
           <div class="post-header-inline">
-            <div class="user-note" style="background: ${originalAuthor.color}; cursor: pointer;" onclick="openUserProfile('${originalAuthor.id}')">♪</div>
+            <div class="user-note" style="${originalAuthor.profile_album_cover_url ? `background-image: url(${originalAuthor.profile_album_cover_url}); background-size: cover; background-position: center; border: 3px solid ${originalAuthor.profile_color || originalAuthor.color};` : `background: ${originalAuthor.profile_color || originalAuthor.color};`} cursor: pointer;" onclick="openUserProfile('${originalAuthor.id}')">${originalAuthor.profile_album_cover_url ? '' : '♪'}</div>
             <span class="username-inline" onclick="openUserProfile('${originalAuthor.id}')">@${originalAuthor.username}</span>
             <span class="timestamp-inline">${timeAgo}</span>
           </div>
@@ -707,6 +707,12 @@ async function loadUserProfile(userId) {
 
     // Appliquer la couleur uniquement sur la page profil (pas globalement)
     document.getElementById('user-username').textContent = `@${currentProfile.username}`;
+
+    // Appliquer la couleur pastel aux notes décoratives
+    const decorativeNotes = document.querySelectorAll('#decorative-notes .note');
+    decorativeNotes.forEach(note => {
+      note.style.color = profileColor;
+    });
 
     const stats = await getUserStats(userId);
     const feelsElement = document.getElementById('feels-count');
@@ -1092,12 +1098,29 @@ async function openUserProfile(userId) {
       return;
     }
 
-    // Mise à jour du header
-    document.getElementById('modal-user-note').style.background = userProfile.color;
+    // Mise à jour du header avec photo de profil personnalisée
+    const modalNote = document.getElementById('modal-user-note');
+    const profileColor = userProfile.profile_color || userProfile.color;
+
+    if (userProfile.profile_album_cover_url) {
+      modalNote.style.backgroundImage = `url(${userProfile.profile_album_cover_url})`;
+      modalNote.style.backgroundSize = 'cover';
+      modalNote.style.backgroundPosition = 'center';
+      modalNote.style.border = `6px solid ${profileColor}`;
+      modalNote.textContent = '';
+    } else {
+      modalNote.style.background = profileColor;
+      modalNote.style.backgroundImage = 'none';
+      modalNote.style.border = `6px solid ${profileColor}`;
+      modalNote.textContent = '♪';
+    }
+
     document.getElementById('modal-user-username').textContent = `@${userProfile.username}`;
 
     const stats = await getUserStats(userId);
-    document.getElementById('modal-feels-count').textContent = stats.feels;
+    const modalFeelsCount = document.getElementById('modal-feels-count');
+    modalFeelsCount.textContent = stats.feels;
+    modalFeelsCount.style.color = profileColor;
 
     // Gérer le bouton follow
     const followBtn = document.getElementById('modal-follow-btn');
