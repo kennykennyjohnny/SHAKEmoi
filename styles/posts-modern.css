@@ -9,13 +9,14 @@
   flex-direction: column !important;
   gap: 0 !important;
   padding: 0 !important;
-  margin-bottom: 10px !important;
-  background: linear-gradient(145deg, #3A4245 0%, #2d3537 100%) !important;
-  border: 2px solid #FF6F61 !important;
-  border-radius: 18px !important;
+  margin-bottom: 12px !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 12px !important;
   overflow: hidden !important;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.2s ease !important;
   position: relative !important;
 }
 
@@ -27,13 +28,15 @@
 
 /* Reshake header - compact et visible */
 .reshake-header {
-  padding: 8px 12px !important;
-  background: rgba(255, 111, 97, 0.1) !important;
-  border-bottom: 1px solid rgba(255, 111, 97, 0.2) !important;
+  padding: 6px 10px !important;
+  background: rgba(255, 111, 97, 0.06) !important;
   display: flex !important;
   align-items: center !important;
   gap: 6px !important;
-  font-size: 0.8rem !important;
+  font-size: 0.78rem !important;
+  position: absolute !important;
+  left: 12px !important;
+  bottom: 12px !important;
 }
 
 .reshake-icon {
@@ -64,12 +67,18 @@
   align-items: flex-start !important;
 }
 
+/* Smaller cover for compact cards */
+.track-cover-container {
+  width: 72px !important;
+  height: 72px !important;
+}
+
 /* Pochette - grande et mise en avant */
 .track-cover-container {
   position: relative !important;
   flex-shrink: 0 !important;
-  width: 90px !important;
-  height: 90px !important;
+  width: 72px !important;
+  height: 72px !important;
   border-radius: 12px !important;
   overflow: hidden !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
@@ -137,13 +146,13 @@
 }
 
 .user-note {
-  width: 28px !important;
-  height: 28px !important;
+  width: 24px !important;
+  height: 24px !important;
   border-radius: 50% !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 0.85rem !important;
+  font-size: 0.75rem !important;
   flex-shrink: 0 !important;
   cursor: pointer !important;
   transition: transform 0.2s ease !important;
@@ -216,7 +225,7 @@
 /* Actions - compact et inline */
 .post-actions {
   display: flex !important;
-  gap: 12px !important;
+  gap: 8px !important;
   align-items: center !important;
   margin-top: auto !important;
 }
@@ -225,14 +234,14 @@
   display: flex !important;
   align-items: center !important;
   gap: 4px !important;
-  padding: 4px 8px !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 4px 6px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: 8px !important;
-  font-size: 0.8rem !important;
-  color: #B0B0B0 !important;
+  font-size: 0.78rem !important;
+  color: #cfcfcf !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.15s ease !important;
 }
 
 .action-btn:hover {
@@ -262,7 +271,7 @@
 
 /* Feed container */
 .feed-container {
-  padding: 8px !important;
+  padding: 16px 8px !important;
   max-width: 600px !important;
   margin: 0 auto !important;
 }
@@ -270,22 +279,23 @@
 /* Responsive */
 @media (max-width: 480px) {
   .track-cover-container {
-    width: 70px !important;
-    height: 70px !important;
+    width: 64px !important;
+    height: 64px !important;
   }
 
   .track-title {
-    font-size: 0.85rem !important;
+    font-size: 0.82rem !important;
   }
 
   .track-artist {
-    font-size: 0.75rem !important;
+    font-size: 0.72rem !important;
   }
 
   .action-btn {
     padding: 3px 6px !important;
-    font-size: 0.75rem !important;
+    font-size: 0.72rem !important;
   }
+  .post-music-btn { width:36px; height:36px }
 }
 
 /* Animation d'apparition */
@@ -303,3 +313,26 @@
     transform: translateY(0);
   }
 }
+
+/* Music button bottom-right and styling */
+.post-music-container {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+}
+.post-music-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#000;
+  color:#1DB954;
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor:pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.post-music-btn svg { display:block }
+.post-music-btn .music-icon { font-size:1rem }
+

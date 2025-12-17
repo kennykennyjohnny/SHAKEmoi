@@ -8,6 +8,84 @@ let searchMode = 'tracks';
 let selectedTrackForShake = null;
 let selectedPostForComment = null;
 
+// Helper : Générer bouton musique selon préférence utilisateur
+function getMusicButtonHtml(post, buttonClass = 'spotify-post-btn') {
+  // Retourne un bouton qui déléguera l'ouverture à openMusicForPost(postId)
+  return `
+    <button class="${buttonClass} post-music-btn" data-post-id="${post.id}" onclick="event.stopPropagation(); openMusicForPost('${post.id}')" title="Ouvrir la plateforme musicale">
+      <span class="music-icon" aria-hidden="true">♪</span>
+    </button>
+  `;
+}
+
+// Ouvre le lien musical approprié pour le post selon préférence utilisateur
+async function openMusicForPost(postId) {
+  try {
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (!postElement) return;
+
+    // Recuperer les données du post depuis le DOM par ID (post data stockée en dataset si nécessaire)
+    // On récupère l'URL Spotify/Apple depuis l'objet post chargé initialement (re-fetch minimal)
+    // Simple méthode: demander au serveur via getFeed et trouver le post
+    const posts = await getFeed(50);
+    const post = posts.find(p => String(p.id) === String(postId));
+    if (!post) return;
+
+    const platform = window.getPreferredMusicPlatform ? window.getPreferredMusicPlatform() : 'spotify';
+
+    if (platform === 'apple') {
+      // Si on a déjà un apple_music_url utilisable
+      if (post.apple_music_url) {
+        window.open(post.apple_music_url, '_blank');
+        return;
+      }
+      // sinon, tenter de récupérer via l'API iTunes
+      if (window.fetchAppleTrackLink) {
+        const url = await window.fetchAppleTrackLink(post.track_name, post.artist);
+        if (url) {
+          window.open(url, '_blank');
+          return;
+        }
+      }
+      // Fallback search
+      const searchUrl = `https://music.apple.com/fr/search?term=${encodeURIComponent(post.track_name + ' ' + post.artist)}`;
+      window.open(searchUrl, '_blank');
+    } else {
+      // Spotify
+      const spotifyUrl = post.spotify_url || (post.track_id ? `https://open.spotify.com/track/${post.track_id}` : null);
+      if (spotifyUrl) {
+        window.open(spotifyUrl, '_blank');
+      } else {
+        // Fallback to search
+        const searchUrl = `https://open.spotify.com/search/${encodeURIComponent(post.track_name + ' ' + post.artist)}`;
+        window.open(searchUrl, '_blank');
+      }
+    }
+  } catch (err) {
+    console.error('Erreur openMusicForPost:', err);
+  }
+}
+
+// Met à jour l'icône / couleur du bouton music selon préférence
+function updateMusicButtons() {
+  const platform = window.getPreferredMusicPlatform ? window.getPreferredMusicPlatform() : 'spotify';
+  document.querySelectorAll('.post-music-btn').forEach(btn => {
+    if (platform === 'apple') {
+      btn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M16.365 1.43c-.94.06-2.07.63-2.73 1.39-.6.67-1.12 1.73-.91 2.77 1.09.07 2.19-.6 2.75-1.37.53-.72.92-1.71.89-2.79zM20.5 7.5c-.44 0-1.01.2-1.39.44-.82.49-1.63 1.51-1.63 2.92 0 1.58.81 2.35 1.68 2.98.6.42 1.4.93 1.4 1.98 0 1.04-.9 1.67-1.78 1.67-.7 0-1.16-.27-1.79-.27-.68 0-1.12.27-1.78.27-.77 0-1.68-.68-1.68-2.02 0-1.03.7-1.5 1.35-1.98.48-.36 1.03-.79 1.03-1.6 0-.95-.83-1.51-1.66-1.51-.96 0-1.68.52-2.55.52-.69 0-1.5-.27-2.08-.82C9.14 9.67 8.6 8.56 8.6 7.36c0-1.58 1-2.84 2.46-3.41 1.21-.49 2.82-.4 3.77.24.33.22.58.47.9.47.34 0 .56-.21.9-.47C18.9 3.01 20.1 2.84 21 3.68c-1.1.72-1.6 1.86-1.6 3.12z"/></svg>`;
+      btn.style.background = '#D459C8';
+      btn.style.color = '#fff';
+    } else {
+      // Spotify
+      btn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="#1DB954"><path d="M12 0C5.37 0 0 5.37 0 12c0 6.63 5.37 12 12 12s12-5.37 12-12C24 5.37 18.63 0 12 0zm5.52 17.34c-.24.36-.66.48-1.02.24-2.82-1.74-6.36-2.1-10.56-1.14-.42.12-.78-.18-.9-.54-.12-.42.18-.78.54-.9C9.6 14.58 15 15.24 18.72 16.52c.36.18.54.78.3 1.02zM19.08 14.04c-.3.42-.84.6-1.26.3-3.24-1.98-8.16-2.58-11.94-1.38-.48.12-1.02-.12-1.14-.6-.12-.48.12-1.02.6-1.14C9.6 9.9 15 10.56 18.72 12.84c.36.18.54.78.3 1.2z"/></svg>`;
+      btn.style.background = '#000';
+      btn.style.color = '#1DB954';
+    }
+  });
+}
+
+window.updateMusicButtons = updateMusicButtons;
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
   await checkAuthAndInit();
@@ -64,6 +142,10 @@ async function checkAuthAndInit() {
     sessionStorage.removeItem('authRedirectCount');
     window.location.href = 'index.html';
   }
+
+  // Initialize settings UI and music buttons (ensure correct visuals from start)
+  if (window.initSettingsMenu) window.initSettingsMenu();
+  if (window.updateMusicButtons) window.updateMusicButtons();
 }
 
 // Setup all event listeners
@@ -74,8 +156,14 @@ function setupEventListeners() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // Logout
-  document.getElementById('logout-btn').addEventListener('click', handleLogout);
+  // Settings button (remplace logout)
+  const settingsBtn = document.getElementById('settings-btn');
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', () => {
+      if (window.initSettingsMenu) window.initSettingsMenu();
+      document.getElementById('settings-menu').style.display = 'block';
+    });
+  }
 
   // Navigation
   document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -115,6 +203,14 @@ function setupEventListeners() {
       loadProfileTab(tab);
     });
   });
+
+  // Close settings
+  const settingsClose = document.getElementById('settings-close');
+  if (settingsClose) {
+    settingsClose.addEventListener('click', () => {
+      document.getElementById('settings-menu').style.display = 'none';
+    });
+  }
 
   // Modal events
   document.getElementById('cancel-comment').addEventListener('click', closeCommentModal);
@@ -310,6 +406,9 @@ async function loadFeed() {
     container.innerHTML = postsHtml.join('');
     attachPostListeners();
 
+    // Update music buttons visuals according to user preference
+    if (window.updateMusicButtons) window.updateMusicButtons();
+
     // Appliquer les émojis après rendu
     if (window.updateEmojis) {
       window.updateEmojis();
@@ -332,11 +431,12 @@ function renderPost(post) {
   // Si c'est un reshake, afficher info discrète avec le reshakeur
   let reshakeFooter = '';
   if (post.is_reshake) {
+    const reshakeCountLabel = post.reshakes_count && post.reshakes_count > 1 ? ` · ${post.reshakes_count}` : '';
     reshakeFooter = `
       <div class="reshake-header">
         <span class="reshake-icon">↻</span>
         <span class="reshake-text">
-          <span class="username" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span>
+          Re-Shake by <span class="username" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span>${reshakeCountLabel}
         </span>
       </div>
     `;
@@ -344,16 +444,8 @@ function renderPost(post) {
 
   return `
     <article class="post post-with-comments" data-post-id="${postId}">
-      <!-- Bouton Spotify en haut à droite -->
-      ${post.spotify_url || post.track_id ? `
-        <button class="spotify-post-btn" onclick="event.stopPropagation(); window.open('${post.spotify_url || `https://open.spotify.com/track/${post.track_id}`}', '_blank')" title="Ouvrir dans Spotify">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
-          </svg>
-        </button>
-      ` : ''}
       <div class="post-content">
-        <!-- Pochette à gauche avec play button et Spotify -->
+        <!-- Pochette à gauche avec play button -->
         <div class="track-cover-container">
           <img src="${post.cover_url}"
                class="track-cover"
@@ -366,13 +458,6 @@ function renderPost(post) {
                 <path d="M8 5v14l11-7z"/>
               </svg>
             </div>
-          ` : ''}
-          ${post.spotify_url || post.track_id ? `
-            <button class="spotify-cover-btn" onclick="event.stopPropagation(); window.open('${post.spotify_url || `https://open.spotify.com/track/${post.track_id}`}', '_blank')" title="Ouvrir dans Spotify">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
-              </svg>
-            </button>
           ` : ''}
         </div>
 
@@ -412,6 +497,11 @@ function renderPost(post) {
 
       <!-- Timestamp en bas à droite -->
       <div class="post-timestamp-bottom">${timeAgo}</div>
+
+      <!-- Bouton musique en bas droite -->
+      <div class="post-music-container">
+        ${getMusicButtonHtml(post, 'post-music-btn')}
+      </div>
 
       <!-- Info reshake discrète en bas à gauche -->
       ${reshakeFooter}
@@ -481,6 +571,7 @@ function attachPostListeners() {
         const result = await reshakePost(btn.dataset.postId);
         if (result.success) {
           alert('Re-shake publié ! 🔄');
+          // Refresh feed to ensure we display original author correctly
           await loadFeed();
         } else {
           alert('Erreur: ' + result.error);
