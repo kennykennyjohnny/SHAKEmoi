@@ -122,7 +122,11 @@ async function getUserPosts(userId, limit = 50) {
       .from('posts')
       .select(`
         *,
-        user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color)
+        user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color),
+        original_post:posts!original_post_id(
+          *,
+          user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color)
+        )
       `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false })

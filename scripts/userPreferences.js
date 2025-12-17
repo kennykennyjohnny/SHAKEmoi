@@ -18,15 +18,33 @@ function setPreferredMusicPlatform(platform) {
     document.querySelectorAll('.platform-toggle').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.platform === platform);
     });
-    // Visual tweak: add small color indicator
+    // Visual tweak: add beautiful color indicators
     document.querySelectorAll('.platform-toggle').forEach(btn => {
       if (btn.dataset.platform === 'spotify') {
-        btn.style.background = platform === 'spotify' ? '#1DB954' : '';
-        btn.style.color = platform === 'spotify' ? '#fff' : '';
+        if (platform === 'spotify') {
+          btn.style.background = 'linear-gradient(135deg, #1DB954 0%, #1ed760 100%)';
+          btn.style.color = '#fff';
+          btn.style.borderColor = '#1DB954';
+          btn.style.boxShadow = '0 4px 12px rgba(29, 185, 84, 0.4)';
+        } else {
+          btn.style.background = 'rgba(255, 255, 255, 0.04)';
+          btn.style.color = '#cfcfcf';
+          btn.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+          btn.style.boxShadow = 'none';
+        }
       }
       if (btn.dataset.platform === 'apple') {
-        btn.style.background = platform === 'apple' ? '#D459C8' : '';
-        btn.style.color = platform === 'apple' ? '#fff' : '';
+        if (platform === 'apple') {
+          btn.style.background = 'linear-gradient(135deg, #BF5BC6 0%, #D459C8 100%)';
+          btn.style.color = '#fff';
+          btn.style.borderColor = '#D459C8';
+          btn.style.boxShadow = '0 4px 12px rgba(212, 89, 200, 0.4)';
+        } else {
+          btn.style.background = 'rgba(255, 255, 255, 0.04)';
+          btn.style.color = '#cfcfcf';
+          btn.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+          btn.style.boxShadow = 'none';
+        }
       }
     });
     // Update music buttons visuals if available
