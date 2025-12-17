@@ -669,7 +669,11 @@ async function loadUserProfile(userId) {
     const editBtn = document.getElementById('btn-edit-profile');
     if (editBtn) {
       // Afficher seulement si c'est le profil de l'utilisateur connecté
-      editBtn.style.display = (userId === currentUser.id) ? 'flex' : 'none';
+      if (userId === currentUser.id) {
+        editBtn.classList.add('visible');
+      } else {
+        editBtn.classList.remove('visible');
+      }
     }
 
     // Update header avec pochette personnalisée ou note musicale

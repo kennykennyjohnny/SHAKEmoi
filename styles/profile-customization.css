@@ -1,11 +1,16 @@
 /* 🎨 SHAKEMOI - PERSONNALISATION PROFIL */
 
+/* Profile header doit avoir position relative pour le bouton absolu */
+.profile-header {
+  position: relative;
+}
+
 /* Bouton Modifier */
 .btn-edit-profile {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  display: flex;
+  display: none; /* Caché par défaut */
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
@@ -17,6 +22,11 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  z-index: 10; /* S'assurer qu'il est au-dessus des autres éléments */
+}
+
+.btn-edit-profile.visible {
+  display: flex !important; /* Affiché quand visible */
 }
 
 .btn-edit-profile:hover {

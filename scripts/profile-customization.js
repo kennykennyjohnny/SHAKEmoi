@@ -99,7 +99,7 @@ async function searchSpotifyAlbums(query) {
     }
 
     const albumsHtml = data.albums.items.map(album => `
-      <div class="album-result-item" onclick="selectAlbum('${album.id}', '${escapeHtml(album.name)}', '${escapeHtml(album.artists[0].name)}', '${album.images[0]?.url || ''}')">
+      <div class="album-result-item" data-album-id="${album.id}" data-album-name="${escapeHtml(album.name)}" data-album-artist="${escapeHtml(album.artists[0].name)}" data-album-cover="${album.images[0]?.url || ''}">
         <img src="${album.images[2]?.url || album.images[0]?.url || 'https://via.placeholder.com/50'}"
              class="album-result-cover"
              alt="${escapeHtml(album.name)}">
@@ -111,6 +111,18 @@ async function searchSpotifyAlbums(query) {
     `).join('');
 
     resultsContainer.innerHTML = albumsHtml;
+
+    // Ajouter les event listeners après l'insertion du HTML
+    resultsContainer.querySelectorAll('.album-result-item').forEach(item => {
+      item.addEventListener('click', () => {
+        selectAlbum(
+          item.dataset.albumId,
+          item.dataset.albumName,
+          item.dataset.albumArtist,
+          item.dataset.albumCover
+        );
+      });
+    });
   } catch (error) {
     console.error('Error searching albums:', error);
     resultsContainer.innerHTML = '<div class="album-results-empty">Erreur de recherche</div>';
@@ -123,9 +135,9 @@ function selectAlbum(id, name, artist, cover) {
 
   // Mettre à jour la sélection visuelle
   document.querySelectorAll('.album-result-item').forEach(item => {
-    item.classList.remove('selected');
+    const isSelected = item.dataset.albumId === id;
+    item.classList.toggle('selected', isSelected);
   });
-  event.target.closest('.album-result-item').classList.add('selected');
 
   // Mettre à jour la prévisualisation
   updatePreview();
