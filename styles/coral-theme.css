@@ -5,9 +5,9 @@
 
 :root {
   /* Couleurs principales - Corail */
-  --primary: #FF6B6B;
-  --primary-hover: #FF5252;
-  --primary-light: #FFB3B3;
+  --primary: #FF6F61;
+  --primary-hover: #FF5A4A;
+  --primary-light: #FFB8B0;
 
   /* Couleurs secondaires */
   --secondary: #FFD166;
@@ -79,12 +79,17 @@ body {
 /* Navigation moderne */
 .nav-btn {
   color: var(--text-muted);
+  transition: all 0.2s ease;
 }
 
 .nav-btn.active {
   color: var(--primary);
-  background: rgba(255, 107, 107, 0.1);
+  background: rgba(255, 111, 97, 0.15);
   border-radius: var(--border-radius);
+}
+
+.nav-btn:hover {
+  color: var(--primary);
 }
 
 .nav-btn.active .nav-icon {
@@ -93,6 +98,11 @@ body {
 
 .nav-icon {
   fill: var(--text-muted);
+  transition: fill 0.2s ease;
+}
+
+.nav-btn:hover .nav-icon {
+  fill: var(--primary);
 }
 
 /* Posts - cartes blanches sur fond sombre */
@@ -101,26 +111,38 @@ body {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
 }
 
 .post:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
-  transition: all 0.2s ease;
+  border-color: rgba(255, 111, 97, 0.3);
 }
 
 /* Action buttons */
 .action-btn {
   color: var(--text-secondary);
+  transition: all 0.2s ease;
 }
 
 .action-btn:hover {
   color: var(--primary);
-  background: rgba(255, 107, 107, 0.1);
+  background: rgba(255, 111, 97, 0.1);
+}
+
+.like-btn.liked {
+  color: var(--primary);
 }
 
 .like-btn.liked .icon {
   color: var(--primary);
+  animation: heartbeat 0.3s ease;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
 }
 
 /* Reshake header avec accent doré */
@@ -155,17 +177,29 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
-/* Profile header avec fond turquoise */
+/* Profile header avec accent corail */
 .profile-header {
-  background: linear-gradient(135deg, rgba(78, 205, 196, 0.1) 0%, rgba(255, 107, 107, 0.1) 100%);
+  background: var(--bg-card);
   padding: 2rem;
   border-radius: var(--border-radius) var(--border-radius) 0 0;
+  border-bottom: 3px solid var(--primary);
 }
 
 .stat-value {
   color: var(--primary);
   font-weight: 700;
   font-size: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.stat-value:hover {
+  transform: scale(1.1);
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 /* Notifications */
