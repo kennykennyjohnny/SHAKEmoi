@@ -500,11 +500,6 @@ function renderPost(post) {
       <!-- Timestamp en bas à droite -->
       <div class="post-timestamp-bottom">${timeAgo}</div>
 
-      <!-- Bouton musique en bas droite -->
-      <div class="post-music-container">
-        ${getMusicButtonHtml(post, 'post-music-btn')}
-      </div>
-
       <!-- Info reshake discrète en bas à gauche -->
       ${reshakeFooter}
 
@@ -585,16 +580,55 @@ function attachPostListeners() {
 
 // ==================== TOP 100 ====================
 
+// Variable pour stocker l'onglet actif du Top
+let currentTopTab = 'france';
+
 async function loadTop100() {
+  // Charger l'onglet par défaut (France)
+  await loadTopTab('france');
+  attachTopTabListeners();
+}
+
+function attachTopTabListeners() {
+  document.querySelectorAll('.top-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabName = btn.dataset.topTab;
+
+      // Mettre à jour l'état actif
+      document.querySelectorAll('.top-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Charger le contenu de l'onglet
+      loadTopTab(tabName);
+    });
+  });
+}
+
+async function loadTopTab(tabName) {
+  currentTopTab = tabName;
   const container = document.getElementById('top-container');
-  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du Top 100 France...</p></div>';
+
+  switch(tabName) {
+    case 'france':
+      await loadTopFrance(container);
+      break;
+    case 'spotify':
+      await loadTopSpotify(container);
+      break;
+    case 'friends':
+      await loadTopFriends(container);
+      break;
+  }
+}
+
+async function loadTopFrance(container) {
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du Top France...</p></div>';
 
   try {
-    // Utiliser Spotify au lieu de Last.fm
     const tracks = await spotify.getTop100France();
 
     if (tracks.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>Impossible de charger le Top 100</p></div>';
+      container.innerHTML = '<div class="empty-state"><p>Impossible de charger le Top France</p></div>';
       return;
     }
 
@@ -602,12 +636,97 @@ async function loadTop100() {
     attachTopTrackListeners();
 
   } catch (error) {
-    console.error('Error loading Top 100:', error);
+    console.error('Error loading Top France:', error);
     container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
   }
 }
 
-function renderTopTrack(track) {
+async function loadTopSpotify(container) {
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du Top Spotify...</p></div>';
+
+  try {
+    // Utiliser une playlist globale top 50 Spotify
+    const tracks = await spotify.getGlobalTop50();
+
+    if (tracks.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>Impossible de charger le Top Spotify</p></div>';
+      return;
+    }
+
+    container.innerHTML = tracks.map(track => renderTopTrack(track)).join('');
+    attachTopTrackListeners();
+
+  } catch (error) {
+    console.error('Error loading Top Spotify:', error);
+    container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
+  }
+}
+
+async function loadTopFriends(container) {
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du Top de mes Shakes...</p></div>';
+
+  try {
+    // Récupérer les posts des personnes qu'on suit
+    const following = await getUserFollowing(currentUser.id);
+
+    if (following.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>Tu ne suis personne encore ! Commence par Shake quelques profils.</p></div>';
+      return;
+    }
+
+    // Récupérer tous les posts des personnes suivies
+    const followingIds = following.map(f => f.following_id);
+    const posts = await getPostsByUserIds(followingIds);
+
+    if (posts.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>Aucun Shake de tes amis pour le moment</p></div>';
+      return;
+    }
+
+    // Compter les morceaux les plus partagés
+    const trackCounts = {};
+    posts.forEach(post => {
+      const key = post.track_id;
+      if (!trackCounts[key]) {
+        trackCounts[key] = {
+          count: 0,
+          track: {
+            name: post.track_name,
+            artist: post.artist,
+            cover: post.cover_url,
+            spotify_url: post.spotify_url,
+            track_id: post.track_id
+          }
+        };
+      }
+      trackCounts[key].count++;
+    });
+
+    // Trier par popularité
+    const sortedTracks = Object.values(trackCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 50)
+      .map((item, index) => ({
+        ...item.track,
+        rank: index + 1,
+        shakeCount: item.count
+      }));
+
+    if (sortedTracks.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>Aucun Shake de tes amis pour le moment</p></div>';
+      return;
+    }
+
+    container.innerHTML = sortedTracks.map(track => renderTopTrack(track, true)).join('');
+    attachTopTrackListeners();
+
+  } catch (error) {
+    console.error('Error loading Top Friends:', error);
+    container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
+  }
+}
+
+function renderTopTrack(track, showShakeCount = false) {
   // Escape JSON pour éviter les problèmes avec les quotes
   const trackData = JSON.stringify(track).replace(/'/g, '&apos;');
 
@@ -617,7 +736,7 @@ function renderTopTrack(track) {
       <img src="${track.cover}" class="track-cover" alt="${track.name}" onerror="this.src='https://via.placeholder.com/60x60?text=No+Cover'">
       <div class="track-info">
         <h3 class="track-title">${escapeHtml(track.name)}</h3>
-        <p class="track-artist">${escapeHtml(track.artist)}</p>
+        <p class="track-artist">${escapeHtml(track.artist)}${showShakeCount && track.shakeCount ? ` • ${track.shakeCount} shakes` : ''}</p>
       </div>
       <div class="track-actions">
         ${track.spotify_url || track.external_urls?.spotify ? `
@@ -729,7 +848,7 @@ function renderSearchUser(user) {
         <div class="user-name">@${escapeHtml(user.username)}</div>
         <div class="user-stats">${user.feels_count || 0} shakeurs</div>
       </div>
-      <button class="btn-follow" data-user-id="${user.id}">Feel</button>
+      <button class="btn-follow" data-user-id="${user.id}">Shake</button>
     </div>
   `;
 }
@@ -759,7 +878,7 @@ function attachSearchUserListeners() {
     // Check if already following
     const following = await isFollowing(userId);
     if (following) {
-      btn.textContent = 'Unfeel';
+      btn.textContent = 'Unshake';
       btn.classList.add('following');
     }
 
@@ -769,13 +888,13 @@ function attachSearchUserListeners() {
       if (isFollowing) {
         const result = await unfollowUser(userId);
         if (result.success) {
-          btn.textContent = 'Feel';
+          btn.textContent = 'Shake';
           btn.classList.remove('following');
         }
       } else {
         const result = await followUser(userId);
         if (result.success) {
-          btn.textContent = 'Unfeel';
+          btn.textContent = 'Unshake';
           btn.classList.add('following');
         } else {
           alert(result.error);
@@ -1013,6 +1132,60 @@ async function submitShake() {
     submitBtn.textContent = 'Shake !';
   }
 }
+
+// ==================== SHARE MODAL ====================
+
+function openShareModal() {
+  const modal = document.getElementById('share-modal');
+  modal.style.display = 'flex';
+
+  // Copier automatiquement le lien lors de l'ouverture
+  copyShareLink();
+}
+
+function closeShareModal() {
+  const modal = document.getElementById('share-modal');
+  modal.style.display = 'none';
+
+  // Réinitialiser le texte du bouton
+  const copyText = document.getElementById('copy-text');
+  const copyBtn = document.getElementById('btn-copy-link');
+  if (copyText && copyBtn) {
+    copyText.textContent = 'Copier';
+    copyBtn.classList.remove('copied');
+  }
+}
+
+function copyShareLink() {
+  const input = document.getElementById('share-link-input');
+  const copyText = document.getElementById('copy-text');
+  const copyBtn = document.getElementById('btn-copy-link');
+
+  if (!input || !copyText || !copyBtn) return;
+
+  // Sélectionner et copier le texte
+  input.select();
+  input.setSelectionRange(0, 99999); // Pour mobile
+
+  try {
+    navigator.clipboard.writeText(input.value);
+
+    // Feedback visuel
+    copyText.textContent = '✓ Copié !';
+    copyBtn.classList.add('copied');
+
+    // Réinitialiser après 2 secondes
+    setTimeout(() => {
+      copyText.textContent = 'Copier';
+      copyBtn.classList.remove('copied');
+    }, 2000);
+  } catch (err) {
+    console.error('Erreur lors de la copie:', err);
+    copyText.textContent = 'Erreur';
+  }
+}
+
+// ==================== COMMENTS ====================
 
 function openCommentModal() {
   const modal = document.getElementById('comment-modal');
@@ -1276,10 +1449,10 @@ async function openUserProfile(userId) {
 
       const following = await isFollowing(userId);
       if (following) {
-        followBtn.textContent = 'Unfeel';
+        followBtn.textContent = 'Unshake';
         followBtn.classList.add('following');
       } else {
-        followBtn.textContent = 'Feel';
+        followBtn.textContent = 'Shake';
         followBtn.classList.remove('following');
       }
 
@@ -1288,13 +1461,13 @@ async function openUserProfile(userId) {
         if (isFollowing) {
           const result = await unfollowUser(userId);
           if (result.success) {
-            followBtn.textContent = 'Feel';
+            followBtn.textContent = 'Shake';
             followBtn.classList.remove('following');
           }
         } else {
           const result = await followUser(userId);
           if (result.success) {
-            followBtn.textContent = 'Unfeel';
+            followBtn.textContent = 'Unshake';
             followBtn.classList.add('following');
           } else {
             alert(result.error);

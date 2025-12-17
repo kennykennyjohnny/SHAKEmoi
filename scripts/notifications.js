@@ -83,8 +83,8 @@ class NotificationManager {
           <span class="notif-time">${this.formatTime(notif.created_at)}</span>
         </div>
         ${notif.type === 'feel' ? `
-          <button class="btn-feelback" onclick="handleFeelback('${notif.from_user_id}', this)" style="margin-left: auto; padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; white-space: nowrap;">
-            Feelback
+          <button class="btn-shakeback" onclick="handleShakeBack('${notif.from_user_id}', this)" style="margin-left: auto; padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; white-space: nowrap;">
+            ShakeBack
           </button>
         ` : ''}
         ${!notif.is_read ? '<div class="notif-dot"></div>' : ''}
@@ -97,9 +97,9 @@ class NotificationManager {
     this.notifications.forEach(async notif => {
       if (notif.type === 'feel') {
         const following = await isFollowing(notif.from_user_id);
-        const btn = document.querySelector(`button[onclick="handleFeelback('${notif.from_user_id}', this)"]`);
+        const btn = document.querySelector(`button[onclick="handleShakeBack('${notif.from_user_id}', this)"]`);
         if (btn && following) {
-          btn.textContent = 'Unfeel';
+          btn.textContent = 'Unshake';
           btn.classList.add('following');
         }
       }
@@ -238,8 +238,8 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Fonction globale pour gérer le feelback depuis les notifications
-window.handleFeelback = async function(userId, buttonElement) {
+// Fonction globale pour gérer le shakeback depuis les notifications
+window.handleShakeBack = async function(userId, buttonElement) {
   if (!userId || !buttonElement) return;
 
   const isFollowing = buttonElement.classList.contains('following');
@@ -252,7 +252,7 @@ window.handleFeelback = async function(userId, buttonElement) {
     if (isFollowing) {
       const result = await unfollowUser(userId);
       if (result.success) {
-        buttonElement.textContent = 'Feelback';
+        buttonElement.textContent = 'ShakeBack';
         buttonElement.classList.remove('following');
         buttonElement.style.background = 'var(--primary)';
       } else {
@@ -262,7 +262,7 @@ window.handleFeelback = async function(userId, buttonElement) {
     } else {
       const result = await followUser(userId);
       if (result.success) {
-        buttonElement.textContent = 'Unfeel';
+        buttonElement.textContent = 'Unshake';
         buttonElement.classList.add('following');
         buttonElement.style.background = '#666';
       } else {

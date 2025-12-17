@@ -100,6 +100,32 @@ class SpotifyAPI {
     }
   }
 
+  // Récupérer le Top 50 Global Spotify
+  async getGlobalTop50() {
+    try {
+      // Rechercher des tracks populaires récentes
+      const data = await this.callEdgeFunction('search', { query: 'year:2024 top hits' });
+
+      if (!data.tracks || !data.tracks.items) return [];
+
+      return data.tracks.items.slice(0, 50).map((track, index) => ({
+        rank: index + 1,
+        id: track.id,
+        name: track.name,
+        artist: track.artists[0].name,
+        artists: track.artists.map(a => a.name).join(', '),
+        artistId: track.artists[0].id,
+        album: track.album.name,
+        cover: track.album.images[0]?.url || 'https://via.placeholder.com/300x300?text=No+Cover',
+        preview_url: track.preview_url,
+        spotify_url: track.external_urls.spotify
+      }));
+    } catch (error) {
+      console.error('❌ Error in getGlobalTop50:', error);
+      return [];
+    }
+  }
+
   // Rechercher des tracks
   async searchTracks(query) {
     if (!query || query.length < 2) return [];

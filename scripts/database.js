@@ -140,6 +140,33 @@ async function getUserPosts(userId, limit = 50) {
   }
 }
 
+// Get posts by multiple user IDs
+async function getPostsByUserIds(userIds, limit = 100) {
+  try {
+    if (!userIds || userIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color),
+        original_post:posts!original_post_id(
+          *,
+          user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color)
+        )
+      `)
+      .in('user_id', userIds)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting posts by user IDs:', error);
+    return [];
+  }
+}
+
 // Create post (shake a track)
 async function createPost(trackName, artist, coverUrl, text = '', previewUrl = null) {
   try {

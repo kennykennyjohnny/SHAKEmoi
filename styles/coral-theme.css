@@ -253,19 +253,19 @@ body {
   color: white;
 }
 
-/* Feelback button */
-.btn-feelback {
+/* ShakeBack button */
+.btn-shakeback {
   background: var(--primary) !important;
   color: white !important;
   font-weight: 600 !important;
 }
 
-.btn-feelback:hover {
+.btn-shakeback:hover {
   background: var(--primary-hover) !important;
   transform: translateY(-1px);
 }
 
-.btn-feelback.following {
+.btn-shakeback.following {
   background: var(--accent) !important;
 }
 
