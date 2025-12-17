@@ -584,8 +584,8 @@ function attachPostListeners() {
 let currentTopTab = 'france';
 
 async function loadTop100() {
-  // Charger l'onglet par défaut (Spotify)
-  await loadTopTab('spotify');
+  // Charger l'onglet par défaut (Pour toi)
+  await loadTopTab('reco');
   attachTopTabListeners();
 }
 

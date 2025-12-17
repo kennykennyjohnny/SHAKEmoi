@@ -8,9 +8,10 @@
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   position: sticky;
-  top: var(--header-height);
+  top: var(--header-height, 60px);
   z-index: 10;
   backdrop-filter: blur(10px);
+  margin-bottom: 0;
 }
 
 .top-tab-btn {
@@ -55,45 +56,34 @@
     var(--primary) 75%,
     transparent 100%
   );
-  animation: wave-slide 2s ease-in-out infinite;
+  animation: wave-slide-once 1.5s ease-in-out;
 }
 
-@keyframes wave-slide {
+@keyframes wave-slide-once {
   0% {
     transform: translateX(-100%);
+    opacity: 0;
   }
   50% {
     transform: translateX(0%);
+    opacity: 1;
   }
   100% {
     transform: translateX(100%);
+    opacity: 0;
   }
 }
 
-/* Alternative: Animation de lueur pulsante */
-.top-tab-btn.active .wave-indicator::after {
+/* Ligne fixe sous l'onglet actif */
+.top-tab-btn.active::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60%;
-  height: 100%;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
   background: var(--primary);
-  box-shadow: 0 0 20px var(--primary), 0 0 40px rgba(255, 111, 97, 0.5);
-  filter: blur(8px);
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
-@keyframes glow-pulse {
-  0%, 100% {
-    opacity: 0.6;
-    width: 40%;
-  }
-  50% {
-    opacity: 1;
-    width: 70%;
-  }
+  z-index: 1;
 }
 
 /* Responsive */
@@ -107,4 +97,10 @@
 /* Ajuster le conteneur du top pour tenir compte des tabs */
 #top-container {
   margin-top: 0;
+  padding-top: 0.5rem;
+}
+
+/* S'assurer que la vue top ne cache pas le contenu */
+#top-view {
+  position: relative;
 }
