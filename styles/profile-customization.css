@@ -20,8 +20,9 @@
 .decorative-notes .note {
   position: absolute;
   font-size: 1.5rem;
-  opacity: 0.15;
+  opacity: 0.4;
   animation: float 3s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .decorative-notes .note-1 {

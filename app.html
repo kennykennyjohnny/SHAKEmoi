@@ -20,6 +20,8 @@
   <link rel="stylesheet" href="styles/profile-customization.css">
   <!-- Design moderne des posts - en dernier pour surcharger tout -->
   <link rel="stylesheet" href="styles/posts-modern.css">
+  <!-- Fix lisibilité - contraste optimisé + compacité -->
+  <link rel="stylesheet" href="styles/lisibilite-fix.css">
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
 </head>
@@ -212,6 +214,14 @@
     <div class="modal-content user-profile-modal">
       <button class="modal-close" onclick="closeUserProfile()">✕</button>
       <div class="profile-header">
+        <!-- Notes décoratives -->
+        <div class="decorative-notes" id="modal-decorative-notes">
+          <span class="note note-1">♪</span>
+          <span class="note note-2">♫</span>
+          <span class="note note-3">♪</span>
+          <span class="note note-4">♫</span>
+          <span class="note note-5">♪</span>
+        </div>
         <div class="music-note" id="modal-user-note">♪</div>
         <h2 class="username" id="modal-user-username">@username</h2>
         <div class="stats">

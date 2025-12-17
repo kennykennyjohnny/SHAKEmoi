@@ -1,0 +1,200 @@
+/* ===================================================
+   SHAKEMOI - FIX LISIBILITÉ
+   Contraste optimisé + Posts compacts
+   =================================================== */
+
+/* Variables globales de lisibilité */
+:root {
+  --text-primary: #FFFFFF;
+  --text-secondary: #D1D5DB;
+  --text-tertiary: #9CA3AF;
+  --bg-primary: #0A0A12;
+  --bg-secondary: #1F1F2E;
+  --bg-card: #1F1F2E;
+  --border-color: #374151;
+}
+
+/* Corps de page - fond noir profond */
+body {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Feed - espacement ultra réduit */
+.feed-container {
+  padding: 6px !important;
+  gap: 4px !important;
+}
+
+.view-content {
+  padding: 8px !important;
+}
+
+/* Posts - Ultra compacts et lisibles */
+.post {
+  padding: 10px 14px !important;
+  margin-bottom: 4px !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 10px !important;
+}
+
+.post:hover {
+  border-color: #FF6F61 !important;
+}
+
+.post-header {
+  margin-bottom: 8px !important;
+  gap: 8px !important;
+}
+
+.post-content {
+  margin: 8px 0 !important;
+  line-height: 1.4 !important;
+}
+
+.post-footer,
+.post-actions {
+  margin-top: 8px !important;
+  padding-top: 8px !important;
+}
+
+/* Typographie - Lisible et contrastée */
+.post-text,
+.track-title,
+.username,
+.username-inline {
+  color: var(--text-primary) !important;
+}
+
+.post-text {
+  font-size: 15px !important;
+  line-height: 1.4 !important;
+  font-weight: 400 !important;
+}
+
+.username,
+.username-inline,
+.post-username {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.username:hover,
+.username-inline:hover {
+  color: #FF6F61 !important;
+}
+
+.track-title {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+}
+
+.track-artist,
+.post-time,
+.timestamp,
+.timestamp-inline,
+.post-timestamp-bottom {
+  font-size: 13px !important;
+  color: var(--text-secondary) !important;
+  font-weight: 400 !important;
+}
+
+/* Séparateurs - Bordures visibles */
+.post,
+.post-card {
+  border: 1px solid var(--border-color) !important;
+}
+
+.post-actions {
+  border-top: 1px solid var(--border-color) !important;
+}
+
+/* Boutons d'action - Contraste amélioré */
+.action-btn {
+  background: transparent !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-secondary) !important;
+}
+
+.action-btn:hover {
+  border-color: #FF6F61 !important;
+  color: #FF6F61 !important;
+  background: rgba(255, 111, 97, 0.1) !important;
+}
+
+.action-btn.liked,
+.action-btn.active {
+  color: #FF6F61 !important;
+  border-color: #FF6F61 !important;
+}
+
+/* Commentaires - Lisibilité améliorée */
+.comment-text,
+.comment-content {
+  color: var(--text-primary) !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+
+.comment-username {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+}
+
+.comment-username:hover {
+  color: #FF6F61 !important;
+}
+
+/* Albums/Covers - Recadrage parfait */
+.track-cover,
+.cover-image,
+img[class*="cover"],
+img[class*="album"] {
+  object-fit: cover !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.track-cover-container {
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+/* Cover carrée et bien recadrée */
+.track-cover {
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 8px !important;
+}
+
+/* Boutons Spotify */
+.spotify-btn,
+.spotify-profile-btn {
+  background: #1DB954 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.spotify-btn:hover,
+.spotify-profile-btn:hover {
+  background: #1ed760 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3) !important;
+}
+
+.spotify-profile-btn {
+  margin-top: 8px !important;
+  width: 100% !important;
+  justify-content: center !important;
+}

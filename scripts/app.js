@@ -329,34 +329,21 @@ function renderPost(post) {
   // Si c'est un reshake, utiliser l'auteur original pour le corps du post
   const originalAuthor = post.is_reshake && post.original_post?.user ? post.original_post.user : post.user;
 
-  // Si c'est un reshake, afficher l'info avec l'utilisateur qui a reshake et l'auteur original
-  let reshakeHeader = '';
+  // Si c'est un reshake, afficher info discrète avec le reshakeur
+  let reshakeFooter = '';
   if (post.is_reshake) {
-    if (post.original_post?.user) {
-      reshakeHeader = `
-        <div class="reshake-header">
-          <span class="reshake-icon">↻</span>
-          <span class="reshake-text">
-            <span class="username" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span> a reshake le post de <span class="username" onclick="openUserProfile('${originalAuthor.id}')">@${originalAuthor.username}</span>
-          </span>
-        </div>
-      `;
-    } else {
-      reshakeHeader = `
-        <div class="reshake-header">
-          <span class="reshake-icon">↻</span>
-          <span class="reshake-text">
-            <span class="username" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span> a reshake ce post
-          </span>
-        </div>
-      `;
-    }
+    reshakeFooter = `
+      <div class="reshake-header">
+        <span class="reshake-icon">↻</span>
+        <span class="reshake-text">
+          <span class="username" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span>
+        </span>
+      </div>
+    `;
   }
 
   return `
     <article class="post post-with-comments" data-post-id="${postId}">
-      ${reshakeHeader}
-
       <div class="post-content">
         <!-- Pochette à gauche avec play button -->
         <div class="track-cover-container">
@@ -376,11 +363,10 @@ function renderPost(post) {
 
         <!-- Infos à droite -->
         <div class="post-info-right">
-          <!-- User + timestamp (auteur original si reshake) -->
+          <!-- User (auteur original si reshake) -->
           <div class="post-header-inline">
             <div class="user-note" style="${originalAuthor.profile_album_cover_url ? `background-image: url(${originalAuthor.profile_album_cover_url}); background-size: cover; background-position: center; border: 3px solid ${originalAuthor.profile_color || originalAuthor.color};` : `background: ${originalAuthor.profile_color || originalAuthor.color};`} cursor: pointer;" onclick="openUserProfile('${originalAuthor.id}')">${originalAuthor.profile_album_cover_url ? '' : '♪'}</div>
             <span class="username-inline" onclick="openUserProfile('${originalAuthor.id}')">@${originalAuthor.username}</span>
-            <span class="timestamp-inline">${timeAgo}</span>
           </div>
 
           <!-- Track info -->
@@ -407,6 +393,12 @@ function renderPost(post) {
           </div>
         </div>
       </div>
+
+      <!-- Timestamp en bas à droite -->
+      <div class="post-timestamp-bottom">${timeAgo}</div>
+
+      <!-- Info reshake discrète en bas à gauche -->
+      ${reshakeFooter}
 
     </article>
   `;
@@ -519,6 +511,11 @@ function renderTopTrack(track) {
         <p class="track-artist">${escapeHtml(track.artist)}</p>
       </div>
       <div class="track-actions">
+        ${track.spotify_url || track.external_urls?.spotify ? `
+          <button class="action-btn spotify-btn" title="Ouvrir dans Spotify" onclick="window.open('${track.spotify_url || track.external_urls?.spotify}', '_blank')">
+            <span class="icon">🎵</span>
+          </button>
+        ` : ''}
         <button class="action-btn shake-btn" title="Shake ce morceau">
           <span class="icon">♥</span>
         </button>
@@ -597,6 +594,11 @@ function renderSearchTrack(track) {
         <p class="track-artist">${escapeHtml(track.artist)}</p>
       </div>
       <div class="track-actions">
+        ${track.spotify_url || track.external_urls?.spotify ? `
+          <button class="action-btn spotify-btn" title="Ouvrir dans Spotify" onclick="window.open('${track.spotify_url || track.external_urls?.spotify}', '_blank')">
+            <span class="icon">🎵</span>
+          </button>
+        ` : ''}
         <button class="action-btn shake-btn" title="Shake ce morceau">
           <span class="icon">♥</span>
         </button>
@@ -780,6 +782,11 @@ async function loadProfileTab(tab) {
                   <span>♥ ${post.likes_count || 0}</span>
                   <span>💭 ${post.comments_count || 0}</span>
                 </div>
+                ${post.spotify_url || post.track_id ? `
+                  <button class="spotify-profile-btn" onclick="window.open('${post.spotify_url || `https://open.spotify.com/track/${post.track_id}`}', '_blank')" title="Ouvrir dans Spotify">
+                    🎵 Spotify
+                  </button>
+                ` : ''}
               </div>
             </div>
           `).join('')}
@@ -820,6 +827,11 @@ async function loadProfileTab(tab) {
                   <span>♥ ${post.likes_count || 0}</span>
                   <span>💭 ${post.comments_count || 0}</span>
                 </div>
+                ${post.spotify_url || post.track_id ? `
+                  <button class="spotify-profile-btn" onclick="window.open('${post.spotify_url || `https://open.spotify.com/track/${post.track_id}`}', '_blank')" title="Ouvrir dans Spotify">
+                    🎵 Spotify
+                  </button>
+                ` : ''}
               </div>
             </div>
           `).join('')}
@@ -1131,6 +1143,12 @@ async function openUserProfile(userId) {
 
     document.getElementById('modal-user-username').textContent = `@${userProfile.username}`;
 
+    // Appliquer la couleur pastel aux notes décoratives de la modal
+    const modalDecorativeNotes = document.querySelectorAll('#modal-decorative-notes .note');
+    modalDecorativeNotes.forEach(note => {
+      note.style.color = profileColor;
+    });
+
     const stats = await getUserStats(userId);
     const modalFeelsCount = document.getElementById('modal-feels-count');
     modalFeelsCount.textContent = stats.feels;
@@ -1195,6 +1213,11 @@ async function openUserProfile(userId) {
                 <span>❤️ ${post.likes_count || 0}</span>
                 <span>💬 ${post.comments_count || 0}</span>
               </div>
+              ${post.spotify_url || post.track_id ? `
+                <button class="spotify-profile-btn" onclick="window.open('${post.spotify_url || `https://open.spotify.com/track/${post.track_id}`}', '_blank')" title="Ouvrir dans Spotify">
+                  🎵 Spotify
+                </button>
+              ` : ''}
             </div>
           </div>
         `).join('')}
