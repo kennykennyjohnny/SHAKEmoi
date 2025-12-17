@@ -696,9 +696,9 @@ body {
   left: 0;
   right: 0;
   height: var(--nav-height);
-  background: var(--bg-glass);
+  background: var(--bg-secondary) !important;
   backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -715,13 +715,19 @@ body {
   padding: var(--spacing-xs);
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: #ADB5BD !important;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  border-radius: 12px;
 }
 
 .nav-btn.active {
-  color: var(--primary);
+  color: var(--primary) !important;
+  background: rgba(255, 111, 97, 0.15) !important;
+}
+
+.nav-btn:hover {
+  color: var(--primary) !important;
 }
 
 .nav-icon {
