@@ -12,7 +12,6 @@
 /* Posts ultra compacts - style Instagram */
 .post {
   padding: 0.6rem 0.5rem !important;
-  padding-left: 2.5rem !important; /* Espace pour reshake à gauche */
   margin-bottom: 0.5rem !important;
   display: flex;
   flex-direction: column;
@@ -184,20 +183,17 @@
   align-items: center;
 }
 
-/* Reshake button repositionné à gauche du post */
-.reshake-btn {
-  position: absolute !important;
-  left: 0.3rem !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  right: auto !important;
-  flex-direction: column !important;
-  padding: 0.3rem !important;
-  min-width: 40px !important;
+/* Like en haut, reshake + comment en bas côte à côte */
+.post-actions .like-btn {
+  order: 1;
 }
 
-.reshake-btn .icon {
-  font-size: 1.2rem !important;
+.post-actions .reshake-btn {
+  order: 2;
+}
+
+.post-actions .comment-btn {
+  order: 3;
 }
 
 .action-btn {
