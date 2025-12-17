@@ -166,6 +166,33 @@ class SpotifyAPI {
       return null;
     }
   }
+
+  // Rechercher des albums
+  async searchAlbums(query) {
+    if (!query || query.length < 2) return [];
+
+    try {
+      const data = await this.callEdgeFunction('search-albums', { query });
+
+      if (!data.albums || !data.albums.items) return [];
+
+      return data.albums.items.map(album => ({
+        id: album.id,
+        name: album.name,
+        artist: album.artists[0].name,
+        artists: album.artists.map(a => a.name).join(', '),
+        images: album.images,
+        cover: album.images[0]?.url || 'https://via.placeholder.com/300x300?text=No+Cover',
+        coverMedium: album.images[1]?.url,
+        coverSmall: album.images[2]?.url,
+        release_date: album.release_date,
+        spotify_url: album.external_urls.spotify
+      }));
+    } catch (error) {
+      console.error('❌ Error searching albums:', error);
+      return [];
+    }
+  }
 }
 
 // Initialiser l'API Spotify

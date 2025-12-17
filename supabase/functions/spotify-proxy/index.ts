@@ -70,6 +70,10 @@ serve(async (req) => {
         url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&market=FR&limit=20`;
         break;
 
+      case 'search-albums':
+        url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&market=FR&limit=20`;
+        break;
+
       case 'artist':
         url = `https://api.spotify.com/v1/artists/${artistId}`;
         break;

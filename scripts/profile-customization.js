@@ -84,28 +84,21 @@ async function searchSpotifyAlbums(query) {
   resultsContainer.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
   try {
-    const token = await getSpotifyToken();
-    const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=8`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const albums = await spotify.searchAlbums(query);
 
-    const data = await response.json();
-
-    if (data.albums.items.length === 0) {
+    if (albums.length === 0) {
       resultsContainer.innerHTML = '<div class="album-results-empty">Aucun album trouvé</div>';
       return;
     }
 
-    const albumsHtml = data.albums.items.map(album => `
-      <div class="album-result-item" data-album-id="${album.id}" data-album-name="${escapeHtml(album.name)}" data-album-artist="${escapeHtml(album.artists[0].name)}" data-album-cover="${album.images[0]?.url || ''}">
-        <img src="${album.images[2]?.url || album.images[0]?.url || 'https://via.placeholder.com/50'}"
+    const albumsHtml = albums.slice(0, 8).map(album => `
+      <div class="album-result-item" data-album-id="${album.id}" data-album-name="${escapeHtml(album.name)}" data-album-artist="${escapeHtml(album.artist)}" data-album-cover="${album.cover}">
+        <img src="${album.coverSmall || album.cover || 'https://via.placeholder.com/50'}"
              class="album-result-cover"
              alt="${escapeHtml(album.name)}">
         <div class="album-result-info">
           <div class="album-result-name">${escapeHtml(album.name)}</div>
-          <div class="album-result-artist">${escapeHtml(album.artists[0].name)}</div>
+          <div class="album-result-artist">${escapeHtml(album.artist)}</div>
         </div>
       </div>
     `).join('');

@@ -47,27 +47,27 @@ const SHAKEMOI_EMOJIS = {
 function updateEmojis() {
   // Like buttons
   document.querySelectorAll('.action-button.like, .like-btn').forEach(btn => {
-    const count = btn.querySelector('span');
-    const countText = count ? count.textContent : '';
+    const countSpan = btn.querySelector('span.count');
+    const countText = countSpan ? countSpan.textContent : '';
     const isActive = btn.classList.contains('active') || btn.classList.contains('liked');
 
     btn.innerHTML = isActive
-      ? `${SHAKEMOI_EMOJIS.liked} ${count ? `<span>${countText}</span>` : ''}`
-      : `${SHAKEMOI_EMOJIS.like} ${count ? `<span>${countText}</span>` : ''}`;
+      ? `${SHAKEMOI_EMOJIS.liked} ${countSpan ? `<span class="count">${countText}</span>` : ''}`
+      : `${SHAKEMOI_EMOJIS.like} ${countSpan ? `<span class="count">${countText}</span>` : ''}`;
   });
 
   // Comments
   document.querySelectorAll('.action-button.comment, .comment-btn').forEach(btn => {
-    const count = btn.querySelector('span');
-    const countText = count ? count.textContent : '';
-    btn.innerHTML = `${SHAKEMOI_EMOJIS.comment} ${count ? `<span>${countText}</span>` : ''}`;
+    const countSpan = btn.querySelector('span.count');
+    const countText = countSpan ? countSpan.textContent : '';
+    btn.innerHTML = `${SHAKEMOI_EMOJIS.comment} ${countSpan ? `<span class="count">${countText}</span>` : ''}`;
   });
 
   // ReShakes
   document.querySelectorAll('.action-button.reshake, .reshake-btn').forEach(btn => {
-    const count = btn.querySelector('span');
-    const countText = count ? count.textContent : '';
-    btn.innerHTML = `${SHAKEMOI_EMOJIS.reshake} ${count ? `<span>${countText}</span>` : ''}`;
+    const countSpan = btn.querySelector('span.count');
+    const countText = countSpan ? countSpan.textContent : '';
+    btn.innerHTML = `${SHAKEMOI_EMOJIS.reshake} ${countSpan ? `<span class="count">${countText}</span>` : ''}`;
   });
 
   // Menu buttons
