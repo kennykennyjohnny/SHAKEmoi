@@ -13,11 +13,11 @@
   --secondary: #FFD166;
   --accent: #4ECDC4;
 
-  /* Couleurs de fond - Palette créative */
+  /* Couleurs de fond - Palette créative GRIS */
   --bg-main: #293133;
   --bg-elevated: #3A4245;
-  --bg-card: #FFFFFF;
-  --bg-surface: #F8F9FA;
+  --bg-card: #3A4245;
+  --bg-surface: #293133;
 
   /* Couleurs de texte */
   --text-on-dark: #FFFFFF;
@@ -149,7 +149,7 @@ body {
 .reshake-header {
   background: rgba(255, 209, 102, 0.1);
   border-left: 3px solid var(--secondary);
-  color: var(--text-on-light);
+  color: var(--text-on-dark);
 }
 
 .reshake-icon {
@@ -218,7 +218,7 @@ body {
 }
 
 .notif-item {
-  color: var(--text-on-light);
+  color: var(--text-on-dark);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -234,7 +234,7 @@ body {
 /* Search */
 .search-input {
   background: var(--bg-card);
-  color: var(--text-on-light);
+  color: var(--text-on-dark);
   border: 1px solid var(--border-color);
 }
 
