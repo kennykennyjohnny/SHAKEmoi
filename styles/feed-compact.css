@@ -9,13 +9,13 @@
   max-width: 100%;
 }
 
-/* Posts compacts */
+/* Posts ultra compacts - plus de posts visibles */
 .post {
-  padding: 0.75rem;
-  margin-bottom: 0.75rem;
+  padding: 0.6rem !important;
+  margin-bottom: 0.5rem !important;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 /* Reshake header compact */
@@ -32,26 +32,28 @@
   font-size: 1rem;
 }
 
-/* Post content - layout horizontal compact */
+/* Post content - layout horizontal aligné */
 .post-content {
   display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
+  gap: 0.65rem;
+  align-items: center !important;
 }
 
-/* Cover à gauche - plus petite */
+/* Cover à gauche - taille fixe */
 .track-cover-container {
   flex-shrink: 0;
-  width: 60px;
-  height: 60px;
+  width: 55px;
+  height: 55px;
   position: relative;
+  align-self: flex-start;
 }
 
 .track-cover {
-  width: 60px;
-  height: 60px;
-  border-radius: 6px;
+  width: 55px;
+  height: 55px;
+  border-radius: 8px;
   object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Play overlay adapté */
@@ -59,10 +61,10 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 60px;
-  height: 60px;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 6px;
+  width: 55px;
+  height: 55px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -81,40 +83,43 @@
   fill: white;
 }
 
-/* Infos à droite - aligné à gauche */
+/* Infos à droite - bien aligné avec cover */
 .post-info-right {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.3rem;
+  align-self: flex-start;
 }
 
 /* Header inline compact */
 .post-header-inline {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   flex-wrap: wrap;
+  margin-bottom: 0.15rem;
 }
 
 .user-note {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   flex-shrink: 0;
 }
 
 .username-inline {
-  font-weight: 600;
-  font-size: 0.875rem;
+  font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
   color: #FF6F61 !important;
   transition: color 0.2s ease;
+  line-height: 1.2;
 }
 
 .username-inline:hover {
@@ -122,51 +127,53 @@
 }
 
 .timestamp-inline {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   margin-left: auto;
 }
 
-/* Track info compact */
+/* Track info - texte plus grand et lisible */
 .track-info-compact {
   margin: 0;
+  line-height: 1.3;
 }
 
 .track-title {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   margin: 0;
-  line-height: 1.3;
-  color: var(--text-on-light);
+  line-height: 1.25;
+  color: #D64545 !important;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
 .track-artist {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
-  margin: 0.1rem 0 0 0;
+  margin: 0.15rem 0 0 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 500;
 }
 
-/* Post text compact */
+/* Post text - plus lisible */
 .post-text {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   line-height: 1.4;
-  margin: 0.25rem 0 0 0;
+  margin: 0.2rem 0 0 0;
   color: var(--text-on-light);
 }
 
 /* Actions compactes */
 .post-actions {
   display: flex;
-  gap: 1rem;
-  margin-top: 0.35rem;
+  gap: 0.8rem;
+  margin-top: 0.3rem;
 }
 
 .action-btn {
@@ -307,34 +314,38 @@
   color: #FF5A4A !important;
 }
 
-/* Responsive */
+/* Responsive - desktop */
 @media (min-width: 768px) {
   .feed-container {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 
   .post {
-    padding: 1rem;
-    margin-bottom: 1rem;
+    padding: 0.75rem !important;
+    margin-bottom: 0.6rem !important;
   }
 
   .track-cover-container {
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
   }
 
   .track-cover,
   .play-overlay {
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
   }
 
   .track-title {
-    font-size: 1rem;
+    font-size: 1.05rem;
   }
 
   .track-artist {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
+  }
+
+  .username-inline {
+    font-size: 0.95rem;
   }
 }
 

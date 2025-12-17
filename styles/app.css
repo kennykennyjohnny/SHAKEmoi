@@ -75,11 +75,12 @@ body {
 .logo {
   font-size: 1.5rem;
   font-weight: 900;
-  background: linear-gradient(135deg, #FF6F61, #FFB3A7, #FF8E80) !important;
+  background: linear-gradient(135deg, #FF6F61 0%, #FF8E80 50%, #FFB3A7 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
   letter-spacing: -1px;
+  filter: drop-shadow(0 0 20px rgba(255, 111, 97, 0.3));
 }
 
 .logout-btn {
