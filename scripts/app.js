@@ -848,9 +848,16 @@ function renderSearchTrack(track) {
 }
 
 function renderSearchUser(user) {
+  // Utiliser la photo de profil si disponible, sinon la note musicale
+  const avatarStyle = user.profile_album_cover_url
+    ? `background-image: url(${user.profile_album_cover_url}); background-size: cover; background-position: center; border: 3px solid ${user.profile_color || user.color};`
+    : `background: ${user.profile_color || user.color};`;
+
+  const avatarContent = user.profile_album_cover_url ? '' : '♪';
+
   return `
     <div class="user-result" data-user-id="${user.id}">
-      <div class="user-avatar" style="background: ${user.color}; cursor: pointer;" onclick="openUserProfile('${user.id}')">♪</div>
+      <div class="user-avatar" style="${avatarStyle} cursor: pointer;" onclick="openUserProfile('${user.id}')">${avatarContent}</div>
       <div class="user-info" style="cursor: pointer;" onclick="openUserProfile('${user.id}')">
         <div class="user-name">@${escapeHtml(user.username)}</div>
         <div class="user-stats">${user.feels_count || 0} shakeurs</div>

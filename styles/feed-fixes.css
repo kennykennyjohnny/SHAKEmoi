@@ -6,6 +6,7 @@
 .post {
   min-height: 96px !important; /* 72px pochette + 24px padding */
   max-height: 96px !important;
+  position: relative !important;
 }
 
 /* Post content - hauteur fixe pour contenir la pochette */
@@ -14,46 +15,40 @@
   align-items: stretch !important;
 }
 
-/* Infos à droite - reorganisées avec actions en haut */
+/* Infos à droite - layout simple sans les actions */
 .post-info-right {
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  grid-template-rows: auto auto 1fr auto !important;
+  display: flex !important;
+  flex-direction: column !important;
   gap: 4px !important;
   height: 100% !important;
+  padding-right: 100px !important; /* Espace pour les actions */
 }
 
-/* Header en ligne 2 */
+/* Header en haut */
 .post-header-inline {
-  grid-column: 1 / 2 !important;
-  grid-row: 2 / 3 !important;
   margin-bottom: 0 !important;
 }
 
-/* Actions EN LIGNE en haut */
+/* Actions EN COLONNE VERTICALE à droite */
 .post-actions {
-  grid-column: 1 / 3 !important;
-  grid-row: 1 / 2 !important;
-  flex-direction: row !important;
-  gap: 6px !important;
-  margin-top: 0 !important;
-  margin-bottom: 4px !important;
-  padding-bottom: 0 !important;
-  justify-content: flex-end !important;
-  align-items: center !important;
+  position: absolute !important;
+  right: 8px !important;
+  top: 8px !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 2 !important;
 }
 
-/* Track info en ligne 3 */
+/* Track info */
 .track-info-compact {
-  grid-column: 1 / 2 !important;
-  grid-row: 3 / 4 !important;
   margin-bottom: 0 !important;
+  flex: 1 !important;
 }
 
 /* Post text en bas si présent */
 .post-text {
-  grid-column: 1 / 2 !important;
-  grid-row: 4 / 5 !important;
   margin: 0 !important;
   font-size: 0.75rem !important;
   -webkit-line-clamp: 1 !important;

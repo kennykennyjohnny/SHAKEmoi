@@ -97,10 +97,17 @@
 /* Ajuster le conteneur du top pour tenir compte des tabs */
 #top-container {
   margin-top: 0;
-  padding-top: 0.5rem;
+  padding-top: 1rem;
 }
 
 /* S'assurer que la vue top ne cache pas le contenu */
 #top-view {
   position: relative;
+  padding-top: 0;
+}
+
+/* Container des tracks avec scroll */
+.top-container {
+  overflow-y: auto;
+  max-height: calc(100vh - var(--header-height, 60px) - 70px - var(--nav-height, 70px));
 }
