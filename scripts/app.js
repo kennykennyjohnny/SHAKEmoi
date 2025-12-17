@@ -653,15 +653,54 @@ function attachSearchUserListeners() {
 // ==================== PROFILE ====================
 
 async function loadProfile() {
+  await loadUserProfile(currentUser.id);
+}
+
+async function loadUserProfile(userId) {
   try {
-    // Update header
-    document.getElementById('user-note').style.background = currentProfile.color;
+    // Charger les données de personnalisation du profil
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('profile_album_cover_url, profile_album_id, profile_color')
+      .eq('user_id', userId)
+      .single();
+
+    // Afficher bouton "Modifier" (seulement sur son propre profil)
+    const editBtn = document.getElementById('btn-edit-profile');
+    if (editBtn) {
+      // Afficher seulement si c'est le profil de l'utilisateur connecté
+      editBtn.style.display = (userId === currentUser.id) ? 'flex' : 'none';
+    }
+
+    // Update header avec pochette personnalisée ou note musicale
+    const userNote = document.getElementById('user-note');
+    const profileColor = profileData?.profile_color || currentProfile.color;
+
+    if (profileData?.profile_album_cover_url) {
+      // Utiliser la pochette d'album comme photo de profil
+      userNote.style.backgroundImage = `url(${profileData.profile_album_cover_url})`;
+      userNote.style.backgroundSize = 'cover';
+      userNote.style.backgroundPosition = 'center';
+      userNote.style.border = `6px solid ${profileColor}`;
+      userNote.textContent = ''; // Retirer la note musicale
+    } else {
+      // Utiliser la note musicale par défaut
+      userNote.style.background = profileColor;
+      userNote.style.backgroundImage = 'none';
+      userNote.style.border = `6px solid ${profileColor}`;
+      userNote.textContent = '♪';
+    }
+
+    // Appliquer la couleur comme accent
+    document.documentElement.style.setProperty('--profile-accent', profileColor);
+
     document.getElementById('user-username').textContent = `@${currentProfile.username}`;
 
-    const stats = await getUserStats(currentUser.id);
+    const stats = await getUserStats(userId);
     const feelsElement = document.getElementById('feels-count');
 
     feelsElement.textContent = stats.feels;
+    feelsElement.style.color = profileColor; // Accent de couleur
 
     // Make stats clickable - only shows people who follow you (Shakeurs)
     feelsElement.style.cursor = 'pointer';
@@ -1204,3 +1243,6 @@ function closeUsersListModal() {
 
   modal.classList.remove('active');
 }
+
+// Export pour profile-customization.js
+window.loadUserProfile = loadUserProfile;

@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="styles/header-navbar-modern.css">
   <link rel="stylesheet" href="styles/coral-theme.css">
   <link rel="stylesheet" href="styles/feed-compact.css">
+  <link rel="stylesheet" href="styles/profile-customization.css">
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
 </head>
@@ -96,6 +97,14 @@
             <!-- Note musicale colorée -->
             <div class="music-note" id="user-note">♪</div>
             <h2 class="username" id="user-username">@username</h2>
+
+            <!-- Bouton Modifier (visible seulement sur son profil) -->
+            <button class="btn-edit-profile" id="btn-edit-profile" style="display: none;" onclick="openEditProfileModal()">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/>
+              </svg>
+              Modifier
+            </button>
 
             <div class="stats">
               <div class="stat">
@@ -217,6 +226,49 @@
     </div>
   </div>
 
+  <!-- Modal pour personnalisation profil -->
+  <div id="edit-profile-modal" class="modal">
+    <div class="modal-content edit-profile-modal">
+      <h3>Personnalise ton profil</h3>
+
+      <!-- Prévisualisation -->
+      <div class="profile-preview">
+        <div class="profile-pic-preview" id="profile-pic-preview">
+          <div class="profile-pic-ring" id="profile-pic-ring" style="border-color: #F5D5E8;">
+            <img id="preview-album-cover" src="" alt="Pochette" style="display: none;">
+            <div class="default-note">♪</div>
+          </div>
+        </div>
+        <p class="preview-label" id="preview-album-name">Choisis une pochette d'album</p>
+      </div>
+
+      <!-- Recherche pochette -->
+      <div class="album-search-section">
+        <label>Rechercher un album/single</label>
+        <input type="text" id="album-search-input" class="search-input-modal" placeholder="Nom de l'album ou artiste...">
+        <div id="album-search-results" class="album-results"></div>
+      </div>
+
+      <!-- Sélecteur couleurs -->
+      <div class="color-picker-section">
+        <label>Choisis ta couleur d'accent</label>
+        <div class="color-options">
+          <button class="color-option active" data-color="#F5D5E8" style="background: #F5D5E8;" title="Rose Tendre"></button>
+          <button class="color-option" data-color="#E8D5F5" style="background: #E8D5F5;" title="Lavande Douce"></button>
+          <button class="color-option" data-color="#D5E8F5" style="background: #D5E8F5;" title="Bleu Ciel"></button>
+          <button class="color-option" data-color="#E8F5D5" style="background: #E8F5D5;" title="Menthe Légère"></button>
+          <button class="color-option" data-color="#F5F5D5" style="background: #F5F5D5;" title="Citron Pâle"></button>
+          <button class="color-option" data-color="#F5E8D5" style="background: #F5E8D5;" title="Pêche Douce"></button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancel-edit-profile">Annuler</button>
+        <button class="btn-primary" id="save-edit-profile">Sauvegarder</button>
+      </div>
+    </div>
+  </div>
+
   <script src="scripts/config.js"></script>
   <script src="scripts/database.js"></script>
   <script src="scripts/spotify.js"></script>
@@ -224,6 +276,7 @@
   <script src="scripts/notifications.js"></script>
   <script src="scripts/emojis.js"></script>
   <script src="scripts/v3-features.js"></script>
+  <script src="scripts/profile-customization.js"></script>
   <!-- App principal en dernier -->
   <script src="scripts/app.js"></script>
 </body>
