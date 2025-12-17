@@ -149,6 +149,16 @@ async function loadView(viewName) {
   // Show current view
   document.getElementById(`${viewName}-view`).classList.add('active');
 
+  // Gérer l'affichage du bouton "Modifier" dans le header
+  const editBtn = document.getElementById('btn-edit-profile-header');
+  if (editBtn) {
+    if (viewName !== 'profile') {
+      // Cacher le bouton sur les autres vues
+      editBtn.style.display = 'none';
+    }
+    // Si c'est la vue profil, loadUserProfile() s'occupera de l'afficher si nécessaire
+  }
+
   // Load view data
   switch (viewName) {
     case 'shake':
@@ -660,19 +670,19 @@ async function loadUserProfile(userId) {
   try {
     // Charger les données de personnalisation du profil
     const { data: profileData } = await supabase
-      .from('profiles')
+      .from('users_profile')
       .select('profile_album_cover_url, profile_album_id, profile_color')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .single();
 
-    // Afficher bouton "Modifier" (seulement sur son propre profil)
-    const editBtn = document.getElementById('btn-edit-profile');
+    // Afficher bouton "Modifier" dans le header (seulement sur son propre profil)
+    const editBtn = document.getElementById('btn-edit-profile-header');
     if (editBtn) {
       // Afficher seulement si c'est le profil de l'utilisateur connecté
       if (userId === currentUser.id) {
-        editBtn.classList.add('visible');
+        editBtn.style.display = 'flex';
       } else {
-        editBtn.classList.remove('visible');
+        editBtn.style.display = 'none';
       }
     }
 
@@ -695,16 +705,14 @@ async function loadUserProfile(userId) {
       userNote.textContent = '♪';
     }
 
-    // Appliquer la couleur comme accent
-    document.documentElement.style.setProperty('--profile-accent', profileColor);
-
+    // Appliquer la couleur uniquement sur la page profil (pas globalement)
     document.getElementById('user-username').textContent = `@${currentProfile.username}`;
 
     const stats = await getUserStats(userId);
     const feelsElement = document.getElementById('feels-count');
 
     feelsElement.textContent = stats.feels;
-    feelsElement.style.color = profileColor; // Accent de couleur
+    feelsElement.style.color = profileColor; // Accent de couleur sur le profil seulement
 
     // Make stats clickable - only shows people who follow you (Shakeurs)
     feelsElement.style.cursor = 'pointer';

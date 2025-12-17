@@ -22,9 +22,9 @@ async function loadCurrentProfile() {
     if (!user) return;
 
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('users_profile')
       .select('profile_album_cover_url, profile_album_id, profile_album_name, profile_album_artist, profile_color')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single();
 
     if (profile) {
@@ -186,7 +186,7 @@ document.getElementById('save-edit-profile')?.addEventListener('click', async ()
 
     // Sauvegarder dans Supabase
     const { error } = await supabase
-      .from('profiles')
+      .from('users_profile')
       .update({
         profile_album_cover_url: profileCustomization.selectedAlbum?.cover || null,
         profile_album_id: profileCustomization.selectedAlbum?.id || null,
@@ -194,7 +194,7 @@ document.getElementById('save-edit-profile')?.addEventListener('click', async ()
         profile_album_artist: profileCustomization.selectedAlbum?.artist || null,
         profile_color: profileCustomization.selectedColor
       })
-      .eq('user_id', user.id);
+      .eq('id', user.id);
 
     if (error) throw error;
 

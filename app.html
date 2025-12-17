@@ -37,6 +37,12 @@
             <!-- Pastille si notifications non lues -->
             <span class="notif-badge" id="notif-badge" style="display: none;"></span>
           </button>
+          <!-- Bouton Modifier Profil (visible seulement sur la vue profil) -->
+          <button class="notif-btn" id="btn-edit-profile-header" onclick="openEditProfileModal()" title="Modifier le profil" style="display: none;">
+            <svg class="notif-icon" viewBox="0 0 24 24">
+              <path d="M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/>
+            </svg>
+          </button>
           <!-- Bouton logout -->
           <button class="notif-btn" id="logout-btn" title="Déconnexion">
             <svg class="notif-icon" viewBox="0 0 24 24">
@@ -97,14 +103,6 @@
             <!-- Note musicale colorée -->
             <div class="music-note" id="user-note">♪</div>
             <h2 class="username" id="user-username">@username</h2>
-
-            <!-- Bouton Modifier (visible seulement sur son profil) -->
-            <button class="btn-edit-profile" id="btn-edit-profile" onclick="openEditProfileModal()">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                <path d="M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/>
-              </svg>
-              Modifier
-            </button>
 
             <div class="stats">
               <div class="stat">
