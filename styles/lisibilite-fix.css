@@ -198,3 +198,74 @@ img[class*="album"] {
   width: 100% !important;
   justify-content: center !important;
 }
+
+/* Bouton Spotify sur pochette post */
+.spotify-cover-btn {
+  position: absolute !important;
+  bottom: 4px !important;
+  right: 4px !important;
+  width: 28px !important;
+  height: 28px !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  z-index: 10 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.spotify-cover-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: #1DB954 !important;
+}
+
+.spotify-cover-btn:hover {
+  background: #1DB954 !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4) !important;
+}
+
+.spotify-cover-btn:hover svg {
+  color: white !important;
+}
+
+/* Bouton Spotify en haut à droite du post (couleur saumon/corail) */
+.spotify-post-btn {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: rgba(255, 111, 97, 0.15) !important;
+  border: 1.5px solid #FF6F61 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  z-index: 5 !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.spotify-post-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: #FF6F61 !important;
+}
+
+.spotify-post-btn:hover {
+  background: #FF6F61 !important;
+  border-color: #FF5A4A !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 4px 12px rgba(255, 111, 97, 0.4) !important;
+}
+
+.spotify-post-btn:hover svg {
+  color: white !important;
+}

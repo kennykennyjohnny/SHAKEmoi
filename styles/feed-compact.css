@@ -24,27 +24,41 @@
   transition: all 0.3s ease;
 }
 
-/* Reshake header - discret et en bas */
+/* Reshake header - discret et en bas avec logo blanc */
 .reshake-header {
-  padding: 4px 8px;
+  padding: 4px 6px;
   margin: 0;
   font-size: 11px;
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #9CA3AF;
-  opacity: 0.8;
+  color: #FFFFFF;
+  opacity: 0.9;
   position: absolute;
   bottom: 6px;
   left: 10px;
-  background: transparent;
-  border: none;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   z-index: 1;
 }
 
 .reshake-icon {
-  font-size: 0.85rem;
-  opacity: 0.7;
+  font-size: 0.9rem;
+  color: #FFFFFF;
+  opacity: 1;
+}
+
+.reshake-text {
+  font-size: 11px;
+  font-weight: 500;
+  color: #FFFFFF;
+}
+
+.reshake-text .username {
+  color: #FFFFFF !important;
+  font-weight: 600;
 }
 
 /* Post content - layout horizontal avec espace pour actions à droite */
