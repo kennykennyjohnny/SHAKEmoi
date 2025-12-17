@@ -21,7 +21,7 @@
   flex-direction: column !important;
   gap: 4px !important;
   height: 100% !important;
-  padding-right: 100px !important; /* Espace pour les actions */
+  padding-bottom: 30px !important; /* Espace pour les actions en bas */
 }
 
 /* Header en haut */
@@ -29,13 +29,14 @@
   margin-bottom: 0 !important;
 }
 
-/* Actions EN COLONNE VERTICALE à droite */
+/* Actions EN LIGNE HORIZONTALE au centre en bas */
 .post-actions {
   position: absolute !important;
-  right: 8px !important;
-  top: 8px !important;
-  flex-direction: column !important;
-  gap: 4px !important;
+  left: 50% !important;
+  bottom: 8px !important;
+  transform: translateX(-50%) !important;
+  flex-direction: row !important;
+  gap: 6px !important;
   margin: 0 !important;
   padding: 0 !important;
   z-index: 2 !important;
