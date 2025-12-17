@@ -32,30 +32,13 @@ function openInSpotify(trackUri) {
   window.open(spotifyUrl, '_blank');
 }
 
-// Toggle play/pause
+// Toggle play/pause - SIMPLIFIÉ : ouvre juste dans Spotify
 async function togglePlay(coverElement) {
   const post = coverElement.closest('.post');
   const trackUri = post.dataset.trackUri;
-  const musicCover = post.querySelector('.music-cover');
-  const waveform = post.querySelector('.track-waveform');
-  const playButton = post.querySelector('.play-button');
 
-  // Si Premium et player initialisé
-  if (window.spotifyPlayer && window.spotifyPlayer.isPremium) {
-    await window.spotifyPlayer.play(trackUri);
-
-    // Animations
-    musicCover.classList.add('playing');
-    waveform.classList.add('active');
-    playButton.classList.add('playing');
-    playButton.innerHTML = window.SHAKEMOI_EMOJIS?.paused || '⏸';
-
-    // Animer waveform
-    animateWaveform(waveform);
-  } else {
-    // Fallback : ouvrir dans Spotify
-    openInSpotify(trackUri);
-  }
+  // Ouvrir directement dans Spotify
+  openInSpotify(trackUri);
 }
 
 // Générer et animer waveform
@@ -98,19 +81,10 @@ function animateWaveform(waveformElement) {
   waveformElement.dataset.interval = interval;
 }
 
-// Seek dans timeline
+// Seek dans timeline - DÉSACTIVÉ pour le moment
 function seek(event, timelineBar) {
-  const rect = timelineBar.getBoundingClientRect();
-  const percent = (event.clientX - rect.left) / rect.width;
-  const progress = timelineBar.querySelector('.timeline-progress');
-  progress.style.width = `${percent * 100}%`;
-
-  // Si player actif, seek réel
-  if (window.spotifyPlayer && window.spotifyPlayer.currentTrack) {
-    const durationMs = window.spotifyPlayer.currentTrack.duration_ms;
-    const seekPosition = Math.floor(durationMs * percent);
-    window.spotifyPlayer.seek(seekPosition);
-  }
+  // Fonctionnalité désactivée - sera réactivée avec Spotify Premium
+  console.log('Seek désactivé pour le moment');
 }
 
 // Toggle description
@@ -211,53 +185,9 @@ function reportPost(postId) {
 
 // Initialisation au chargement
 document.addEventListener('DOMContentLoaded', async () => {
-  // Init Spotify Player si token disponible
-  const accessToken = localStorage.getItem('spotify_access_token');
-  if (accessToken && window.spotifyPlayer) {
-    try {
-      await window.spotifyPlayer.init(accessToken);
-    } catch (error) {
-      console.warn('Spotify Player init failed:', error);
-    }
-  }
-
-  // Listener pour updates de playback
-  document.addEventListener('track-changed', (e) => {
-    const { track, isPlaying, position, duration } = e.detail;
-    updateCurrentPost(track, isPlaying, position, duration);
-  });
+  console.log('🎵 SHAKEmoi interactions chargées');
+  // Spotify Player désactivé pour le moment
 });
-
-// Update le post en cours de lecture
-function updateCurrentPost(track, isPlaying, position, duration) {
-  // Trouver le post correspondant
-  const trackUri = `spotify:track:${track.id}`;
-  const post = document.querySelector(`[data-track-uri="${trackUri}"]`);
-
-  if (!post) return;
-
-  // Update timeline
-  const progress = post.querySelector('.timeline-progress');
-  if (progress) {
-    const percent = (position / duration) * 100;
-    progress.style.width = `${percent}%`;
-  }
-
-  // Update times
-  const times = post.querySelectorAll('.timeline-time');
-  if (times.length >= 2) {
-    times[0].textContent = formatTime(position);
-    times[1].textContent = formatTime(duration);
-  }
-}
-
-// Formater temps
-function formatTime(ms) {
-  const seconds = Math.floor(ms / 1000);
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
 
 // Export global
 window.togglePostMenu = togglePostMenu;
