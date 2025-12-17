@@ -1,0 +1,305 @@
+/* =====================================================
+   SHAKEMOI - DESIGN MODERNE DES POSTS
+   Pochette en avant, layout compact, esthétique
+   ===================================================== */
+
+/* Post container - carte élégante et compacte */
+.post {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  margin-bottom: 10px !important;
+  background: linear-gradient(145deg, #3A4245 0%, #2d3537 100%) !important;
+  border: 2px solid #FF6F61 !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+}
+
+.post:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(255, 111, 97, 0.3) !important;
+  border-color: #FF8E80 !important;
+}
+
+/* Reshake header - compact et visible */
+.reshake-header {
+  padding: 8px 12px !important;
+  background: rgba(255, 111, 97, 0.1) !important;
+  border-bottom: 1px solid rgba(255, 111, 97, 0.2) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 0.8rem !important;
+}
+
+.reshake-icon {
+  font-size: 1rem !important;
+  color: #FF6F61 !important;
+}
+
+.reshake-text {
+  color: #E0E0E0 !important;
+  font-size: 0.8rem !important;
+}
+
+.reshake-text .username {
+  color: #FF6F61 !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+.reshake-text .username:hover {
+  text-decoration: underline !important;
+}
+
+/* Post content - layout horizontal optimisé */
+.post-content {
+  display: flex !important;
+  gap: 12px !important;
+  padding: 12px !important;
+  align-items: flex-start !important;
+}
+
+/* Pochette - grande et mise en avant */
+.track-cover-container {
+  position: relative !important;
+  flex-shrink: 0 !important;
+  width: 90px !important;
+  height: 90px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  transition: transform 0.3s ease !important;
+}
+
+.post:hover .track-cover-container {
+  transform: scale(1.05) !important;
+}
+
+.track-cover {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+/* Play overlay */
+.play-overlay {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
+  cursor: pointer !important;
+}
+
+.track-cover-container:hover .play-overlay {
+  opacity: 1 !important;
+}
+
+.play-overlay svg {
+  width: 32px !important;
+  height: 32px !important;
+  fill: white !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) !important;
+}
+
+.play-overlay.playing {
+  background: rgba(255, 111, 97, 0.8) !important;
+  opacity: 1 !important;
+}
+
+/* Infos à droite - layout vertical compact */
+.post-info-right {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+/* Header inline - user + timestamp */
+.post-header-inline {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 2px !important;
+}
+
+.user-note {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.85rem !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease !important;
+}
+
+.user-note:hover {
+  transform: scale(1.1) !important;
+}
+
+.username-inline {
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  color: #FF6F61 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+}
+
+.username-inline:hover {
+  text-decoration: underline !important;
+}
+
+.timestamp-inline {
+  font-size: 0.75rem !important;
+  color: #9CA3AF !important;
+  margin-left: auto !important;
+  white-space: nowrap !important;
+}
+
+/* Track info - compact */
+.track-info-compact {
+  margin-bottom: 4px !important;
+}
+
+.track-title {
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  color: #FFFFFF !important;
+  margin: 0 0 2px 0 !important;
+  line-height: 1.2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 1 !important;
+  -webkit-box-orient: vertical !important;
+}
+
+.track-artist {
+  font-size: 0.8rem !important;
+  color: #B0B0B0 !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Post text */
+.post-text {
+  font-size: 0.85rem !important;
+  color: #E0E0E0 !important;
+  line-height: 1.4 !important;
+  margin: 0 0 6px 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+}
+
+/* Actions - compact et inline */
+.post-actions {
+  display: flex !important;
+  gap: 12px !important;
+  align-items: center !important;
+  margin-top: auto !important;
+}
+
+.action-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 4px 8px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  font-size: 0.8rem !important;
+  color: #B0B0B0 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.action-btn:hover {
+  background: rgba(255, 111, 97, 0.1) !important;
+  border-color: #FF6F61 !important;
+  color: #FF6F61 !important;
+  transform: translateY(-1px) !important;
+}
+
+.action-btn.liked,
+.action-btn.active {
+  background: rgba(255, 111, 97, 0.15) !important;
+  border-color: #FF6F61 !important;
+  color: #FF6F61 !important;
+}
+
+.action-btn .icon {
+  font-size: 1rem !important;
+}
+
+.action-btn .count {
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  min-width: 12px !important;
+  text-align: center !important;
+}
+
+/* Feed container */
+.feed-container {
+  padding: 8px !important;
+  max-width: 600px !important;
+  margin: 0 auto !important;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .track-cover-container {
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  .track-title {
+    font-size: 0.85rem !important;
+  }
+
+  .track-artist {
+    font-size: 0.75rem !important;
+  }
+
+  .action-btn {
+    padding: 3px 6px !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Animation d'apparition */
+.post {
+  animation: slideUp 0.3s ease !important;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

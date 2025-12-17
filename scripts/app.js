@@ -330,14 +330,28 @@ function renderPost(post) {
   const originalAuthor = post.is_reshake && post.original_post?.user ? post.original_post.user : post.user;
 
   // Si c'est un reshake, afficher l'info avec l'utilisateur qui a reshake et l'auteur original
-  const reshakeHeader = post.is_reshake && post.original_post?.user ? `
-    <div class="reshake-header">
-      <span class="reshake-icon">↻</span>
-      <span class="reshake-text">
-        <span class="username" style="cursor: pointer;" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span> a reshake le post de <span class="username" style="cursor: pointer;" onclick="openUserProfile('${originalAuthor.id}')">@${originalAuthor.username}</span>
-      </span>
-    </div>
-  ` : '';
+  let reshakeHeader = '';
+  if (post.is_reshake) {
+    if (post.original_post?.user) {
+      reshakeHeader = `
+        <div class="reshake-header">
+          <span class="reshake-icon">↻</span>
+          <span class="reshake-text">
+            <span class="username" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span> a reshake le post de <span class="username" onclick="openUserProfile('${originalAuthor.id}')">@${originalAuthor.username}</span>
+          </span>
+        </div>
+      `;
+    } else {
+      reshakeHeader = `
+        <div class="reshake-header">
+          <span class="reshake-icon">↻</span>
+          <span class="reshake-text">
+            <span class="username" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span> a reshake ce post
+          </span>
+        </div>
+      `;
+    }
+  }
 
   return `
     <article class="post post-with-comments" data-post-id="${postId}">

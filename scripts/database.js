@@ -76,7 +76,7 @@ async function getFeed(limit = 20) {
         *,
         user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color),
         original_post:posts!original_post_id(
-          user_id,
+          *,
           user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color)
         )
       `)
