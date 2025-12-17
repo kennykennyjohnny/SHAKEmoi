@@ -11,15 +11,17 @@
 
 /* Posts ultra compacts - style Instagram avec fond gris et bordure corail */
 .post {
-  padding: 0.6rem 0.5rem !important;
-  margin-bottom: 0.5rem !important;
+  padding: 0.75rem !important;
+  margin-bottom: 0.6rem !important;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
   position: relative;
   background: #3A4245 !important;
-  border: 1.5px solid #FF6F61 !important;
-  border-radius: 12px;
+  border: 2px solid #FF6F61 !important;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
 }
 
 /* Reshake header compact */
@@ -56,9 +58,10 @@
 .track-cover {
   width: 55px;
   height: 55px;
-  border-radius: 8px;
+  border-radius: 10px;
   object-fit: cover;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: 1.5px solid rgba(255, 111, 97, 0.3);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
 }
 
 /* Play overlay adapté */
@@ -138,12 +141,12 @@
 /* Timestamp en bas à droite de la bulle, discret en rose corail */
 .post-timestamp-bottom {
   position: absolute;
-  bottom: 0.4rem;
-  right: 0.5rem;
-  font-size: 0.65rem;
-  color: #FF6F61;
-  opacity: 0.5;
-  font-weight: 400;
+  bottom: 0.5rem;
+  right: 0.65rem;
+  font-size: 0.7rem;
+  color: #FF8E80;
+  opacity: 0.7;
+  font-weight: 500;
 }
 
 /* Track info - texte plus grand et lisible */
@@ -218,19 +221,19 @@
 }
 
 .action-btn {
-  background: none;
-  border: 1px solid #FF6F61 !important;
+  background: #3A4245;
+  border: 1.5px solid #FF6F61 !important;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
-  padding: 0.35rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-  min-width: 42px;
-  color: #FF6F61 !important;
+  padding: 0.4rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  min-width: 44px;
+  color: #FFFFFF !important;
 }
 
 .action-btn .icon {
@@ -238,16 +241,17 @@
 }
 
 .action-btn .count {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #FF6F61 !important;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #FFFFFF !important;
 }
 
 /* Touches de corail dans les détails */
 .action-btn:hover {
   border-color: #FF5A4A !important;
-  color: #FF5A4A !important;
-  background: rgba(255, 111, 97, 0.15) !important;
+  background: #FF6F61 !important;
+  box-shadow: 0 0 0 3px rgba(255, 111, 97, 0.15);
+  transform: scale(1.05);
 }
 
 .action-btn:hover .icon {
@@ -256,13 +260,14 @@
 }
 
 .action-btn:hover .count {
-  color: #FF5A4A !important;
+  color: #FFFFFF !important;
 }
 
 .like-btn.liked {
   border-color: #FF6F61 !important;
-  color: #FF6F61 !important;
-  background: rgba(255, 111, 97, 0.2) !important;
+  background: #FF6F61 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(255, 111, 97, 0.3);
 }
 
 .like-btn:hover {
@@ -455,7 +460,9 @@
 
 /* Touches de corail subtiles */
 .post:hover {
-  border-color: rgba(255, 111, 97, 0.3);
+  border-color: #FF5A4A !important;
+  box-shadow: 0 4px 16px rgba(255, 111, 97, 0.25);
+  transform: translateY(-2px);
 }
 
 .username-inline:hover,
