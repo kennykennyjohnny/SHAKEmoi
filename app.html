@@ -121,7 +121,7 @@
         <!-- View 3: Recherche -->
         <div id="search-view" class="view">
           <div class="search-header">
-            <input type="text" id="search-input" class="search-input" placeholder="Rechercher...">
+            <input type="text" id="search-input" class="search-input" placeholder="Rechercher des sons, artistes...">
 
             <div class="search-toggle">
               <button class="toggle-btn active" data-mode="tracks">Sons</button>
@@ -129,9 +129,40 @@
             </div>
           </div>
 
+          <!-- Catégories / Suggestions -->
+          <div id="search-categories" class="search-categories">
+            <h3 class="categories-title">Parcourir</h3>
+            <div class="categories-grid">
+              <button class="category-card" data-query="rap">
+                <span class="category-emoji">🎤</span>
+                <span class="category-name">Rap</span>
+              </button>
+              <button class="category-card" data-query="pop">
+                <span class="category-emoji">✨</span>
+                <span class="category-name">Pop</span>
+              </button>
+              <button class="category-card" data-query="rock">
+                <span class="category-emoji">🎸</span>
+                <span class="category-name">Rock</span>
+              </button>
+              <button class="category-card" data-query="electronic">
+                <span class="category-emoji">🎹</span>
+                <span class="category-name">Électro</span>
+              </button>
+              <button class="category-card" data-query="rnb">
+                <span class="category-emoji">🎵</span>
+                <span class="category-name">R&B</span>
+              </button>
+              <button class="category-card" data-query="jazz">
+                <span class="category-emoji">🎺</span>
+                <span class="category-name">Jazz</span>
+              </button>
+            </div>
+          </div>
+
           <div id="search-results" class="search-results">
             <div class="empty-state">
-              <p>Tape quelque chose pour rechercher</p>
+              <p>Recherche un son ou clique sur une catégorie</p>
             </div>
           </div>
         </div>
@@ -390,6 +421,6 @@
   <script src="scripts/v3-features.js"></script>
   <script src="scripts/profile-customization.js"></script>
   <!-- App principal en dernier -->
-  <script src="scripts/app.js?v=20251221b"></script>
+  <script src="scripts/app.js?v=20251221c"></script>
 </body>
 </html>

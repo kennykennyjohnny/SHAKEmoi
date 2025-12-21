@@ -270,6 +270,21 @@ function setupEventListeners() {
     });
   }
 
+  // Category cards
+  document.querySelectorAll('.category-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const query = card.dataset.query;
+      const searchInput = document.getElementById('search-input');
+      if (searchInput) {
+        searchInput.value = query;
+      }
+      // Cacher les catégories et lancer la recherche
+      const categories = document.getElementById('search-categories');
+      if (categories) categories.style.display = 'none';
+      handleSearch(query);
+    });
+  });
+
   // Profile tabs
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -734,13 +749,76 @@ async function loadTopSpotify(container) {
       return;
     }
 
-    container.innerHTML = tracks.map(track => renderTopTrack(track)).join('');
+    // Créer un meilleur layout avec sections
+    const top3 = tracks.slice(0, 3);
+    const top10 = tracks.slice(3, 10);
+    const rest = tracks.slice(10);
+
+    container.innerHTML = `
+      <!-- Podium Top 3 -->
+      <div class="top-section-header">
+        <h3>🏆 Podium</h3>
+      </div>
+      <div class="top-podium">
+        ${top3.map(track => renderPodiumTrack(track)).join('')}
+      </div>
+
+      <!-- Top 10 -->
+      ${top10.length > 0 ? `
+        <div class="top-section-header">
+          <h3>🔥 Top 10</h3>
+        </div>
+        <div class="top-list">
+          ${top10.map(track => renderTopTrack(track)).join('')}
+        </div>
+      ` : ''}
+
+      <!-- Reste du Top 50 -->
+      ${rest.length > 0 ? `
+        <div class="top-section-header">
+          <h3>📈 Top 50</h3>
+        </div>
+        <div class="top-list">
+          ${rest.map(track => renderTopTrack(track)).join('')}
+        </div>
+      ` : ''}
+    `;
+
     attachTopTrackListeners();
 
   } catch (error) {
     console.error('Error loading Top Spotify:', error);
     container.innerHTML = '<div class="empty-state"><p>Erreur de chargement</p></div>';
   }
+}
+
+// Fonction pour rendre un track du podium (Top 3)
+function renderPodiumTrack(track) {
+  const medals = ['🥇', '🥈', '🥉'];
+  const medal = medals[track.rank - 1] || '';
+
+  return `
+    <div class="podium-track" data-rank="${track.rank}">
+      <div class="podium-rank">${medal}</div>
+      <div class="podium-cover-container">
+        <img src="${track.cover}" alt="${track.name}" class="podium-cover">
+      </div>
+      <div class="podium-info">
+        <h4 class="podium-title">${escapeHtml(track.name)}</h4>
+        <p class="podium-artist">${escapeHtml(track.artist)}</p>
+      </div>
+      <button class="shake-from-top-btn"
+              data-track-name="${escapeHtml(track.name)}"
+              data-artist="${escapeHtml(track.artist)}"
+              data-cover="${track.cover}"
+              data-spotify-url="${track.spotify_url || ''}"
+              data-track-id="${track.track_id || ''}"
+              data-preview-url="${track.preview_url || ''}"
+              title="Shake ce son">
+        Shake
+      </button>
+    </div>
+  `;
 }
 
 async function loadTopShakemoi(container) {
