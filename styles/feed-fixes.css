@@ -4,11 +4,12 @@
 
 /* Post container - hauteur fixe = hauteur pochette */
 .post {
-  min-height: 80px !important; /* 60px pochette + 20px padding */
-  max-height: 80px !important;
+  min-height: 74px !important; /* 60px pochette + 14px padding */
+  max-height: 74px !important;
   position: relative !important;
-  padding-top: 6px !important;
-  padding-bottom: 6px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  margin-bottom: 8px !important;
 }
 
 /* Post content - hauteur fixe pour contenir la pochette */
@@ -69,14 +70,14 @@
   line-height: 1.2 !important;
 }
 
-/* Actions buttons - style SVG rose corail */
+/* Actions buttons - style SVG corail */
 .action-btn {
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 6px !important;
   background: none !important;
   border: none !important;
-  color: #FF6B9D !important;
+  color: #FF7668 !important;
   cursor: pointer !important;
   padding: 0 !important;
   transition: all 0.2s ease !important;
@@ -84,9 +85,9 @@
 }
 
 .action-btn svg {
-  width: 20px !important;
-  height: 20px !important;
-  color: #FF6B9D !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: #FF7668 !important;
   transition: transform 0.2s ease !important;
 }
 
@@ -95,8 +96,8 @@
 }
 
 .action-btn .count {
-  font-size: 0.75rem !important;
-  color: #FF6B9D !important;
+  font-size: 0.7rem !important;
+  color: #FF7668 !important;
   font-weight: 500 !important;
 }
 
@@ -108,18 +109,22 @@
 /* Responsive - pochette plus petite sur mobile */
 @media (max-width: 480px) {
   .post {
-    min-height: 72px !important;
-    max-height: 72px !important;
+    min-height: 68px !important;
+    max-height: 68px !important;
+    margin-bottom: 6px !important;
   }
 
   .post-content {
-    height: 56px !important;
+    height: 54px !important;
   }
 
-  .action-btn {
-    padding: 2px 3px !important;
+  .action-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .action-btn .count {
     font-size: 0.65rem !important;
-    min-width: 36px !important;
   }
 }
 

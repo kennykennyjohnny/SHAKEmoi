@@ -625,7 +625,7 @@ function attachPostListeners() {
         btn.classList.add('liked');
         // Remplir le coeur si déjà liké
         const count = btn.querySelector('.count').textContent;
-        btn.innerHTML = ICONS.heart.replace('FILL_COLOR', '#FF6B9D') + `<span class="count">${count}</span>`;
+        btn.innerHTML = ICONS.heart.replace('FILL_COLOR', '#FF7668') + `<span class="count">${count}</span>`;
       }
     });
 
@@ -639,7 +639,7 @@ function attachPostListeners() {
           const count = parseInt(btn.querySelector('.count').textContent);
           btn.querySelector('.count').textContent = Math.max(0, count - 1);
           // Mettre à jour le SVG pour vider le coeur
-          btn.innerHTML = ICONS.heart.replace('FILL_COLOR', 'none') + `<span class="count">${Math.max(0, count - 1)}</span>`;
+          btn.innerHTML = ICONS.heart.replace('FILL_COLOR', 'none') + `<span class="count">${Math.max(0, count - 1) || ''}</span>`;
         }
       } else {
         const result = await likePost(postId);
@@ -648,7 +648,7 @@ function attachPostListeners() {
           const count = parseInt(btn.querySelector('.count').textContent);
           btn.querySelector('.count').textContent = count + 1;
           // Mettre à jour le SVG pour remplir le coeur
-          btn.innerHTML = ICONS.heart.replace('FILL_COLOR', '#FF6B9D') + `<span class="count">${count + 1}</span>`;
+          btn.innerHTML = ICONS.heart.replace('FILL_COLOR', '#FF7668') + `<span class="count">${count + 1 || ''}</span>`;
         }
       }
     });
