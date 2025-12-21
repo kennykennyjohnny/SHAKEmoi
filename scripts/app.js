@@ -510,44 +510,30 @@ function renderPost(post) {
   const postId = post.id;
   const hasPreview = post.preview_url && post.preview_url !== 'null';
 
-  // FIX RE-SHAKE : Différencier original vs reshake
+  // FIX RE-SHAKE : Ne plus afficher le reshake-header, juste compter
   const isReshake = post.is_reshake;
-  const originalAuthor = isReshake && post.original_post?.user ? post.original_post.user : post.user;
-  const resharer = isReshake ? post.user : null;
+  // Toujours afficher l'auteur du post (même si c'est un reshake, on affiche le reshaker)
+  const author = post.user;
 
-  // Reshake header (au-dessus du post)
-  let reshakeHeader = '';
-  if (isReshake && resharer) {
-    reshakeHeader = `
-      <div class="reshake-header">
-        <span class="reshake-icon">↻</span>
-        <span class="reshake-text">
-          <span class="username" onclick="openUserProfile('${resharer.id}')">@${resharer.username}</span> a re-shaké
-        </span>
-      </div>
-    `;
-  }
+  // Avatar de l'auteur
+  const avatarStyle = author.profile_album_cover_url
+    ? `background-image: url(${author.profile_album_cover_url}); background-size: cover; background-position: center; border: 3px solid ${author.profile_color || author.color};`
+    : `background: ${author.profile_color || author.color};`;
 
-  // Avatar de l'auteur original
-  const avatarStyle = originalAuthor.profile_album_cover_url
-    ? `background-image: url(${originalAuthor.profile_album_cover_url}); background-size: cover; background-position: center; border: 3px solid ${originalAuthor.profile_color || originalAuthor.color};`
-    : `background: ${originalAuthor.profile_color || originalAuthor.color};`;
-
-  const avatarContent = originalAuthor.profile_album_cover_url ? '' : '♪';
+  const avatarContent = author.profile_album_cover_url ? '' : '♪';
 
   return `
-    <article class="post" data-post-id="${postId}">
-      ${reshakeHeader}
+    <article class="post" data-post-id="${postId}">`
 
       <div class="post-content">
         <!-- Avatar -->
-        <div class="user-note" style="${avatarStyle} cursor: pointer;" onclick="openUserProfile('${originalAuthor.id}')">${avatarContent}</div>
+        <div class="user-note" style="${avatarStyle} cursor: pointer;" onclick="openUserProfile('${author.id}')">${avatarContent}</div>
 
         <!-- Post info right -->
         <div class="post-info-right">
           <!-- Header -->
           <div class="post-header-inline">
-            <span class="username-inline" onclick="openUserProfile('${originalAuthor.id}')">@${originalAuthor.username}</span>
+            <span class="username-inline" onclick="openUserProfile('${author.id}')">@${author.username}</span>
             <span class="dot-separator">·</span>
             <span class="timestamp-inline">${timeAgo}</span>
           </div>
