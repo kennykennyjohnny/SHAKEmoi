@@ -4,8 +4,8 @@
 
 /* Post container - hauteur fixe = hauteur pochette */
 .post {
-  min-height: 96px !important; /* 72px pochette + 24px padding */
-  max-height: 96px !important;
+  min-height: 80px !important; /* 60px pochette + 20px padding */
+  max-height: 80px !important;
   position: relative !important;
   padding-top: 6px !important;
   padding-bottom: 6px !important;
@@ -13,7 +13,7 @@
 
 /* Post content - hauteur fixe pour contenir la pochette */
 .post-content {
-  height: 72px !important;
+  height: 60px !important;
   align-items: stretch !important;
 }
 
@@ -87,12 +87,12 @@
 /* Responsive - pochette plus petite sur mobile */
 @media (max-width: 480px) {
   .post {
-    min-height: 88px !important;
-    max-height: 88px !important;
+    min-height: 72px !important;
+    max-height: 72px !important;
   }
 
   .post-content {
-    height: 64px !important;
+    height: 56px !important;
   }
 
   .action-btn {

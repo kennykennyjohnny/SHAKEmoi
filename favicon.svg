@@ -1,9 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Fond violet dégradé -->
   <defs>
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#6d28d9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5b21b6;stop-opacity:1" />
     </linearGradient>
     <linearGradient id="sGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" style="stop-color:#FF8C7A;stop-opacity:1" />
@@ -11,18 +10,14 @@
     </linearGradient>
   </defs>
 
-  <!-- Fond arrondi -->
+  <!-- Fond arrondi plus sombre -->
   <rect width="100" height="100" rx="20" fill="url(#bgGrad)"/>
 
-  <!-- Forme d'onde stylisée (3 barres verticales) en arrière-plan -->
-  <rect x="15" y="55" width="8" height="30" rx="4" fill="rgba(255,255,255,0.15)"/>
-  <rect x="27" y="45" width="8" height="40" rx="4" fill="rgba(255,255,255,0.2)"/>
-  <rect x="39" y="50" width="8" height="35" rx="4" fill="rgba(255,255,255,0.15)"/>
+  <!-- Forme d'onde stylisée en arrière-plan -->
+  <rect x="15" y="55" width="8" height="30" rx="4" fill="rgba(255,255,255,0.1)"/>
+  <rect x="27" y="45" width="8" height="40" rx="4" fill="rgba(255,255,255,0.15)"/>
+  <rect x="39" y="50" width="8" height="35" rx="4" fill="rgba(255,255,255,0.1)"/>
 
-  <!-- S stylisé et moderne -->
+  <!-- S stylisé -->
   <text x="50" y="68" font-family="system-ui, -apple-system, sans-serif" font-size="62" font-weight="900" fill="url(#sGrad)" text-anchor="middle" letter-spacing="-2">S</text>
-
-  <!-- Point musical accent en haut à droite -->
-  <circle cx="75" cy="25" r="6" fill="#FF7668" opacity="0.9"/>
-  <circle cx="75" cy="25" r="3" fill="#fff"/>
 </svg>
