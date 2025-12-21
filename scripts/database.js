@@ -89,23 +89,32 @@ async function getFeed(limit = 20) {
       throw error;
     }
 
-    // Pour chaque post, compter les commentaires
+    // Pour chaque post, compter les commentaires et les reshakes
     if (posts && posts.length > 0) {
-      const postsWithComments = await Promise.all(posts.map(async (post) => {
+      const postsWithCounts = await Promise.all(posts.map(async (post) => {
         // Compter les commentaires
-        const { count } = await supabase
+        const { count: commentsCount } = await supabase
           .from('comments')
           .select('*', { count: 'exact', head: true })
           .eq('post_id', post.id);
 
+        // Compter les reshakes (posts qui ont cet ID comme original_post_id)
+        const originalPostId = post.is_reshake ? post.original_post_id : post.id;
+        const { count: reshakesCount } = await supabase
+          .from('posts')
+          .select('*', { count: 'exact', head: true })
+          .eq('original_post_id', originalPostId)
+          .eq('is_reshake', true);
+
         return {
           ...post,
-          comments_count: count || 0,
+          comments_count: commentsCount || 0,
+          reshakes_count: reshakesCount || 0,
           comments: [] // On chargera les commentaires à la demande
         };
       }));
 
-      return postsWithComments;
+      return postsWithCounts;
     }
 
     return posts || [];

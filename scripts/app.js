@@ -388,7 +388,9 @@ function attachCommentInputListener(postId) {
 
 async function loadFeed() {
   const container = document.getElementById('feed-container');
-  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement du feed...</p></div>';
+
+  // Afficher skeleton loader
+  container.innerHTML = renderSkeletonPosts(5);
 
   try {
     const posts = await getFeed();
@@ -422,87 +424,111 @@ async function loadFeed() {
   }
 }
 
+// Render skeleton loader posts
+function renderSkeletonPosts(count = 5) {
+  return Array(count).fill(0).map(() => `
+    <div class="skeleton-post">
+      <div style="display: flex; gap: 12px;">
+        <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%;"></div>
+        <div style="flex: 1;">
+          <div class="skeleton" style="width: 60%; height: 16px; margin-bottom: 8px;"></div>
+          <div class="skeleton" style="width: 100%; height: 80px; border-radius: 12px;"></div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
 function renderPost(post) {
   const timeAgo = getTimeAgo(post.created_at);
   const postId = post.id;
   const hasPreview = post.preview_url && post.preview_url !== 'null';
 
-  // Si c'est un reshake, utiliser l'auteur original pour le corps du post
-  const originalAuthor = post.is_reshake && post.original_post?.user ? post.original_post.user : post.user;
+  // FIX RE-SHAKE : Différencier original vs reshake
+  const isReshake = post.is_reshake;
+  const originalAuthor = isReshake && post.original_post?.user ? post.original_post.user : post.user;
+  const resharer = isReshake ? post.user : null;
 
-  // Si c'est un reshake, afficher info discrète avec le reshakeur
-  let reshakeFooter = '';
-  if (post.is_reshake) {
-    const reshakeCountLabel = post.reshakes_count && post.reshakes_count > 1 ? ` · ${post.reshakes_count}` : '';
-    reshakeFooter = `
+  // Reshake header (au-dessus du post)
+  let reshakeHeader = '';
+  if (isReshake && resharer) {
+    reshakeHeader = `
       <div class="reshake-header">
         <span class="reshake-icon">↻</span>
         <span class="reshake-text">
-          Re-Shake by <span class="username" onclick="openUserProfile('${post.user.id}')">@${post.user.username}</span>${reshakeCountLabel}
+          <span class="username" onclick="openUserProfile('${resharer.id}')">@${resharer.username}</span> a re-shaké
         </span>
       </div>
     `;
   }
 
+  // Avatar de l'auteur original
+  const avatarStyle = originalAuthor.profile_album_cover_url
+    ? `background-image: url(${originalAuthor.profile_album_cover_url}); background-size: cover; background-position: center; border: 3px solid ${originalAuthor.profile_color || originalAuthor.color};`
+    : `background: ${originalAuthor.profile_color || originalAuthor.color};`;
+
+  const avatarContent = originalAuthor.profile_album_cover_url ? '' : '♪';
+
   return `
-    <article class="post post-with-comments" data-post-id="${postId}">
+    <article class="post" data-post-id="${postId}">
+      ${reshakeHeader}
+
       <div class="post-content">
-        <!-- Pochette à gauche avec play button -->
-        <div class="track-cover-container">
-          <img src="${post.cover_url}"
-               class="track-cover"
-               id="cover-${postId}"
-               alt="${post.track_name}"
-               onerror="this.src='https://via.placeholder.com/100x100?text=No+Cover'">
-          ${hasPreview ? `
-            <div class="play-overlay" id="play-${postId}" onclick="togglePlayPreview('${post.preview_url}', '${postId}')">
-              <svg viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
-            </div>
-          ` : ''}
-        </div>
+        <!-- Avatar -->
+        <div class="user-note" style="${avatarStyle} cursor: pointer;" onclick="openUserProfile('${originalAuthor.id}')">${avatarContent}</div>
 
-        <!-- Infos à droite -->
+        <!-- Post info right -->
         <div class="post-info-right">
-          <!-- User (auteur original si reshake) -->
+          <!-- Header -->
           <div class="post-header-inline">
-            <div class="user-note" style="${originalAuthor.profile_album_cover_url ? `background-image: url(${originalAuthor.profile_album_cover_url}); background-size: cover; background-position: center; border: 3px solid ${originalAuthor.profile_color || originalAuthor.color};` : `background: ${originalAuthor.profile_color || originalAuthor.color};`} cursor: pointer;" onclick="openUserProfile('${originalAuthor.id}')">${originalAuthor.profile_album_cover_url ? '' : '♪'}</div>
             <span class="username-inline" onclick="openUserProfile('${originalAuthor.id}')">@${originalAuthor.username}</span>
+            <span class="dot-separator">·</span>
+            <span class="timestamp-inline">${timeAgo}</span>
           </div>
 
-          <!-- Track info -->
-          <div class="track-info-compact">
-            <h3 class="track-title">${escapeHtml(post.track_name)}</h3>
-            <p class="track-artist">${escapeHtml(post.artist)}</p>
-          </div>
-
+          <!-- Text si présent -->
           ${post.text ? `<p class="post-text">${makeUsernamesClickable(post.text)}</p>` : ''}
+
+          <!-- Music card -->
+          <div class="music-card">
+            <div class="track-cover-container">
+              <img src="${post.cover_url}"
+                   class="track-cover"
+                   id="cover-${postId}"
+                   alt="${post.track_name}"
+                   onerror="this.src='https://via.placeholder.com/100x100?text=No+Cover'"
+                   loading="lazy">
+              ${hasPreview ? `
+                <div class="play-overlay" id="play-${postId}" onclick="togglePlayPreview('${post.preview_url}', '${postId}')">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+              ` : ''}
+            </div>
+            <div class="track-info-compact">
+              <h3 class="track-title">${escapeHtml(post.track_name)}</h3>
+              <p class="track-artist">${escapeHtml(post.artist)}</p>
+            </div>
+          </div>
 
           <!-- Actions -->
           <div class="post-actions">
-            <button class="action-btn like-btn" data-post-id="${postId}">
-              <span class="icon">♥</span>
-              <span class="count">${post.likes_count || 0}</span>
-            </button>
             <button class="action-btn comment-btn" data-post-id="${postId}">
-              <span class="icon">💭</span>
-              <span class="count">${post.comments_count || 0}</span>
+              <span class="icon">💬</span>
+              <span class="count">${post.comments_count || ''}</span>
             </button>
-            <button class="action-btn reshake-btn" data-post-id="${postId}">
-              <span class="icon">↻</span>
-              <span class="count">${post.reshakes_count || 0}</span>
+            <button class="action-btn reshake-btn ${isReshake ? 'active' : ''}" data-post-id="${postId}">
+              <span class="icon">🔄</span>
+              <span class="count">${post.reshakes_count || ''}</span>
+            </button>
+            <button class="action-btn like-btn" data-post-id="${postId}">
+              <span class="icon">❤</span>
+              <span class="count">${post.likes_count || ''}</span>
             </button>
           </div>
         </div>
       </div>
-
-      <!-- Timestamp en bas à droite -->
-      <div class="post-timestamp-bottom">${timeAgo}</div>
-
-      <!-- Info reshake discrète en bas à gauche -->
-      ${reshakeFooter}
-
     </article>
   `;
 }

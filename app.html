@@ -37,6 +37,10 @@
   <link rel="stylesheet" href="styles/images-fix.css">
   <!-- Corrections Reshake -->
   <link rel="stylesheet" href="styles/reshake-fix.css">
+  <!-- Modal Commentaires -->
+  <link rel="stylesheet" href="styles/comments-modal.css">
+  <!-- Feed Twitter Style - EN DERNIER pour surcharger -->
+  <link rel="stylesheet" href="styles/feed-twitter-style.css">
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
 </head>
@@ -239,14 +243,22 @@
     </div>
   </div>
 
-  <!-- Modal pour commenter -->
-  <div id="comment-modal" class="modal">
-    <div class="modal-content">
-      <h3>Ajouter un commentaire</h3>
-      <textarea id="comment-text" placeholder="Ton commentaire..."></textarea>
-      <div class="modal-actions">
-        <button class="btn-secondary" id="cancel-comment">Annuler</button>
-        <button class="btn-primary" id="submit-comment">Publier</button>
+  <!-- Modal commentaires style Instagram -->
+  <div id="comments-modal">
+    <div class="comments-modal-content">
+      <div class="comments-modal-header">
+        <h3>Commentaires</h3>
+        <button class="comments-close-btn" onclick="closeCommentsModal()">✕</button>
+      </div>
+      <div class="comments-list" id="comments-list">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Chargement...</p>
+        </div>
+      </div>
+      <div class="comments-input-container">
+        <textarea class="comments-input" id="comments-input" placeholder="Ajoute un commentaire..." rows="1"></textarea>
+        <button class="comments-submit-btn" id="comments-submit-btn" onclick="submitComment()">➤</button>
       </div>
     </div>
   </div>

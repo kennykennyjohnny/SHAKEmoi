@@ -1,17 +1,16 @@
-/* Fix Reshake - Ne pas superposer la pochette */
+/* Fix Reshake - Au-dessus de la bulle */
 
 .reshake-header {
-  position: absolute !important;
-  left: 90px !important; /* Juste après la pochette */
-  bottom: 10px !important;
-  padding: 3px 6px !important;
+  position: relative !important;
+  padding: 4px 8px !important;
   background: rgba(255, 111, 97, 0.12) !important;
   backdrop-filter: blur(5px) !important;
   border: 1px solid rgba(255, 111, 97, 0.25) !important;
-  border-radius: 6px !important;
-  font-size: 0.65rem !important;
+  border-radius: 8px 8px 0 0 !important;
+  font-size: 0.7rem !important;
+  margin: -1px !important;
+  margin-bottom: 0 !important;
   z-index: 1 !important;
-  max-width: calc(100% - 100px) !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;

@@ -21,7 +21,7 @@
   flex-direction: column !important;
   gap: 4px !important;
   height: 100% !important;
-  padding-bottom: 30px !important; /* Espace pour les actions en bas */
+  padding-right: 0 !important;
 }
 
 /* Header en haut */
@@ -29,12 +29,11 @@
   margin-bottom: 0 !important;
 }
 
-/* Actions EN LIGNE HORIZONTALE au centre en bas */
+/* Actions EN LIGNE HORIZONTALE en haut à droite */
 .post-actions {
   position: absolute !important;
-  left: 50% !important;
-  bottom: 8px !important;
-  transform: translateX(-50%) !important;
+  right: 8px !important;
+  top: 8px !important;
   flex-direction: row !important;
   gap: 6px !important;
   margin: 0 !important;
@@ -91,6 +90,20 @@
     font-size: 0.65rem !important;
     min-width: 36px !important;
   }
+}
+
+/* Timestamp en dessous des actions */
+.post-timestamp-bottom {
+  position: absolute !important;
+  right: 8px !important;
+  top: 40px !important; /* En dessous des actions */
+  font-size: 0.65rem !important;
+  color: #9CA3AF !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  z-index: 1 !important;
 }
 
 /* Supprimer complètement le bouton musique du feed s'il reste */
