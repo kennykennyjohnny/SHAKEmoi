@@ -96,35 +96,51 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Check auth and initialize
 async function checkAuthAndInit() {
   try {
+    console.log('🔍 Checking auth...');
+
     // Protection anti-boucle
     const redirectCount = parseInt(sessionStorage.getItem('authRedirectCount') || '0');
+    console.log('📊 Redirect count:', redirectCount);
+
     if (redirectCount > 3) {
       console.error('⚠️ Trop de redirections détectées. Arrêt pour éviter la boucle.');
+      alert('Erreur: Boucle de redirection détectée. Veuillez vous reconnecter.');
       sessionStorage.removeItem('authRedirectCount');
       await supabase.auth.signOut();
       window.location.href = 'index.html';
       return;
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      console.error('❌ Session error:', sessionError);
+      throw sessionError;
+    }
 
     if (!session) {
-      // Not logged in, redirect to login page
+      console.log('❌ No session found, redirecting to login...');
       sessionStorage.setItem('authRedirectCount', String(redirectCount + 1));
       window.location.href = 'index.html';
       return;
     }
 
+    console.log('✅ Session found for user:', session.user.id);
     currentUser = session.user;
+
+    console.log('🔍 Loading user profile...');
     currentProfile = await getUserProfile(currentUser.id);
 
     if (!currentProfile) {
-      alert('Erreur de chargement du profil');
+      console.error('❌ Profile not found for user:', currentUser.id);
+      alert('Erreur de chargement du profil. Le profil n\'existe pas dans la base de données.');
       await supabase.auth.signOut();
       sessionStorage.removeItem('authRedirectCount');
       window.location.href = 'index.html';
       return;
     }
+
+    console.log('✅ Profile loaded:', currentProfile.username);
 
     // Authentification réussie, réinitialiser le compteur
     sessionStorage.removeItem('authRedirectCount');
@@ -139,9 +155,13 @@ async function checkAuthAndInit() {
       notifManager.subscribeToNotifications();
     }
 
+    console.log('✅ App initialized successfully');
+
   } catch (error) {
-    console.error('Init error:', error);
+    console.error('💥 Init error:', error);
+    alert('Erreur d\'initialisation: ' + error.message);
     sessionStorage.removeItem('authRedirectCount');
+    await supabase.auth.signOut();
     window.location.href = 'index.html';
   }
 

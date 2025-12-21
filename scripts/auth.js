@@ -66,31 +66,45 @@ function switchMode(mode) {
 // Check if user is already logged in
 async function checkAuth() {
   try {
+    console.log('🔍 [INDEX] Checking auth...');
+
     // Protection anti-boucle
     const redirectCount = parseInt(sessionStorage.getItem('authRedirectCount') || '0');
+    console.log('📊 [INDEX] Redirect count:', redirectCount);
+
     if (redirectCount > 3) {
-      console.error('⚠️ Trop de redirections détectées. Arrêt pour éviter la boucle.');
+      console.error('⚠️ [INDEX] Trop de redirections détectées. Arrêt pour éviter la boucle.');
+      alert('Erreur: Boucle de redirection détectée. Veuillez rafraîchir la page.');
       sessionStorage.removeItem('authRedirectCount');
       await supabase.auth.signOut();
       return;
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      console.error('❌ [INDEX] Session error:', sessionError);
+      sessionStorage.removeItem('authRedirectCount');
+      return;
+    }
 
     if (session) {
+      console.log('✅ [INDEX] Session found for user:', session.user.id);
       // User is logged in, redirect to app
       // Reset redirect counter (no increment) to avoid redirect loops
       sessionStorage.removeItem('authRedirectCount');
       // Only redirect if not already on app page
       if (!window.location.pathname.endsWith('app.html')) {
+        console.log('➡️ [INDEX] Redirecting to app.html...');
         window.location.href = 'app.html';
       }
     } else {
+      console.log('❌ [INDEX] No session found, staying on login page');
       // Réinitialiser le compteur si pas de session
       sessionStorage.removeItem('authRedirectCount');
     }
   } catch (error) {
-    console.error('Error checking auth:', error);
+    console.error('💥 [INDEX] Error checking auth:', error);
     sessionStorage.removeItem('authRedirectCount');
   }
 }
