@@ -8,33 +8,18 @@ let searchMode = 'tracks';
 let selectedTrackForShake = null;
 let selectedPostForComment = null;
 
-// SVG Icons pour les actions
+// SVG Icons pour les actions (Figma)
 const ICONS = {
-  heart: `<svg width="20" height="20" viewBox="0 0 48 48" fill="none">
-    <path d="M41.68 9.22c-1.02-1.02-2.23-1.83-3.57-2.38a11.9 11.9 0 00-8.79 0c-1.34.55-2.55 1.36-3.57 2.38L24 11.34l-2.12-2.12c-2.06-2.06-4.86-3.22-7.78-3.22s-5.72 1.16-7.78 3.22c-2.06 2.06-3.22 4.86-3.22 7.78s1.16 5.72 3.22 7.78L24 42.46l17.68-17.68c1.02-1.02 1.83-2.23 2.38-3.57a11.9 11.9 0 000-8.79c-.55-1.34-1.36-2.55-2.38-3.57z"
-          stroke="currentColor"
-          fill="FILL_COLOR"
-          stroke-width="3"
-          stroke-linecap="round"
-          stroke-linejoin="round"/>
+  heart: `<svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M41.6802 9.21975C40.6587 8.19775 39.4459 7.38704 38.1109 6.83391C36.776 6.28079 35.3452 5.99609 33.9002 5.99609C32.4553 5.99609 31.0244 6.28079 29.6895 6.83391C28.3546 7.38704 27.1418 8.19775 26.1202 9.21975L24.0002 11.3397L21.8802 9.21975C19.8169 7.15636 17.0183 5.99716 14.1002 5.99716C11.1822 5.99716 8.38362 7.15636 6.32024 9.21975C4.25685 11.2831 3.09766 14.0817 3.09766 16.9997C3.09766 19.9178 4.25685 22.7164 6.32024 24.7797L24.0002 42.4597L41.6802 24.7797C42.7022 23.7582 43.5129 22.5454 44.0661 21.2105C44.6192 19.8755 44.9039 18.4447 44.9039 16.9997C44.9039 15.5548 44.6192 14.124 44.0661 12.789C43.5129 11.4541 42.7022 10.2413 41.6802 9.21975Z" stroke="currentColor" fill="FILL_COLOR" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`,
 
-  comment: `<svg width="20" height="20" viewBox="0 0 48 48" fill="none">
-    <path d="M36 30c0 1.06-.42 2.08-1.17 2.83-.75.75-1.77 1.17-2.83 1.17H12L4 42V10c0-1.06.42-2.08 1.17-2.83C5.92 6.42 6.94 6 8 6h28c1.06 0 2.08.42 2.83 1.17.75.75 1.17 1.77 1.17 2.83v20z"
-          stroke="currentColor"
-          fill="none"
-          stroke-width="3"
-          stroke-linecap="round"
-          stroke-linejoin="round"/>
+  comment: `<svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M42 30C42 31.0609 41.5786 32.0783 40.8284 32.8284C40.0783 33.5786 39.0609 34 38 34H14L6 42V10C6 8.93913 6.42143 7.92172 7.17157 7.17157C7.92172 6.42143 8.93913 6 10 6H38C39.0609 6 40.0783 6.42143 40.8284 7.17157C41.5786 7.92172 42 8.93913 42 10V30Z" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`,
 
-  reshake: `<svg width="20" height="20" viewBox="0 0 48 48" fill="none">
-    <path d="M36 2l8 8m0 0l-8 8m8-8H16c-2.12 0-4.16.84-5.66 2.34A8 8 0 008 18v4m8 24l-8-8m0 0l8-8m-8 8h28c2.12 0 4.16-.84 5.66-2.34A8 8 0 0044 30v-4"
-          stroke="currentColor"
-          fill="none"
-          stroke-width="3"
-          stroke-linecap="round"
-          stroke-linejoin="round"/>
+  reshake: `<svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M34 2L42 10M42 10L34 18M42 10H14C11.8783 10 9.84344 10.8429 8.34315 12.3431C6.84285 13.8434 6 15.8783 6 18V22M14 46L6 38M6 38L14 30M6 38H34C36.1217 38 38.1566 37.1571 39.6569 35.6569C41.1571 34.1566 42 32.1217 42 30V26" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`
 };
 
