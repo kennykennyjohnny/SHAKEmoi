@@ -133,9 +133,13 @@ async function checkAuthAndInit() {
 
     if (!currentProfile) {
       console.error('❌ Profile not found for user:', currentUser.id);
-      alert('Erreur de chargement du profil. Le profil n\'existe pas dans la base de données.');
+
+      // Clear everything and force logout
+      sessionStorage.clear();
+      localStorage.clear();
       await supabase.auth.signOut();
-      sessionStorage.removeItem('authRedirectCount');
+
+      alert('Erreur : Votre profil est corrompu ou manquant.\n\nVeuillez vous réinscrire.\n\nSi le problème persiste, contactez le support.');
       window.location.href = 'index.html';
       return;
     }

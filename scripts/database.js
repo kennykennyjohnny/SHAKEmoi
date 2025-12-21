@@ -14,7 +14,7 @@ async function getCurrentUser() {
   }
 }
 
-// Get user profile (with auto-create if missing)
+// Get user profile
 async function getUserProfile(userId) {
   try {
     console.log('🔍 Getting profile for user:', userId);
@@ -27,49 +27,16 @@ async function getUserProfile(userId) {
 
     if (error) {
       console.error('❌ Error fetching profile:', error);
-      throw error;
+      return null;
     }
 
-    // Profile exists
     if (data) {
       console.log('✅ Profile found:', data.username);
       return data;
     }
 
-    // Profile doesn't exist - create it automatically
-    console.log('⚠️ Profile not found, creating default profile...');
-
-    // Get user email from auth
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      console.error('❌ Cannot create profile: no user found');
-      return null;
-    }
-
-    // Generate username from email
-    const username = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '') + Math.floor(Math.random() * 1000);
-    const randomColor = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A8E6CF', '#FF8B94', '#B4A7D6'][Math.floor(Math.random() * 6)];
-
-    const { data: newProfile, error: createError } = await supabase
-      .from('users_profile')
-      .insert([{
-        id: userId,
-        username: username,
-        email: user.email,
-        color: randomColor,
-        feels_count: 0,
-        feelings_count: 0
-      }])
-      .select()
-      .single();
-
-    if (createError) {
-      console.error('❌ Error creating profile:', createError);
-      throw createError;
-    }
-
-    console.log('✅ Profile created:', newProfile.username);
-    return newProfile;
+    console.log('❌ No profile found for user:', userId);
+    return null;
 
   } catch (error) {
     console.error('💥 Error in getUserProfile:', error);
