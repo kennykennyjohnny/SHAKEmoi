@@ -150,23 +150,49 @@ async function checkAuthAndInit() {
     sessionStorage.removeItem('authRedirectCount');
 
     // Setup app
-    setupEventListeners();
-    await loadView('shake');
+    console.log('🔧 Setting up event listeners...');
+    try {
+      setupEventListeners();
+      console.log('✅ Event listeners set up');
+    } catch (err) {
+      console.error('❌ Error setting up listeners:', err);
+      throw new Error('Erreur setupEventListeners: ' + err.message);
+    }
+
+    console.log('📱 Loading view shake...');
+    try {
+      await loadView('shake');
+      console.log('✅ View loaded');
+    } catch (err) {
+      console.error('❌ Error loading view:', err);
+      throw new Error('Erreur loadView: ' + err.message);
+    }
 
     // Initialiser les notifications
-    if (typeof notifManager !== 'undefined') {
-      await notifManager.loadNotifications();
-      notifManager.subscribeToNotifications();
+    console.log('🔔 Initializing notifications...');
+    try {
+      if (typeof notifManager !== 'undefined') {
+        await notifManager.loadNotifications();
+        notifManager.subscribeToNotifications();
+        console.log('✅ Notifications initialized');
+      } else {
+        console.log('⚠️ notifManager not defined, skipping');
+      }
+    } catch (err) {
+      console.error('❌ Error with notifications:', err);
+      // Don't throw, notifications are optional
     }
 
     console.log('✅ App initialized successfully');
 
   } catch (error) {
     console.error('💥 Init error:', error);
-    alert('Erreur d\'initialisation: ' + error.message);
+    console.error('💥 Stack:', error.stack);
+    alert('Erreur d\'initialisation: ' + error.message + '\n\nOuvre la console (F12) pour plus de détails.');
     sessionStorage.removeItem('authRedirectCount');
-    await supabase.auth.signOut();
-    window.location.href = 'index.html';
+    // Don't sign out, just stay on the page to see logs
+    // await supabase.auth.signOut();
+    // window.location.href = 'index.html';
   }
 
   // Initialize settings UI and music buttons (ensure correct visuals from start)
