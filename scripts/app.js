@@ -523,8 +523,7 @@ function renderPost(post) {
   const avatarContent = author.profile_album_cover_url ? '' : '♪';
 
   return `
-    <article class="post" data-post-id="${postId}">`
-
+    <article class="post" data-post-id="${postId}">
       <div class="post-content">
         <!-- Avatar -->
         <div class="user-note" style="${avatarStyle} cursor: pointer;" onclick="openUserProfile('${author.id}')">${avatarContent}</div>
