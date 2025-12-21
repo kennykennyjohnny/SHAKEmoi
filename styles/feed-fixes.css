@@ -39,7 +39,7 @@
   right: 8px !important;
   top: 4px !important;
   flex-direction: row !important;
-  gap: 6px !important;
+  gap: 48px !important;
   margin: 0 !important;
   padding: 0 !important;
   z-index: 2 !important;
@@ -69,19 +69,40 @@
   line-height: 1.2 !important;
 }
 
-/* Actions buttons - plus compacts */
+/* Actions buttons - style SVG rose corail */
 .action-btn {
-  padding: 2px 4px !important;
-  font-size: 0.7rem !important;
-  min-width: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: none !important;
+  border: none !important;
+  color: #FF6B9D !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transition: all 0.2s ease !important;
+  min-width: auto !important;
 }
 
-.action-btn .icon {
-  font-size: 0.8rem !important;
+.action-btn svg {
+  width: 20px !important;
+  height: 20px !important;
+  color: #FF6B9D !important;
+  transition: transform 0.2s ease !important;
+}
+
+.action-btn:hover svg {
+  transform: scale(1.1) !important;
 }
 
 .action-btn .count {
-  font-size: 0.7rem !important;
+  font-size: 0.75rem !important;
+  color: #FF6B9D !important;
+  font-weight: 500 !important;
+}
+
+/* Supprimer les anciens styles icon */
+.action-btn .icon {
+  display: none !important;
 }
 
 /* Responsive - pochette plus petite sur mobile */

@@ -8,6 +8,36 @@ let searchMode = 'tracks';
 let selectedTrackForShake = null;
 let selectedPostForComment = null;
 
+// SVG Icons pour les actions
+const ICONS = {
+  heart: `<svg width="20" height="20" viewBox="0 0 48 48" fill="none">
+    <path d="M41.68 9.22c-1.02-1.02-2.23-1.83-3.57-2.38a11.9 11.9 0 00-8.79 0c-1.34.55-2.55 1.36-3.57 2.38L24 11.34l-2.12-2.12c-2.06-2.06-4.86-3.22-7.78-3.22s-5.72 1.16-7.78 3.22c-2.06 2.06-3.22 4.86-3.22 7.78s1.16 5.72 3.22 7.78L24 42.46l17.68-17.68c1.02-1.02 1.83-2.23 2.38-3.57a11.9 11.9 0 000-8.79c-.55-1.34-1.36-2.55-2.38-3.57z"
+          stroke="currentColor"
+          fill="FILL_COLOR"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+  </svg>`,
+
+  comment: `<svg width="20" height="20" viewBox="0 0 48 48" fill="none">
+    <path d="M36 30c0 1.06-.42 2.08-1.17 2.83-.75.75-1.77 1.17-2.83 1.17H12L4 42V10c0-1.06.42-2.08 1.17-2.83C5.92 6.42 6.94 6 8 6h28c1.06 0 2.08.42 2.83 1.17.75.75 1.17 1.77 1.17 2.83v20z"
+          stroke="currentColor"
+          fill="none"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+  </svg>`,
+
+  reshake: `<svg width="20" height="20" viewBox="0 0 48 48" fill="none">
+    <path d="M36 2l8 8m0 0l-8 8m8-8H16c-2.12 0-4.16.84-5.66 2.34A8 8 0 008 18v4m8 24l-8-8m0 0l8-8m-8 8h28c2.12 0 4.16-.84 5.66-2.34A8 8 0 0044 30v-4"
+          stroke="currentColor"
+          fill="none"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+  </svg>`
+};
+
 // Helper : Générer bouton musique selon préférence utilisateur
 function getMusicButtonHtml(post, buttonClass = 'spotify-post-btn') {
   // Retourne un bouton qui déléguera l'ouverture à openMusicForPost(postId)
@@ -565,17 +595,17 @@ function renderPost(post) {
 
           <!-- Actions -->
           <div class="post-actions">
+            <button class="action-btn like-btn" data-post-id="${postId}">
+              ${ICONS.heart.replace('FILL_COLOR', 'none')}
+              <span class="count">${post.likes_count || ''}</span>
+            </button>
             <button class="action-btn comment-btn" data-post-id="${postId}">
-              <span class="icon">💬</span>
+              ${ICONS.comment}
               <span class="count">${post.comments_count || ''}</span>
             </button>
             <button class="action-btn reshake-btn ${isReshake ? 'active' : ''}" data-post-id="${postId}">
-              <span class="icon">🔄</span>
+              ${ICONS.reshake}
               <span class="count">${post.reshakes_count || ''}</span>
-            </button>
-            <button class="action-btn like-btn" data-post-id="${postId}">
-              <span class="icon">❤</span>
-              <span class="count">${post.likes_count || ''}</span>
             </button>
           </div>
         </div>
@@ -593,6 +623,9 @@ function attachPostListeners() {
     hasLikedPost(postId).then(liked => {
       if (liked) {
         btn.classList.add('liked');
+        // Remplir le coeur si déjà liké
+        const count = btn.querySelector('.count').textContent;
+        btn.innerHTML = ICONS.heart.replace('FILL_COLOR', '#FF6B9D') + `<span class="count">${count}</span>`;
       }
     });
 
@@ -605,6 +638,8 @@ function attachPostListeners() {
           btn.classList.remove('liked');
           const count = parseInt(btn.querySelector('.count').textContent);
           btn.querySelector('.count').textContent = Math.max(0, count - 1);
+          // Mettre à jour le SVG pour vider le coeur
+          btn.innerHTML = ICONS.heart.replace('FILL_COLOR', 'none') + `<span class="count">${Math.max(0, count - 1)}</span>`;
         }
       } else {
         const result = await likePost(postId);
@@ -612,6 +647,8 @@ function attachPostListeners() {
           btn.classList.add('liked');
           const count = parseInt(btn.querySelector('.count').textContent);
           btn.querySelector('.count').textContent = count + 1;
+          // Mettre à jour le SVG pour remplir le coeur
+          btn.innerHTML = ICONS.heart.replace('FILL_COLOR', '#FF6B9D') + `<span class="count">${count + 1}</span>`;
         }
       }
     });
