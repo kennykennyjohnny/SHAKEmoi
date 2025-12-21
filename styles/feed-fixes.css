@@ -7,6 +7,8 @@
   min-height: 96px !important; /* 72px pochette + 24px padding */
   max-height: 96px !important;
   position: relative !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
 }
 
 /* Post content - hauteur fixe pour contenir la pochette */
@@ -35,7 +37,7 @@
 .post-actions {
   position: absolute !important;
   right: 8px !important;
-  top: 8px !important;
+  top: 4px !important;
   flex-direction: row !important;
   gap: 6px !important;
   margin: 0 !important;
@@ -104,7 +106,7 @@
 .post-timestamp-bottom {
   position: absolute !important;
   right: 8px !important;
-  top: 40px !important; /* En dessous des actions */
+  top: 36px !important; /* En dessous des actions */
   font-size: 0.65rem !important;
   color: #9CA3AF !important;
   background: transparent !important;
