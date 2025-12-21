@@ -203,17 +203,21 @@ async function checkAuthAndInit() {
 // Setup all event listeners
 function setupEventListeners() {
   // Logo cliquable - retour au feed
-  document.querySelector('.logo').addEventListener('click', () => {
-    loadView('shake');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
+  const logo = document.querySelector('.logo');
+  if (logo) {
+    logo.addEventListener('click', () => {
+      loadView('shake');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
 
   // Settings button (remplace logout)
   const settingsBtn = document.getElementById('settings-btn');
   if (settingsBtn) {
     settingsBtn.addEventListener('click', () => {
       if (window.initSettingsMenu) window.initSettingsMenu();
-      document.getElementById('settings-menu').style.display = 'block';
+      const settingsMenu = document.getElementById('settings-menu');
+      if (settingsMenu) settingsMenu.style.display = 'block';
     });
   }
 
@@ -232,18 +236,24 @@ function setupEventListeners() {
       document.querySelectorAll('#search-view .toggle-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.mode === searchMode);
       });
-      document.getElementById('search-results').innerHTML = '<div class="empty-state"><p>Tape quelque chose pour rechercher</p></div>';
+      const searchResults = document.getElementById('search-results');
+      if (searchResults) {
+        searchResults.innerHTML = '<div class="empty-state"><p>Tape quelque chose pour rechercher</p></div>';
+      }
     });
   });
 
   // Search input
-  let searchTimeout;
-  document.getElementById('search-input').addEventListener('input', (e) => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      handleSearch(e.target.value);
-    }, 300);
-  });
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    let searchTimeout;
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        handleSearch(e.target.value);
+      }, 300);
+    });
+  }
 
   // Profile tabs
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -260,15 +270,21 @@ function setupEventListeners() {
   const settingsClose = document.getElementById('settings-close');
   if (settingsClose) {
     settingsClose.addEventListener('click', () => {
-      document.getElementById('settings-menu').style.display = 'none';
+      const settingsMenu = document.getElementById('settings-menu');
+      if (settingsMenu) settingsMenu.style.display = 'none';
     });
   }
 
-  // Modal events
-  document.getElementById('cancel-comment').addEventListener('click', closeCommentModal);
-  document.getElementById('submit-comment').addEventListener('click', submitComment);
-  document.getElementById('cancel-shake').addEventListener('click', closeShakeModal);
-  document.getElementById('submit-shake').addEventListener('click', submitShake);
+  // Modal events - with null checks
+  const cancelComment = document.getElementById('cancel-comment');
+  const submitCommentBtn = document.getElementById('submit-comment');
+  const cancelShake = document.getElementById('cancel-shake');
+  const submitShakeBtn = document.getElementById('submit-shake');
+
+  if (cancelComment) cancelComment.addEventListener('click', closeCommentModal);
+  if (submitCommentBtn) submitCommentBtn.addEventListener('click', submitComment);
+  if (cancelShake) cancelShake.addEventListener('click', closeShakeModal);
+  if (submitShakeBtn) submitShakeBtn.addEventListener('click', submitShake);
 }
 
 // Logout
