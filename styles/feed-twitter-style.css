@@ -10,13 +10,18 @@
   padding-bottom: 80px;
 }
 
-/* POST CARD - TWITTER STYLE - Bordures corail complètes COMPACT */
+/* POST CARD - Bordures dégradé Corail/Rose/Violet + Espacement réduit */
 .post {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px);
-  border: 1px solid #FF8E80 !important;
+  border: 2px solid transparent !important;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03)),
+    linear-gradient(135deg, #FF8E80 0%, #FF6B9D 50%, #BF5BC6 100%) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
   border-radius: 12px !important;
-  padding: 30px 12px 8px 12px !important;
+  padding: 24px 12px 8px 12px !important;
   transition: all 0.2s;
   min-height: auto !important;
   max-height: none !important;
@@ -24,13 +29,14 @@
   flex-direction: column;
   gap: 0 !important;
   position: relative;
-  margin-bottom: 8px;
+  margin-bottom: 4px !important;
 }
 
 .post:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: #FF7668 !important;
-  box-shadow: 0 4px 12px rgba(255, 142, 128, 0.2);
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05)),
+    linear-gradient(135deg, #FF7668 0%, #FF5A8C 50%, #A847B3 100%) !important;
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
 }
 
 /* RESHARE LABEL - AU-DESSUS DU POST */
