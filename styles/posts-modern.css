@@ -425,6 +425,7 @@
   display: flex !important;
   flex-direction: column !important;
   gap: 6px !important;
+  margin-top: 8px !important;
   padding-top: 0 !important;
   min-width: 0 !important;
 }
@@ -506,7 +507,7 @@
   justify-content: flex-end !important;
   flex-shrink: 0 !important;
   padding-right: 8px !important;
-  align-self: center !important;
+  margin-top: 8px !important;
 }
 
 .post-actions-new .action-btn {
@@ -553,6 +554,14 @@
   .track-cover-container-new {
     width: 80px !important;
     height: 80px !important;
+    margin-top: 8px !important;
+  }
+
+  .post-info-container {
+    margin-top: 8px !important;
+  }
+
+  .post-actions-new {
     margin-top: 8px !important;
   }
 
