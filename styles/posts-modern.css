@@ -555,8 +555,6 @@
 
   .post {
     padding-top: 55px !important;
-    min-height: auto !important;
-    max-height: none !important;
   }
 
   .username-coral {
