@@ -1,382 +1,329 @@
 /* =====================================================
-   SHAKEMOI - DESIGN MODERNE DES POSTS (VERSION NETTOYÉE)
-   Style Twitter/X unifié - PC et Mobile harmonisés
+   SHAKEMOI - DESIGN MODERNE DES POSTS
+   Pochette en avant, layout compact, esthétique
    ===================================================== */
 
-/* =====================================================
-   FEED CONTAINER
-   ===================================================== */
-.feed-container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding-bottom: 80px;
-}
-
-/* =====================================================
-   POST CARD - BASE - COMPACT
-   ===================================================== */
+/* Post container - carte ultra-compacte optimisée */
 .post {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 40px 16px 10px 16px;
-  transition: background 0.2s;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  position: relative;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding: 8px !important;
+  margin-bottom: 8px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 142, 128, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+  min-height: 115px !important;
+  max-height: 130px !important;
 }
 
 .post:hover {
-  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 16px rgba(255, 142, 128, 0.3) !important;
+  border-color: #FF8E80 !important;
 }
 
-/* =====================================================
-   HEADER EN HAUT - USERNAME CENTRÉ - COMPACT
-   ===================================================== */
-.post-header-top {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  text-align: center;
-  padding: 4px 0;
-  min-height: 20px;
-  border-bottom: 1px solid rgba(255, 142, 128, 0.15);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(5px);
-  z-index: 3;
+/* Reshake header - compact et visible, aligné en bas à gauche */
+.reshake-header {
+  padding: 4px 8px !important;
+  background: rgba(255, 111, 97, 0.08) !important;
+  backdrop-filter: blur(5px) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 0.7rem !important;
+  position: absolute !important;
+  left: 12px !important;
+  bottom: 10px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 111, 97, 0.2) !important;
+  z-index: 2 !important;
 }
 
-.username-top {
-  font-size: 0.75rem;
-  font-style: italic;
-  font-weight: 600;
-  color: #FF8E80;
-  cursor: pointer;
-  transition: color 0.2s;
+.reshake-icon {
+  font-size: 0.85rem !important;
+  color: #FF6F61 !important;
 }
 
-.username-top:hover {
-  color: #FF7668;
-  text-decoration: underline;
+.reshake-text {
+  color: #E0E0E0 !important;
+  font-size: 0.7rem !important;
+  line-height: 1.2 !important;
 }
 
-/* =====================================================
-   RESHARE HEADER
-   ===================================================== */
-.reshare-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 4px;
-  padding-left: 40px;
+.reshake-text .username {
+  color: #FF6F61 !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  font-size: 0.7rem !important;
 }
 
-.reshare-icon {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
+.reshake-text .username:hover {
+  text-decoration: underline !important;
 }
 
-.reshare-text {
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.reshare-text .username {
-  color: #FF7668;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.reshare-text .username:hover {
-  text-decoration: underline;
-}
-
-/* =====================================================
-   POST CONTENT - LAYOUT HORIZONTAL
-   ===================================================== */
+/* Post content - layout horizontal optimisé */
 .post-content {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
+  display: flex !important;
+  gap: 12px !important;
+  padding: 12px !important;
+  align-items: flex-start !important;
 }
 
-/* =====================================================
-   AVATAR / USER NOTE
-   ===================================================== */
-.post-avatar,
-.user-note {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.post-avatar {
-  object-fit: cover;
-}
-
-.user-note {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-}
-
-.post-avatar:hover,
-.user-note:hover {
-  opacity: 0.8;
-}
-
-/* =====================================================
-   POST INFO - CONTENU À DROITE DE L'AVATAR
-   ===================================================== */
-.post-info-right {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Header inline - masqué car on utilise username-top */
-.post-header-inline {
-  display: none;
-}
-
-/* =====================================================
-   POST TEXT - MESSAGE DE L'UTILISATEUR - COMPACT
-   ===================================================== */
-.post-text {
-  font-size: 14px;
-  line-height: 18px;
-  color: white;
-  margin: 0 0 6px 0;
-  word-wrap: break-word;
-}
-
-/* =====================================================
-   MUSIC CARD - POCHETTE + INFO + EMOJIS EN LIGNE - COMPACT
-   ===================================================== */
-.music-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  padding: 8px;
-  margin-bottom: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: background 0.2s;
-}
-
-.music-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* Pochette - taille compacte */
+/* Smaller cover for compact cards */
 .track-cover-container {
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
+  width: 72px !important;
+  height: 72px !important;
+}
+
+/* Pochette - grande et mise en avant */
+.track-cover-container {
+  position: relative !important;
+  flex-shrink: 0 !important;
+  width: 72px !important;
+  height: 72px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  transition: transform 0.3s ease !important;
+}
+
+.post:hover .track-cover-container {
+  transform: scale(1.05) !important;
 }
 
 .track-cover {
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-  object-fit: cover;
-  background: rgba(255, 255, 255, 0.1);
-  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
 }
 
 /* Play overlay */
 .play-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
-  cursor: pointer;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
+  cursor: pointer !important;
 }
 
 .track-cover-container:hover .play-overlay {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 .play-overlay svg {
-  width: 24px;
-  height: 24px;
-  fill: white;
+  width: 32px !important;
+  height: 32px !important;
+  fill: white !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) !important;
 }
 
 .play-overlay.playing {
-  background: rgba(255, 111, 97, 0.8);
-  opacity: 1;
+  background: rgba(255, 111, 97, 0.8) !important;
+  opacity: 1 !important;
 }
 
-/* Track info - centré verticalement avec la pochette */
+/* Infos à droite - layout vertical compact */
+.post-info-right {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+/* Header inline - user + timestamp */
+.post-header-inline {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 2px !important;
+}
+
+.user-note {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.75rem !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease !important;
+}
+
+.user-note:hover {
+  transform: scale(1.1) !important;
+}
+
+.username-inline {
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  color: #BF5BC6 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+}
+
+.username-inline:hover {
+  text-decoration: underline !important;
+}
+
+.timestamp-inline {
+  font-size: 0.75rem !important;
+  color: #9CA3AF !important;
+  margin-left: auto !important;
+  white-space: nowrap !important;
+}
+
+/* Track info - compact */
 .track-info-compact {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  margin-bottom: 4px !important;
 }
 
 .track-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: white;
-  margin: 0 0 2px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  color: #FFFFFF !important;
+  margin: 0 0 2px 0 !important;
+  line-height: 1.2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 1 !important;
+  -webkit-box-orient: vertical !important;
 }
 
 .track-artist {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.8rem !important;
+  color: #B0B0B0 !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
-/* =====================================================
-   POST ACTIONS - BOUTONS DE RÉACTION (EMOJIS) - COMPACT
-   À droite, centrés avec la pochette
-   ===================================================== */
+/* Post text */
+.post-text {
+  font-size: 0.85rem !important;
+  color: #E0E0E0 !important;
+  line-height: 1.4 !important;
+  margin: 0 0 6px 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+}
+
+/* Actions - compact et inline avec emojis réduits */
 .post-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 0;
-  max-width: 380px;
-  margin-top: 2px;
+  display: flex !important;
+  gap: 6px !important;
+  align-items: center !important;
+  margin-top: auto !important;
+  padding-bottom: 2px !important;
 }
 
 .action-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 13px;
-  cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 18px;
-  transition: all 0.2s;
+  display: flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  padding: 3px 5px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  font-size: 0.72rem !important;
+  color: #cfcfcf !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
 }
 
 .action-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 111, 97, 0.1) !important;
+  border-color: #FF6F61 !important;
+  color: #FF6F61 !important;
+  transform: translateY(-1px) !important;
+}
+
+.action-btn.liked,
+.action-btn.active {
+  background: rgba(255, 111, 97, 0.15) !important;
+  border-color: #FF6F61 !important;
+  color: #FF6F61 !important;
 }
 
 .action-btn .icon {
-  width: 18px;
-  height: 18px;
-  font-size: 18px;
+  font-size: 0.85rem !important;
 }
 
 .action-btn .count {
-  font-size: 13px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  min-width: 10px !important;
+  text-align: center !important;
 }
 
-/* Like button states */
-.like-btn.liked {
-  color: #f91880;
+/* Timestamp en bas à droite */
+.post-timestamp-bottom {
+  position: absolute !important;
+  right: 12px !important;
+  bottom: 10px !important;
+  font-size: 0.7rem !important;
+  color: #9CA3AF !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(5px) !important;
+  padding: 3px 7px !important;
+  border-radius: 8px !important;
+  z-index: 2 !important;
 }
 
-.like-btn.liked .icon,
-.like-btn.liked .count {
-  color: #f91880;
+/* Feed container */
+.feed-container {
+  padding: 16px 8px !important;
+  max-width: 600px !important;
+  margin: 0 auto !important;
 }
 
-.like-btn:hover {
-  background: rgba(249, 24, 128, 0.1);
-  color: #f91880;
+/* Responsive */
+@media (max-width: 480px) {
+  .track-cover-container {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .track-title {
+    font-size: 0.82rem !important;
+  }
+
+  .track-artist {
+    font-size: 0.72rem !important;
+  }
+
+  .action-btn {
+    padding: 3px 6px !important;
+    font-size: 0.72rem !important;
+  }
+  .post-music-btn { width:36px; height:36px }
 }
 
-.like-btn:hover .icon,
-.like-btn:hover .count {
-  color: #f91880;
-}
-
-/* Comment button */
-.comment-btn:hover {
-  background: rgba(29, 155, 240, 0.1);
-  color: #1d9bf0;
-}
-
-.comment-btn:hover .icon,
-.comment-btn:hover .count {
-  color: #1d9bf0;
-}
-
-/* Reshake button */
-.reshake-btn.active {
-  color: #00ba7c;
-}
-
-.reshake-btn.active .icon,
-.reshake-btn.active .count {
-  color: #00ba7c;
-}
-
-.reshake-btn:hover {
-  background: rgba(0, 186, 124, 0.1);
-  color: #00ba7c;
-}
-
-.reshake-btn:hover .icon,
-.reshake-btn:hover .count {
-  color: #00ba7c;
-}
-
-/* =====================================================
-   TIMESTAMP EN BAS À DROITE
-   ===================================================== */
-.post-footer-timestamp {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  z-index: 3;
-}
-
-.timestamp-bottom {
-  font-size: 0.7rem;
-  color: rgba(255, 142, 128, 0.7);
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(5px);
-  padding: 3px 7px;
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-/* =====================================================
-   ANIMATIONS
-   ===================================================== */
+/* Animation d'apparition */
 .post {
-  animation: slideUp 0.3s ease;
+  animation: slideUp 0.3s ease !important;
 }
 
 @keyframes slideUp {
@@ -390,167 +337,323 @@
   }
 }
 
-.track-cover.playing {
-  animation: pulse 1.5s ease-in-out infinite;
+/* Music button bottom-right and styling */
+.post-music-container {
+  position: absolute;
+  right: 50px;
+  bottom: 10px;
+  z-index: 2;
 }
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-/* =====================================================
-   LOADING & EMPTY STATES
-   ===================================================== */
-.loading {
-  text-align: center;
-  padding: 40px 20px;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.loading .spinner {
-  width: 40px;
-  height: 40px;
-  margin: 0 auto 16px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #FF7668;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loading p {
-  font-size: 14px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.empty-state p {
-  font-size: 15px;
-  line-height: 1.5;
-}
-
-/* =====================================================
-   SKELETON LOADING
-   ===================================================== */
-.skeleton-post {
-  padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.05) 25%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.05) 75%
-  );
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
+.post-music-btn {
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
-}
-
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* =====================================================
-   MENTIONS CLIQUABLES
-   ===================================================== */
-.mention {
-  color: #1d9bf0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  color: #1DB954;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
-  transition: text-decoration 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+.post-music-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+.post-music-btn svg {
+  display: block;
+}
+.post-music-btn .music-icon {
+  font-size: 0.95rem;
 }
 
-.mention:hover {
-  text-decoration: underline;
+
+/* ===================================================
+   NOUVEAU LAYOUT POST OPTIMISÉ - Plus compact, pochette grande
+   =================================================== */
+
+/* Layout horizontal : pochette + contenu (centrés verticalement) */
+.post-content {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  height: 100% !important;
+  padding: 0 !important;
+  position: relative !important;
 }
 
-/* =====================================================
-   RESPONSIVE - MOBILE - COMPACT
-   ===================================================== */
-@media (max-width: 600px) {
+/* Pochette agrandie à gauche - prend presque toute la hauteur */
+.track-cover-container-new {
+  width: 90px !important;
+  height: 90px !important;
+  flex-shrink: 0 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease !important;
+  margin-top: 8px !important;
+}
+
+.track-cover-container-new:hover {
+  transform: scale(1.05) !important;
+}
+
+.track-cover-new {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+/* Contenu central - flex-1 pour remplir l'espace */
+.post-center {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+  padding-right: 0px !important;
+  align-items: center !important;
+}
+
+/* Container pour les infos (titre/artiste/description) - à gauche */
+.post-info-container {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  margin-top: 8px !important;
+  padding-top: 0 !important;
+  min-width: 0 !important;
+}
+
+/* Username en CORAIL et GROS */
+.username-coral {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: #FF8E80 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  transition: color 0.2s !important;
+  margin-bottom: 2px !important;
+}
+
+.username-coral:hover {
+  color: #FF7668 !important;
+  text-decoration: underline !important;
+}
+
+/* Post text compact */
+.post-text-compact {
+  font-size: 0.8rem !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  margin: 0 0 4px 0 !important;
+  line-height: 1.2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 1 !important;
+  line-clamp: 1 !important;
+  -webkit-box-orient: vertical !important;
+}
+
+/* Track info compacte */
+.track-info-new {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  margin-bottom: 4px !important;
+}
+
+.track-title-new {
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: white !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+.track-artist-new {
+  font-size: 0.75rem !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+/* Timestamp compact */
+.timestamp-new {
+  font-size: 0.7rem !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  white-space: nowrap !important;
+}
+
+/* Actions en ligne horizontale à droite, centrées avec la pochette */
+.post-actions-new {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 6px !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex-shrink: 0 !important;
+  padding-right: 8px !important;
+  margin-top: 8px !important;
+}
+
+.post-actions-new .action-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: rgba(255, 142, 128, 0.1) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 4px 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  color: #FF8E80 !important;
+  font-size: 0.75rem !important;
+  min-width: 50px !important;
+}
+
+.post-actions-new .action-btn:hover {
+  background: rgba(255, 142, 128, 0.2) !important;
+  transform: scale(1.05) !important;
+}
+
+.post-actions-new .action-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.post-actions-new .action-btn .count {
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  color: #FF8E80 !important;
+}
+
+.post-actions-new .like-btn.liked {
+  background: rgba(255, 142, 128, 0.25) !important;
+}
+
+.post-actions-new .reshake-btn.active {
+  background: rgba(255, 142, 128, 0.25) !important;
+}
+
+/* Responsive - Ajustements pour mobile */
+@media (max-width: 768px) {
+  .track-cover-container-new {
+    width: 80px !important;
+    height: 80px !important;
+    margin-top: 8px !important;
+  }
+
+  .post-info-container {
+    margin-top: 8px !important;
+  }
+
+  .post-actions-new {
+    margin-top: 8px !important;
+  }
+
   .post {
-    padding: 40px 10px 8px 10px;
+    padding-top: 55px !important;
   }
 
-  .post-content {
-    gap: 8px;
+  .username-coral {
+    font-size: 1rem !important;
   }
 
-  .user-note,
-  .post-avatar {
-    width: 32px;
-    height: 32px;
+  .track-title-new {
+    font-size: 0.8rem !important;
   }
 
-  .reshare-header {
-    padding-left: 32px;
+  .post-actions-new .action-btn {
+    min-width: 45px !important;
+    padding: 3px 6px !important;
   }
+}
 
-  .music-card {
-    padding: 6px;
-    gap: 8px;
-  }
+/* ===================================================
+   NOUVEAU : Username en haut + Timestamp en bas
+   =================================================== */
 
-  .track-cover-container {
-    width: 44px;
-    height: 44px;
-  }
+/* Header avec username au centre en haut */
+.post-header-top {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  text-align: center !important;
+  padding: 2px 0 !important;
+  min-height: 16px !important;
+  border-bottom: 1px solid rgba(255, 142, 128, 0.15) !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(5px) !important;
+  z-index: 3 !important;
+}
 
-  .track-title {
-    font-size: 13px;
-  }
+/* Username en haut : petit, italique, corail */
+.username-top {
+  font-size: 0.75rem !important;
+  font-style: italic !important;
+  font-weight: 600 !important;
+  color: #FF8E80 !important;
+  cursor: pointer !important;
+  transition: color 0.2s !important;
+}
 
-  .track-artist {
-    font-size: 12px;
-  }
+.username-top:hover {
+  color: #FF7668 !important;
+  text-decoration: underline !important;
+}
 
-  .post-text {
-    font-size: 13px;
-    line-height: 17px;
-  }
+/* Ajustement du post pour faire place au header */
+.post {
+  padding-top: 55px !important;
+  position: relative !important;
+}
 
-  .action-btn {
-    padding: 5px 8px;
-    gap: 5px;
-  }
+/* Footer timestamp en bas à droite */
+.post-footer-timestamp {
+  position: absolute !important;
+  bottom: 8px !important;
+  right: 8px !important;
+  z-index: 3 !important;
+}
 
-  .action-btn .icon {
-    width: 15px;
-    height: 15px;
-    font-size: 15px;
-  }
+/* Timestamp en bas : corail avec transparence */
+.timestamp-bottom {
+  font-size: 0.7rem !important;
+  color: rgba(255, 142, 128, 0.7) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(5px) !important;
+  padding: 3px 7px !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+}
 
-  .post-actions {
-    max-width: 320px;
-  }
+/* Agrandir les icônes de réaction */
+.post-actions-new .action-btn svg {
+  width: 20px !important;
+  height: 20px !important;
+}
 
-  .username-top {
-    font-size: 0.7rem;
-  }
+/* Masquer l'ancien username corail */
+.username-coral {
+  display: none !important;
+}
 
-  .post-header-top {
-    padding: 3px 0;
-    min-height: 18px;
-  }
+/* Masquer l'ancien timestamp */
+.timestamp-new {
+  display: none !important;
 }

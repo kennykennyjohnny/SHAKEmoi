@@ -22,18 +22,14 @@
   z-index: 1000 !important;
 }
 
-/* Logo texte avec RADIAL gradient (Figma exact) */
+/* Logo texte - couleurs solides */
 .logo {
   font-family: 'Maven Pro', -apple-system, BlinkMacSystemFont, sans-serif !important;
   font-size: 1.6rem !important;
   font-weight: 700 !important;
   cursor: pointer !important;
   transition: opacity 0.3s ease !important;
-  background: radial-gradient(125.12% 811.02% at 18.57% 69.75%, #FF7668 20.19%, #BF5BC6 36.54%, #FF7668 62.83%, #D459C8 99.04%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
-  text-fill-color: transparent !important;
+  color: #FF7668 !important;
 }
 
 .logo:hover {
@@ -41,11 +37,7 @@
 }
 
 .logo-moi {
-  background: radial-gradient(125.12% 811.02% at 18.57% 69.75%, #FF7668 20.19%, #BF5BC6 36.54%, #FF7668 62.83%, #D459C8 99.04%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
-  text-fill-color: transparent !important;
+  color: #BF5BC6 !important;
   font-weight: 800;
   position: relative;
   display: inline-block;
