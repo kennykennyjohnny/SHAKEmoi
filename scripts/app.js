@@ -253,9 +253,18 @@ function setupEventListeners() {
       });
       const searchResults = document.getElementById('search-results');
       const searchInput = document.getElementById('search-input');
+      const categories = document.getElementById('search-categories');
+      
       if (searchResults && (!searchInput || searchInput.value.trim().length === 0)) {
-        // Toujours afficher le top users quand on bascule avec une barre vide
-        loadTopUsers();
+        if (searchMode === 'users') {
+          // En mode Personnes: masquer les catégories et afficher le top
+          if (categories) categories.style.display = 'none';
+          loadTopUsers();
+        } else {
+          // En mode Musique: afficher les catégories
+          if (categories) categories.style.display = 'grid';
+          searchResults.innerHTML = '<div class="empty-state"><p>Clique sur une catégorie ou tape pour rechercher</p></div>';
+        }
       }
     });
   });
@@ -380,10 +389,10 @@ async function loadView(viewName) {
       break;
     case 'search':
       document.getElementById('search-input').value = '';
-      // Masquer les catégories par défaut et charger les top users
+      // Afficher les catégories et le message par défaut
       const categories = document.getElementById('search-categories');
-      if (categories) categories.style.display = 'none';
-      loadTopUsers();
+      if (categories) categories.style.display = 'grid';
+      document.getElementById('search-results').innerHTML = '<div class="empty-state"><p>Clique sur une catégorie ou tape pour rechercher</p></div>';
       break;
     case 'profile':
       await loadProfile();
@@ -996,10 +1005,21 @@ async function handleSearch(query) {
   const container = document.getElementById('search-results');
 
   if (!query || query.trim().length < 2) {
-    // Toujours afficher les top users quand query est vide
-    loadTopUsers();
+    // Si en mode Personnes et query vide, afficher le top
+    if (searchMode === 'users') {
+      loadTopUsers();
+    } else {
+      // En mode Musique, afficher les catégories
+      const categories = document.getElementById('search-categories');
+      if (categories) categories.style.display = 'grid';
+      container.innerHTML = '<div class="empty-state"><p>Clique sur une catégorie ou tape pour rechercher</p></div>';
+    }
     return;
   }
+
+  // Masquer les catégories quand on tape
+  const categories = document.getElementById('search-categories');
+  if (categories) categories.style.display = 'none';
 
   container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Recherche...</p></div>';
 
