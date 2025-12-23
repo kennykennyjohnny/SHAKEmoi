@@ -554,6 +554,11 @@ function renderPost(post) {
 
   return `
     <article class="post" data-post-id="${postId}">
+      <!-- Username en haut au centre -->
+      <div class="post-header-top">
+        <span class="username-top" onclick="openUserProfile('${author.id}')">@${author.username}</span>
+      </div>
+
       <div class="post-content">
         <!-- Pochette agrandie à gauche -->
         <div class="track-cover-container-new">
@@ -567,9 +572,6 @@ function renderPost(post) {
 
         <!-- Contenu central -->
         <div class="post-center">
-          <!-- Username en corail, gros -->
-          <span class="username-coral" onclick="openUserProfile('${author.id}')">@${author.username}</span>
-
           <!-- Text si présent -->
           ${post.text ? `<p class="post-text-compact">${makeUsernamesClickable(post.text)}</p>` : ''}
 
@@ -578,9 +580,6 @@ function renderPost(post) {
             <h3 class="track-title-new">${escapeHtml(post.track_name)}</h3>
             <p class="track-artist-new">${escapeHtml(post.artist)}</p>
           </div>
-
-          <!-- Timestamp -->
-          <span class="timestamp-new">${timeAgo}</span>
         </div>
 
         <!-- Actions resserrées à droite, centrées verticalement -->
@@ -598,6 +597,11 @@ function renderPost(post) {
             <span class="count">${post.reshakes_count || ''}</span>
           </button>
         </div>
+      </div>
+
+      <!-- Timestamp en bas à droite -->
+      <div class="post-footer-timestamp">
+        <span class="timestamp-bottom">${timeAgo}</span>
       </div>
     </article>
   `;
