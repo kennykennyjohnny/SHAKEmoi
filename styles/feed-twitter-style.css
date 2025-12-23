@@ -101,15 +101,37 @@
   opacity: 0.8;
 }
 
-/* POST INFO - À DROITE DE L'AVATAR */
+/* POST INFO - À DROITE DE L'AVATAR - GRID LAYOUT */
 .post-info-right {
   flex: 1 !important;
   min-width: 0;
-  display: flex !important;
-  flex-direction: column !important;
+  display: grid !important;
+  grid-template-columns: 1fr auto;
+  grid-auto-rows: auto;
   gap: 8px !important;
   height: auto !important;
   padding-right: 0 !important;
+}
+
+/* Header et texte prennent toute la largeur */
+.post-header-inline {
+  grid-column: 1 / -1;
+}
+
+.post-text {
+  grid-column: 1 / -1;
+}
+
+/* Music-card et actions sur la même ligne */
+.music-card {
+  grid-column: 1;
+  margin-bottom: 0 !important;
+}
+
+.post-actions {
+  grid-column: 2;
+  margin-top: 0 !important;
+  align-self: center !important;
 }
 
 /* HEADER INLINE */
@@ -153,7 +175,7 @@
   word-wrap: break-word;
 }
 
-/* MUSIC CARD - COMPACT */
+/* MUSIC CARD - COMPACT - TOUT EN LIGNE */
 .music-card {
   display: flex;
   align-items: center;
@@ -161,7 +183,7 @@
   background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   padding: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 0 !important;
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: background 0.2s;
 }
@@ -246,20 +268,21 @@
   text-overflow: ellipsis;
 }
 
-/* ACTIONS - STYLE TWITTER */
+/* ACTIONS - STYLE TWITTER - INTÉGRÉ EN LIGNE */
 .post-actions {
   display: flex !important;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center !important;
-  max-width: 425px;
-  margin-top: 4px !important;
+  gap: 4px !important;
+  margin-top: 0 !important;
+  margin-left: auto !important;
   position: static !important;
   transform: none !important;
   flex-direction: row !important;
-  gap: 0 !important;
   padding: 0 !important;
   right: auto !important;
   top: auto !important;
+  flex-shrink: 0 !important;
 }
 
 .action-btn {

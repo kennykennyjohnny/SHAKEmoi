@@ -30,6 +30,10 @@
   cursor: pointer !important;
   transition: opacity 0.3s ease !important;
   color: #FF7668 !important;
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: #FF7668 !important;
+  background-clip: initial !important;
 }
 
 .logo:hover {
@@ -38,6 +42,7 @@
 
 .logo-moi {
   color: #BF5BC6 !important;
+  -webkit-text-fill-color: #BF5BC6 !important;
   font-weight: 800;
   position: relative;
   display: inline-block;
