@@ -222,6 +222,9 @@
   flex: 1;
   min-width: 0;
   margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
 }
 
 .track-title {
@@ -247,6 +250,7 @@
 .post-actions {
   display: flex !important;
   justify-content: space-between;
+  align-items: center !important;
   max-width: 425px;
   margin-top: 4px !important;
   position: static !important;

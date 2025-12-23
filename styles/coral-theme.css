@@ -51,14 +51,7 @@ body {
   border-bottom: 1px solid var(--border-on-dark);
 }
 
-.logo {
-  color: var(--primary);
-  font-weight: 700;
-}
-
-.logo-moi {
-  color: var(--text-on-dark);
-}
+/* Logo géré par header-navbar-modern.css */
 
 /* Boutons avec couleurs vives */
 .btn-primary,
