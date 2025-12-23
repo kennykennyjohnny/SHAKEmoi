@@ -502,17 +502,56 @@
   white-space: nowrap !important;
 }
 
-/* Actions - Aligné en haut aussi */
-.post-actions-new {
+/* Actions EN BAS du post - Horizontal */
+.post-actions-bottom {
   display: flex !important;
   flex-direction: row !important;
-  gap: 4px !important;
-  align-items: flex-start !important;
+  gap: 6px !important;
+  align-items: center !important;
   justify-content: center !important;
-  flex-shrink: 0 !important;
-  padding: 0 !important;
+  padding: 8px 0 0 0 !important;
   margin: 0 !important;
-  align-self: flex-start !important;
+  border-top: 1px solid rgba(255, 142, 128, 0.15) !important;
+}
+
+.post-actions-bottom .action-btn {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: rgba(255, 142, 128, 0.1) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 6px 12px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  color: #FF8E80 !important;
+  font-size: 0.75rem !important;
+  min-width: 60px !important;
+}
+
+.post-actions-bottom .action-btn:hover {
+  background: rgba(255, 142, 128, 0.2) !important;
+  transform: scale(1.05) !important;
+}
+
+.post-actions-bottom .action-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.post-actions-bottom .action-btn .count {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: #FF8E80 !important;
+}
+
+.post-actions-bottom .like-btn.liked {
+  background: rgba(255, 142, 128, 0.25) !important;
+}
+
+.post-actions-bottom .reshake-btn.active {
+  background: rgba(255, 142, 128, 0.25) !important;
 }
 
 .post-actions-new .action-btn {
@@ -594,25 +633,27 @@
    NOUVEAU : Username en haut + Timestamp en bas
    =================================================== */
 
-/* Header avec username au centre en haut - EXTRA COMPACT */
+/* Header avec username à gauche + timestamp à droite - Dégradé subtil */
 .post-header-top {
   position: absolute !important;
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  text-align: center !important;
-  padding: 2px 0 !important;
-  min-height: 16px !important;
-  border-bottom: 1px solid rgba(255, 142, 128, 0.3) !important;
-  background: linear-gradient(135deg, rgba(255, 142, 128, 0.15), rgba(255, 118, 104, 0.15)) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 4px 12px !important;
+  min-height: 24px !important;
+  border-bottom: 1px solid rgba(255, 142, 128, 0.2) !important;
+  background: linear-gradient(135deg, rgba(255, 142, 128, 0.08), rgba(255, 107, 157, 0.08), rgba(191, 91, 198, 0.08)) !important;
   backdrop-filter: blur(5px) !important;
   z-index: 3 !important;
   border-radius: 12px 12px 0 0 !important;
 }
 
-/* Username en haut : micro, italique, corail */
+/* Username en haut à gauche : micro, italique, corail */
 .username-top {
-  font-size: 0.6rem !important;
+  font-size: 0.65rem !important;
   font-style: italic !important;
   font-weight: 600 !important;
   color: #FF8E80 !important;
@@ -626,9 +667,18 @@
   text-decoration: underline !important;
 }
 
-/* Ajustement du post pour faire place au header MICRO */
+/* Timestamp en haut à droite */
+.timestamp-top-right {
+  font-size: 0.6rem !important;
+  color: rgba(255, 142, 128, 0.7) !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+/* Ajustement du post pour faire place au header */
 .post {
-  padding-top: 24px !important;
+  padding-top: 32px !important;
+  padding-bottom: 12px !important;
   position: relative !important;
 }
 

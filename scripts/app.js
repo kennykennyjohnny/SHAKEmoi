@@ -614,9 +614,10 @@ function renderPost(post) {
 
   return `
     <article class="post" data-post-id="${postId}">
-      <!-- Username en haut au centre -->
+      <!-- Username en haut à gauche + Timestamp en haut à droite -->
       <div class="post-header-top">
         <span class="username-top" onclick="openUserProfile('${author.id}')">@${author.username}</span>
+        <span class="timestamp-top-right">${timeAgo}</span>
       </div>
 
       <div class="post-content">
@@ -630,7 +631,7 @@ function renderPost(post) {
                loading="lazy">
         </div>
 
-        <!-- Contenu central avec infos + actions -->
+        <!-- Contenu central avec infos -->
         <div class="post-center">
           <div class="post-info-container">
             <!-- Track info en premier -->
@@ -639,31 +640,26 @@ function renderPost(post) {
               <p class="track-artist-new">${escapeHtml(post.artist)}</p>
             </div>
 
-            <!-- Text (description) en dernier -->
+            <!-- Text (description) -->
             ${post.text ? `<p class="post-text-compact">${makeUsernamesClickable(post.text)}</p>` : ''}
-          </div>
-
-          <!-- Actions en ligne horizontale à droite -->
-          <div class="post-actions-new">
-            <button class="action-btn like-btn" data-post-id="${postId}">
-              ${ICONS.heart.replace('FILL_COLOR', 'none')}
-              <span class="count">${post.likes_count || ''}</span>
-            </button>
-            <button class="action-btn comment-btn" data-post-id="${postId}">
-              ${ICONS.comment}
-              <span class="count">${post.comments_count || ''}</span>
-            </button>
-            <button class="action-btn reshake-btn ${isReshake ? 'active' : ''}" data-post-id="${postId}">
-              ${ICONS.reshake}
-              <span class="count">${post.reshakes_count || ''}</span>
-            </button>
           </div>
         </div>
       </div>
 
-      <!-- Timestamp en bas à droite -->
-      <div class="post-footer-timestamp">
-        <span class="timestamp-bottom">${timeAgo}</span>
+      <!-- Actions en bas du post -->
+      <div class="post-actions-bottom">
+        <button class="action-btn like-btn" data-post-id="${postId}">
+          ${ICONS.heart.replace('FILL_COLOR', 'none')}
+          <span class="count">${post.likes_count || ''}</span>
+        </button>
+        <button class="action-btn comment-btn" data-post-id="${postId}">
+          ${ICONS.comment}
+          <span class="count">${post.comments_count || ''}</span>
+        </button>
+        <button class="action-btn reshake-btn ${isReshake ? 'active' : ''}" data-post-id="${postId}">
+          ${ICONS.reshake}
+          <span class="count">${post.reshakes_count || ''}</span>
+        </button>
       </div>
     </article>
   `;
