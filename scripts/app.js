@@ -263,6 +263,14 @@ function setupEventListeners() {
   if (searchInput) {
     let searchTimeout;
     searchInput.addEventListener('input', (e) => {
+      // Cacher les catégories dès qu'on commence à taper
+      const categories = document.getElementById('search-categories');
+      if (categories && e.target.value.trim().length > 0) {
+        categories.style.display = 'none';
+      } else if (categories && e.target.value.trim().length === 0) {
+        categories.style.display = 'grid';
+      }
+
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
         handleSearch(e.target.value);
@@ -572,14 +580,14 @@ function renderPost(post) {
 
         <!-- Contenu central -->
         <div class="post-center">
-          <!-- Text si présent -->
-          ${post.text ? `<p class="post-text-compact">${makeUsernamesClickable(post.text)}</p>` : ''}
-
-          <!-- Track info -->
+          <!-- Track info en premier -->
           <div class="track-info-new">
             <h3 class="track-title-new">${escapeHtml(post.track_name)}</h3>
             <p class="track-artist-new">${escapeHtml(post.artist)}</p>
           </div>
+
+          <!-- Text (description) en dernier -->
+          ${post.text ? `<p class="post-text-compact">${makeUsernamesClickable(post.text)}</p>` : ''}
         </div>
 
         <!-- Actions resserrées à droite, centrées verticalement -->
@@ -922,7 +930,7 @@ function renderTopTrack(track, showShakeCount = false) {
           </button>
         ` : ''}
         <button class="action-btn shake-btn" title="Shake ce morceau">
-          <span class="icon">♥</span>
+          ${ICONS.heart.replace('FILL_COLOR', 'none')}
         </button>
         ${track.preview_url ? `
           <button class="action-btn preview-btn" title="Écouter 30s" onclick="playPreview('${track.preview_url}', this)">
@@ -1005,7 +1013,7 @@ function renderSearchTrack(track) {
           </button>
         ` : ''}
         <button class="action-btn shake-btn" title="Shake ce morceau">
-          <span class="icon">♥</span>
+          ${ICONS.heart.replace('FILL_COLOR', 'none')}
         </button>
         ${track.preview_url ? `
           <button class="action-btn preview-btn" title="Écouter 30s" onclick="playPreview('${track.preview_url}', this)">
@@ -1192,7 +1200,7 @@ async function loadProfileTab(tab) {
               <div class="profile-post-overlay">
                 <div class="profile-post-title">${escapeHtml(post.track_name)}</div>
                 <div class="profile-post-stats">
-                  <span>♥ ${post.likes_count || 0}</span>
+                  <span class="stat-likes">${ICONS.heart.replace('FILL_COLOR', 'none').replace('width="20"', 'width="14"').replace('height="20"', 'height="14"')} ${post.likes_count || 0}</span>
                   <span>💭 ${post.comments_count || 0}</span>
                 </div>
                 ${post.spotify_url || post.track_id ? `
@@ -1237,7 +1245,7 @@ async function loadProfileTab(tab) {
               <div class="profile-post-overlay">
                 <div class="profile-post-title">${escapeHtml(post.track_name)}</div>
                 <div class="profile-post-stats">
-                  <span>♥ ${post.likes_count || 0}</span>
+                  <span class="stat-likes">${ICONS.heart.replace('FILL_COLOR', 'none').replace('width="20"', 'width="14"').replace('height="20"', 'height="14"')} ${post.likes_count || 0}</span>
                   <span>💭 ${post.comments_count || 0}</span>
                 </div>
                 ${post.spotify_url || post.track_id ? `
@@ -1677,7 +1685,7 @@ async function openUserProfile(userId) {
             <div class="profile-post-overlay">
               <div class="profile-post-title">${escapeHtml(post.track_name)}</div>
               <div class="profile-post-stats">
-                <span>❤️ ${post.likes_count || 0}</span>
+                <span class="stat-likes">${ICONS.heart.replace('FILL_COLOR', 'none').replace('width="20"', 'width="14"').replace('height="20"', 'height="14"')} ${post.likes_count || 0}</span>
                 <span>💬 ${post.comments_count || 0}</span>
               </div>
               ${post.spotify_url || post.track_id ? `

@@ -411,9 +411,11 @@
   flex: 1 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 2px !important;
+  gap: 4px !important;
   min-width: 0 !important;
   padding-right: 8px !important;
+  padding-top: 4px !important;
+  justify-content: flex-start !important;
 }
 
 /* Username en CORAIL et GROS */
@@ -452,8 +454,8 @@
 .track-info-new {
   display: flex !important;
   flex-direction: column !important;
-  gap: 0px !important;
-  margin-bottom: 2px !important;
+  gap: 2px !important;
+  margin-bottom: 4px !important;
 }
 
 .track-title-new {
@@ -484,15 +486,19 @@
   white-space: nowrap !important;
 }
 
-/* Actions resserrées à droite, centrées verticalement */
+/* Actions en ligne horizontale au centre du post */
 .post-actions-new {
+  position: absolute !important;
+  bottom: 8px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
   display: flex !important;
-  flex-direction: column !important;
-  gap: 4px !important;
-  align-items: flex-end !important;
+  flex-direction: row !important;
+  gap: 8px !important;
+  align-items: center !important;
   justify-content: center !important;
   flex-shrink: 0 !important;
-  padding-left: 4px !important;
+  z-index: 3 !important;
 }
 
 .post-actions-new .action-btn {
@@ -599,10 +605,10 @@
   position: relative !important;
 }
 
-/* Footer timestamp en bas à droite */
+/* Footer timestamp en bas à droite (au-dessus des actions) */
 .post-footer-timestamp {
   position: absolute !important;
-  bottom: 8px !important;
+  bottom: 40px !important;
   right: 8px !important;
   z-index: 3 !important;
 }
