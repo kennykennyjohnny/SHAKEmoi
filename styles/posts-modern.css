@@ -161,7 +161,7 @@
 }
 
 /* =====================================================
-   MUSIC CARD - POCHETTE + INFO
+   MUSIC CARD - POCHETTE + INFO + EMOJIS EN LIGNE
    ===================================================== */
 .music-card {
   display: flex;
@@ -179,7 +179,7 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* Pochette */
+/* Pochette - taille normale */
 .track-cover-container {
   width: 56px;
   height: 56px;
@@ -230,11 +230,14 @@
   opacity: 1;
 }
 
-/* Track info */
+/* Track info - centré verticalement avec la pochette */
 .track-info-compact {
   flex: 1;
   min-width: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .track-title {
@@ -258,10 +261,12 @@
 
 /* =====================================================
    POST ACTIONS - BOUTONS DE RÉACTION (EMOJIS)
+   À droite, centrés avec la pochette
    ===================================================== */
 .post-actions {
   display: flex;
   justify-content: space-between;
+  gap: 0;
   max-width: 425px;
   margin-top: 4px;
 }
@@ -500,6 +505,19 @@
 
   .reshare-header {
     padding-left: 36px;
+  }
+
+  .track-cover-container {
+    width: 48px;
+    height: 48px;
+  }
+
+  .track-title {
+    font-size: 13px;
+  }
+
+  .track-artist {
+    font-size: 12px;
   }
 
   .action-btn {
