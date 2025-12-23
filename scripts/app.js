@@ -253,13 +253,9 @@ function setupEventListeners() {
       });
       const searchResults = document.getElementById('search-results');
       const searchInput = document.getElementById('search-input');
-      if (searchResults) {
-        // Si en mode Personnes et la barre est vide, afficher les top users
-        if (searchMode === 'users' && (!searchInput || searchInput.value.trim().length === 0)) {
-          loadTopUsers();
-        } else {
-          searchResults.innerHTML = '<div class="empty-state"><p>Tape quelque chose pour rechercher</p></div>';
-        }
+      if (searchResults && (!searchInput || searchInput.value.trim().length === 0)) {
+        // Toujours afficher le top users quand on bascule avec une barre vide
+        loadTopUsers();
       }
     });
   });
@@ -384,9 +380,10 @@ async function loadView(viewName) {
       break;
     case 'search':
       document.getElementById('search-input').value = '';
-      // Afficher les catégories par défaut et le message pour les pistes
-      document.getElementById('search-categories').style.display = 'grid';
-      document.getElementById('search-results').innerHTML = '<div class="empty-state"><p>Clique sur une catégorie ou tape pour rechercher</p></div>';
+      // Masquer les catégories par défaut et charger les top users
+      const categories = document.getElementById('search-categories');
+      if (categories) categories.style.display = 'none';
+      loadTopUsers();
       break;
     case 'profile':
       await loadProfile();
@@ -999,12 +996,8 @@ async function handleSearch(query) {
   const container = document.getElementById('search-results');
 
   if (!query || query.trim().length < 2) {
-    // Si en mode users et query vide, afficher les top users
-    if (searchMode === 'users') {
-      loadTopUsers();
-    } else {
-      container.innerHTML = '<div class="empty-state"><p>Tape au moins 2 caractères</p></div>';
-    }
+    // Toujours afficher les top users quand query est vide
+    loadTopUsers();
     return;
   }
 
