@@ -600,6 +600,8 @@ body {
   background: linear-gradient(135deg, #FF6F61 0%, #FF8E80 100%);
   box-shadow: 0 4px 12px rgba(255, 111, 97, 0.3);
   color: white;
+  position: relative;
+  z-index: 10;
 }
 
 .username {
