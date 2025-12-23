@@ -22,14 +22,21 @@
   z-index: 1000 !important;
 }
 
-/* Logo sobre */
+/* Logo sobre - avec fallback pour mobile */
 .logo {
   font-size: 1.75rem !important;
   font-weight: 900 !important;
+  /* Fallback color pour navigateurs qui ne supportent pas background-clip */
+  color: #FF8E80 !important;
   background: linear-gradient(135deg, #FF6F61 0%, #FF8E80 50%, #FFB3A7 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
+  /* Support pour navigateurs sans background-clip */
+  @supports not (background-clip: text) {
+    color: #FF8E80 !important;
+    -webkit-text-fill-color: #FF8E80 !important;
+  }
   letter-spacing: -1.5px !important;
   cursor: pointer !important;
   transition: opacity 0.3s ease !important;
