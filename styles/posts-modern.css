@@ -13,13 +13,13 @@
   background: rgba(255, 255, 255, 0.05) !important;
   backdrop-filter: blur(10px) !important;
   border-radius: 12px !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   border: 1px solid rgba(255, 142, 128, 0.15) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   transition: all 0.2s ease !important;
   position: relative !important;
   min-height: 115px !important;
-  max-height: 130px !important;
+  max-height: none !important;
 }
 
 .post:hover {
@@ -377,7 +377,7 @@
 /* Layout horizontal : pochette + contenu (centrés verticalement) */
 .post-content {
   display: flex !important;
-  align-items: center !important;
+  align-items: stretch !important;
   gap: 10px !important;
   height: 100% !important;
   padding: 0 !important;
@@ -394,7 +394,8 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
   cursor: pointer !important;
   transition: transform 0.2s ease !important;
-  margin-top: 8px !important;
+  margin-top: 0 !important;
+  align-self: center !important;
 }
 
 .track-cover-container-new:hover {
@@ -416,18 +417,20 @@
   gap: 12px !important;
   min-width: 0 !important;
   padding-right: 0px !important;
-  align-items: center !important;
+  align-items: stretch !important;
+  justify-content: space-between !important;
 }
 
-/* Container pour les infos (titre/artiste/description) - à gauche */
+/* Container pour les infos (titre/artiste/description) - à gauche, justifié verticalement */
 .post-info-container {
   flex: 1 !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 6px !important;
-  margin-top: 8px !important;
+  margin-top: 0 !important;
   padding-top: 0 !important;
   min-width: 0 !important;
+  justify-content: center !important;
 }
 
 /* Username en CORAIL et GROS */
@@ -504,10 +507,11 @@
   flex-direction: row !important;
   gap: 6px !important;
   align-items: center !important;
-  justify-content: flex-end !important;
+  justify-content: center !important;
   flex-shrink: 0 !important;
   padding-right: 8px !important;
-  margin-top: 8px !important;
+  margin-top: 0 !important;
+  align-self: center !important;
 }
 
 .post-actions-new .action-btn {
@@ -554,15 +558,15 @@
   .track-cover-container-new {
     width: 80px !important;
     height: 80px !important;
-    margin-top: 8px !important;
+    margin-top: 0 !important;
   }
 
   .post-info-container {
-    margin-top: 8px !important;
+    margin-top: 0 !important;
   }
 
   .post-actions-new {
-    margin-top: 8px !important;
+    margin-top: 0 !important;
   }
 
   .post {
