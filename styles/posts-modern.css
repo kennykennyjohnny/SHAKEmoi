@@ -633,7 +633,7 @@
    NOUVEAU : Username en haut + Timestamp en bas
    =================================================== */
 
-/* Header élégant avec username à gauche + timestamp à droite */
+/* Header plus grand et élégant */
 .post-header-top {
   position: absolute !important;
   top: 0 !important;
@@ -642,20 +642,20 @@
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  padding: 3px 10px !important;
-  min-height: 20px !important;
+  padding: 6px 12px !important;
+  min-height: 28px !important;
   border-bottom: 1px solid rgba(255, 142, 128, 0.25) !important;
-  background: rgba(255, 142, 128, 0.08) !important;
+  background: rgba(255, 142, 128, 0.10) !important;
   backdrop-filter: blur(10px) !important;
   z-index: 3 !important;
   border-radius: 11px 11px 0 0 !important;
 }
 
-/* Username en haut à gauche : micro, italique, corail */
+/* Username plus visible */
 .username-top {
-  font-size: 0.65rem !important;
+  font-size: 0.75rem !important;
   font-style: italic !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   color: #FF8E80 !important;
   cursor: pointer !important;
   transition: color 0.2s !important;
@@ -667,9 +667,9 @@
   text-decoration: underline !important;
 }
 
-/* Timestamp en haut à droite */
+/* Timestamp */
 .timestamp-top-right {
-  font-size: 0.6rem !important;
+  font-size: 0.65rem !important;
   color: rgba(255, 142, 128, 0.7) !important;
   font-weight: 500 !important;
   line-height: 1 !important;

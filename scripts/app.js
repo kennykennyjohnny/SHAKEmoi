@@ -621,7 +621,7 @@ function renderPost(post) {
       </div>
 
       <div class="post-content">
-        <!-- Pochette agrandie à gauche -->
+        <!-- Pochette à gauche -->
         <div class="track-cover-container-new">
           <img src="${post.cover_url}"
                class="track-cover-new"
@@ -632,34 +632,29 @@ function renderPost(post) {
         </div>
 
         <!-- Contenu central avec infos -->
-        <div class="post-center">
-          <div class="post-info-container">
-            <!-- Track info en premier -->
-            <div class="track-info-new">
-              <h3 class="track-title-new">${escapeHtml(post.track_name)}</h3>
-              <p class="track-artist-new">${escapeHtml(post.artist)}</p>
-            </div>
-
-            <!-- Text (description) -->
-            ${post.text ? `<p class="post-text-compact">${makeUsernamesClickable(post.text)}</p>` : ''}
+        <div class="post-info-container">
+          <div class="track-info-new">
+            <h3 class="track-title-new">${escapeHtml(post.track_name)}</h3>
+            <p class="track-artist-new">${escapeHtml(post.artist)}</p>
           </div>
+          ${post.text ? `<p class="post-text-compact">${makeUsernamesClickable(post.text)}</p>` : ''}
         </div>
-      </div>
 
-      <!-- Actions en bas du post -->
-      <div class="post-actions-bottom">
-        <button class="action-btn like-btn" data-post-id="${postId}">
-          ${ICONS.heart.replace('FILL_COLOR', 'none')}
-          <span class="count">${post.likes_count || ''}</span>
-        </button>
-        <button class="action-btn comment-btn" data-post-id="${postId}">
-          ${ICONS.comment}
-          <span class="count">${post.comments_count || ''}</span>
-        </button>
-        <button class="action-btn reshake-btn ${isReshake ? 'active' : ''}" data-post-id="${postId}">
-          ${ICONS.reshake}
-          <span class="count">${post.reshakes_count || ''}</span>
-        </button>
+        <!-- Actions à droite alignées verticalement -->
+        <div class="post-actions-right">
+          <button class="action-btn like-btn" data-post-id="${postId}">
+            ${ICONS.heart.replace('FILL_COLOR', 'none')}
+            <span class="count">${post.likes_count || ''}</span>
+          </button>
+          <button class="action-btn comment-btn" data-post-id="${postId}">
+            ${ICONS.comment}
+            <span class="count">${post.comments_count || ''}</span>
+          </button>
+          <button class="action-btn reshake-btn ${isReshake ? 'active' : ''}" data-post-id="${postId}">
+            ${ICONS.reshake}
+            <span class="count">${post.reshakes_count || ''}</span>
+          </button>
+        </div>
       </div>
     </article>
   `;
