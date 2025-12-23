@@ -67,22 +67,22 @@
   text-decoration: underline !important;
 }
 
-/* Post content - layout horizontal optimisé */
-.post-content {
+/* Post content - layout horizontal optimisé - DÉSACTIVÉ pour feed-twitter-style.css */
+/* .post-content {
   display: flex !important;
   gap: 12px !important;
   padding: 12px !important;
   align-items: flex-start !important;
-}
+} */
 
-/* Smaller cover for compact cards */
-.track-cover-container {
+/* Smaller cover for compact cards - DÉSACTIVÉ */
+/* .track-cover-container {
   width: 72px !important;
   height: 72px !important;
-}
+} */
 
-/* Pochette - grande et mise en avant */
-.track-cover-container {
+/* Pochette - grande et mise en avant - DÉSACTIVÉ */
+/* .track-cover-container {
   position: relative !important;
   flex-shrink: 0 !important;
   width: 72px !important;
@@ -230,8 +230,8 @@
   -webkit-box-orient: vertical !important;
 }
 
-/* Actions - compact et inline avec emojis réduits */
-.post-actions {
+/* Actions - DÉSACTIVÉ pour feed-twitter-style.css */
+/* .post-actions {
   display: flex !important;
   gap: 6px !important;
   align-items: center !important;
@@ -276,7 +276,7 @@
   font-weight: 600 !important;
   min-width: 10px !important;
   text-align: center !important;
-}
+} */
 
 /* Timestamp en bas à droite */
 .post-timestamp-bottom {
@@ -501,8 +501,8 @@
   white-space: nowrap !important;
 }
 
-/* Actions - centrées verticalement au milieu du post */
-.post-actions-new {
+/* Actions - centrées verticalement au milieu du post - DÉSACTIVÉ */
+/* .post-actions-new {
   display: flex !important;
   flex-direction: column !important;
   gap: 6px !important;
@@ -551,7 +551,7 @@
 
 .post-actions-new .reshake-btn.active {
   background: rgba(255, 142, 128, 0.25) !important;
-}
+} */
 
 /* Responsive - Ajustements pour mobile */
 @media (max-width: 768px) {
