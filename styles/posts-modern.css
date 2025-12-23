@@ -501,10 +501,10 @@
   white-space: nowrap !important;
 }
 
-/* Actions - centrées verticalement au milieu du post - DÉSACTIVÉ */
-/* .post-actions-new {
+/* Actions - HORIZONTAL EN LIGNE */
+.post-actions-new {
   display: flex !important;
-  flex-direction: column !important;
+  flex-direction: row !important;
   gap: 6px !important;
   align-items: center !important;
   justify-content: center !important;
@@ -516,6 +516,7 @@
 
 .post-actions-new .action-btn {
   display: flex !important;
+  flex-direction: row !important;
   align-items: center !important;
   gap: 4px !important;
   background: rgba(255, 142, 128, 0.1) !important;
@@ -551,7 +552,7 @@
 
 .post-actions-new .reshake-btn.active {
   background: rgba(255, 142, 128, 0.25) !important;
-} */
+}
 
 /* Responsive - Ajustements pour mobile */
 @media (max-width: 768px) {
