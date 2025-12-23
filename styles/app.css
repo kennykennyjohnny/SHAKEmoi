@@ -1164,3 +1164,12 @@ body {
     width: 100%;
   }
 }
+
+
+/* Mobile logo fix */
+@media (max-width: 600px) {
+  .logo {
+    font-size: 1.2rem;
+    filter: drop-shadow(0 0 10px rgba(255, 111, 97, 0.2));
+  }
+}
