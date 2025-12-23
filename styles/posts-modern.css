@@ -411,11 +411,19 @@
   flex: 1 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 4px !important;
+  gap: 0px !important;
   min-width: 0 !important;
-  padding-right: 8px !important;
-  padding-top: 4px !important;
-  justify-content: flex-start !important;
+  padding-right: 0px !important;
+  padding-top: 10px !important;
+  justify-content: space-between !important;
+}
+
+/* Container pour les infos (titre/artiste/description) */
+.post-info-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  margin-bottom: 4px !important;
 }
 
 /* Username en CORAIL et GROS */
@@ -486,19 +494,17 @@
   white-space: nowrap !important;
 }
 
-/* Actions en ligne horizontale au centre du post */
+/* Actions en ligne horizontale à droite, alignées avec la pochette */
 .post-actions-new {
-  position: absolute !important;
-  bottom: 8px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
   display: flex !important;
   flex-direction: row !important;
-  gap: 8px !important;
+  gap: 6px !important;
   align-items: center !important;
-  justify-content: center !important;
+  justify-content: flex-end !important;
   flex-shrink: 0 !important;
-  z-index: 3 !important;
+  padding-right: 8px !important;
+  margin-top: auto !important;
+  padding-bottom: 2px !important;
 }
 
 .post-actions-new .action-btn {
@@ -605,10 +611,10 @@
   position: relative !important;
 }
 
-/* Footer timestamp en bas à droite (au-dessus des actions) */
+/* Footer timestamp en bas à droite */
 .post-footer-timestamp {
   position: absolute !important;
-  bottom: 40px !important;
+  bottom: 8px !important;
   right: 8px !important;
   z-index: 3 !important;
 }
