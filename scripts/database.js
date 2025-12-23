@@ -641,6 +641,23 @@ async function searchUsers(query) {
   }
 }
 
+// Get top users by feels (shakeurs les plus suivis)
+async function getTopUsers(limit = 20) {
+  try {
+    const { data, error } = await supabase
+      .from('users_profile')
+      .select('*')
+      .order('feels_count', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting top users:', error);
+    return [];
+  }
+}
+
 // Search posts by track name or artist
 async function searchPosts(query) {
   try {
