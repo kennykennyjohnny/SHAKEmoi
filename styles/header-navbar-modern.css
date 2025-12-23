@@ -314,11 +314,12 @@
 
 @media (max-width: 768px) {
   .logo {
-    height: 28px !important;
+    height: 30px !important;
   }
 
   .logo-svg {
-    height: 22px !important;
+    height: 26px !important;
+    min-height: 26px !important;
   }
 
   .nav-btn {
