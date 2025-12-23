@@ -23,6 +23,8 @@
   flex-direction: column;
   gap: 12px;
   position: relative;
+  border: none !important;
+  border-radius: 0 !important;
 }
 
 .post:hover {
@@ -362,22 +364,22 @@
 
 /* Reshake button */
 .reshake-btn.active {
-  color: #00ba7c !important;
+  color: #FF8E80 !important;
 }
 
 .reshake-btn.active .icon,
 .reshake-btn.active .count {
-  color: #00ba7c !important;
+  color: #FF8E80 !important;
 }
 
 .reshake-btn:hover {
-  background: rgba(0, 186, 124, 0.1) !important;
-  color: #00ba7c !important;
+  background: rgba(255, 142, 128, 0.1) !important;
+  color: #FF8E80 !important;
 }
 
 .reshake-btn:hover .icon,
 .reshake-btn:hover .count {
-  color: #00ba7c !important;
+  color: #FF8E80 !important;
 }
 
 /* TIMESTAMP BOTTOM */

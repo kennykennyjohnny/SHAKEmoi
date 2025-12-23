@@ -1,10 +1,10 @@
 /* =====================================================
    SHAKEMOI - DESIGN MODERNE DES POSTS
-   Pochette en avant, layout compact, esthétique
+   DÉSACTIVÉ - feed-twitter-style.css prend le contrôle
    ===================================================== */
 
-/* Post container - carte ultra-compacte optimisée */
-.post {
+/* Post container - DÉSACTIVÉ */
+/* .post {
   display: flex !important;
   flex-direction: column !important;
   gap: 0 !important;
@@ -26,7 +26,7 @@
   transform: translateY(-1px) !important;
   box-shadow: 0 4px 16px rgba(255, 142, 128, 0.3) !important;
   border-color: #FF8E80 !important;
-}
+} */
 
 /* Reshake header - compact et visible, aligné en bas à gauche */
 .reshake-header {
