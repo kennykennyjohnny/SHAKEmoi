@@ -22,23 +22,28 @@
   z-index: 1000 !important;
 }
 
-/* Logo SVG - responsive */
+/* Logo texte avec gradient CSS */
 .logo {
-  display: flex !important;
-  align-items: center !important;
+  font-size: 1.6rem !important;
+  font-weight: 900 !important;
+  letter-spacing: -1px !important;
   cursor: pointer !important;
   transition: opacity 0.3s ease !important;
-  height: 32px !important;
-}
-
-.logo-svg {
-  height: 28px !important;
-  width: auto !important;
-  display: block !important;
+  background: linear-gradient(135deg, #FF7668 0%, #BF5BC6 35%, #FF7668 65%, #D459C8 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
 }
 
 .logo:hover {
   opacity: 0.8 !important;
+}
+
+.logo-moi {
+  background: linear-gradient(135deg, #FF7668 0%, #BF5BC6 35%, #FF7668 65%, #D459C8 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
 }
 
 .logo:active {
@@ -314,12 +319,7 @@
 
 @media (max-width: 768px) {
   .logo {
-    height: 30px !important;
-  }
-
-  .logo-svg {
-    height: 26px !important;
-    min-height: 26px !important;
+    font-size: 1.3rem !important;
   }
 
   .nav-btn {

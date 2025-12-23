@@ -75,11 +75,62 @@
 }
 
 /* =====================================================
-   OVERRIDE TAILLE POCHETTE
+   OVERRIDE - POSTS COMPACTS
    ===================================================== */
+.post {
+  padding: 30px 12px 8px 12px !important;
+  gap: 6px !important;
+}
+
+.post-header-top {
+  padding: 3px 0 !important;
+  min-height: 18px !important;
+}
+
+.username-top {
+  font-size: 0.7rem !important;
+}
+
+.post-text {
+  font-size: 13px !important;
+  line-height: 17px !important;
+  margin: 0 0 4px 0 !important;
+}
+
+.music-card {
+  padding: 6px !important;
+  gap: 8px !important;
+  margin-bottom: 4px !important;
+}
+
 .track-cover-container {
-  width: 48px !important;
-  height: 48px !important;
+  width: 44px !important;
+  height: 44px !important;
+}
+
+.post-actions {
+  margin-top: 2px !important;
+  max-width: 350px !important;
+}
+
+.action-btn {
+  padding: 5px 8px !important;
+  gap: 5px !important;
+}
+
+@media (max-width: 600px) {
+  .post {
+    padding: 30px 10px 6px 10px !important;
+  }
+
+  .track-cover-container {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .music-card {
+    padding: 5px !important;
+  }
 }
 
 /* =====================================================
