@@ -553,6 +553,7 @@
   .track-cover-container-new {
     width: 80px !important;
     height: 80px !important;
+    margin-top: 8px !important;
   }
 
   .post {
