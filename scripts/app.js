@@ -478,7 +478,7 @@ async function renderReshakesWithButton(postId, reshakes) {
         <p class="comment-text">a reshake ce post</p>
       </div>
     </div>
-  `).join('') : '<p class="no-comments">Aucun reshake</p>';
+  `).join('') : '<p class="no-comments">Sois le premier à reshaker ce post !</p>';
 
   return `
     <div class="comments-section reshakes-section" id="reshakes-${postId}">
@@ -486,7 +486,7 @@ async function renderReshakesWithButton(postId, reshakes) {
         ${reshakesList}
       </div>
       <div class="comment-input-container">
-        <button class="comment-submit-btn reshake-submit-btn" data-post-id="${postId}">Re-shake</button>
+        <button class="reshake-submit-btn" data-post-id="${postId}" id="reshake-btn-${postId}">Re-shake</button>
       </div>
     </div>
   `;
@@ -494,11 +494,13 @@ async function renderReshakesWithButton(postId, reshakes) {
 
 // Fonction pour attacher le listener à l'input de commentaire
 function attachCommentInputListener(postId) {
-  const submitBtn = document.querySelector(`.comment-submit-btn[data-post-id="${postId}"]`);
+  const submitBtn = document.querySelector(`#comments-${postId} .comment-submit-btn[data-post-id="${postId}"]`);
   const input = document.getElementById(`comment-input-${postId}`);
 
-  if (submitBtn && input) {
-    submitBtn.addEventListener('click', async () => {
+  if (submitBtn && input && !submitBtn.dataset.listenerAttached) {
+    submitBtn.dataset.listenerAttached = 'true';
+
+    const handleSubmit = async () => {
       const text = input.value.trim();
       if (!text) return;
 
@@ -508,28 +510,33 @@ function attachCommentInputListener(postId) {
         // Recharger les commentaires
         const comments = await getPostComments(postId);
         const commentsList = document.querySelector(`#comments-${postId} .comments-list`);
-        commentsList.innerHTML = comments.map(comment => `
-          <div class="comment-item">
-            <div class="comment-avatar" style="background: ${comment.user.color}">♪</div>
-            <div class="comment-content">
-              <span class="comment-username" onclick="openUserProfile('${comment.user.id}')">@${comment.user.username}</span>
-              <p class="comment-text">${makeUsernamesClickable(comment.text)}</p>
+        if (commentsList) {
+          commentsList.innerHTML = comments.map(comment => `
+            <div class="comment-item">
+              <div class="comment-avatar" style="background: ${comment.user.color}">♪</div>
+              <div class="comment-content">
+                <span class="comment-username" onclick="openUserProfile('${comment.user.id}')">@${comment.user.username}</span>
+                <p class="comment-text">${makeUsernamesClickable(comment.text)}</p>
+              </div>
             </div>
-          </div>
-        `).join('');
+          `).join('');
+        }
         // Mettre à jour le compteur
         const btn = document.querySelector(`.comment-btn[data-post-id="${postId}"]`);
         if (btn) {
-          const count = parseInt(btn.querySelector('.count').textContent);
-          btn.querySelector('.count').textContent = count + 1;
+          const countEl = btn.querySelector('.count');
+          const count = parseInt(countEl.textContent) || 0;
+          countEl.textContent = count + 1;
         }
       }
-    });
+    };
+
+    submitBtn.addEventListener('click', handleSubmit);
 
     // Submit on Enter
     input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        submitBtn.click();
+        handleSubmit();
       }
     });
   }
@@ -747,15 +754,35 @@ function attachPostListeners() {
 
 // Fonction pour attacher le listener au bouton Re-shake
 function attachReshakeButtonListener(postId) {
-  const reshakeBtn = document.querySelector(`.reshake-submit-btn[data-post-id="${postId}"]`);
+  const reshakeBtn = document.getElementById(`reshake-btn-${postId}`);
 
-  if (reshakeBtn) {
+  if (reshakeBtn && !reshakeBtn.dataset.listenerAttached) {
+    reshakeBtn.dataset.listenerAttached = 'true';
     reshakeBtn.addEventListener('click', async () => {
       const result = await reshakePost(postId);
       if (result.success) {
         alert('Re-shake publié ! 🔄');
-        // Refresh feed to ensure we display original author correctly
-        await loadFeed();
+        // Recharger juste la section reshakes au lieu de tout le feed
+        const reshakes = await getPostReshakes(postId);
+        const reshakesList = document.querySelector(`#reshakes-${postId} .comments-list`);
+        if (reshakesList) {
+          reshakesList.innerHTML = reshakes.map(reshake => `
+            <div class="comment-item">
+              <div class="comment-avatar" style="background: ${reshake.user.color}">♪</div>
+              <div class="comment-content">
+                <span class="comment-username" onclick="openUserProfile('${reshake.user.id}')">@${reshake.user.username}</span>
+                <p class="comment-text">a reshake ce post</p>
+              </div>
+            </div>
+          `).join('');
+        }
+        // Mettre à jour le compteur
+        const btn = document.querySelector(`.reshake-btn[data-post-id="${postId}"]`);
+        if (btn) {
+          const countEl = btn.querySelector('.count');
+          const count = parseInt(countEl.textContent) || 0;
+          countEl.textContent = count + 1;
+        }
       } else {
         alert('Erreur: ' + result.error);
       }
