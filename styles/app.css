@@ -327,6 +327,7 @@ body {
 
 .post-actions {
   display: flex;
+  flex-direction: row !important;
   gap: 6px;
   padding-top: 8px;
   margin-top: 8px;
@@ -336,6 +337,7 @@ body {
 .action-btn {
   flex: 1;
   display: flex;
+  flex-direction: row !important;
   align-items: center;
   justify-content: center;
   gap: 4px;
