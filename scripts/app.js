@@ -712,16 +712,22 @@ function attachPostListeners() {
   // Comment buttons - Toggle comments visibility (style Instagram)
   document.querySelectorAll('.comment-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
+      console.log('💬 Comment button clicked');
       const postId = btn.dataset.postId;
-      const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-      let commentsSection = postElement.querySelector('.comments-section');
+      console.log('Post ID:', postId);
+      const postElement = document.querySelector(`article.post[data-post-id="${postId}"]`);
+      console.log('Post element found:', postElement);
+      let commentsSection = postElement ? postElement.querySelector('.comments-section') : null;
+      console.log('Comments section found:', commentsSection);
 
       // Toggle visibility des commentaires
       if (commentsSection) {
-        const isHidden = commentsSection.style.display === 'none';
+        const isHidden = commentsSection.style.display === 'none' || !commentsSection.style.display;
         commentsSection.style.display = isHidden ? 'block' : 'none';
+        console.log('Toggled visibility:', isHidden ? 'show' : 'hide');
       } else {
         // Créer et afficher la section commentaires si elle n'existe pas
+        console.log('Creating new comments section');
         const comments = await getPostComments(postId);
         const commentsHtml = await renderCommentsWithInput(postId, comments);
         postElement.insertAdjacentHTML('beforeend', commentsHtml);
@@ -733,17 +739,24 @@ function attachPostListeners() {
   // Re-shake buttons - afficher la liste des reshakes
   document.querySelectorAll('.reshake-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
+      console.log('🔄 Reshake button clicked');
       const postId = btn.dataset.postId;
-      const postElement = btn.closest('.post');
-      const reshakesSection = postElement.querySelector('.reshakes-section');
+      console.log('Post ID:', postId);
+      const postElement = btn.closest('article.post');
+      console.log('Post element found:', postElement);
+      const reshakesSection = postElement ? postElement.querySelector('.reshakes-section') : null;
+      console.log('Reshakes section found:', reshakesSection);
 
       if (reshakesSection) {
         // Toggle visibility si la section existe déjà
-        const isHidden = reshakesSection.style.display === 'none';
+        const isHidden = reshakesSection.style.display === 'none' || !reshakesSection.style.display;
         reshakesSection.style.display = isHidden ? 'block' : 'none';
+        console.log('Toggled visibility:', isHidden ? 'show' : 'hide');
       } else {
         // Créer et afficher la section reshakes si elle n'existe pas
+        console.log('Creating new reshakes section');
         const reshakes = await getPostReshakes(postId);
+        console.log('Reshakes loaded:', reshakes);
         const reshakesHtml = await renderReshakesWithButton(postId, reshakes);
         postElement.insertAdjacentHTML('beforeend', reshakesHtml);
         attachReshakeButtonListener(postId);
