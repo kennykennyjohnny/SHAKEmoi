@@ -468,6 +468,30 @@ async function renderCommentsWithInput(postId, comments) {
   `;
 }
 
+// Fonction pour afficher les reshakes avec bouton re-shake
+async function renderReshakesWithButton(postId, reshakes) {
+  const reshakesList = reshakes && reshakes.length > 0 ? reshakes.map(reshake => `
+    <div class="comment-item">
+      <div class="comment-avatar" style="background: ${reshake.user.color}">♪</div>
+      <div class="comment-content">
+        <span class="comment-username" onclick="openUserProfile('${reshake.user.id}')">@${reshake.user.username}</span>
+        <p class="comment-text">a reshake ce post</p>
+      </div>
+    </div>
+  `).join('') : '<p class="no-comments">Aucun reshake</p>';
+
+  return `
+    <div class="comments-section reshakes-section" id="reshakes-${postId}">
+      <div class="comments-list">
+        ${reshakesList}
+      </div>
+      <div class="comment-input-container">
+        <button class="comment-submit-btn reshake-submit-btn" data-post-id="${postId}">Re-shake</button>
+      </div>
+    </div>
+  `;
+}
+
 // Fonction pour attacher le listener à l'input de commentaire
 function attachCommentInputListener(postId) {
   const submitBtn = document.querySelector(`.comment-submit-btn[data-post-id="${postId}"]`);
@@ -699,21 +723,44 @@ function attachPostListeners() {
     });
   });
 
-  // Re-shake buttons
+  // Re-shake buttons - afficher la liste des reshakes
   document.querySelectorAll('.reshake-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (confirm('Re-shake ce post ?')) {
-        const result = await reshakePost(btn.dataset.postId);
-        if (result.success) {
-          alert('Re-shake publié ! 🔄');
-          // Refresh feed to ensure we display original author correctly
-          await loadFeed();
-        } else {
-          alert('Erreur: ' + result.error);
-        }
+      const postId = btn.dataset.postId;
+      const postElement = btn.closest('.post');
+      const reshakesSection = postElement.querySelector('.reshakes-section');
+
+      if (reshakesSection) {
+        // Toggle visibility si la section existe déjà
+        const isHidden = reshakesSection.style.display === 'none';
+        reshakesSection.style.display = isHidden ? 'block' : 'none';
+      } else {
+        // Créer et afficher la section reshakes si elle n'existe pas
+        const reshakes = await getPostReshakes(postId);
+        const reshakesHtml = await renderReshakesWithButton(postId, reshakes);
+        postElement.insertAdjacentHTML('beforeend', reshakesHtml);
+        attachReshakeButtonListener(postId);
       }
     });
   });
+}
+
+// Fonction pour attacher le listener au bouton Re-shake
+function attachReshakeButtonListener(postId) {
+  const reshakeBtn = document.querySelector(`.reshake-submit-btn[data-post-id="${postId}"]`);
+
+  if (reshakeBtn) {
+    reshakeBtn.addEventListener('click', async () => {
+      const result = await reshakePost(postId);
+      if (result.success) {
+        alert('Re-shake publié ! 🔄');
+        // Refresh feed to ensure we display original author correctly
+        await loadFeed();
+      } else {
+        alert('Erreur: ' + result.error);
+      }
+    });
+  }
 }
 
 // ==================== TOP 100 ====================

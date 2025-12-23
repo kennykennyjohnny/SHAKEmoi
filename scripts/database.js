@@ -450,7 +450,7 @@ async function getPostComments(postId) {
       .from('comments')
       .select(`
         *,
-        user:users_profile!posts_user_id_fkey(id, username, color)
+        user:users_profile(id, username, color)
       `)
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
@@ -483,6 +483,27 @@ async function getUserComments(userId, limit = 50) {
     return data || [];
   } catch (error) {
     console.error('Error getting user comments:', error);
+    return [];
+  }
+}
+
+// Get reshakes for a post (users who reshaked)
+async function getPostReshakes(postId) {
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        created_at,
+        user:users_profile(id, username, color)
+      `)
+      .eq('original_post_id', postId)
+      .eq('is_reshake', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting post reshakes:', error);
     return [];
   }
 }
