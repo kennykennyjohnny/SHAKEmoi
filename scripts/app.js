@@ -450,7 +450,7 @@ async function renderCommentsWithInput(postId, comments) {
         <p class="comment-text">${makeUsernamesClickable(comment.text)}</p>
       </div>
     </div>
-  `).join('') : '<p class="no-comments">Aucun commentaire</p>';
+  `).join('') : '<p class="no-comments">Sois le premier à commenter !</p>';
 
   return `
     <div class="comments-section" id="comments-${postId}">

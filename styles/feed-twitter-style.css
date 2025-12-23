@@ -422,7 +422,7 @@
   }
 }
 
-/* COMMENTS SECTION */
+/* COMMENTS SECTION - Liste défilante */
 .comments-section {
   margin-top: 12px;
   padding-top: 12px;
@@ -434,6 +434,27 @@
   flex-direction: column;
   gap: 8px;
   margin-bottom: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.comments-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.comments-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 142, 128, 0.4);
+  border-radius: 4px;
+}
+
+.comments-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 142, 128, 0.6);
 }
 
 .comment-item {
@@ -518,7 +539,7 @@
 
 .comment-submit-btn {
   padding: 8px 16px;
-  background: #1d9bf0;
+  background: #FF8E80;
   color: white;
   border: none;
   border-radius: 20px;
@@ -529,7 +550,24 @@
 }
 
 .comment-submit-btn:hover {
-  background: #1a8cd8;
+  background: #FF7668;
+}
+
+.reshake-submit-btn {
+  padding: 8px 16px;
+  background: #FF8E80;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  width: 100%;
+}
+
+.reshake-submit-btn:hover {
+  background: #FF7668;
 }
 
 /* RESPONSIVE */
