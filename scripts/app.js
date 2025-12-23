@@ -555,59 +555,48 @@ function renderPost(post) {
   return `
     <article class="post" data-post-id="${postId}">
       <div class="post-content">
-        <!-- Avatar -->
-        <div class="user-note" style="${avatarStyle} cursor: pointer;" onclick="openUserProfile('${author.id}')">${avatarContent}</div>
+        <!-- Pochette agrandie à gauche -->
+        <div class="track-cover-container-new">
+          <img src="${post.cover_url}"
+               class="track-cover-new"
+               id="cover-${postId}"
+               alt="${post.track_name}"
+               onerror="this.src='https://via.placeholder.com/100x100?text=No+Cover'"
+               loading="lazy">
+        </div>
 
-        <!-- Post info right -->
-        <div class="post-info-right">
-          <!-- Header -->
-          <div class="post-header-inline">
-            <span class="username-inline" onclick="openUserProfile('${author.id}')">@${author.username}</span>
-            <span class="dot-separator">·</span>
-            <span class="timestamp-inline">${timeAgo}</span>
-          </div>
+        <!-- Contenu central -->
+        <div class="post-center">
+          <!-- Username en corail, gros -->
+          <span class="username-coral" onclick="openUserProfile('${author.id}')">@${author.username}</span>
 
           <!-- Text si présent -->
-          ${post.text ? `<p class="post-text">${makeUsernamesClickable(post.text)}</p>` : ''}
+          ${post.text ? `<p class="post-text-compact">${makeUsernamesClickable(post.text)}</p>` : ''}
 
-          <!-- Music card -->
-          <div class="music-card">
-            <div class="track-cover-container">
-              <img src="${post.cover_url}"
-                   class="track-cover"
-                   id="cover-${postId}"
-                   alt="${post.track_name}"
-                   onerror="this.src='https://via.placeholder.com/100x100?text=No+Cover'"
-                   loading="lazy">
-              ${hasPreview ? `
-                <div class="play-overlay" id="play-${postId}" onclick="togglePlayPreview('${post.preview_url}', '${postId}')">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                </div>
-              ` : ''}
-            </div>
-            <div class="track-info-compact">
-              <h3 class="track-title">${escapeHtml(post.track_name)}</h3>
-              <p class="track-artist">${escapeHtml(post.artist)}</p>
-            </div>
+          <!-- Track info -->
+          <div class="track-info-new">
+            <h3 class="track-title-new">${escapeHtml(post.track_name)}</h3>
+            <p class="track-artist-new">${escapeHtml(post.artist)}</p>
           </div>
 
-          <!-- Actions -->
-          <div class="post-actions">
-            <button class="action-btn like-btn" data-post-id="${postId}">
-              ${ICONS.heart.replace('FILL_COLOR', 'none')}
-              <span class="count">${post.likes_count || ''}</span>
-            </button>
-            <button class="action-btn comment-btn" data-post-id="${postId}">
-              ${ICONS.comment}
-              <span class="count">${post.comments_count || ''}</span>
-            </button>
-            <button class="action-btn reshake-btn ${isReshake ? 'active' : ''}" data-post-id="${postId}">
-              ${ICONS.reshake}
-              <span class="count">${post.reshakes_count || ''}</span>
-            </button>
-          </div>
+          <!-- Timestamp -->
+          <span class="timestamp-new">${timeAgo}</span>
+        </div>
+
+        <!-- Actions resserrées à droite, centrées verticalement -->
+        <div class="post-actions-new">
+          <button class="action-btn like-btn" data-post-id="${postId}">
+            ${ICONS.heart.replace('FILL_COLOR', 'none')}
+            <span class="count">${post.likes_count || ''}</span>
+          </button>
+          <button class="action-btn comment-btn" data-post-id="${postId}">
+            ${ICONS.comment}
+            <span class="count">${post.comments_count || ''}</span>
+          </button>
+          <button class="action-btn reshake-btn ${isReshake ? 'active' : ''}" data-post-id="${postId}">
+            ${ICONS.reshake}
+            <span class="count">${post.reshakes_count || ''}</span>
+          </button>
         </div>
       </div>
     </article>
