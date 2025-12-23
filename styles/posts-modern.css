@@ -384,10 +384,10 @@
   position: relative !important;
 }
 
-/* Pochette à gauche - plus petite et compacte */
+/* Pochette à gauche - 90px */
 .track-cover-container-new {
-  width: 70px !important;
-  height: 70px !important;
+  width: 90px !important;
+  height: 90px !important;
   flex-shrink: 0 !important;
   border-radius: 8px !important;
   overflow: hidden !important;
@@ -395,7 +395,7 @@
   cursor: pointer !important;
   transition: transform 0.2s ease !important;
   margin: 0 !important;
-  align-self: center !important;
+  align-self: flex-start !important;
 }
 
 .track-cover-container-new:hover {
@@ -409,7 +409,7 @@
   display: block !important;
 }
 
-/* Contenu central - flex-1 pour remplir l'espace, tout centré verticalement */
+/* Contenu central - aligné en haut */
 .post-center {
   flex: 1 !important;
   display: flex !important;
@@ -417,11 +417,12 @@
   gap: 12px !important;
   min-width: 0 !important;
   padding-right: 0px !important;
-  align-items: center !important;
+  align-items: flex-start !important;
   justify-content: space-between !important;
+  padding-top: 10px !important;
 }
 
-/* Container pour les infos (titre/artiste/description) - ULTRA COMPACT */
+/* Container pour les infos (titre/artiste/description) - Aligné en haut */
 .post-info-container {
   flex: 1 !important;
   display: flex !important;
@@ -430,7 +431,7 @@
   margin: 0 !important;
   padding: 0 !important;
   min-width: 0 !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
 }
 
 /* Username en CORAIL et GROS */
@@ -501,17 +502,17 @@
   white-space: nowrap !important;
 }
 
-/* Actions - HORIZONTAL EN LIGNE COMPACT */
+/* Actions - Aligné en haut aussi */
 .post-actions-new {
   display: flex !important;
   flex-direction: row !important;
   gap: 4px !important;
-  align-items: center !important;
+  align-items: flex-start !important;
   justify-content: center !important;
   flex-shrink: 0 !important;
   padding: 0 !important;
   margin: 0 !important;
-  align-self: center !important;
+  align-self: flex-start !important;
 }
 
 .post-actions-new .action-btn {
@@ -625,9 +626,9 @@
   text-decoration: underline !important;
 }
 
-/* Ajustement du post pour faire place au header COMPACT */
+/* Ajustement du post pour faire place au header MICRO */
 .post {
-  padding-top: 30px !important;
+  padding-top: 24px !important;
   position: relative !important;
 }
 

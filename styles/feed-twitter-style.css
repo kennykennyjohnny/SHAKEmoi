@@ -10,9 +10,9 @@
   padding-bottom: 80px;
 }
 
-/* POST CARD - Bordures dégradé Corail/Rose/Violet + Espacement réduit */
+/* POST CARD - Bordures dégradé Corail/Rose/Violet UNIQUEMENT */
 .post {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.03) !important;
   backdrop-filter: blur(20px);
   border: 2px solid transparent !important;
   background-image: 
