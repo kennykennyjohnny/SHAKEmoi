@@ -10,29 +10,27 @@
   padding-bottom: 80px;
 }
 
-/* POST CARD - TWITTER STYLE - Bordures corail top/bottom */
+/* POST CARD - TWITTER STYLE - Bordures corail complètes */
 .post {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px);
-  border-top: 1px solid #FF8E80 !important;
-  border-bottom: 1px solid #FF8E80 !important;
-  border-left: none !important;
-  border-right: none !important;
+  border: 1px solid #FF8E80 !important;
+  border-radius: 12px !important;
   padding: 55px 16px 12px 16px;
-  transition: background 0.2s;
+  transition: all 0.2s;
   min-height: auto !important;
   max-height: none !important;
   display: flex;
   flex-direction: column;
   gap: 12px;
   position: relative;
-  border-radius: 0 !important;
+  margin-bottom: 8px;
 }
 
 .post:hover {
   background: rgba(255, 255, 255, 0.05);
-  border-top-color: #FF7668 !important;
-  border-bottom-color: #FF7668 !important;
+  border-color: #FF7668 !important;
+  box-shadow: 0 4px 12px rgba(255, 142, 128, 0.2);
 }
 
 /* RESHARE LABEL - AU-DESSUS DU POST */
