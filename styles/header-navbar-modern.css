@@ -46,19 +46,14 @@
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
   text-fill-color: transparent !important;
-}
-
-.logo:active {
-  transform: scale(0.95) !important;
-}
-
-.logo-moi {
-  color: #FF6B9D !important;
-  -webkit-text-fill-color: #FF6B9D !important;
   font-weight: 800;
   position: relative;
   display: inline-block;
   animation: pulse-pink 2s ease-in-out infinite;
+}
+
+.logo:active {
+  transform: scale(0.95) !important;
 }
 
 @keyframes pulse-pink {
