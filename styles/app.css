@@ -80,7 +80,6 @@ body {
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
   letter-spacing: -1px;
-  filter: drop-shadow(0 0 20px rgba(255, 111, 97, 0.3));
 }
 
 .logout-btn {
@@ -1170,6 +1169,5 @@ body {
 @media (max-width: 600px) {
   .logo {
     font-size: 1.2rem;
-    filter: drop-shadow(0 0 10px rgba(255, 111, 97, 0.2));
   }
 }
