@@ -554,8 +554,9 @@
   }
 
   .post {
-    min-height: 90px !important;
-    max-height: 105px !important;
+    padding-top: 55px !important;
+    min-height: auto !important;
+    max-height: none !important;
   }
 
   .username-coral {
