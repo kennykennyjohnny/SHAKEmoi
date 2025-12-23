@@ -10,11 +10,14 @@
   padding-bottom: 80px;
 }
 
-/* POST CARD - TWITTER STYLE */
+/* POST CARD - TWITTER STYLE - Bordures corail top/bottom */
 .post {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid #FF8E80 !important;
+  border-bottom: 1px solid #FF8E80 !important;
+  border-left: none !important;
+  border-right: none !important;
   padding: 55px 16px 12px 16px;
   transition: background 0.2s;
   min-height: auto !important;
@@ -23,12 +26,13 @@
   flex-direction: column;
   gap: 12px;
   position: relative;
-  border: none !important;
   border-radius: 0 !important;
 }
 
 .post:hover {
   background: rgba(255, 255, 255, 0.05);
+  border-top-color: #FF7668 !important;
+  border-bottom-color: #FF7668 !important;
 }
 
 /* RESHARE LABEL - AU-DESSUS DU POST */
