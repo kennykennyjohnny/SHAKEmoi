@@ -671,3 +671,25 @@
 .mention:hover {
   text-decoration: underline;
 }
+
+/* ===================================================
+   FORCE HORIZONTAL LAYOUT FOR ACTIONS - OVERRIDE EVERYTHING
+   =================================================== */
+.post .post-actions,
+.feed-container .post-actions,
+div.post-actions {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 4px !important;
+}
+
+.post .action-btn,
+.feed-container .action-btn,
+button.action-btn {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
