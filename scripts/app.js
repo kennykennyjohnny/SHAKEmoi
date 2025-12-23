@@ -8,18 +8,18 @@ let searchMode = 'tracks';
 let selectedTrackForShake = null;
 let selectedPostForComment = null;
 
-// SVG Icons pour les actions (Figma)
+// SVG Icons pour les actions (Figma) - Mis à jour avec les nouveaux designs
 const ICONS = {
   heart: `<svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M41.6802 9.21975C40.6587 8.19775 39.4459 7.38704 38.1109 6.83391C36.776 6.28079 35.3452 5.99609 33.9002 5.99609C32.4553 5.99609 31.0244 6.28079 29.6895 6.83391C28.3546 7.38704 27.1418 8.19775 26.1202 9.21975L24.0002 11.3397L21.8802 9.21975C19.8169 7.15636 17.0183 5.99716 14.1002 5.99716C11.1822 5.99716 8.38362 7.15636 6.32024 9.21975C4.25685 11.2831 3.09766 14.0817 3.09766 16.9997C3.09766 19.9178 4.25685 22.7164 6.32024 24.7797L24.0002 42.4597L41.6802 24.7797C42.7022 23.7582 43.5129 22.5454 44.0661 21.2105C44.6192 19.8755 44.9039 18.4447 44.9039 16.9997C44.9039 15.5548 44.6192 14.124 44.0661 12.789C43.5129 11.4541 42.7022 10.2413 41.6802 9.21975Z" stroke="currentColor" fill="FILL_COLOR" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M41.6802 9.21975C40.6587 8.19775 39.4459 7.38704 38.1109 6.83391C36.776 6.28079 35.3452 5.99609 33.9002 5.99609C32.4553 5.99609 31.0244 6.28079 29.6895 6.83391C28.3546 7.38704 27.1418 8.19775 26.1202 9.21975L24.0002 11.3397L21.8802 9.21975C19.8169 7.15636 17.0183 5.99716 14.1002 5.99716C11.1822 5.99716 8.38362 7.15636 6.32024 9.21975C4.25685 11.2831 3.09766 14.0817 3.09766 16.9997C3.09766 19.9178 4.25685 22.7164 6.32024 24.7797L24.0002 42.4597L41.6802 24.7797C42.7022 23.7582 43.5129 22.5454 44.0661 21.2105C44.6192 19.8755 44.9039 18.4447 44.9039 16.9997C44.9039 15.5548 44.6192 14.124 44.0661 12.789C43.5129 11.4541 42.7022 10.2413 41.6802 9.21975Z" stroke="#FF8E80" fill="FILL_COLOR" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`,
 
   comment: `<svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M42 30C42 31.0609 41.5786 32.0783 40.8284 32.8284C40.0783 33.5786 39.0609 34 38 34H14L6 42V10C6 8.93913 6.42143 7.92172 7.17157 7.17157C7.92172 6.42143 8.93913 6 10 6H38C39.0609 6 40.0783 6.42143 40.8284 7.17157C41.5786 7.92172 42 8.93913 42 10V30Z" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M42 30C42 31.0609 41.5786 32.0783 40.8284 32.8284C40.0783 33.5786 39.0609 34 38 34H14L6 42V10C6 8.93913 6.42143 7.92172 7.17157 7.17157C7.92172 6.42143 8.93913 6 10 6H38C39.0609 6 40.0783 6.42143 40.8284 7.17157C41.5786 7.92172 42 8.93913 42 10V30Z" stroke="#FF8E80" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`,
 
   reshake: `<svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M34 2L42 10M42 10L34 18M42 10H14C11.8783 10 9.84344 10.8429 8.34315 12.3431C6.84285 13.8434 6 15.8783 6 18V22M14 46L6 38M6 38L14 30M6 38H34C36.1217 38 38.1566 37.1571 39.6569 35.6569C41.1571 34.1566 42 32.1217 42 30V26" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M34 2L42 10M42 10L34 18M42 10H14C11.8783 10 9.84344 10.8429 8.34315 12.3431C6.84285 13.8434 6 15.8783 6 18V22M14 46L6 38M6 38L14 30M6 38H34C36.1217 38 38.1566 37.1571 39.6569 35.6569C41.1571 34.1566 42 32.1217 42 30V26" stroke="#FF8E80" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`
 };
 
@@ -625,7 +625,7 @@ function attachPostListeners() {
         btn.classList.add('liked');
         // Remplir le coeur si déjà liké
         const count = btn.querySelector('.count').textContent;
-        btn.innerHTML = ICONS.heart.replace('FILL_COLOR', '#FF7668') + `<span class="count">${count}</span>`;
+        btn.innerHTML = ICONS.heart.replace('FILL_COLOR', '#FF8E80') + `<span class="count">${count}</span>`;
       }
     });
 
@@ -648,7 +648,7 @@ function attachPostListeners() {
           const count = parseInt(btn.querySelector('.count').textContent);
           btn.querySelector('.count').textContent = count + 1;
           // Mettre à jour le SVG pour remplir le coeur
-          btn.innerHTML = ICONS.heart.replace('FILL_COLOR', '#FF7668') + `<span class="count">${count + 1 || ''}</span>`;
+          btn.innerHTML = ICONS.heart.replace('FILL_COLOR', '#FF8E80') + `<span class="count">${count + 1 || ''}</span>`;
         }
       }
     });

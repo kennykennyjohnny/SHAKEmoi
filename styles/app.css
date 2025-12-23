@@ -1045,8 +1045,8 @@ body {
 }
 
 .podium-track {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(255, 111, 97, 0.08) 100%);
-  border: 1px solid rgba(255, 111, 97, 0.2);
+  background: linear-gradient(135deg, rgba(191, 91, 198, 0.08) 0%, rgba(255, 142, 128, 0.08) 100%);
+  border: 1px solid rgba(255, 142, 128, 0.2);
   border-radius: 16px;
   padding: 16px;
   display: flex;
@@ -1057,12 +1057,12 @@ body {
 
 .podium-track:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(255, 111, 97, 0.2);
-  border-color: rgba(255, 111, 97, 0.4);
+  box-shadow: 0 8px 24px rgba(255, 142, 128, 0.25);
+  border-color: rgba(255, 142, 128, 0.4);
 }
 
 .podium-track[data-rank="1"] {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 111, 97, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 142, 128, 0.1) 100%);
   border-color: rgba(255, 215, 0, 0.3);
 }
 
@@ -1126,7 +1126,7 @@ body {
 
 .shake-from-top-btn:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(255, 111, 97, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 142, 128, 0.4);
 }
 
 .shake-from-top-btn:active {
