@@ -71,23 +71,45 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {/* Avatar */}
-          <div className="flex items-center gap-4">
-            <img
-              src={formData.avatar}
-              alt="Avatar"
-              className="w-20 h-20 rounded-full object-cover ring-2 ring-purple-500"
-            />
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                URL de l'avatar
-              </label>
-              <input
-                type="url"
-                value={formData.avatar}
-                onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="https://..."
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-300">
+              Photo de profil
+            </label>
+            <div className="flex items-center gap-4">
+              <img
+                src={formData.avatar}
+                alt="Avatar"
+                className="w-20 h-20 rounded-full object-cover ring-2 ring-purple-500"
               />
+              <div className="flex-1 space-y-2">
+                <input
+                  type="url"
+                  value={formData.avatar}
+                  onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="https://..."
+                />
+                <p className="text-xs text-gray-500">
+                  💡 Utilise une URL d'image (ex: Imgur, Unsplash, etc.)
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    'https://api.dicebear.com/7.x/avataaars/svg?seed=' + currentUser.username,
+                    'https://api.dicebear.com/7.x/bottts/svg?seed=' + currentUser.username,
+                    'https://api.dicebear.com/7.x/lorelei/svg?seed=' + currentUser.username,
+                    'https://api.dicebear.com/7.x/micah/svg?seed=' + currentUser.username
+                  ].map((url, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, avatar: url })}
+                      className="w-10 h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-purple-500 transition-all"
+                    >
+                      <img src={url} alt={`Avatar ${i + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 

@@ -728,3 +728,27 @@ export async function getUserFollowingCount(userId: string): Promise<number> {
     return 0;
   }
 }
+
+export async function getUserReshakes(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        user:users_profile!posts_user_id_fkey(id, username, color),
+        original_post:posts!posts_original_post_id_fkey(
+          *,
+          user:users_profile!posts_user_id_fkey(id, username, color)
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('is_reshake', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting user reshakes:', error);
+    return [];
+  }
+}

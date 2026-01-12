@@ -19,16 +19,23 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
     onClose();
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-      localStorage.removeItem('shakemoi_auth_token');
-      localStorage.removeItem('shakemoi_user');
-      localStorage.removeItem('shakemoi_onboarding');
-      
-      if (onLogout) {
-        onLogout();
-      } else {
-        window.location.reload();
+      try {
+        // Logout Supabase
+        const { supabase } = await import('../../lib/supabase');
+        await supabase.auth.signOut();
+        
+        // Clear local storage
+        localStorage.removeItem('shakemoi_auth_token');
+        localStorage.removeItem('shakemoi_user');
+        localStorage.removeItem('shakemoi_onboarding');
+        
+        // Redirect to home
+        window.location.href = '/';
+      } catch (error) {
+        console.error('Logout error:', error);
+        window.location.href = '/';
       }
     }
   };
