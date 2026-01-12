@@ -1,6 +1,6 @@
-import { X, User, Mail, AtSign, MessageSquare, Upload, Loader2 } from 'lucide-react';
+import { X, User, Mail, AtSign, MessageSquare, Upload, Loader2, Camera } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { updateUserProfile } from '../../lib/database';
 
 interface EditProfileDialogProps {
@@ -17,6 +17,20 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
     bio: currentUser.bio || '',
     avatar: currentUser.avatar || ''
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Convert to base64 for preview and storage
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setFormData({ ...formData, avatar: base64String });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,15 +96,31 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
                 className="w-20 h-20 rounded-full object-cover ring-2 ring-purple-500"
               />
               <div className="flex-1 space-y-2">
+                {/* File upload from phone */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+                >
+                  <Camera className="w-4 h-4" />
+                  Choisir une photo
+                </button>
                 <input
                   type="url"
-                  value={formData.avatar}
+                  value={formData.avatar.startsWith('data:') ? '' : formData.avatar}
                   onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="https://..."
+                  placeholder="ou coller une URL..."
                 />
                 <p className="text-xs text-gray-500">
-                  💡 Utilise une URL d'image (ex: Imgur, Unsplash, etc.)
+                  📸 Télécharge depuis ton téléphone ou utilise une URL
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   {[

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Search, PlusCircle, Bell, User, TrendingUp, Headphones, Share2 } from 'lucide-react';
+import { Home, Search, PlusCircle, Bell, User, TrendingUp, Headphones, Share2, Settings } from 'lucide-react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
 import { ProfileView } from './components/ProfileView';
@@ -10,6 +10,7 @@ import { TrendingBar } from './components/TrendingBar';
 import { OnboardingDialog } from './components/OnboardingDialog';
 import { ShareDialog } from './components/ShareDialog';
 import { AuthDialog } from './components/AuthDialog';
+import { SettingsDialog } from './components/SettingsDialog';
 import { Logo } from './components/Logo';
 import { LogoShowcase } from './components/LogoShowcase';
 import { supabase } from '../lib/supabase';
@@ -28,6 +29,7 @@ export default function App() {
   const [showAuth, setShowAuth] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [refreshFeed, setRefreshFeed] = useState(0);
 
   // Logo showcase mode
@@ -160,6 +162,14 @@ export default function App() {
               </button>
 
               <button
+                onClick={() => setShowSettings(true)}
+                className="p-2 hover:bg-zinc-800 rounded-full transition-colors group"
+                title="Paramètres"
+              >
+                <Settings className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+              </button>
+
+              <button
                 onClick={() => setShowCreateShake(true)}
                 className="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2"
               >
@@ -167,7 +177,10 @@ export default function App() {
                 Shake
               </button>
               
-              <button className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-purple-500/50">
+              <button 
+                onClick={() => setCurrentView('profile')}
+                className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-purple-500/50 hover:ring-purple-500 transition-all"
+              >
                 <img src={currentUser?.avatar} alt="Avatar" className="w-full h-full object-cover" />
               </button>
             </div>
@@ -180,8 +193,8 @@ export default function App() {
         </main>
 
         {/* Bottom Navigation Mobile */}
-        <nav className="lg:hidden border-t border-zinc-800 backdrop-blur-lg bg-black/90">
-          <div className="px-2 py-2 flex items-center justify-around">
+        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-zinc-800 backdrop-blur-lg bg-black z-50 safe-area-inset-bottom">
+          <div className="px-2 py-2 flex items-center justify-around max-w-md mx-auto">
             <button
               onClick={() => setCurrentView('feed')}
               className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
@@ -193,13 +206,13 @@ export default function App() {
             </button>
             
             <button
-              onClick={() => setCurrentView('search')}
+              onClick={() => setCurrentView('top')}
               className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
-                currentView === 'search' ? 'text-purple-500 bg-purple-500/10' : 'text-gray-400'
+                currentView === 'top' ? 'text-purple-500 bg-purple-500/10' : 'text-gray-400'
               }`}
             >
-              <Search className="w-5 h-5" />
-              <span className="text-xs font-medium">Explorer</span>
+              <TrendingUp className="w-5 h-5" />
+              <span className="text-xs font-medium">TOP</span>
             </button>
             
             <button
@@ -326,6 +339,18 @@ export default function App() {
       {/* Share Dialog */}
       {showShareDialog && (
         <ShareDialog onClose={() => setShowShareDialog(false)} />
+      )}
+
+      {/* Settings Dialog */}
+      {showSettings && (
+        <SettingsDialog 
+          onClose={() => setShowSettings(false)}
+          onLogout={() => {
+            setCurrentUser(null);
+            setShowAuth(true);
+            setShowSettings(false);
+          }}
+        />
       )}
     </div>
   );
