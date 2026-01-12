@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search as SearchIcon, TrendingUp, Clock, Play, User, Music } from 'lucide-react';
 import { motion } from 'motion/react';
+import { spotify } from '../../lib/spotify';
+import { searchUsers } from '../../lib/database';
 
 interface SearchViewProps {
   onPlayTrack: (track: any) => void;
@@ -9,6 +11,36 @@ interface SearchViewProps {
 export function SearchView({ onPlayTrack }: SearchViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'tracks' | 'artists' | 'users'>('all');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [userResults, setUserResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (searchQuery.length >= 2) {
+      performSearch();
+    } else {
+      setSearchResults([]);
+      setUserResults([]);
+    }
+  }, [searchQuery, activeTab]);
+
+  const performSearch = async () => {
+    setLoading(true);
+    try {
+      if (activeTab === 'tracks' || activeTab === 'all') {
+        const tracks = await spotify.searchTracks(searchQuery);
+        setSearchResults(tracks);
+      }
+      if (activeTab === 'users' || activeTab === 'all') {
+        const users = await searchUsers(searchQuery);
+        setUserResults(users);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const trendingTracks = [
     {

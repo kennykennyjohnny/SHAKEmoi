@@ -1,2 +1,7 @@
-/* Google Fonts - Maven Pro */
-@import url('https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400;500;600;700;800;900&display=swap');
+/* Google Fonts - Maven Pro + McLaren */
+@import url('https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400;500;600;700;800;900&family=McLaren&display=swap');
+
+/* McLaren pour titres et éléments importants */
+h1, h2, h3, .logo, nav button, .nav-label {
+  font-family: 'McLaren', 'Maven Pro', cursive, sans-serif !important;
+}

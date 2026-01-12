@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { X, Search, Music2, Sparkles, Check, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import * as api from '../utils/api';
-import * as spotifyAPI from '../utils/spotify';
+import { createPost } from '../../lib/database';
+import { spotify } from '../../lib/spotify';
 
 interface CreateShakeDialogProps {
   currentUser: any;
@@ -42,8 +42,18 @@ export function CreateShakeDialog({ currentUser, onClose }: CreateShakeDialogPro
   const loadRecommendations = async () => {
     try {
       setIsLoadingRecommendations(true);
-      const tracks = await spotifyAPI.getSpotifyRecommendations();
-      setRecommendedTracks(tracks);
+      const tracks = await spotify.getTop100France();
+      // Transform to expected format
+      const formatted = tracks.slice(0, 10).map((t: any) => ({
+        id: t.id,
+        title: t.name,
+        artist: t.artist,
+        coverUrl: t.cover,
+        duration: '3:00',
+        previewUrl: t.preview_url,
+        spotifyUri: t.spotify_url
+      }));
+      setRecommendedTracks(formatted);
     } catch (error) {
       console.error('Failed to load recommendations:', error);
     } finally {
@@ -54,8 +64,18 @@ export function CreateShakeDialog({ currentUser, onClose }: CreateShakeDialogPro
   const performSearch = async (query: string) => {
     try {
       setIsSearching(true);
-      const tracks = await spotifyAPI.searchSpotify(query);
-      setSearchResults(tracks);
+      const tracks = await spotify.searchTracks(query);
+      // Transform to expected format
+      const formatted = tracks.map((t: any) => ({
+        id: t.id,
+        title: t.name,
+        artist: t.artist,
+        coverUrl: t.cover,
+        duration: '3:00',
+        previewUrl: t.preview_url,
+        spotifyUri: t.spotify_url
+      }));
+      setSearchResults(formatted);
     } catch (error) {
       console.error('Failed to search Spotify:', error);
       setSearchResults([]);
@@ -70,25 +90,26 @@ export function CreateShakeDialog({ currentUser, onClose }: CreateShakeDialogPro
     if (!selectedTrack) return;
     setIsCreating(true);
     try {
-      // Créer le shake avec toutes les infos du track
-      await api.createShake({
-        track: {
-          id: selectedTrack.id,
-          title: selectedTrack.title,
-          artist: selectedTrack.artist,
-          coverUrl: selectedTrack.coverUrl,
-          duration: selectedTrack.duration,
-          previewUrl: 'https://p.scdn.co/mp3-preview/mock',
-          spotifyUri: `https://open.spotify.com/track/${selectedTrack.id}`,
-          appleMusicUrl: `https://music.apple.com/track/${selectedTrack.id}`
-        },
-        caption
-      });
-      setSuccess(true);
-      // Fermer après 500ms pour montrer le succès
-      setTimeout(() => {
-        onClose();
-      }, 500);
+      // Create post with Supabase
+      const result = await createPost(
+        selectedTrack.title,
+        selectedTrack.artist,
+        selectedTrack.coverUrl,
+        caption,
+        selectedTrack.previewUrl,
+        selectedTrack.spotifyUri,
+        selectedTrack.id
+      );
+
+      if (result.success) {
+        setSuccess(true);
+        // Close after 500ms to show success
+        setTimeout(() => {
+          onClose();
+        }, 500);
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.error('Error creating shake:', error);
       setIsCreating(false);

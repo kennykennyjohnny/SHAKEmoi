@@ -634,3 +634,67 @@ export async function searchPosts(query: string) {
     return [];
   }
 }
+
+// ==================== ADDITIONAL FUNCTIONS ====================
+
+export async function getTopPosts(limit = 10) {
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        user:users_profile!posts_user_id_fkey(*)
+      `)
+      .order('likes_count', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting top posts:', error);
+    return [];
+  }
+}
+
+export async function deletePost(postId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Verify post belongs to user
+    const { data: post, error: fetchError } = await supabase
+      .from('posts')
+      .select('user_id')
+      .eq('id', postId)
+      .single();
+
+    if (fetchError) throw fetchError;
+    if (post.user_id !== user.id) throw new Error('Not authorized');
+
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', postId);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    throw error;
+  }
+}
+
+export async function updateUserProfile(userId: string, updates: Partial<UserProfile>) {
+  try {
+    const { error } = await supabase
+      .from('users_profile')
+      .update(updates)
+      .eq('id', userId);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    throw error;
+  }
+}

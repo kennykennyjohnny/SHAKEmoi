@@ -2,9 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Music2, Mail, Lock, User as UserIcon, Loader2, AlertCircle } from 'lucide-react';
 import { Logo } from './Logo';
-import { projectId, publicAnonKey } from '/utils/supabase/info';
-
-const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-7dbfc935`;
+import { supabase } from '../../lib/supabase';
 
 interface AuthDialogProps {
   onAuthComplete: (user: any) => void;
@@ -29,83 +27,75 @@ export function AuthDialog({ onAuthComplete }: AuthDialogProps) {
 
     try {
       if (mode === 'signup') {
-        // Create account
+        // Create account with Supabase Auth
         console.log('[AUTH] Signup attempt:', { email: formData.email, username: formData.username });
-        
-        const response = await fetch(`${API_BASE}/auth/signup`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
+
+        // Check if username exists
+        const { data: existingUser } = await supabase
+          .from('users_profile')
+          .select('username')
+          .eq('username', formData.username)
+          .single();
+
+        if (existingUser) {
+          throw new Error('Ce nom d\'utilisateur est déjà pris');
+        }
+
+        // Create auth user
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password
+        });
+
+        if (authError) throw authError;
+        if (!authData.user) throw new Error('Erreur lors de la création du compte');
+
+        // Create user profile
+        const { error: profileError } = await supabase
+          .from('users_profile')
+          .insert([{
+            id: authData.user.id,
             username: formData.username,
-            displayName: formData.displayName
-          })
-        });
-
-        console.log('[AUTH] Signup response status:', response.status);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('[AUTH] Signup error response:', errorText);
-          let error;
-          try {
-            error = JSON.parse(errorText);
-          } catch {
-            error = { error: errorText };
-          }
-          throw new Error(error.error || 'Échec de l\'inscription');
-        }
-
-        const data = await response.json();
-        console.log('[AUTH] Signup success:', data);
-        
-        // Save auth token
-        localStorage.setItem('shakemoi_auth_token', data.access_token);
-        localStorage.setItem('shakemoi_user', JSON.stringify(data.user));
-        
-        onAuthComplete(data.user);
-      } else {
-        // Login
-        console.log('[AUTH] Login attempt:', { email: formData.email });
-        
-        const response = await fetch(`${API_BASE}/auth/login`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`
-          },
-          body: JSON.stringify({
             email: formData.email,
-            password: formData.password
-          })
+            color: '#B4A7D6', // Default color
+            feels_count: 0,
+            feelings_count: 0
+          }]);
+
+        if (profileError) throw new Error('Erreur lors de la création du profil');
+
+        console.log('[AUTH] Signup success');
+
+        // Fetch the created profile
+        const { data: profile } = await supabase
+          .from('users_profile')
+          .select('*')
+          .eq('id', authData.user.id)
+          .single();
+
+        onAuthComplete(profile);
+      } else {
+        // Login with Supabase Auth
+        console.log('[AUTH] Login attempt:', { email: formData.email });
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password
         });
 
-        console.log('[AUTH] Login response status:', response.status);
+        if (error) throw error;
+        if (!data.user) throw new Error('Erreur de connexion');
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('[AUTH] Login error response:', errorText);
-          let error;
-          try {
-            error = JSON.parse(errorText);
-          } catch {
-            error = { error: errorText };
-          }
-          throw new Error(error.error || 'Échec de la connexion');
-        }
+        console.log('[AUTH] Login success');
 
-        const data = await response.json();
-        console.log('[AUTH] Login success:', data);
-        
-        // Save auth token
-        localStorage.setItem('shakemoi_auth_token', data.access_token);
-        localStorage.setItem('shakemoi_user', JSON.stringify(data.user));
-        
-        onAuthComplete(data.user);
+        // Fetch user profile
+        const { data: profile } = await supabase
+          .from('users_profile')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        onAuthComplete(profile);
       }
     } catch (err: any) {
       console.error('Auth error:', err);

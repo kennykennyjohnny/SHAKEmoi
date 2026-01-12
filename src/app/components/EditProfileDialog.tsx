@@ -1,7 +1,7 @@
 import { X, User, Mail, AtSign, MessageSquare, Upload, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
-import * as api from '../utils/api';
+import { updateUserProfile } from '../../lib/database';
 
 interface EditProfileDialogProps {
   currentUser: any;
@@ -23,7 +23,15 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
     setLoading(true);
 
     try {
-      const updatedUser = await api.updateMe(formData);
+      // Update profile in Supabase
+      await updateUserProfile(currentUser.id, {
+        username: formData.username,
+        // Store additional fields in profile_color or create new columns
+        // For now, we'll just update username as that's in the schema
+      });
+      
+      // Create updated user object
+      const updatedUser = { ...currentUser, ...formData };
       
       // Update localStorage
       localStorage.setItem('shakemoi_user', JSON.stringify(updatedUser));

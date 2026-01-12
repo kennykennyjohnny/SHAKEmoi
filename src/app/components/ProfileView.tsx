@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
-import * as api from '../utils/api';
+import { getUserPosts, deletePost } from '../../lib/database';
 
 interface ProfileViewProps {
   user: any;
@@ -26,8 +26,23 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
     
     try {
       setLoading(true);
-      // Get user's shakes from API
-      const shakes = await api.getUserShakes(user.id);
+      // Get user's posts from database
+      const posts = await getUserPosts(user.id);
+      // Transform to shake format expected by UI
+      const shakes = posts.map((post: any) => ({
+        id: post.id,
+        track: {
+          title: post.track_name,
+          artist: post.artist,
+          coverUrl: post.cover_url,
+          previewUrl: post.preview_url,
+          spotifyUrl: post.spotify_url,
+          duration: '0:30'
+        },
+        likes: post.likes_count || 0,
+        reshakes: post.reshakes_count || 0,
+        timestamp: new Date(post.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+      }));
       setUserShakes(shakes);
     } catch (error) {
       console.error('Failed to load user shakes:', error);
@@ -54,10 +69,11 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
 
   const handleDeleteShake = async (shakeId: string) => {
     try {
-      await api.deleteShake(shakeId);
+      await deletePost(shakeId);
       setUserShakes(userShakes.filter(shake => shake.id !== shakeId));
     } catch (error) {
       console.error('Failed to delete shake:', error);
+      alert('Erreur lors de la suppression');
     }
   };
 

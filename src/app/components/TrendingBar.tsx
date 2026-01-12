@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, Flame, Clock, Play, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
-import * as api from '../utils/api';
+import { getTopPosts } from '../../lib/database';
 
 interface TrendingBarProps {
   onPlayTrack: (track: any) => void;
@@ -18,8 +18,22 @@ export function TrendingBar({ onPlayTrack }: TrendingBarProps) {
   const loadTrending = async () => {
     try {
       setLoading(true);
-      const data = await api.getTrending();
-      setTrending(data);
+      // Get top posts from database (limit 10)
+      const posts = await getTopPosts(10);
+      // Transform to trending format expected by UI
+      const trendingData = posts.map((post: any, index: number) => ({
+        track: {
+          id: post.track_id || post.id,
+          title: post.track_name,
+          artist: post.artist,
+          coverUrl: post.cover_url,
+          previewUrl: post.preview_url,
+          spotifyUrl: post.spotify_url
+        },
+        count: post.likes_count || 0,
+        totalLikes: post.likes_count || 0
+      }));
+      setTrending(trendingData);
     } catch (err) {
       console.error('Error loading trending:', err);
     } finally {
