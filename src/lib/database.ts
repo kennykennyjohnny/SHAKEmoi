@@ -698,3 +698,33 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
     throw error;
   }
 }
+
+export async function getUserFollowersCount(userId: string): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', userId);
+
+    if (error) throw error;
+    return count || 0;
+  } catch (error) {
+    console.error('Error getting followers count:', error);
+    return 0;
+  }
+}
+
+export async function getUserFollowingCount(userId: string): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('follower_id', userId);
+
+    if (error) throw error;
+    return count || 0;
+  } catch (error) {
+    console.error('Error getting following count:', error);
+    return 0;
+  }
+}

@@ -15,7 +15,7 @@ import { LogoShowcase } from './components/LogoShowcase';
 import { supabase } from '../lib/supabase';
 import { getCurrentUser, getUserProfile } from '../lib/database';
 
-type View = 'feed' | 'search' | 'profile' | 'notifications';
+type View = 'feed' | 'top' | 'profile' | 'notifications';
 
 export default function App() {
   // CHANGE THIS TO false WHEN YOU'VE CHOSEN YOUR LOGO
@@ -125,8 +125,8 @@ export default function App() {
     switch (currentView) {
       case 'feed':
         return <FeedView currentUser={currentUser} onPlayTrack={setCurrentTrack} refreshFeed={refreshFeed} />;
-      case 'search':
-        return <SearchView onPlayTrack={setCurrentTrack} />;
+      case 'top':
+        return <SearchView onPlayTrack={setCurrentTrack} showTopOnly={true} />;
       case 'profile':
         return <ProfileView user={currentUser} onPlayTrack={setCurrentTrack} onUpdateUser={setCurrentUser} />;
       case 'notifications':
@@ -175,7 +175,7 @@ export default function App() {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto pb-20">
           {renderView()}
         </main>
 
@@ -255,13 +255,13 @@ export default function App() {
           </button>
           
           <button
-            onClick={() => setCurrentView('search')}
+            onClick={() => setCurrentView('top')}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-              currentView === 'search' ? 'bg-purple-500/10 text-purple-500' : 'text-gray-400 hover:bg-zinc-800'
+              currentView === 'top' ? 'bg-purple-500/10 text-purple-500' : 'text-gray-400 hover:bg-zinc-800'
             }`}
           >
-            <Search className="w-5 h-5" />
-            <span className="font-medium">Explorer</span>
+            <TrendingUp className="w-5 h-5" />
+            <span className="font-medium">TOP</span>
           </button>
           
           <button

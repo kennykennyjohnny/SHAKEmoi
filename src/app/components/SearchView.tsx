@@ -1,19 +1,40 @@
 import { useState, useEffect } from 'react';
-import { Search as SearchIcon, TrendingUp, Clock, Play, User, Music } from 'lucide-react';
+import { Search as SearchIcon, TrendingUp, Clock, Play, User, Music, Flame } from 'lucide-react';
 import { motion } from 'motion/react';
 import { spotify } from '../../lib/spotify';
-import { searchUsers } from '../../lib/database';
+import { searchUsers, getTopPosts } from '../../lib/database';
 
 interface SearchViewProps {
   onPlayTrack: (track: any) => void;
+  showTopOnly?: boolean;
 }
 
-export function SearchView({ onPlayTrack }: SearchViewProps) {
+export function SearchView({ onPlayTrack, showTopOnly = false }: SearchViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'tracks' | 'artists' | 'users'>('all');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [userResults, setUserResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [topPosts, setTopPosts] = useState<any[]>([]);
+
+  // Load TOP posts if showTopOnly
+  useEffect(() => {
+    if (showTopOnly) {
+      loadTopPosts();
+    }
+  }, [showTopOnly]);
+
+  const loadTopPosts = async () => {
+    setLoading(true);
+    try {
+      const posts = await getTopPosts(50);
+      setTopPosts(posts);
+    } catch (error) {
+      console.error('Error loading top posts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (searchQuery.length >= 2) {
@@ -89,6 +110,78 @@ export function SearchView({ onPlayTrack }: SearchViewProps) {
     { id: '2', query: 'One Dance', type: 'track' },
     { id: '3', query: 'Rap français', type: 'genre' }
   ];
+
+  // Si mode TOP only, afficher directement les top posts
+  if (showTopOnly) {
+    return (
+      <div className="max-w-2xl mx-auto p-4">
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Flame className="w-6 h-6 text-orange-500" />
+            <h1 className="text-2xl font-bold">TOP SHAKEMOI</h1>
+          </div>
+          <p className="text-gray-400 text-sm">Les sons les plus secoués du moment 🔥</p>
+        </div>
+
+        {loading ? (
+          <div className="text-center text-gray-400 py-12">Chargement...</div>
+        ) : topPosts.length > 0 ? (
+          <div className="space-y-3">
+            {topPosts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-zinc-900 rounded-lg p-4 hover:bg-zinc-800 transition-colors cursor-pointer group"
+                onClick={() => onPlayTrack({
+                  title: post.track_name,
+                  artist: post.artist,
+                  coverUrl: post.cover_url,
+                  previewUrl: post.preview_url,
+                  spotifyUrl: post.spotify_url
+                })}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex-shrink-0 relative">
+                    <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-6 h-6 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-xs font-bold">
+                      {index + 1}
+                    </div>
+                    <img
+                      src={post.cover_url}
+                      alt={post.track_name}
+                      className="w-16 h-16 rounded object-cover"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded">
+                      <Play className="w-6 h-6 text-white fill-white" />
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold truncate">{post.track_name}</h3>
+                    <p className="text-sm text-gray-400 truncate">{post.artist}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        ❤️ {post.likes_count || 0} likes
+                      </span>
+                      {post.user && (
+                        <span>par @{post.user.username}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-400 py-12">
+            <Music className="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <p>Aucun post pour le moment</p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-4">

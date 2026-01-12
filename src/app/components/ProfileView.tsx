@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
-import { getUserPosts, deletePost } from '../../lib/database';
+import { getUserPosts, deletePost, getUserFollowersCount, getUserFollowingCount } from '../../lib/database';
 
 interface ProfileViewProps {
   user: any;
@@ -16,19 +16,24 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [userShakes, setUserShakes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    shakes: 0,
+    followers: 0,
+    following: 0
+  });
 
   useEffect(() => {
-    loadUserShakes();
+    loadUserData();
   }, [user]);
 
-  const loadUserShakes = async () => {
+  const loadUserData = async () => {
     if (!user) return;
     
     try {
       setLoading(true);
-      // Get user's posts from database
+      
+      // Load posts
       const posts = await getUserPosts(user.id);
-      // Transform to shake format expected by UI
       const shakes = posts.map((post: any) => ({
         id: post.id,
         track: {
@@ -44,8 +49,20 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
         timestamp: new Date(post.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
       }));
       setUserShakes(shakes);
+      
+      // Load stats
+      const [followersCount, followingCount] = await Promise.all([
+        getUserFollowersCount(user.id),
+        getUserFollowingCount(user.id)
+      ]);
+      
+      setStats({
+        shakes: posts.length,
+        followers: followersCount,
+        following: followingCount
+      });
     } catch (error) {
-      console.error('Failed to load user shakes:', error);
+      console.error('Failed to load user data:', error);
       setUserShakes([]);
     } finally {
       setLoading(false);
@@ -121,15 +138,15 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
             {/* Stats */}
             <div className="flex gap-4 text-sm">
               <button className="hover:underline">
-                <span className="font-bold text-white">{user.shakes}</span>
+                <span className="font-bold text-white">{stats.shakes}</span>
                 <span className="text-gray-400 ml-1">shakes</span>
               </button>
               <button className="hover:underline">
-                <span className="font-bold text-white">{user.followers}</span>
+                <span className="font-bold text-white">{stats.followers}</span>
                 <span className="text-gray-400 ml-1">abonnés</span>
               </button>
               <button className="hover:underline">
-                <span className="font-bold text-white">{user.following}</span>
+                <span className="font-bold text-white">{stats.following}</span>
                 <span className="text-gray-400 ml-1">abonnements</span>
               </button>
             </div>
@@ -152,10 +169,7 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
             Mes shakes
           </button>
           <button className="py-3 text-gray-400 hover:text-white transition-colors text-sm">
-            Playlists
-          </button>
-          <button className="py-3 text-gray-400 hover:text-white transition-colors text-sm">
-            Likes
+            Re-shakes
           </button>
         </div>
       </div>
