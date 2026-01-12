@@ -1,8 +1,4 @@
-// YouTube Data API v3 Integration
-// Client ID: 335829434000-06sg4hfsrhssub1fr91pg3v5bc9vda6s.apps.googleusercontent.com
-
-const YOUTUBE_API_KEY = 'AIzaSyDLXJjHTpAhzir_c2rZ9WeZudcgTkJdZr8'; // Tu devras remplacer par ta vraie clé
-
+// YouTube Integration - NO API KEY NEEDED
 export interface YouTubeTrack {
   id: string;
   title: string;
@@ -12,106 +8,39 @@ export interface YouTubeTrack {
   duration: string;
 }
 
-// Rechercher un track sur YouTube
-export async function searchYouTubeTrack(trackName: string, artist: string): Promise<YouTubeTrack | null> {
-  try {
-    const query = encodeURIComponent(`${trackName} ${artist} official audio`);
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=1&q=${query}&key=${YOUTUBE_API_KEY}`;
-    
-    const response = await fetch(url);
-    const data = await response.json();
-    
-    if (data.items && data.items.length > 0) {
-      const video = data.items[0];
-      return {
-        id: video.id.videoId,
-        videoId: video.id.videoId,
-        title: video.snippet.title,
-        artist: video.snippet.channelTitle,
-        thumbnail: video.snippet.thumbnails.high?.url || video.snippet.thumbnails.default.url,
-        duration: '3:00' // Duration requires additional API call
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('❌ YouTube search error:', error);
-    return null;
-  }
+export function getYouTubeTopFrance(): YouTubeTrack[] {
+  return [
+    { id: 'cFH5JgyZK1I', videoId: 'cFH5JgyZK1I', title: 'Imagine', artist: 'Carbonne', thumbnail: 'https://i.ytimg.com/vi/cFH5JgyZK1I/hqdefault.jpg', duration: '3:24' },
+    { id: 'S2lhyVhCRX8', videoId: 'S2lhyVhCRX8', title: 'Bolide', artist: 'SDM', thumbnail: 'https://i.ytimg.com/vi/S2lhyVhCRX8/hqdefault.jpg', duration: '2:58' },
+    { id: 'TkRJOdDvB60', videoId: 'TkRJOdDvB60', title: 'Désert', artist: 'Tiakola', thumbnail: 'https://i.ytimg.com/vi/TkRJOdDvB60/hqdefault.jpg', duration: '3:12' },
+    { id: 'K_i4oAKNYmM', videoId: 'K_i4oAKNYmM', title: 'Doudou', artist: 'Aya Nakamura', thumbnail: 'https://i.ytimg.com/vi/K_i4oAKNYmM/hqdefault.jpg', duration: '2:48' },
+    { id: '6sy5fvYU4Js', videoId: '6sy5fvYU4Js', title: 'Bâtiment', artist: 'Niska', thumbnail: 'https://i.ytimg.com/vi/6sy5fvYU4Js/hqdefault.jpg', duration: '3:01' },
+    { id: 'fhVWUW00Rcw', videoId: 'fhVWUW00Rcw', title: 'Superstar', artist: 'Jul', thumbnail: 'https://i.ytimg.com/vi/fhVWUW00Rcw/hqdefault.jpg', duration: '2:54' },
+    { id: 'ULHLbxf3OXo', videoId: 'ULHLbxf3OXo', title: 'Cartier', artist: 'Kerchak', thumbnail: 'https://i.ytimg.com/vi/ULHLbxf3OXo/hqdefault.jpg', duration: '3:18' },
+    { id: 'VXGYDJ_Kjyo', videoId: 'VXGYDJ_Kjyo', title: 'H24', artist: 'Hamza', thumbnail: 'https://i.ytimg.com/vi/VXGYDJ_Kjyo/hqdefault.jpg', duration: '2:42' },
+    { id: 'wSF8EmblVTs', videoId: 'wSF8EmblVTs', title: 'S/o', artist: 'Freeze Corleone', thumbnail: 'https://i.ytimg.com/vi/wSF8EmblVTs/hqdefault.jpg', duration: '3:06' },
+    { id: 'NRpjLbEOf18', videoId: 'NRpjLbEOf18', title: 'Best Life', artist: 'Naps', thumbnail: 'https://i.ytimg.com/vi/NRpjLbEOf18/hqdefault.jpg', duration: '3:33' }
+  ];
 }
 
-// Obtenir l'URL d'écoute YouTube (pour ouvrir dans l'app)
 export function getYouTubeUrl(videoId: string): string {
   return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
-// Deep link pour ouvrir dans l'app YouTube
 export function getYouTubeDeepLink(videoId: string): string {
   return `vnd.youtube://${videoId}`;
 }
 
-// Obtenir l'URL embed pour le player
 export function getYouTubeEmbedUrl(videoId: string, autoplay = false): string {
-  return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=${autoplay ? 1 : 0}&controls=1&modestbranding=1&rel=0`;
+  return `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay ? 1 : 0}`;
 }
 
-// Ouvrir dans l'app YouTube (mobile) ou navigateur (desktop)
 export function openInYouTube(videoId: string) {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  
   if (isMobile) {
-    // Try to open in YouTube app
-    const deepLink = getYouTubeDeepLink(videoId);
-    window.location.href = deepLink;
-    
-    // Fallback to web after 1.5s if app not installed
-    setTimeout(() => {
-      window.open(getYouTubeUrl(videoId), '_blank');
-    }, 1500);
+    window.location.href = getYouTubeDeepLink(videoId);
+    setTimeout(() => window.open(getYouTubeUrl(videoId), '_blank'), 1500);
   } else {
-    // Desktop: open in new tab
     window.open(getYouTubeUrl(videoId), '_blank');
-  }
-}
-
-// Top tracks France sur YouTube Music
-export async function getYouTubeTopFrance(): Promise<YouTubeTrack[]> {
-  try {
-    // IDs de vidéos populaires en France (à mettre à jour régulièrement)
-    const topVideoIds = [
-      'cFH5JgyZK1I', // Carbonne - Imagine
-      'NRpjLbEOf18', // Naps - Best Life
-      'TkRJOdDvB60', // Tiakola - Désert
-      'K_i4oAKNYmM', // Aya Nakamura - Doudou
-      '6sy5fvYU4Js', // Niska - Bâtiment
-      'fhVWUW00Rcw', // Jul - Superstar
-      'S2lhyVhCRX8', // SDM - Bolide
-      'ULHLbxf3OXo', // Kerchak - Cartier
-      'VXGYDJ_Kjyo', // Hamza - H24
-      'wSF8EmblVTs'  // Freeze Corleone - S/o
-    ];
-    
-    const query = topVideoIds.join(',');
-    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${query}&key=${YOUTUBE_API_KEY}`;
-    
-    const response = await fetch(url);
-    const data = await response.json();
-    
-    if (data.items) {
-      return data.items.map((video: any, index: number) => ({
-        id: video.id,
-        videoId: video.id,
-        title: video.snippet.title,
-        artist: video.snippet.channelTitle,
-        thumbnail: video.snippet.thumbnails.high?.url || video.snippet.thumbnails.default.url,
-        duration: '3:00',
-        position: index + 1
-      }));
-    }
-    
-    return [];
-  } catch (error) {
-    console.error('❌ YouTube top tracks error:', error);
-    return [];
   }
 }

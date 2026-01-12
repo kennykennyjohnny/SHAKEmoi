@@ -644,6 +644,7 @@ export async function searchPosts(query: string) {
 
 export async function getTopPosts(limit = 10) {
   try {
+    // Get all posts ordered by likes
     const { data, error } = await supabase
       .from('posts')
       .select(`
@@ -651,10 +652,24 @@ export async function getTopPosts(limit = 10) {
         user:users_profile!posts_user_id_fkey(*)
       `)
       .order('likes_count', { ascending: false })
-      .limit(limit);
+      .limit(50); // Get more to deduplicate
 
     if (error) throw error;
-    return data || [];
+    
+    // Deduplicate by track_name + artist, keep highest likes
+    const uniqueTracks = new Map();
+    (data || []).forEach((post: any) => {
+      const key = `${post.track_name}-${post.artist}`.toLowerCase();
+      const existing = uniqueTracks.get(key);
+      if (!existing || (post.likes_count || 0) > (existing.likes_count || 0)) {
+        uniqueTracks.set(key, post);
+      }
+    });
+    
+    // Convert back to array and limit
+    return Array.from(uniqueTracks.values())
+      .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
+      .slice(0, limit);
   } catch (error) {
     console.error('Error getting top posts:', error);
     return [];

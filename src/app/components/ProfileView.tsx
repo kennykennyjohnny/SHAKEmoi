@@ -28,7 +28,7 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
 
   useEffect(() => {
     loadUserData();
-  }, [user]);
+  }, [user, activeTab]); // Reload when user changes OR when tab changes
 
   const loadUserData = async () => {
     if (!user) return;
