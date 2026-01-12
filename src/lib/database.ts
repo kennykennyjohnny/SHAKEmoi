@@ -752,3 +752,22 @@ export async function getUserReshakes(userId: string) {
     return [];
   }
 }
+
+// Get user notifications
+export async function getUserNotifications(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_read', false)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting notifications:', error);
+    return [];
+  }
+}

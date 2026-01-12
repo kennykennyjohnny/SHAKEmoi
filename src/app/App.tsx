@@ -132,7 +132,7 @@ export default function App() {
       case 'profile':
         return <ProfileView user={currentUser} onPlayTrack={setCurrentTrack} onUpdateUser={setCurrentUser} />;
       case 'notifications':
-        return <NotificationsView />;
+        return <NotificationsView currentUser={currentUser} />;
       default:
         return <FeedView currentUser={currentUser} onPlayTrack={setCurrentTrack} refreshFeed={refreshFeed} />;
     }
@@ -159,14 +159,6 @@ export default function App() {
                 title="Partager Shakemoi"
               >
                 <Share2 className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
-              </button>
-
-              <button
-                onClick={() => setShowSettings(true)}
-                className="p-2 hover:bg-zinc-800 rounded-full transition-colors group"
-                title="Paramètres"
-              >
-                <Settings className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
               </button>
 
               <button
@@ -344,7 +336,13 @@ export default function App() {
       {/* Settings Dialog */}
       {showSettings && (
         <SettingsDialog 
+          currentUser={currentUser}
           onClose={() => setShowSettings(false)}
+          onSave={(settings) => {
+            const updatedUser = { ...currentUser, musicService: settings.musicService };
+            setCurrentUser(updatedUser);
+            localStorage.setItem('shakemoi_user', JSON.stringify(updatedUser));
+          }}
           onLogout={() => {
             setCurrentUser(null);
             setShowAuth(true);

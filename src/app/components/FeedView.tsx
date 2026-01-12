@@ -204,20 +204,6 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Stories-like horizontal scroll */}
-      <div className="sticky top-0 z-30 bg-black border-b border-zinc-800 px-4 py-3">
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide">
-          {['Top Hits', 'Rap FR', 'Electro', 'R&B', 'Indie', 'Rock'].map((genre) => (
-            <button
-              key={genre}
-              className="px-4 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-full text-sm font-medium whitespace-nowrap transition-colors"
-            >
-              {genre}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="p-4 space-y-3">
         {shakes.map((shake, index) => (
           <motion.article

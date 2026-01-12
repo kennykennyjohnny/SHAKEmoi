@@ -1,91 +1,56 @@
-import { Heart, MessageCircle, UserPlus, Music, Repeat2 } from 'lucide-react';
+import { Heart, MessageCircle, UserPlus, Music, Repeat2, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useState, useEffect } from 'react';
+import { getUserNotifications } from '../../lib/database';
 
-export function NotificationsView() {
-  const notifications = [
-    {
-      id: '1',
-      type: 'like',
-      user: {
-        username: 'sophiemusic',
-        displayName: 'Sophie M.',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop'
-      },
-      message: 'a aimé votre shake',
-      timestamp: '5min',
-      trackCover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100&h=100&fit=crop'
-    },
-    {
-      id: '2',
-      type: 'comment',
-      user: {
-        username: 'djmaxime',
-        displayName: 'DJ Maxime',
-        avatar: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop'
-      },
-      message: 'a commenté : "Super son ! 🔥"',
-      timestamp: '15min',
-      trackCover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=100&h=100&fit=crop'
-    },
-    {
-      id: '3',
-      type: 'follow',
-      user: {
-        username: 'marcbeats',
-        displayName: 'Marc Beats',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop'
-      },
-      message: 's\'est abonné à vous',
-      timestamp: '1h'
-    },
-    {
-      id: '4',
-      type: 'reshake',
-      user: {
-        username: 'emmavibes',
-        displayName: 'Emma Vibes',
-        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop'
-      },
-      message: 'a reshaké votre post',
-      timestamp: '3h',
-      trackCover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&h=100&fit=crop'
-    },
-    {
-      id: '5',
-      type: 'like',
-      user: {
-        username: 'thomas_dj',
-        displayName: 'Thomas',
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop'
-      },
-      message: 'a aimé votre shake',
-      timestamp: '5h',
-      trackCover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100&h=100&fit=crop'
-    },
-    {
-      id: '6',
-      type: 'follow',
-      user: {
-        username: 'julie_music',
-        displayName: 'Julie',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop'
-      },
-      message: 's\'est abonné à vous',
-      timestamp: '1j'
-    },
-    {
-      id: '7',
-      type: 'comment',
-      user: {
-        username: 'alex_beats',
-        displayName: 'Alex',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop'
-      },
-      message: 'a commenté : "Excellent goût musical 👌"',
-      timestamp: '2j',
-      trackCover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100&h=100&fit=crop'
+interface NotificationsViewProps {
+  currentUser: any;
+}
+
+export function NotificationsView({ currentUser }: NotificationsViewProps) {
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadNotifications();
+  }, [currentUser]);
+
+  const loadNotifications = async () => {
+    if (!currentUser) return;
+    
+    try {
+      setLoading(true);
+      const data = await getUserNotifications(currentUser.id);
+      setNotifications(data);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-3" />
+        <p className="text-sm text-gray-400">Chargement des notifications...</p>
+      </div>
+    );
+  }
+
+  if (notifications.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-4">
+        <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center mb-4">
+          <Heart className="w-8 h-8 text-gray-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-white mb-2">Aucune notification</h3>
+        <p className="text-sm text-gray-400 text-center">
+          Les interactions avec tes shakes apparaîtront ici
+        </p>
+      </div>
+    );
+  }
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -100,6 +65,21 @@ export function NotificationsView() {
       default:
         return <Music className="w-4 h-4 text-gray-500" />;
     }
+  };
+
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (minutes < 1) return 'maintenant';
+    if (minutes < 60) return `${minutes}min`;
+    if (hours < 24) return `${hours}h`;
+    if (days < 7) return `${days}j`;
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   };
 
   return (
@@ -122,25 +102,25 @@ export function NotificationsView() {
 
             {/* Avatar */}
             <img
-              src={notif.user.avatar}
-              alt={notif.user.displayName}
+              src={notif.actor_avatar || `https://ui-avatars.com/api/?name=${notif.actor_username}&background=random`}
+              alt={notif.actor_username}
               className="w-10 h-10 rounded-full object-cover flex-shrink-0"
             />
 
             {/* Content */}
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white">
-                <span className="font-semibold">{notif.user.displayName}</span>
+                <span className="font-semibold">@{notif.actor_username}</span>
                 {' '}
-                <span className="text-gray-400">{notif.message}</span>
+                <span className="text-gray-400">{notif.content}</span>
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">{notif.timestamp}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{formatTimestamp(notif.created_at)}</p>
             </div>
 
-            {/* Track Cover */}
-            {notif.trackCover && (
+            {/* Track Cover if available */}
+            {notif.post_cover_url && (
               <img
-                src={notif.trackCover}
+                src={notif.post_cover_url}
                 alt="Track"
                 className="w-10 h-10 rounded object-cover flex-shrink-0"
               />
