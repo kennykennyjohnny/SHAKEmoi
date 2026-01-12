@@ -1,34 +1,179 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X, Heart, ExternalLink } from 'lucide-react';
 import { motion } from 'motion/react';
+import { openInYouTube } from '../../lib/youtube';
 
 interface PlayerBarProps {
   track: any;
   onClose: () => void;
-  musicService?: 'spotify' | 'apple';
+  musicService?: 'spotify' | 'apple' | 'youtube';
 }
 
 export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBarProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(30); // Preview = 30s
+  const [duration, setDuration] = useState(30);
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [useYouTube, setUseYouTube] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const playerRef = useRef<any>(null);
 
-  // Preview URL from Spotify API
-  const previewUrl = track.previewUrl || track.preview_url;
+  // Check if we should use YouTube (no Spotify preview or YouTube videoId available)
+  const hasYouTubeVideo = track.youtubeVideoId || track.videoId;
+  const hasSpotifyPreview = track.previewUrl || track.preview_url;
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume;
+    // Use YouTube if no Spotify preview or if videoId is provided
+    if (hasYouTubeVideo && !hasSpotifyPreview) {
+      setUseYouTube(true);
+      loadYouTubePlayer();
     }
-  }, [volume, isMuted]);
+  }, [track]);
+
+  const loadYouTubePlayer = () => {
+    // Load YouTube IFrame API
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+
+      window.onYouTubeIframeAPIReady = () => {
+        createPlayer();
+      };
+    } else {
+      createPlayer();
+    }
+  };
+
+  const createPlayer = () => {
+    const videoId = track.youtubeVideoId || track.videoId;
+    if (!videoId) return;
+
+    playerRef.current = new window.YT.Player('youtube-player', {
+      height: '0',
+      width: '0',
+      videoId: videoId,
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        modestbranding: 1,
+        rel: 0
+      },
+      events: {
+        onReady: (event: any) => {
+          console.log('✅ YouTube player ready');
+          setDuration(Math.floor(event.target.getDuration()));
+        },
+        onStateChange: (event: any) => {
+          if (event.data === window.YT.PlayerState.PLAYING) {
+            setIsPlaying(true);
+            startTimeUpdate();
+          } else if (event.data === window.YT.PlayerState.PAUSED) {
+            setIsPlaying(false);
+          } else if (event.data === window.YT.PlayerState.ENDED) {
+            setIsPlaying(false);
+            setCurrentTime(0);
+          }
+        }
+      }
+    });
+  };
+
+  const startTimeUpdate = () => {
+    const interval = setInterval(() => {
+      if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
+        setCurrentTime(Math.floor(playerRef.current.getCurrentTime()));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  };
+
+  useEffect(() => {
+    if (audioRef.current && !useYouTube) {
+      audioRef.current.volume = isMuted ? 0 : volume;
+    } else if (playerRef.current && playerRef.current.setVolume) {
+      playerRef.current.setVolume(isMuted ? 0 : volume * 100);
+    }
+  }, [volume, isMuted, useYouTube]);
+
+  const togglePlay = () => {
+    if (useYouTube && playerRef.current) {
+      if (isPlaying) {
+        playerRef.current.pauseVideo();
+      } else {
+        playerRef.current.playVideo();
+      }
+      setIsPlaying(!isPlaying);
+    } else if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play().catch(err => {
+          console.error('❌ Audio playback error:', err);
+          // Fallback to YouTube if audio fails
+          setUseYouTube(true);
+          loadYouTubePlayer();
+        });
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = Number(e.target.value);
+    setCurrentTime(time);
+    
+    if (useYouTube && playerRef.current && playerRef.current.seekTo) {
+      playerRef.current.seekTo(time, true);
+    } else if (audioRef.current) {
+      audioRef.current.currentTime = time;
+    }
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = Number(e.target.value);
+    setVolume(newVolume);
+    setIsMuted(newVolume === 0);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleOpenInApp = () => {
+    const videoId = track.youtubeVideoId || track.videoId;
+    
+    if (videoId) {
+      // Open in YouTube app
+      openInYouTube(videoId);
+    } else if (track.spotifyUri || track.spotifyUrl || track.spotify_url) {
+      // Open in Spotify
+      const trackId = track.id || track.track_id;
+      const spotifyUrl = track.spotifyUri?.startsWith('http') 
+        ? track.spotifyUri 
+        : track.spotifyUrl || track.spotify_url || `https://open.spotify.com/track/${trackId}`;
+      
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        const deepLink = `spotify:track:${trackId}`;
+        window.location.href = deepLink;
+        setTimeout(() => {
+          window.open(spotifyUrl, '_blank');
+        }, 1500);
+      } else {
+        window.open(spotifyUrl, '_blank');
+      }
+    }
+  };
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || useYouTube) return;
 
     const handleLoadedMetadata = () => {
       setDuration(Math.floor(audio.duration));
@@ -52,71 +197,9 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, []);
+  }, [useYouTube]);
 
-  const togglePlay = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const time = Number(e.target.value);
-    setCurrentTime(time);
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
-    }
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = Number(e.target.value);
-    setVolume(newVolume);
-    setIsMuted(newVolume === 0);
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const openInMusicApp = () => {
-    const trackId = track.id || track.track_id;
-    
-    if (musicService === 'spotify') {
-      // Try to open in Spotify app first (deep link)
-      const spotifyUrl = track.spotifyUri?.startsWith('http') 
-        ? track.spotifyUri 
-        : track.spotifyUrl || track.spotify_url || `https://open.spotify.com/track/${trackId}`;
-      
-      // For mobile, use spotify:// protocol
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        const deepLink = `spotify:track:${trackId}`;
-        window.location.href = deepLink;
-        // Fallback to web if app not installed
-        setTimeout(() => {
-          window.open(spotifyUrl, '_blank');
-        }, 1500);
-      } else {
-        window.open(spotifyUrl, '_blank');
-      }
-    } else if (musicService === 'apple' && track.appleMusicUrl) {
-      // Apple Music deep link
-      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        window.location.href = track.appleMusicUrl.replace('https://music.apple.com', 'music://');
-        setTimeout(() => {
-          window.open(track.appleMusicUrl, '_blank');
-        }, 1500);
-      } else {
-        window.open(track.appleMusicUrl, '_blank');
-      }
-    }
-  };
+  const previewUrl = track.previewUrl || track.preview_url;
 
   return (
     <motion.div
@@ -125,26 +208,23 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
       exit={{ y: 100 }}
       className="border-t border-zinc-800 bg-zinc-900/95 backdrop-blur-lg"
     >
-      {/* Hidden audio element */}
-      <audio 
-        ref={audioRef} 
-        src={previewUrl}
-        onError={(e) => {
-          console.error('❌ Audio playback error:', e);
-          console.log('Preview URL:', previewUrl);
-          console.log('Track:', track);
-          // If preview fails, offer to open in app directly
-          if (!previewUrl || previewUrl === '') {
-            console.warn('⚠️ No preview URL available - Opening in music app instead');
-          }
-        }}
-        onLoadStart={() => {
-          console.log('🎵 Loading audio from:', previewUrl);
-        }}
-        onCanPlay={() => {
-          console.log('✅ Audio ready to play');
-        }}
-      />
+      {/* Hidden audio element for Spotify */}
+      {!useYouTube && (
+        <audio 
+          ref={audioRef} 
+          src={previewUrl}
+          onError={(e) => {
+            console.error('❌ Spotify preview failed, switching to YouTube');
+            setUseYouTube(true);
+            loadYouTubePlayer();
+          }}
+          onLoadStart={() => console.log('🎵 Loading Spotify preview...')}
+          onCanPlay={() => console.log('✅ Spotify preview ready')}
+        />
+      )}
+
+      {/* Hidden YouTube player */}
+      {useYouTube && <div id="youtube-player" style={{ display: 'none' }} />}
 
       <div className="px-4 py-2">
         {/* Progress bar */}
@@ -162,7 +242,9 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
           />
           <div className="flex justify-between items-center text-xs text-gray-400 mt-1">
             <span>{formatTime(currentTime)}</span>
-            <span className="text-purple-400 text-[10px] uppercase">Preview 30s</span>
+            <span className="text-purple-400 text-[10px] uppercase">
+              {useYouTube ? '🎥 YouTube' : '🎧 Preview 30s'}
+            </span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
@@ -171,7 +253,7 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
           {/* Track info */}
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <img
-              src={track.coverUrl}
+              src={track.coverUrl || track.thumbnail}
               alt={track.title}
               className="w-12 h-12 rounded object-cover"
             />
@@ -237,12 +319,12 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
 
           {/* Open in App Button */}
           <button
-            onClick={openInMusicApp}
+            onClick={handleOpenInApp}
             className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-xs font-semibold hover:opacity-90 transition-opacity"
-            title="Ouvrir dans l'application musicale"
+            title="Ouvrir dans l'application"
           >
             <ExternalLink className="w-3 h-3" />
-            Ouvrir dans l'app
+            Ouvrir
           </button>
 
           {/* Close */}
@@ -256,9 +338,8 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
 
         {/* Mobile: Open in App */}
         <button
-          onClick={openInMusicApp}
+          onClick={handleOpenInApp}
           className="sm:hidden w-full mt-2 flex items-center justify-center gap-2 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
-          title="Ouvrir dans l'application musicale"
         >
           <ExternalLink className="w-3 h-3" />
           Ouvrir dans l'app

@@ -66,7 +66,6 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
       await updateUserProfile(currentUser.id, {
         username: formData.username,
         profile_album_cover_url: formData.avatar,
-        // bio and displayName can be stored when schema supports them
       });
       
       // Create updated user object
@@ -84,6 +83,12 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
       if (onUpdateUser) {
         onUpdateUser(updatedUser);
       }
+      
+      // Force reload after 500ms to ensure changes are visible
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
       onClose();
     } catch (error) {
       console.error('Failed to update profile:', error);
