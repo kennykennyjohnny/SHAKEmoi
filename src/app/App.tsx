@@ -77,7 +77,14 @@ export default function App() {
   }, []);
 
   const handleAuthComplete = (user: any) => {
-    setCurrentUser(user);
+    // Transform user to match ProfileView expectations
+    const profileUser = {
+      ...user,
+      avatar: user.profile_album_cover_url || user.avatar || `https://ui-avatars.com/api/?name=${user.username}&background=random`,
+      displayName: user.username,
+      bio: user.bio || ''
+    };
+    setCurrentUser(profileUser);
     setShowAuth(false);
     
     // Check if needs onboarding
@@ -101,7 +108,14 @@ export default function App() {
               .update({ music_service: preferences.musicService })
               .eq('id', user.id);
           }
-          setCurrentUser(profile);
+          // Transform to match ProfileView expectations
+          const profileUser = {
+            ...profile,
+            avatar: profile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${profile.username}&background=random`,
+            displayName: profile.username,
+            bio: ''
+          };
+          setCurrentUser(profileUser);
         }
       }
     } catch (err) {
