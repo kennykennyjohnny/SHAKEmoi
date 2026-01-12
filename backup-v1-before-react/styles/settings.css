@@ -1,0 +1,140 @@
+/* Settings menu styles - Amélioré */
+.settings-menu {
+  position: fixed;
+  right: 16px;
+  top: 64px;
+  width: 340px;
+  max-width: calc(100% - 32px);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  z-index: 9999;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 111, 97, 0.05);
+}
+
+.settings-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.settings-body {
+  padding: 16px;
+}
+
+.setting-group {
+  margin-bottom: 16px;
+}
+
+.setting-label {
+  display: block;
+  color: #E0E0E0;
+  margin-bottom: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.platform-toggles {
+  display: flex;
+  gap: 10px;
+}
+
+.platform-toggle {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  color: #cfcfcf;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.platform-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.platform-toggle.active {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-logout {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 111, 97, 0.1);
+  border: 2px solid rgba(255, 111, 97, 0.3);
+  color: #FF6F61;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.btn-logout:hover {
+  background: rgba(255, 111, 97, 0.2);
+  border-color: #FF6F61;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 111, 97, 0.3);
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  color: #cfcfcf;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-close:hover {
+  background: rgba(255, 111, 97, 0.15);
+  color: #FF6F61;
+}
+
+/* Small screen adaptation */
+@media (max-width: 480px) {
+  .settings-menu {
+    left: 16px;
+    right: 16px;
+    top: 56px;
+    width: auto;
+  }
+}

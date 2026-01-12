@@ -1,0 +1,32 @@
+/* Fix Reshake - Au-dessus de la bulle */
+
+.reshake-header {
+  position: relative !important;
+  padding: 4px 8px !important;
+  background: rgba(255, 111, 97, 0.12) !important;
+  backdrop-filter: blur(5px) !important;
+  border: 1px solid rgba(255, 111, 97, 0.25) !important;
+  border-radius: 8px 8px 0 0 !important;
+  font-size: 0.7rem !important;
+  margin: -1px !important;
+  margin-bottom: 0 !important;
+  z-index: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.reshake-icon {
+  font-size: 0.75rem !important;
+  color: var(--coral-500, #FF7668) !important;
+}
+
+.reshake-text {
+  font-size: 0.65rem !important;
+  color: var(--text-200) !important;
+}
+
+.reshake-text .username {
+  color: var(--coral-500, #FF7668) !important;
+  font-weight: 600 !important;
+}

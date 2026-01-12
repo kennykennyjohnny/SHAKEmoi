@@ -1,0 +1,336 @@
+/* ============================================
+   SHAKEMOI - THÈME CORAIL MODERNE
+   Palette harmonieuse et créative
+   ============================================ */
+
+:root {
+  /* Couleurs principales - Corail */
+  --primary: #FF6F61;
+  --primary-hover: #FF5A4A;
+  --primary-light: #FFB8B0;
+
+  /* Couleurs secondaires */
+  --secondary: #FFD166;
+  --accent: #4ECDC4;
+
+  /* Couleurs de fond - Palette créative GRIS */
+  --bg-main: #293133;
+  --bg-elevated: #3A4245;
+  --bg-card: #3A4245;
+  --bg-surface: #293133;
+
+  /* Couleurs de texte */
+  --text-on-dark: #FFFFFF;
+  --text-on-light: #1A1A1A;
+  --text-secondary: #6C757D;
+  --text-muted: #ADB5BD;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+  /* Borders */
+  --border-radius: 12px;
+  --border-color: #DEE2E6;
+  --border-on-dark: rgba(255, 255, 255, 0.1);
+}
+
+/* Background */
+body {
+  background: var(--bg-main);
+}
+
+.app-wrapper {
+  background: var(--bg-main);
+}
+
+/* Header avec fond élevé */
+.app-header {
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-on-dark);
+}
+
+/* Logo géré par header-navbar-modern.css */
+
+/* Boutons avec couleurs vives */
+.btn-primary,
+.btn-follow {
+  background: var(--primary);
+  color: white;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+}
+
+.btn-primary:hover,
+.btn-follow:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Navigation moderne */
+.nav-btn {
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.nav-btn.active {
+  color: var(--primary);
+  background: rgba(255, 111, 97, 0.15);
+  border-radius: var(--border-radius);
+}
+
+.nav-btn:hover {
+  color: var(--primary);
+}
+
+.nav-btn.active .nav-icon {
+  fill: var(--primary);
+}
+
+.nav-icon {
+  fill: var(--text-muted);
+  transition: fill 0.2s ease;
+}
+
+.nav-btn:hover .nav-icon {
+  fill: var(--primary);
+}
+
+/* Posts - cartes blanches sur fond sombre */
+.post {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.post:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: rgba(255, 111, 97, 0.3);
+}
+
+/* Action buttons */
+.action-btn {
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  color: var(--primary);
+  background: rgba(255, 111, 97, 0.1);
+}
+
+.like-btn.liked {
+  color: var(--primary);
+}
+
+.like-btn.liked .icon {
+  color: var(--primary);
+  animation: heartbeat 0.3s ease;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* Reshake header avec accent doré */
+.reshake-header {
+  background: rgba(255, 209, 102, 0.1);
+  border-left: 3px solid var(--secondary);
+  color: var(--text-on-dark);
+}
+
+.reshake-icon {
+  color: var(--secondary);
+}
+
+/* Username mentions - CORAIL PARTOUT */
+.username,
+.mention {
+  color: #FF6F61 !important;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.username:hover,
+.mention:hover {
+  color: #FF5A4A !important;
+  text-decoration: underline;
+}
+
+/* Modales */
+.modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Profile header avec accent corail */
+.profile-header {
+  background: var(--bg-card);
+  padding: 2rem;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  border-bottom: 3px solid var(--primary);
+}
+
+.stat-value {
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.stat-value:hover {
+  transform: scale(1.1);
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Notifications */
+.notif-badge {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 0 0 3px var(--bg-elevated);
+}
+
+.notif-menu {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+}
+
+.notif-item {
+  color: var(--text-on-dark);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.notif-item:hover {
+  background: var(--bg-surface);
+}
+
+.notif-item.unread {
+  background: rgba(255, 107, 107, 0.05);
+  border-left: 3px solid var(--primary);
+}
+
+/* Search */
+.search-input {
+  background: var(--bg-card);
+  color: var(--text-on-dark);
+  border: 1px solid var(--border-color);
+}
+
+.search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+}
+
+.toggle-btn {
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.toggle-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* ShakeBack button */
+.btn-shakeback {
+  background: var(--primary) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.btn-shakeback:hover {
+  background: var(--primary-hover) !important;
+  transform: translateY(-1px);
+}
+
+.btn-shakeback.following {
+  background: var(--accent) !important;
+}
+
+/* Amélioration pour desktop */
+@media (min-width: 768px) {
+  .app-container {
+    max-width: 600px;
+    margin: 1rem auto;
+    border: 1px solid var(--border-color);
+  }
+
+  .main-content {
+    padding: 1.5rem;
+  }
+
+  .post {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-container {
+    max-width: 650px;
+  }
+
+  .profile-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+}
+
+/* Scrollbar colorée */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
+}
+
+/* Accent sur les éléments interactifs */
+.user-result:hover,
+.comment-item:hover,
+.profile-post:hover {
+  background: var(--bg-surface);
+  transition: background 0.2s ease;
+}
+
+/* Texte sur fond sombre */
+.view-header h2,
+.empty-state,
+.loading {
+  color: var(--text-on-dark);
+}
+
+/* Améliorer les contrastes */
+.main-content {
+  background: var(--bg-main);
+}
+
+.feed-container,
+.top-container,
+.search-results,
+.profile-content {
+  background: transparent;
+}

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Feed - SHAKEMOI</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
+  <script src="scripts/config.js"></script>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1a1a24;
+      color: #fff;
+    }
+    .test { margin: 10px 0; padding: 10px; background: #2a2a34; border-radius: 8px; }
+    .success { border-left: 4px solid #10B981; }
+    .error { border-left: 4px solid #EF4444; }
+    .info { border-left: 4px solid #8b5cf6; }
+    button {
+      background: #8b5cf6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover { background: #7c3aed; }
+    #results { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>🔧 SHAKEMOI - Diagnostic Feed</h1>
+
+  <button onclick="runDiagnostic()">🚀 Lancer le diagnostic</button>
+  <button onclick="clearResults()">🗑️ Effacer</button>
+
+  <div id="results"></div>
+
+  <script>
+    const resultsDiv = document.getElementById('results');
+
+    function log(message, type = 'info') {
+      const div = document.createElement('div');
+      div.className = `test ${type}`;
+      div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong> - ${message}`;
+      resultsDiv.appendChild(div);
+      console.log(message);
+    }
+
+    function clearResults() {
+      resultsDiv.innerHTML = '';
+    }
+
+    async function runDiagnostic() {
+      clearResults();
+      log('🔍 Début du diagnostic...', 'info');
+
+      try {
+        // Test 1: Supabase initialisé
+        log('Test 1: Vérification Supabase...', 'info');
+        if (typeof supabase === 'undefined') {
+          log('❌ ERREUR: Supabase non initialisé!', 'error');
+          return;
+        }
+        log('✅ Supabase OK', 'success');
+
+        // Test 2: User connecté
+        log('Test 2: Vérification utilisateur...', 'info');
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          log(`❌ ERREUR Session: ${sessionError.message}`, 'error');
+          return;
+        }
+        if (!session) {
+          log('❌ Pas de session! Tu dois te connecter.', 'error');
+          window.location.href = 'index.html';
+          return;
+        }
+        log(`✅ User connecté: ${session.user.email}`, 'success');
+
+        // Test 3: Profile utilisateur
+        log('Test 3: Chargement du profil...', 'info');
+        const { data: profile, error: profileError } = await supabase
+          .from('users_profile')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileError) {
+          log(`❌ ERREUR Profile: ${profileError.message}`, 'error');
+          return;
+        }
+        log(`✅ Profile OK: @${profile.username}`, 'success');
+
+        // Test 4: Follows
+        log('Test 4: Vérification des follows...', 'info');
+        const { data: follows, error: followsError } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', session.user.id);
+
+        if (followsError) {
+          log(`❌ ERREUR Follows: ${followsError.message}`, 'error');
+        } else {
+          log(`✅ Tu suis ${follows.length} personne(s)`, 'success');
+          if (follows.length === 0) {
+            log('⚠️ Tu ne suis personne! Ton feed sera vide. Va dans Recherche pour "feel" des gens.', 'info');
+          }
+        }
+
+        // Test 5: Posts dans le feed
+        log('Test 5: Chargement des posts...', 'info');
+        const followingIds = follows ? follows.map(f => f.following_id) : [];
+
+        const { data: posts, error: postsError } = await supabase
+          .from('posts')
+          .select(`
+            *,
+            user:users_profile!posts_user_id_fkey(id, username, color)
+          `)
+          .in('user_id', followingIds)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (postsError) {
+          log(`❌ ERREUR Posts: ${postsError.message}`, 'error');
+          log(`Détails: ${JSON.stringify(postsError)}`, 'error');
+          return;
+        }
+
+        log(`✅ ${posts.length} post(s) trouvé(s) dans le feed`, 'success');
+
+        if (posts.length > 0) {
+          log(`📝 Premier post: "${posts[0].track_name}" par @${posts[0].user.username}`, 'info');
+        }
+
+        // Test 6: Rendu HTML
+        log('Test 6: Test de rendu...', 'info');
+        if (posts.length > 0) {
+          const post = posts[0];
+          const html = `
+            <div style="background: #2a2a34; padding: 15px; border-radius: 8px; margin: 10px 0;">
+              <strong>@${post.user.username}</strong><br>
+              🎵 ${post.track_name}<br>
+              🎤 ${post.artist}<br>
+              ♥ ${post.likes_count || 0} | 💭 ${post.comments_count || 0}
+            </div>
+          `;
+          log('✅ Exemple de post:', 'success');
+          resultsDiv.insertAdjacentHTML('beforeend', html);
+        }
+
+        log('✅ DIAGNOSTIC TERMINÉ - Tout semble OK!', 'success');
+        log('Si le feed ne s\'affiche toujours pas sur app.html, c\'est un problème de JavaScript ou de cache navigateur.', 'info');
+
+      } catch (error) {
+        log(`❌ ERREUR CRITIQUE: ${error.message}`, 'error');
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>

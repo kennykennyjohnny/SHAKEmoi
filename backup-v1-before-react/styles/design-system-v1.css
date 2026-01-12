@@ -1,0 +1,317 @@
+/* ============================================
+   SHAKEmoi — Design System v1
+   Dark UI + Coral/Violet
+   Date: 2025-12-17
+   ============================================ */
+
+/* Import Maven Pro pour le logo */
+@import url('https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  /* ========== Brand Colors ========== */
+  --coral-500: #FF7668;  /* Primary */
+  --coral-600: #E85F54;  /* Hover/Active */
+  --coral-300: #FF8F85;  /* Soft */
+
+  --violet-500: #BF5BC6;  /* From logo */
+  --violet-400: #D459C8;  /* Accent */
+  --violet-600: #8D3FA3;  /* Dark */
+
+  /* ========== Dark UI (Fonds) ========== */
+  --bg-900: #0B0D12;
+  --bg-800: #151824;
+  --bg-750: #1C2030;
+  --bg-700: #232742;
+
+  /* ========== Text Colors ========== */
+  --text-100: #F4F5F7;
+  --text-200: #B5B8C9;
+  --text-300: #8A8FA8;
+  --text-inverse: #0B0D12;  /* Texte sur corail */
+
+  /* ========== Borders ========== */
+  --border-soft: rgba(244, 245, 247, 0.10);
+  --border-strong: rgba(244, 245, 247, 0.18);
+
+  /* ========== Gradients ========== */
+  --gradient-brand: linear-gradient(90deg, #FF7668 0%, #BF5BC6 55%, #D459C8 100%);
+  --gradient-brand-soft: radial-gradient(60% 60% at 20% 10%,
+    rgba(255, 118, 104, 0.35) 0%,
+    rgba(191, 91, 198, 0.18) 45%,
+    rgba(11, 13, 18, 0) 100%);
+
+  /* ========== Border Radius ========== */
+  --r-lg: 20px;
+  --r-md: 14px;
+  --r-sm: 10px;
+
+  /* ========== Shadows ========== */
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow-glow: 0 0 0 1px rgba(255, 118, 104, 0.20), 0 0 40px rgba(191, 91, 198, 0.18);
+
+  /* ========== Typography Scale ========== */
+  --h1: 48px;
+  --h2: 32px;
+  --h3: 24px;
+  --ui-lg: 18px;
+  --ui: 16px;
+  --ui-sm: 14px;
+  --ui-xs: 12px;
+
+  --lh-tight: 1.1;
+  --lh-normal: 1.35;
+  --lh-relaxed: 1.5;
+
+  /* ========== Compatibilité avec ancien système ========== */
+  --primary: var(--coral-500);
+  --primary-hover: var(--coral-600);
+  --bg-primary: var(--bg-900);
+  --bg-secondary: var(--bg-800);
+  --text-primary: var(--text-100);
+  --text-secondary: var(--text-200);
+  --border-color: var(--border-soft);
+}
+
+/* ========== Logo Typography ========== */
+.logo {
+  font-family: 'Maven Pro', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.logo-moi {
+  text-transform: lowercase;
+}
+
+/* ========== Body & Base Styles ========== */
+body {
+  background: var(--bg-900);
+  color: var(--text-100);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: var(--ui);
+  line-height: var(--lh-normal);
+}
+
+/* ========== Headings ========== */
+h1, h2, h3 {
+  font-family: 'Poppins', 'Inter', sans-serif;
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  color: var(--text-100);
+}
+
+h1 { font-size: var(--h1); }
+h2 { font-size: var(--h2); }
+h3 { font-size: var(--h3); }
+
+@media (max-width: 768px) {
+  h1 { font-size: 36px; }
+  h2 { font-size: 26px; }
+  h3 { font-size: 20px; }
+}
+
+/* ========== Buttons - Primary (Coral CTA) ========== */
+.btn-primary {
+  background: var(--coral-500);
+  color: var(--text-inverse);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  font: 600 var(--ui)/var(--lh-normal) 'Poppins', 'Inter', sans-serif;
+  border: 1px solid rgba(255, 118, 104, 0.25);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: var(--coral-600);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 118, 104, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* ========== Buttons - Gradient (Premium) ========== */
+.btn-gradient {
+  background: var(--gradient-brand);
+  color: var(--text-100);
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-glow);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  font: 600 var(--ui)/var(--lh-normal) 'Poppins', 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow), 0 8px 20px rgba(191, 91, 198, 0.3);
+}
+
+/* ========== Buttons - Secondary ========== */
+.btn-secondary {
+  background: transparent;
+  color: var(--text-200);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  font: 500 var(--ui)/var(--lh-normal) 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--bg-750);
+  color: var(--text-100);
+  border-color: var(--coral-300);
+}
+
+/* ========== Cards / Posts ========== */
+.post-card, .card {
+  background: var(--bg-800);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.post-card:hover, .card:hover {
+  background: var(--bg-750);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+/* ========== Inputs ========== */
+.input, input[type="text"], input[type="email"], input[type="password"], textarea {
+  background: var(--bg-750);
+  border: 1px solid var(--border-soft);
+  color: var(--text-100);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  font: 500 var(--ui)/var(--lh-normal) 'Inter', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.input:focus, input:focus, textarea:focus {
+  outline: none;
+  border-color: rgba(255, 118, 104, 0.45);
+  box-shadow: 0 0 0 4px rgba(255, 118, 104, 0.15);
+}
+
+/* ========== Badges / Tags ========== */
+.badge {
+  background: rgba(255, 118, 104, 0.12);
+  border: 1px solid rgba(255, 118, 104, 0.20);
+  color: var(--coral-300);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font: 500 var(--ui-sm)/1 'Inter', sans-serif;
+  display: inline-block;
+}
+
+.badge-violet {
+  background: rgba(191, 91, 198, 0.12);
+  border: 1px solid rgba(191, 91, 198, 0.20);
+  color: #E7C7F0;
+}
+
+/* ========== Navigation Tabs ========== */
+.nav-item {
+  color: var(--text-200);
+  transition: color 0.3s ease;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  color: var(--violet-500);
+}
+
+.nav-item.active {
+  color: var(--coral-500);
+  font-weight: 600;
+}
+
+/* ========== Player Audio (Signature) ========== */
+.player-progress {
+  background: rgba(244, 245, 247, 0.10);
+  border-radius: 999px;
+  overflow: hidden;
+  height: 6px;
+}
+
+.player-progress > .fill {
+  background: var(--gradient-brand);
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* Thumb/Slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  background: transparent;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--coral-500);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 118, 104, 0.5);
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background: var(--gradient-brand);
+  height: 6px;
+  border-radius: 999px;
+}
+
+/* ========== Scrollbar ========== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-800);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--coral-500);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--coral-600);
+}
+
+/* ========== Utilities ========== */
+.text-primary { color: var(--text-100); }
+.text-secondary { color: var(--text-200); }
+.text-muted { color: var(--text-300); }
+.text-coral { color: var(--coral-500); }
+.text-violet { color: var(--violet-500); }
+
+.bg-primary { background: var(--bg-900); }
+.bg-secondary { background: var(--bg-800); }
+.bg-coral { background: var(--coral-500); }
+
+/* ========== Responsive Typography ========== */
+@media (max-width: 768px) {
+  :root {
+    --ui-lg: 16px;
+    --ui: 14px;
+    --ui-sm: 13px;
+    --ui-xs: 11px;
+  }
+}

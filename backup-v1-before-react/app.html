@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SHAKEMOI - L'app que tu ouvres avant Spotify">
+  <meta name="theme-color" content="#FF7668">
+  <title>SHAKEMOI</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <!-- Design System V1 - Doit être chargé en premier -->
+  <link rel="stylesheet" href="styles/design-system-v1.css">
+  <!-- Variables de couleur -->
+  <link rel="stylesheet" href="styles/color-scheme.css">
+  <!-- Styles de base -->
+  <link rel="stylesheet" href="styles/app.css">
+  <link rel="stylesheet" href="styles/enhancements.css">
+  <link rel="stylesheet" href="styles/v3-features.css">
+  <link rel="stylesheet" href="styles/modern-layout.css">
+  <link rel="stylesheet" href="styles/ultra-modern.css">
+  <link rel="stylesheet" href="styles/header-navbar-modern.css">
+  <link rel="stylesheet" href="styles/coral-theme.css">
+  <!-- ANCIENS CSS FEED DÉSACTIVÉS TEMPORAIREMENT
+  <link rel="stylesheet" href="styles/feed-compact.css">
+  -->
+  <link rel="stylesheet" href="styles/profile-customization.css">
+  <link rel="stylesheet" href="styles/settings.css">
+  <!-- Design moderne des posts - en dernier pour surcharger tout -->
+  <link rel="stylesheet" href="styles/posts-modern.css">
+  <!-- LISIBILITE FIX DÉSACTIVÉ - conflit avec feed-twitter-style
+  <link rel="stylesheet" href="styles/lisibilite-fix.css">
+  -->
+  <!-- Onglets Top avec animation -->
+  <link rel="stylesheet" href="styles/top-tabs.css">
+  <!-- Modal de partage -->
+  <link rel="stylesheet" href="styles/share-modal.css">
+  <!-- Spinner amélioré -->
+  <link rel="stylesheet" href="styles/spinner-enhanced.css">
+  <!-- ANCIENS CSS FEED DÉSACTIVÉS
+  <link rel="stylesheet" href="styles/feed-fixes.css">
+  <link rel="stylesheet" href="styles/images-fix.css">
+  <link rel="stylesheet" href="styles/reshake-fix.css">
+  -->
+  <!-- Modal Commentaires -->
+  <link rel="stylesheet" href="styles/comments-modal.css">
+  <!-- Feed Twitter Style - EN DERNIER pour surcharger -->
+  <link rel="stylesheet" href="styles/feed-twitter-style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
+</head>
+<body>
+  <div class="app-wrapper">
+    <div class="app-container">
+
+      <!-- Header -->
+      <header class="app-header">
+        <h1 class="logo">SHAKE<span class="logo-moi">moi</span></h1>
+        <div class="header-actions">
+          <!-- Bouton Partager SHAKEmoi -->
+          <button class="share-btn vibrate-btn" onclick="openShareModal()" title="Partager SHAKEmoi">
+            <span class="note-icon">♪</span>
+          </button>
+          <!-- Bouton notifications avec pastille -->
+          <button class="notif-btn" onclick="toggleNotifMenu()" title="Notifications">
+            <svg class="notif-icon" viewBox="0 0 24 24">
+              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+            </svg>
+            <!-- Pastille si notifications non lues -->
+            <span class="notif-badge" id="notif-badge" style="display: none;"></span>
+          </button>
+          <!-- Bouton Modifier Profil (visible seulement sur la vue profil) -->
+          <button class="notif-btn" id="btn-edit-profile-header" onclick="openEditProfileModal()" title="Modifier le profil" style="display: none;">
+            <svg class="notif-icon" viewBox="0 0 24 24">
+              <path d="M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/>
+            </svg>
+          </button>
+          <!-- Bouton paramètres (remplace déconnexion) -->
+          <button class="notif-btn" id="settings-btn" title="Paramètres">
+            <svg class="notif-icon" viewBox="0 0 24 24">
+              <path d="M19.14 12.936a7.953 7.953 0 000-1.872l2.036-1.58a.5.5 0 00.12-.637l-1.928-3.337a.5.5 0 00-.607-.22l-2.397.96a7.94 7.94 0 00-1.62-.94l-.36-2.54A.5.5 0 0013.87 2h-3.74a.5.5 0 00-.494.423l-.36 2.54a7.94 7.94 0 00-1.62.94l-2.397-.96a.5.5 0 00-.607.22L2.7 8.847a.5.5 0 00.12.637l2.036 1.58a7.953 7.953 0 000 1.872L2.82 14.515a.5.5 0 00-.12.637l1.928 3.337c.14.243.435.356.707.274l2.397-.96c.5.382 1.04.69 1.62.94l.36 2.54c.048.336.33.423.494.423h3.74c.164 0 .446-.087.494-.423l.36-2.54c.58-.25 1.12-.558 1.62-.94l2.397.96c.272.082.567-.031.707-.274l1.928-3.337a.5.5 0 00-.12-.637l-2.02-1.579zM12 15.5A3.5 3.5 0 1112 8.5a3.5 3.5 0 010 7z"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+
+        <!-- View 1: Shake (Feed) -->
+        <div id="shake-view" class="view active">
+          <div id="feed-container" class="feed-container">
+            <div class="loading">
+              <div class="spinner"></div>
+              <p>Chargement du feed...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- View 2: TOP (Top 100) -->
+        <div id="top-view" class="view">
+          <div class="top-tabs">
+            <button class="top-tab-btn" data-top-tab="spotify">
+              Top Spotify
+              <div class="wave-indicator"></div>
+            </button>
+            <button class="top-tab-btn active" data-top-tab="reco">
+              Pour toi
+              <div class="wave-indicator"></div>
+            </button>
+            <button class="top-tab-btn" data-top-tab="shakemoi">
+              Top Shakemoi
+              <div class="wave-indicator"></div>
+            </button>
+          </div>
+          <div id="top-container" class="top-container">
+            <div class="loading">
+              <div class="spinner"></div>
+              <p>Chargement du Top...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- View 3: Recherche -->
+        <div id="search-view" class="view">
+          <div class="search-header">
+            <input type="text" id="search-input" class="search-input" placeholder="Rechercher des sons, artistes...">
+
+            <div class="search-toggle">
+              <button class="toggle-btn active" data-mode="tracks">Sons</button>
+              <button class="toggle-btn" data-mode="users">Personnes</button>
+            </div>
+          </div>
+
+          <!-- Catégories / Suggestions -->
+          <div id="search-categories" class="search-categories">
+            <h3 class="categories-title">Parcourir</h3>
+            <div class="categories-grid">
+              <button class="category-card" data-query="rap">
+                <span class="category-emoji">🎤</span>
+                <span class="category-name">Rap</span>
+              </button>
+              <button class="category-card" data-query="pop">
+                <span class="category-emoji">✨</span>
+                <span class="category-name">Pop</span>
+              </button>
+              <button class="category-card" data-query="rock">
+                <span class="category-emoji">🎸</span>
+                <span class="category-name">Rock</span>
+              </button>
+              <button class="category-card" data-query="electronic">
+                <span class="category-emoji">🎹</span>
+                <span class="category-name">Électro</span>
+              </button>
+              <button class="category-card" data-query="rnb">
+                <span class="category-emoji">🎵</span>
+                <span class="category-name">R&B</span>
+              </button>
+              <button class="category-card" data-query="jazz">
+                <span class="category-emoji">🎺</span>
+                <span class="category-name">Jazz</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="search-results" class="search-results">
+            <div class="empty-state">
+              <p>Recherche un son ou clique sur une catégorie</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- View 4: Profil -->
+        <div id="profile-view" class="view">
+          <div class="profile-header">
+            <!-- Notes décoratives -->
+            <div class="decorative-notes" id="decorative-notes">
+              <span class="note note-1">♪</span>
+              <span class="note note-2">♫</span>
+              <span class="note note-3">♪</span>
+              <span class="note note-4">♫</span>
+              <span class="note note-5">♪</span>
+              <span class="note note-6">♫</span>
+              <span class="note note-7">♪</span>
+              <span class="note note-8">♫</span>
+              <span class="note note-9">♪</span>
+              <span class="note note-10">♫</span>
+              <span class="note note-11">♪</span>
+              <span class="note note-12">♫</span>
+              <span class="note note-13">♪</span>
+              <span class="note note-14">♫</span>
+              <span class="note note-15">♪</span>
+            </div>
+            <!-- Note musicale colorée -->
+            <div class="music-note" id="user-note">♪</div>
+            <h2 class="username" id="user-username">@username</h2>
+
+            <div class="stats">
+              <div class="stat">
+                <span class="stat-value" id="feels-count">0</span>
+                <span class="stat-label">Shakeurs</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-tabs">
+            <button class="tab-btn active" data-tab="shakes">♫ Shakes</button>
+            <button class="tab-btn" data-tab="reshakes">↻ Re-Shakes</button>
+          </div>
+
+          <div id="profile-content" class="profile-content">
+            <div class="loading">
+              <div class="spinner"></div>
+              <p>Chargement...</p>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Bottom Navigation -->
+      <nav class="bottom-nav">
+        <button class="nav-btn active" data-view="shake">
+          <svg class="nav-icon" viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+          <span class="nav-label">Shake</span>
+        </button>
+        <button class="nav-btn" data-view="top">
+          <svg class="nav-icon" viewBox="0 0 24 24">
+            <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+          </svg>
+          <span class="nav-label">TOP</span>
+        </button>
+        <button class="nav-btn" data-view="search">
+          <svg class="nav-icon" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+          <span class="nav-label">Recherche</span>
+        </button>
+        <button class="nav-btn" data-view="profile">
+          <svg class="nav-icon" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+          </svg>
+          <span class="nav-label">Profil</span>
+        </button>
+      </nav>
+
+    </div>
+  </div>
+
+  <!-- Menu notifications (masqué par défaut) -->
+  <div class="notif-menu" id="notif-menu" style="display: none;">
+    <div class="notif-header">
+      <h3>Notifications</h3>
+      <button class="btn-close" onclick="toggleNotifMenu()">✕</button>
+    </div>
+    <div class="notif-list" id="notif-list">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Chargement...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu Paramètres (masqué par défaut) -->
+  <div class="settings-menu" id="settings-menu" style="display:none;">
+    <div class="settings-header">
+      <h3>PARAMÈTRES</h3>
+      <button class="btn-close" id="settings-close">✕</button>
+    </div>
+
+    <div class="settings-body">
+      <div class="setting-group">
+        <label class="setting-label">Plateforme musicale :</label>
+        <div class="platform-toggles">
+          <button class="platform-toggle active" data-platform="spotify" id="toggle-spotify">
+            <span style="font-size: 1.1rem;">●</span> Spotify
+          </button>
+          <button class="platform-toggle" data-platform="apple" id="toggle-apple">
+            <span style="font-size: 1.1rem;">◐</span> Apple Music
+          </button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <button class="btn-logout" id="settings-logout">🚪 Se déconnecter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal commentaires style Instagram -->
+  <div id="comments-modal">
+    <div class="comments-modal-content">
+      <div class="comments-modal-header">
+        <h3>Commentaires</h3>
+        <button class="comments-close-btn" onclick="closeCommentsModal()">✕</button>
+      </div>
+      <div class="comments-list" id="comments-list">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Chargement...</p>
+        </div>
+      </div>
+      <div class="comments-input-container">
+        <textarea class="comments-input" id="comments-input" placeholder="Ajoute un commentaire..." rows="1"></textarea>
+        <button class="comments-submit-btn" id="comments-submit-btn" onclick="submitComment()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour shake avec texte -->
+  <div id="shake-modal" class="modal">
+    <div class="modal-content">
+      <h3>Shake ce morceau</h3>
+      <div id="shake-track-info"></div>
+      <textarea id="shake-text" placeholder="Ajoute un commentaire (optionnel)..."></textarea>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancel-shake">Annuler</button>
+        <button class="btn-primary" id="submit-shake">Shake !</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour partager SHAKEmoi -->
+  <div id="share-modal" class="modal">
+    <div class="modal-content share-modal-content">
+      <button class="modal-close" onclick="closeShareModal()">✕</button>
+      <div class="share-header">
+        <span class="share-icon-big">♪</span>
+        <h3>Partage SHAKEmoi !</h3>
+      </div>
+      <p class="share-message">
+        La musique a été créée pour être partagée ! 🎵<br>
+        Merci de ton soutien et n'hésite pas à partager SHAKEmoi avec tes amis pour mieux vous découvrir.<br><br>
+        Des retours ? DM-nous sur Instagram <strong>@shakemoi.fr</strong> !
+      </p>
+      <div class="share-link-container">
+        <input type="text" id="share-link-input" value="https://shakemoi.fr" readonly />
+        <button class="btn-copy" id="btn-copy-link" onclick="copyShareLink()">
+          <span id="copy-text">Copier</span>
+        </button>
+      </div>
+      <p class="share-hint">Le lien a été copié automatiquement !</p>
+    </div>
+  </div>
+
+  <!-- Modal pour profil utilisateur -->
+  <div id="user-profile-modal" class="modal">
+    <div class="modal-content user-profile-modal">
+      <button class="modal-close" onclick="closeUserProfile()">✕</button>
+      <div class="profile-header">
+        <!-- Notes décoratives -->
+        <div class="decorative-notes" id="modal-decorative-notes">
+          <span class="note note-1">♪</span>
+          <span class="note note-2">♫</span>
+          <span class="note note-3">♪</span>
+          <span class="note note-4">♫</span>
+          <span class="note note-5">♪</span>
+          <span class="note note-6">♫</span>
+          <span class="note note-7">♪</span>
+          <span class="note note-8">♫</span>
+          <span class="note note-9">♪</span>
+          <span class="note note-10">♫</span>
+          <span class="note note-11">♪</span>
+          <span class="note note-12">♫</span>
+          <span class="note note-13">♪</span>
+          <span class="note note-14">♫</span>
+          <span class="note note-15">♪</span>
+        </div>
+        <div class="music-note" id="modal-user-note">♪</div>
+        <h2 class="username" id="modal-user-username">@username</h2>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value" id="modal-feels-count">0</span>
+            <span class="stat-label">Shakeurs</span>
+          </div>
+        </div>
+        <button class="btn-follow modal-follow-btn" id="modal-follow-btn">Shake</button>
+      </div>
+      <div class="profile-tabs">
+        <button class="tab-btn active" data-tab="shakes">Shakes</button>
+      </div>
+      <div id="modal-profile-content" class="profile-content">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Chargement...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour personnalisation profil -->
+  <div id="edit-profile-modal" class="modal">
+    <div class="modal-content edit-profile-modal">
+      <h3>Personnalise ton profil</h3>
+
+      <!-- Prévisualisation -->
+      <div class="profile-preview">
+        <div class="profile-pic-preview" id="profile-pic-preview">
+          <div class="profile-pic-ring" id="profile-pic-ring" style="border-color: #F5D5E8;">
+            <img id="preview-album-cover" src="" alt="Pochette" style="display: none;">
+            <div class="default-note">♪</div>
+          </div>
+        </div>
+        <p class="preview-label" id="preview-album-name">Choisis une pochette d'album</p>
+      </div>
+
+      <!-- Recherche pochette -->
+      <div class="album-search-section">
+        <label>Rechercher un album/single</label>
+        <input type="text" id="album-search-input" class="search-input-modal" placeholder="Nom de l'album ou artiste...">
+        <div id="album-search-results" class="album-results"></div>
+      </div>
+
+      <!-- Sélecteur couleurs -->
+      <div class="color-picker-section">
+        <label>Choisis ta couleur d'accent</label>
+        <div class="color-options">
+          <button class="color-option active" data-color="#F5D5E8" style="background: #F5D5E8;" title="Rose Tendre"></button>
+          <button class="color-option" data-color="#E8D5F5" style="background: #E8D5F5;" title="Lavande Douce"></button>
+          <button class="color-option" data-color="#D5E8F5" style="background: #D5E8F5;" title="Bleu Ciel"></button>
+          <button class="color-option" data-color="#E8F5D5" style="background: #E8F5D5;" title="Menthe Légère"></button>
+          <button class="color-option" data-color="#F5F5D5" style="background: #F5F5D5;" title="Citron Pâle"></button>
+          <button class="color-option" data-color="#F5E8D5" style="background: #F5E8D5;" title="Pêche Douce"></button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancel-edit-profile">Annuler</button>
+        <button class="btn-primary" id="save-edit-profile">Sauvegarder</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="scripts/config.js"></script>
+  <script src="scripts/userPreferences.js"></script>
+  <script src="scripts/appleMusicApi.js"></script>
+  <script src="scripts/database.js"></script>
+  <script src="scripts/spotify.js"></script>
+  <script src="scripts/lastfm.js"></script>
+  <script src="scripts/notifications.js"></script>
+  <!-- <script src="scripts/emojis.js"></script> -->
+  <script src="scripts/v3-features.js"></script>
+  <script src="scripts/profile-customization.js"></script>
+  <!-- App principal en dernier -->
+  <script src="scripts/app.js?v=20251221c"></script>
+</body>
+</html>

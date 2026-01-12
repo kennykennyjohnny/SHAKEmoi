@@ -1,0 +1,459 @@
+/* =====================================================
+   SHAKEMOI - LAYOUT MODERNE HORIZONTAL
+   Posts compacts, largeur pleine, design pro
+   ===================================================== */
+
+/* =====================================================
+   POST LAYOUT HORIZONTAL
+   ===================================================== */
+
+.post {
+  display: flex !important;
+  gap: 12px !important;
+  padding: 16px !important;
+  margin-bottom: 16px !important;
+  background: linear-gradient(135deg, rgba(26, 26, 36, 0.9) 0%, rgba(26, 26, 36, 0.7) 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(124, 58, 237, 0.2) !important;
+  border-radius: 16px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  align-items: center !important;
+  min-height: auto !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.post:hover {
+  border-color: rgba(124, 58, 237, 0.4) !important;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.2) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Pochette à gauche - 100x100px fixe */
+.post-content {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  margin-bottom: 0 !important;
+}
+
+.track-cover-container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.track-cover {
+  width: 70px !important;
+  height: 70px !important;
+  max-width: 70px !important;
+  border-radius: 8px !important;
+  object-fit: cover !important;
+  margin: 0 !important;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.track-cover:hover {
+  transform: scale(1.05);
+}
+
+/* Play button overlay */
+.play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.track-cover-container:hover .play-overlay {
+  opacity: 1;
+}
+
+.play-overlay.playing {
+  opacity: 1;
+  background: rgba(255, 107, 157, 0.9);
+}
+
+.play-overlay svg {
+  width: 20px;
+  height: 20px;
+  fill: white;
+}
+
+/* Animation vinyle quand ça joue */
+.track-cover.playing {
+  animation: vinyl-spin 3s linear infinite;
+  box-shadow: 0 0 20px rgba(255, 107, 157, 0.6),
+              0 0 40px rgba(255, 107, 157, 0.3);
+}
+
+@keyframes vinyl-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Infos à droite */
+.post-info-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0; /* Pour le text-overflow */
+}
+
+/* Header avec user */
+.post-header-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-note {
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 0.75rem !important;
+  flex-shrink: 0;
+}
+
+.username-inline {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.username-inline:hover {
+  color: var(--primary);
+}
+
+.timestamp-inline {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+/* Track info compact */
+.track-info-compact {
+  margin: 0 !important;
+}
+
+.track-title {
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 2px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-artist {
+  font-size: 0.8rem !important;
+  color: var(--text-secondary) !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Actions inline */
+.post-actions {
+  display: flex !important;
+  gap: 8px !important;
+  padding-top: 0 !important;
+  border-top: none !important;
+}
+
+.action-btn {
+  padding: 6px 12px !important;
+  border-radius: 16px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  gap: 6px !important;
+  flex: 0 0 auto !important;
+  min-width: 65px;
+  justify-content: center;
+}
+
+.action-btn .icon {
+  font-size: 1rem !important;
+}
+
+/* Like button */
+.like-btn .icon {
+  filter: grayscale(1);
+  transition: all 0.3s ease;
+}
+
+.like-btn.liked .icon {
+  filter: grayscale(0);
+  animation: heart-pop 0.3s ease;
+}
+
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.like-btn.liked {
+  background: rgba(255, 107, 157, 0.15) !important;
+  border-color: #FF6B9D !important;
+  color: #FF6B9D !important;
+}
+
+.like-btn:hover {
+  background: rgba(255, 107, 157, 0.1) !important;
+  border-color: #FF6B9D !important;
+  color: #FF6B9D !important;
+}
+
+/* Comment button */
+.comment-btn:hover {
+  background: rgba(74, 144, 226, 0.1) !important;
+  border-color: #4A90E2 !important;
+  color: #4A90E2 !important;
+}
+
+/* Reshake button */
+.reshake-btn:hover {
+  background: rgba(16, 185, 129, 0.1) !important;
+  border-color: #10B981 !important;
+  color: #10B981 !important;
+}
+
+/* =====================================================
+   COMMENTAIRES SOUS LE POST
+   ===================================================== */
+
+.post-with-comments {
+  display: flex;
+  flex-direction: column;
+}
+
+.comments-section {
+  margin-top: 8px !important;
+  padding-top: 8px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.comment-item {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.comment-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.comment-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.7rem;
+  color: white;
+}
+
+.comment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-username {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: #FF6B9D;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.comment-username:hover {
+  color: #FF5088;
+}
+
+.comment-text {
+  margin-top: 2px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+  word-wrap: break-word;
+}
+
+.show-more-comments {
+  width: 100%;
+  padding: 6px;
+  margin-top: 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.show-more-comments:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+}
+
+/* =====================================================
+   RESHAKE HEADER
+   ===================================================== */
+
+.reshake-header {
+  padding: 8px 12px 4px !important;
+  margin: -12px -12px 8px -12px !important;
+  background: rgba(16, 185, 129, 0.05) !important;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.2) !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+/* Sur PC - Layout horizontal parfait */
+@media (min-width: 769px) {
+  .post-content {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 16px !important;
+  }
+
+  .track-cover-container {
+    flex-shrink: 0 !important;
+  }
+
+  .track-cover {
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  .post-info-right {
+    flex: 1 !important;
+  }
+}
+
+/* Sur mobile - Stack vertical */
+@media (max-width: 768px) {
+  .post {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  .post-content {
+    width: 100% !important;
+    flex-direction: row !important;
+  }
+
+  .track-cover {
+    width: 60px !important;
+    height: 60px !important;
+    max-width: 60px !important;
+  }
+
+  .action-btn {
+    min-width: 60px;
+    padding: 6px 10px !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* =====================================================
+   MENTIONS CLIQUABLES
+   ===================================================== */
+
+.mention {
+  color: #FF6B9D;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.mention:hover {
+  color: #FF5088;
+  text-decoration: underline;
+}
+
+/* =====================================================
+   FEED CONTAINER
+   ===================================================== */
+
+.feed-container {
+  padding: 12px !important;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* =====================================================
+   ANIMATIONS
+   ===================================================== */
+
+.post {
+  animation: slide-in 0.3s ease;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =====================================================
+   SCROLLBAR CUSTOM
+   ===================================================== */
+
+.comments-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.comments-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.comments-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
