@@ -426,6 +426,13 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
                 </span>
               </button>
 
+              {/* Show reshaker name if it's a reshake */}
+              {shake.reshakeFrom && (
+                <span className="text-xs text-purple-400 font-medium">
+                  @{shake.reshakeFrom.username}
+                </span>
+              )}
+
               <button 
                 onClick={() => openInMusicApp(shake.track)}
                 className="flex items-center gap-1.5 group ml-auto"

@@ -29,6 +29,13 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
     if (hasYouTubeVideo && !hasSpotifyPreview) {
       setUseYouTube(true);
       loadYouTubePlayer();
+    } else if (hasSpotifyPreview && audioRef.current) {
+      // Auto-play Spotify preview
+      audioRef.current.play().catch(err => {
+        console.error('Auto-play failed, switching to YouTube');
+        setUseYouTube(true);
+        loadYouTubePlayer();
+      });
     }
   }, [track]);
 

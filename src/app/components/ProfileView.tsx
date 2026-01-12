@@ -111,7 +111,16 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
     }
   };
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-400">Chargement du profil...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSaveSettings = (settings: { musicService: 'spotify' | 'apple' }) => {
     const updatedUser = { ...user, ...settings };
@@ -195,9 +204,12 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
             <motion.img
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              src={user.avatar}
-              alt={user.displayName}
+              src={user.avatar || user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=random`}
+              alt={user.displayName || user.username}
               className="w-24 h-24 rounded-full object-cover border-4 border-black ring-4 ring-purple-500"
+              onError={(e) => {
+                e.currentTarget.src = `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=random`;
+              }}
             />
             
             <div className="flex gap-2 pb-2">
