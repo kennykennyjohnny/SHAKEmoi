@@ -1,0 +1,285 @@
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Music2, Mail, Lock, User as UserIcon, Loader2, AlertCircle } from 'lucide-react';
+import { Logo } from './Logo';
+import { projectId, publicAnonKey } from '/utils/supabase/info';
+
+const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-7dbfc935`;
+
+interface AuthDialogProps {
+  onAuthComplete: (user: any) => void;
+}
+
+export function AuthDialog({ onAuthComplete }: AuthDialogProps) {
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    username: '',
+    displayName: ''
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (mode === 'signup') {
+        // Create account
+        console.log('[AUTH] Signup attempt:', { email: formData.email, username: formData.username });
+        
+        const response = await fetch(`${API_BASE}/auth/signup`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            username: formData.username,
+            displayName: formData.displayName
+          })
+        });
+
+        console.log('[AUTH] Signup response status:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[AUTH] Signup error response:', errorText);
+          let error;
+          try {
+            error = JSON.parse(errorText);
+          } catch {
+            error = { error: errorText };
+          }
+          throw new Error(error.error || 'Échec de l\'inscription');
+        }
+
+        const data = await response.json();
+        console.log('[AUTH] Signup success:', data);
+        
+        // Save auth token
+        localStorage.setItem('shakemoi_auth_token', data.access_token);
+        localStorage.setItem('shakemoi_user', JSON.stringify(data.user));
+        
+        onAuthComplete(data.user);
+      } else {
+        // Login
+        console.log('[AUTH] Login attempt:', { email: formData.email });
+        
+        const response = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password
+          })
+        });
+
+        console.log('[AUTH] Login response status:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[AUTH] Login error response:', errorText);
+          let error;
+          try {
+            error = JSON.parse(errorText);
+          } catch {
+            error = { error: errorText };
+          }
+          throw new Error(error.error || 'Échec de la connexion');
+        }
+
+        const data = await response.json();
+        console.log('[AUTH] Login success:', data);
+        
+        // Save auth token
+        localStorage.setItem('shakemoi_auth_token', data.access_token);
+        localStorage.setItem('shakemoi_user', JSON.stringify(data.user));
+        
+        onAuthComplete(data.user);
+      }
+    } catch (err: any) {
+      console.error('Auth error:', err);
+      setError(err.message || 'Une erreur est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black z-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden"
+        >
+          {/* Header */}
+          <div className="p-8 text-center border-b border-zinc-800">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1, type: 'spring' }}
+              className="mb-4 flex justify-center"
+            >
+              <Logo size="lg" animated={true} showText={false} />
+            </motion.div>
+            <h1 className="text-2xl font-bold mb-2">
+              {mode === 'login' ? 'Bienvenue sur Shakemoi' : 'Rejoins Shakemoi'}
+            </h1>
+            <p className="text-gray-400 text-sm">
+              {mode === 'login' 
+                ? 'Connecte-toi pour découvrir de la musique' 
+                : 'Crée ton compte et partage tes sons préférés'}
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {/* Error message */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center gap-2"
+                >
+                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                  <p className="text-red-400 text-sm">{error}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Signup fields */}
+            {mode === 'signup' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Nom d'utilisateur
+                  </label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      required
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="musiclover"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Nom complet
+                  </label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      required
+                      value={formData.displayName}
+                      onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="Music Lover"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="ton@email.com"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Mot de passe
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="••••••••"
+                  minLength={6}
+                />
+              </div>
+              {mode === 'signup' && (
+                <p className="text-xs text-gray-500 mt-1">Minimum 6 caractères</p>
+              )}
+            </div>
+
+            {/* Submit button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  {mode === 'login' ? 'Connexion...' : 'Création...'}
+                </>
+              ) : (
+                mode === 'login' ? 'Se connecter' : "S'inscrire"
+              )}
+            </button>
+
+            {/* Switch mode */}
+            <div className="text-center pt-4 border-t border-zinc-800">
+              <p className="text-gray-400 text-sm">
+                {mode === 'login' ? "Pas encore de compte ?" : "Déjà un compte ?"}
+                {' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode(mode === 'login' ? 'signup' : 'login');
+                    setError(null);
+                  }}
+                  className="text-purple-400 hover:text-purple-300 font-semibold transition-colors"
+                >
+                  {mode === 'login' ? "S'inscrire" : "Se connecter"}
+                </button>
+              </p>
+            </div>
+          </form>
+        </motion.div>
+
+        {/* Footer */}
+        <p className="text-center text-gray-500 text-xs mt-4">
+          En continuant, tu acceptes nos conditions d'utilisation
+        </p>
+      </div>
+    </div>
+  );
+}

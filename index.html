@@ -1,92 +1,15 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="SHAKEMOI - L'app que tu ouvres avant Spotify">
-  <meta name="theme-color" content="#7c3aed">
-  <title>SHAKEMOI - Réseau Social Musical</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="styles/auth.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
-</head>
-<body>
-  <div class="auth-container">
-    <div class="auth-card">
-      <!-- Logo -->
-      <h1 class="logo">SHAKEMOI</h1>
-      <p class="tagline">L'app que tu ouvres avant Spotify</p>
 
-      <!-- Toggle Login/Signup -->
-      <div class="auth-toggle">
-        <button class="toggle-btn active" data-mode="login">Se connecter</button>
-        <button class="toggle-btn" data-mode="signup">S'inscrire</button>
-      </div>
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Redesign Music Social Network</title>
+    </head>
 
-      <!-- Login Form -->
-      <form id="login-form" class="auth-form active">
-        <div class="form-group">
-          <label for="login-email">Email</label>
-          <input type="email" id="login-email" placeholder="ton@email.com" required>
-        </div>
-
-        <div class="form-group">
-          <label for="login-password">Mot de passe</label>
-          <input type="password" id="login-password" placeholder="••••••••" required minlength="6">
-        </div>
-
-        <div id="login-error" class="error-message"></div>
-
-        <button type="submit" class="submit-btn">Se connecter</button>
-
-        <p class="switch-text">
-          Pas de compte ? <a href="#" class="switch-link" data-mode="signup">S'inscrire</a>
-        </p>
-      </form>
-
-      <!-- Signup Form -->
-      <form id="signup-form" class="auth-form">
-        <div class="form-group">
-          <label for="signup-username">Nom d'utilisateur</label>
-          <input type="text" id="signup-username" placeholder="@tonusername" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]+">
-          <small>Lettres, chiffres et _ uniquement</small>
-        </div>
-
-        <div class="form-group">
-          <label for="signup-email">Email</label>
-          <input type="email" id="signup-email" placeholder="ton@email.com" required>
-        </div>
-
-        <div class="form-group">
-          <label for="signup-password">Mot de passe</label>
-          <input type="password" id="signup-password" placeholder="••••••••" required minlength="6">
-          <small>Minimum 6 caractères</small>
-        </div>
-
-        <div class="form-group">
-          <label>Choisis ta couleur</label>
-          <div class="color-picker">
-            <button type="button" class="color-btn" data-color="#FF6B6B" style="background: #FF6B6B" title="Rouge"></button>
-            <button type="button" class="color-btn" data-color="#4ECDC4" style="background: #4ECDC4" title="Cyan"></button>
-            <button type="button" class="color-btn" data-color="#FFE66D" style="background: #FFE66D" title="Jaune"></button>
-            <button type="button" class="color-btn" data-color="#A8E6CF" style="background: #A8E6CF" title="Vert"></button>
-            <button type="button" class="color-btn" data-color="#FF8B94" style="background: #FF8B94" title="Rose"></button>
-            <button type="button" class="color-btn active" data-color="#B4A7D6" style="background: #B4A7D6" title="Violet"></button>
-          </div>
-        </div>
-
-        <div id="signup-error" class="error-message"></div>
-
-        <button type="submit" class="submit-btn">Créer mon compte</button>
-
-        <p class="switch-text">
-          Déjà inscrit ? <a href="#" class="switch-link" data-mode="login">Se connecter</a>
-        </p>
-      </form>
-    </div>
-  </div>
-
-  <script src="scripts/config.js"></script>
-  <script src="scripts/auth.js"></script>
-</body>
-</html>
+    <body>
+      <div id="root"></div>
+      <script type="module" src="/src/main.tsx"></script>
+    </body>
+  </html>
+  
