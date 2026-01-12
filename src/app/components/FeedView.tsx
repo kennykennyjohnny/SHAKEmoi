@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Repeat2, ExternalLink, Play, MoreHorizontal, Loader2, UserPlus, UserCheck } from 'lucide-react';
+import { Heart, MessageCircle, Repeat2, ExternalLink, Play, MoreHorizontal, Loader2, UserPlus, UserCheck, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
 import { ReshakeDialog } from './ReshakeDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
+import { SendSongDialog } from './SendSongDialog';
 
 interface Shake {
   id: string;
@@ -48,6 +49,7 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
   const [reshakeDialogShake, setReshakeDialogShake] = useState<Shake | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
+  const [sendSongTrack, setSendSongTrack] = useState<any>(null);
 
   useEffect(() => {
     loadFeed();
@@ -313,6 +315,16 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
                       exit={{ opacity: 0, scale: 0.95, y: -10 }}
                       className="absolute right-0 mt-1 w-48 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl z-20 overflow-hidden"
                     >
+                      <button
+                        onClick={() => {
+                          setSendSongTrack(shake.track);
+                          setMenuOpenId(null);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-zinc-700 transition-colors flex items-center gap-2"
+                      >
+                        <Send className="w-4 h-4" />
+                        Envoyer à un ami
+                      </button>
                       {shake.reshakeFrom && (
                         <button
                           onClick={() => {
@@ -444,6 +456,16 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
             userId={profilePreview.userId}
             username={profilePreview.username}
             onClose={() => setProfilePreview(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Send Song Dialog */}
+      <AnimatePresence>
+        {sendSongTrack && (
+          <SendSongDialog
+            track={sendSongTrack}
+            onClose={() => setSendSongTrack(null)}
           />
         )}
       </AnimatePresence>

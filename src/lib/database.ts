@@ -815,3 +815,34 @@ function getNotificationMessage(type: string): string {
     default: return 'a interagi avec toi';
   }
 }
+
+// Send song to friend (notification)
+export async function sendSongNotification(recipientId: string, track: any) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Create notification
+    const { error } = await supabase
+      .from('notifications')
+      .insert([{
+        user_id: recipientId,
+        actor_id: user.id,
+        type: 'song_share',
+        post_id: null,
+        // Store track info in metadata (you may need to add this column)
+        metadata: {
+          track_title: track.title,
+          track_artist: track.artist,
+          track_cover: track.coverUrl || track.thumbnail,
+          track_url: track.spotifyUrl || track.youtubeVideoId
+        }
+      }]);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error sending song notification:', error);
+    return { success: false, error: error.message };
+  }
+}
