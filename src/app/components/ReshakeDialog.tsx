@@ -1,0 +1,133 @@
+import { X, Repeat2, Loader2 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useState } from 'react';
+
+interface ReshakeDialogProps {
+  shake: any;
+  onClose: () => void;
+  onConfirm: (comment?: string) => Promise<void>;
+}
+
+export function ReshakeDialog({ shake, onClose, onConfirm }: ReshakeDialogProps) {
+  const [comment, setComment] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      await onConfirm(comment.trim() || undefined);
+      onClose();
+    } catch (error) {
+      console.error('Error reshaking:', error);
+      alert('Erreur lors du reshake');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-zinc-900 rounded-2xl w-full max-w-md border border-zinc-800"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Repeat2 className="w-5 h-5 text-green-500" />
+            <h2 className="text-lg font-bold">Reshake ce son</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-zinc-800 rounded-full transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <form onSubmit={handleSubmit} className="p-4">
+          {/* Original Shake Preview */}
+          <div className="mb-4 p-3 bg-zinc-800 rounded-lg border border-zinc-700">
+            <div className="flex gap-3">
+              <img
+                src={shake.track.coverUrl}
+                alt={shake.track.title}
+                className="w-14 h-14 rounded-md object-cover"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-400 mb-1">@{shake.user.username}</p>
+                <h3 className="font-bold text-sm truncate">{shake.track.title}</h3>
+                <p className="text-xs text-gray-400 truncate">{shake.track.artist}</p>
+              </div>
+            </div>
+            {shake.caption && (
+              <p className="text-sm text-gray-300 mt-2">{shake.caption}</p>
+            )}
+          </div>
+
+          {/* Comment Input */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Ajoute un commentaire (optionnel)
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Pourquoi tu reshakes ce son ? 🎵"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+              rows={3}
+              maxLength={280}
+            />
+            <p className="text-xs text-gray-500 mt-1 text-right">
+              {comment.length}/280
+            </p>
+          </div>
+
+          {/* Info */}
+          <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+            <p className="text-xs text-green-400">
+              ✨ Ce reshake apparaîtra dans le feed de tes abonnés avec ton nom et ton commentaire
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg font-medium transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Reshake...
+                </>
+              ) : (
+                <>
+                  <Repeat2 className="w-4 h-4" />
+                  Reshake
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
+}

@@ -226,7 +226,7 @@ export async function createPost(
   }
 }
 
-export async function reshakePost(originalPostId: string) {
+export async function reshakePost(originalPostId: string, comment?: string) {
   try {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
@@ -245,7 +245,7 @@ export async function reshakePost(originalPostId: string) {
       ? originalPost.original_post_id
       : originalPostId;
 
-    // Create re-shake
+    // Create re-shake with optional comment
     const { data, error } = await supabase
       .from('posts')
       .insert([{
@@ -253,12 +253,13 @@ export async function reshakePost(originalPostId: string) {
         track_name: originalPost.track_name,
         artist: originalPost.artist,
         cover_url: originalPost.cover_url,
-        text: originalPost.text,
+        text: comment || originalPost.text, // Use comment if provided, otherwise original text
         preview_url: originalPost.preview_url,
         spotify_url: originalPost.spotify_url,
         track_id: originalPost.track_id,
         likes_count: 0,
         comments_count: 0,
+        reshakes_count: 0,
         is_reshake: true,
         original_post_id: trueOriginalPostId
       }])
@@ -266,6 +267,10 @@ export async function reshakePost(originalPostId: string) {
       .single();
 
     if (error) throw error;
+    
+    // Increment reshakes_count on original post
+    await supabase.rpc('increment_reshakes_count', { post_id: trueOriginalPostId });
+    
     return { success: true, data };
   } catch (error: any) {
     console.error('Error reshaking post:', error);

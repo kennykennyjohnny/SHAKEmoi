@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Repeat2, Share2, Play, MoreHorizontal, Loader2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Heart, MessageCircle, Repeat2, ExternalLink, Play, MoreHorizontal, Loader2, UserPlus, UserCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
+import { ReshakeDialog } from './ReshakeDialog';
+import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
 interface Shake {
   id: string;
@@ -43,6 +45,9 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
   const [shakes, setShakes] = useState<Shake[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reshakeDialogShake, setReshakeDialogShake] = useState<Shake | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
 
   useEffect(() => {
     loadFeed();
@@ -122,14 +127,20 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
     }
   };
 
-  const toggleReshake = async (shakeId: string) => {
+  const handleReshakeClick = (shake: Shake) => {
+    setReshakeDialogShake(shake);
+  };
+
+  const confirmReshake = async (comment?: string) => {
+    if (!reshakeDialogShake) return;
+    
     try {
-      const result = await db.reshakePost(shakeId);
+      const result = await db.reshakePost(reshakeDialogShake.id, comment);
 
       if (result.success) {
         // Mark as reshaked and increment count
         setShakes(shakes.map(shake =>
-          shake.id === shakeId
+          shake.id === reshakeDialogShake.id
             ? { ...shake, isReshaked: true, reshakes: shake.reshakes + 1 }
             : shake
         ));
@@ -138,7 +149,30 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
         await loadFeed();
       }
     } catch (err) {
-      console.error('Error toggling reshake:', err);
+      console.error('Error reshaking:', err);
+    }
+  };
+
+  const openInMusicApp = (track: any) => {
+    if (track.spotifyUri || track.spotifyUrl) {
+      // Try to open in Spotify app first (deep link)
+      const spotifyUrl = track.spotifyUri?.startsWith('http') 
+        ? track.spotifyUri 
+        : track.spotifyUrl || `https://open.spotify.com/track/${track.id}`;
+      
+      // For mobile, use spotify:// protocol
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        const deepLink = `spotify:track:${track.id}`;
+        window.location.href = deepLink;
+        // Fallback to web if app not installed
+        setTimeout(() => {
+          window.open(spotifyUrl, '_blank');
+        }, 1000);
+      } else {
+        window.open(spotifyUrl, '_blank');
+      }
+    } else if (track.appleMusicUrl) {
+      window.open(track.appleMusicUrl, '_blank');
     }
   };
 
@@ -215,30 +249,99 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
           >
             {/* Reshake indicator */}
             {shake.reshakeFrom && (
-              <div className="px-4 pt-2 flex items-center gap-2 text-xs text-gray-400">
+              <div className="px-4 pt-2 flex items-center gap-2 text-xs text-purple-400">
                 <Repeat2 className="w-3 h-3" />
-                <span>Reshake de @{shake.reshakeFrom.username}</span>
+                <button 
+                  onClick={() => setProfilePreview({ 
+                    userId: shake.reshakeFrom!.username, 
+                    username: shake.reshakeFrom!.username 
+                  })}
+                  className="hover:underline font-medium"
+                >
+                  @{shake.reshakeFrom.username}
+                </button>
+                <span className="text-gray-500">a reshake</span>
               </div>
             )}
 
             {/* User Header */}
             <div className="px-4 py-2 flex items-center gap-2">
-              <img
-                src={shake.user.avatar}
-                alt={shake.user.displayName}
-                className="w-9 h-9 rounded-full object-cover"
-              />
+              <button 
+                onClick={() => setProfilePreview({ 
+                  userId: shake.user.username, 
+                  username: shake.user.username 
+                })}
+              >
+                <img
+                  src={shake.user.avatar}
+                  alt={shake.user.displayName}
+                  className="w-9 h-9 rounded-full object-cover hover:ring-2 hover:ring-purple-500 transition-all"
+                />
+              </button>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-sm truncate">{shake.user.displayName}</span>
+                  <button 
+                    onClick={() => setProfilePreview({ 
+                      userId: shake.user.username, 
+                      username: shake.user.username 
+                    })}
+                    className="font-semibold text-sm truncate hover:underline"
+                  >
+                    {shake.user.displayName}
+                  </button>
                   <span className="text-gray-400 text-xs">@{shake.user.username}</span>
                   <span className="text-gray-600 text-xs">·</span>
                   <span className="text-gray-400 text-xs">{formatTimestamp(shake.timestamp || shake.createdAt)}</span>
                 </div>
               </div>
-              <button className="p-1.5 hover:bg-zinc-800 rounded-full transition-colors">
-                <MoreHorizontal className="w-4 h-4 text-gray-400" />
-              </button>
+              
+              {/* More Menu */}
+              <div className="relative">
+                <button 
+                  onClick={() => setMenuOpenId(menuOpenId === shake.id ? null : shake.id)}
+                  className="p-1.5 hover:bg-zinc-800 rounded-full transition-colors"
+                >
+                  <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                </button>
+                
+                {/* Dropdown Menu */}
+                <AnimatePresence>
+                  {menuOpenId === shake.id && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                      className="absolute right-0 mt-1 w-48 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl z-20 overflow-hidden"
+                    >
+                      {shake.reshakeFrom && (
+                        <button
+                          onClick={() => {
+                            setProfilePreview({ 
+                              userId: shake.user.username, 
+                              username: shake.user.username 
+                            });
+                            setMenuOpenId(null);
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-sm hover:bg-zinc-700 transition-colors flex items-center gap-2"
+                        >
+                          <UserPlus className="w-4 h-4" />
+                          Voir le profil
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          openInMusicApp(shake.track);
+                          setMenuOpenId(null);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-zinc-700 transition-colors flex items-center gap-2"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Ouvrir dans l'app
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
 
             {/* Track Card */}
@@ -296,7 +399,7 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
               </button>
 
               <button
-                onClick={() => toggleReshake(shake.id)}
+                onClick={() => handleReshakeClick(shake)}
                 className="flex items-center gap-1.5 group"
               >
                 <Repeat2
@@ -311,13 +414,39 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
                 </span>
               </button>
 
-              <button className="flex items-center gap-1.5 group ml-auto">
-                <Share2 className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+              <button 
+                onClick={() => openInMusicApp(shake.track)}
+                className="flex items-center gap-1.5 group ml-auto"
+                title="Ouvrir dans l'application"
+              >
+                <ExternalLink className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
               </button>
             </div>
           </motion.article>
         ))}
       </div>
+
+      {/* Reshake Dialog */}
+      <AnimatePresence>
+        {reshakeDialogShake && (
+          <ReshakeDialog
+            shake={reshakeDialogShake}
+            onClose={() => setReshakeDialogShake(null)}
+            onConfirm={confirmReshake}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Profile Preview Dialog */}
+      <AnimatePresence>
+        {profilePreview && (
+          <ProfilePreviewDialog
+            userId={profilePreview.userId}
+            username={profilePreview.username}
+            onClose={() => setProfilePreview(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

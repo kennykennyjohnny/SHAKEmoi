@@ -1,9 +1,9 @@
-import { Users, Music, Heart, Settings, Share2, Play, Trash2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Users, Music, Heart, Settings, ExternalLink, Play, Trash2, Repeat2, MessageCircle, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
-import { getUserPosts, deletePost, getUserFollowersCount, getUserFollowingCount } from '../../lib/database';
+import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, likePost, unlikePost, hasLikedPost } from '../../lib/database';
 
 interface ProfileViewProps {
   user: any;
@@ -11,10 +11,14 @@ interface ProfileViewProps {
   onUpdateUser?: (updatedUser: any) => void;
 }
 
+type TabType = 'shakes' | 'reshakes';
+
 export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('shakes');
   const [userShakes, setUserShakes] = useState<any[]>([]);
+  const [userReshakes, setUserReshakes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     shakes: 0,
@@ -32,29 +36,66 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
     try {
       setLoading(true);
       
-      // Load posts
-      const posts = await getUserPosts(user.id);
-      const shakes = posts.map((post: any) => ({
-        id: post.id,
-        track: {
-          title: post.track_name,
-          artist: post.artist,
-          coverUrl: post.cover_url,
-          previewUrl: post.preview_url,
-          spotifyUrl: post.spotify_url,
-          duration: '0:30'
-        },
-        likes: post.likes_count || 0,
-        reshakes: post.reshakes_count || 0,
-        timestamp: new Date(post.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-      }));
-      setUserShakes(shakes);
-      
-      // Load stats
-      const [followersCount, followingCount] = await Promise.all([
+      // Load posts and reshakes
+      const [posts, reshakes, followersCount, followingCount] = await Promise.all([
+        getUserPosts(user.id),
+        getUserReshakes(user.id),
         getUserFollowersCount(user.id),
         getUserFollowingCount(user.id)
       ]);
+      
+      // Transform posts
+      const shakesData = await Promise.all(posts.map(async (post: any) => {
+        const isLiked = await hasLikedPost(post.id);
+        return {
+          id: post.id,
+          track: {
+            id: post.track_id || post.id,
+            title: post.track_name,
+            artist: post.artist,
+            coverUrl: post.cover_url,
+            previewUrl: post.preview_url,
+            spotifyUrl: post.spotify_url,
+            duration: '0:30'
+          },
+          caption: post.text,
+          likes: post.likes_count || 0,
+          reshakes: post.reshakes_count || 0,
+          comments: post.comments_count || 0,
+          isLiked,
+          timestamp: new Date(post.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+        };
+      }));
+      
+      // Transform reshakes
+      const reshakesData = await Promise.all(reshakes.map(async (post: any) => {
+        const isLiked = await hasLikedPost(post.id);
+        return {
+          id: post.id,
+          track: {
+            id: post.track_id || post.id,
+            title: post.track_name,
+            artist: post.artist,
+            coverUrl: post.cover_url,
+            previewUrl: post.preview_url,
+            spotifyUrl: post.spotify_url,
+            duration: '0:30'
+          },
+          caption: post.text,
+          likes: post.likes_count || 0,
+          reshakes: post.reshakes_count || 0,
+          comments: post.comments_count || 0,
+          isLiked,
+          originalUser: post.original_post?.user ? {
+            username: post.original_post.user.username,
+            avatar: post.original_post.user.profile_album_cover_url
+          } : null,
+          timestamp: new Date(post.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+        };
+      }));
+      
+      setUserShakes(shakesData);
+      setUserReshakes(reshakesData);
       
       setStats({
         shakes: posts.length,
@@ -64,6 +105,7 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
     } catch (error) {
       console.error('Failed to load user data:', error);
       setUserShakes([]);
+      setUserReshakes([]);
     } finally {
       setLoading(false);
     }
@@ -88,11 +130,58 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
     try {
       await deletePost(shakeId);
       setUserShakes(userShakes.filter(shake => shake.id !== shakeId));
+      setUserReshakes(userReshakes.filter(shake => shake.id !== shakeId));
+      setStats({ ...stats, shakes: stats.shakes - 1 });
     } catch (error) {
       console.error('Failed to delete shake:', error);
       alert('Erreur lors de la suppression');
     }
   };
+
+  const toggleLike = async (shakeId: string) => {
+    const currentList = activeTab === 'shakes' ? userShakes : userReshakes;
+    const setCurrentList = activeTab === 'shakes' ? setUserShakes : setUserReshakes;
+    
+    const shake = currentList.find(s => s.id === shakeId);
+    if (!shake) return;
+
+    try {
+      if (shake.isLiked) {
+        await unlikePost(shakeId);
+        setCurrentList(currentList.map(s =>
+          s.id === shakeId
+            ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) }
+            : s
+        ));
+      } else {
+        await likePost(shakeId);
+        setCurrentList(currentList.map(s =>
+          s.id === shakeId
+            ? { ...s, isLiked: true, likes: s.likes + 1 }
+            : s
+        ));
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
+  };
+
+  const openInMusicApp = (track: any) => {
+    const spotifyUrl = track.spotifyUrl || track.spotify_url;
+    if (spotifyUrl) {
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        const deepLink = `spotify:track:${track.id}`;
+        window.location.href = deepLink;
+        setTimeout(() => {
+          window.open(spotifyUrl, '_blank');
+        }, 1000);
+      } else {
+        window.open(spotifyUrl, '_blank');
+      }
+    }
+  };
+
+  const currentShakes = activeTab === 'shakes' ? userShakes : userReshakes;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -165,10 +254,24 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
       {/* Tabs */}
       <div className="border-y border-zinc-800 px-4 sticky top-0 bg-black z-30">
         <div className="flex gap-6">
-          <button className="py-3 border-b-2 border-purple-500 text-purple-500 font-semibold text-sm">
+          <button 
+            onClick={() => setActiveTab('shakes')}
+            className={`py-3 border-b-2 font-semibold text-sm transition-colors ${
+              activeTab === 'shakes'
+                ? 'border-purple-500 text-purple-500'
+                : 'border-transparent text-gray-400 hover:text-white'
+            }`}
+          >
             Mes shakes
           </button>
-          <button className="py-3 text-gray-400 hover:text-white transition-colors text-sm">
+          <button 
+            onClick={() => setActiveTab('reshakes')}
+            className={`py-3 border-b-2 font-semibold text-sm transition-colors ${
+              activeTab === 'reshakes'
+                ? 'border-green-500 text-green-500'
+                : 'border-transparent text-gray-400 hover:text-white'
+            }`}
+          >
             Re-shakes
           </button>
         </div>
@@ -177,68 +280,116 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
       {/* Shakes Grid */}
       <div className="p-4 space-y-3">
         {loading ? (
-          <div className="text-center text-gray-400">Chargement...</div>
-        ) : userShakes.length > 0 ? (
-          userShakes.map((shake, index) => (
+          <div className="text-center py-8">
+            <Loader2 className="w-8 h-8 text-purple-500 animate-spin mx-auto mb-2" />
+            <p className="text-gray-400">Chargement...</p>
+          </div>
+        ) : currentShakes.length > 0 ? (
+          currentShakes.map((shake, index) => (
             <motion.div
               key={shake.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-zinc-900 rounded-lg p-3 border border-zinc-800 hover:border-zinc-700 transition-all relative"
+              className="bg-zinc-900 rounded-xl p-4 border border-zinc-800 hover:border-zinc-700 transition-all"
             >
-              {/* Delete button */}
-              <button
-                onClick={() => {
-                  if (confirm('Supprimer ce shake ?')) {
-                    handleDeleteShake(shake.id);
-                  }
-                }}
-                className="absolute top-2 right-2 p-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-colors z-10"
-                title="Supprimer"
-              >
-                <Trash2 className="w-4 h-4 text-red-400" />
-              </button>
+              {/* Reshake indicator */}
+              {activeTab === 'reshakes' && shake.originalUser && (
+                <div className="flex items-center gap-2 text-xs text-green-400 mb-2">
+                  <Repeat2 className="w-3 h-3" />
+                  <span>Reshake de @{shake.originalUser.username}</span>
+                </div>
+              )}
 
-              <button
-                onClick={() => onPlayTrack(shake.track)}
-                className="w-full flex gap-3 items-center group"
-              >
-                <div className="relative">
+              {/* Track */}
+              <div className="flex gap-3 mb-3">
+                <div className="relative group flex-shrink-0">
                   <img
                     src={shake.track.coverUrl}
                     alt={shake.track.title}
-                    className="w-16 h-16 rounded object-cover"
+                    className="w-16 h-16 rounded-lg object-cover"
                   />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded">
+                  <button
+                    onClick={() => onPlayTrack(shake.track)}
+                    className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
+                  >
                     <Play className="w-6 h-6 text-white fill-white" />
-                  </div>
+                  </button>
                 </div>
                 
-                <div className="flex-1 text-left min-w-0">
-                  <h4 className="font-semibold text-sm text-white truncate">{shake.track.title}</h4>
-                  <p className="text-xs text-gray-400 truncate">{shake.track.artist}</p>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Heart className="w-3 h-3" />
-                      {shake.likes}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Music className="w-3 h-3" />
-                      {shake.reshakes}
-                    </span>
-                    <span>{shake.timestamp}</span>
-                  </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-sm text-white truncate">{shake.track.title}</h4>
+                  <p className="text-xs text-gray-400 truncate mb-1">{shake.track.artist}</p>
+                  {shake.caption && (
+                    <p className="text-xs text-gray-300 line-clamp-2">{shake.caption}</p>
+                  )}
                 </div>
-                
+
                 <span className="text-xs text-gray-500">{shake.track.duration}</span>
-              </button>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-4 pt-2 border-t border-zinc-800">
+                <button
+                  onClick={() => toggleLike(shake.id)}
+                  className="flex items-center gap-1.5 group"
+                >
+                  <Heart
+                    className={`w-5 h-5 transition-all ${
+                      shake.isLiked
+                        ? 'text-pink-500 fill-pink-500'
+                        : 'text-gray-400 group-hover:text-pink-500'
+                    }`}
+                  />
+                  <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-gray-400'}`}>
+                    {shake.likes}
+                  </span>
+                </button>
+
+                <button className="flex items-center gap-1.5 group">
+                  <MessageCircle className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                  <span className="text-xs font-medium text-gray-400">{shake.comments}</span>
+                </button>
+
+                <button className="flex items-center gap-1.5 group">
+                  <Repeat2 className="w-5 h-5 text-gray-400 group-hover:text-green-500 transition-colors" />
+                  <span className="text-xs font-medium text-gray-400">{shake.reshakes}</span>
+                </button>
+
+                <button 
+                  onClick={() => openInMusicApp(shake.track)}
+                  className="flex items-center gap-1.5 group ml-auto"
+                  title="Ouvrir dans l'app"
+                >
+                  <ExternalLink className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (confirm('Supprimer ce shake ?')) {
+                      handleDeleteShake(shake.id);
+                    }
+                  }}
+                  className="p-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-colors"
+                  title="Supprimer"
+                >
+                  <Trash2 className="w-4 h-4 text-red-400" />
+                </button>
+              </div>
             </motion.div>
           ))
         ) : (
-          <div className="text-center text-gray-400 py-8">
-            <Music className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>Aucun shake pour le moment</p>
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 bg-zinc-800 rounded-full flex items-center justify-center">
+              {activeTab === 'shakes' ? (
+                <Music className="w-8 h-8 text-gray-600" />
+              ) : (
+                <Repeat2 className="w-8 h-8 text-gray-600" />
+              )}
+            </div>
+            <p className="text-gray-400">
+              {activeTab === 'shakes' ? 'Aucun shake pour le moment' : 'Aucun reshake pour le moment'}
+            </p>
           </div>
         )}
       </div>

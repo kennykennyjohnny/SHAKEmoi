@@ -86,11 +86,35 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
   };
 
   const openInMusicApp = () => {
-    if (musicService === 'spotify' && track.spotifyUri) {
-      // Format: spotify:track:TRACK_ID ou https://open.spotify.com/track/TRACK_ID
-      window.open(track.spotifyUri.startsWith('http') ? track.spotifyUri : `https://open.spotify.com/track/${track.id}`, '_blank');
+    const trackId = track.id || track.track_id;
+    
+    if (musicService === 'spotify') {
+      // Try to open in Spotify app first (deep link)
+      const spotifyUrl = track.spotifyUri?.startsWith('http') 
+        ? track.spotifyUri 
+        : track.spotifyUrl || track.spotify_url || `https://open.spotify.com/track/${trackId}`;
+      
+      // For mobile, use spotify:// protocol
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        const deepLink = `spotify:track:${trackId}`;
+        window.location.href = deepLink;
+        // Fallback to web if app not installed
+        setTimeout(() => {
+          window.open(spotifyUrl, '_blank');
+        }, 1500);
+      } else {
+        window.open(spotifyUrl, '_blank');
+      }
     } else if (musicService === 'apple' && track.appleMusicUrl) {
-      window.open(track.appleMusicUrl, '_blank');
+      // Apple Music deep link
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        window.location.href = track.appleMusicUrl.replace('https://music.apple.com', 'music://');
+        setTimeout(() => {
+          window.open(track.appleMusicUrl, '_blank');
+        }, 1500);
+      } else {
+        window.open(track.appleMusicUrl, '_blank');
+      }
     }
   };
 
@@ -106,8 +130,19 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
         ref={audioRef} 
         src={previewUrl}
         onError={(e) => {
-          console.error('Audio error:', e);
+          console.error('❌ Audio playback error:', e);
           console.log('Preview URL:', previewUrl);
+          console.log('Track:', track);
+          // If preview fails, offer to open in app directly
+          if (!previewUrl || previewUrl === '') {
+            console.warn('⚠️ No preview URL available - Opening in music app instead');
+          }
+        }}
+        onLoadStart={() => {
+          console.log('🎵 Loading audio from:', previewUrl);
+        }}
+        onCanPlay={() => {
+          console.log('✅ Audio ready to play');
         }}
       />
 
@@ -204,9 +239,10 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
           <button
             onClick={openInMusicApp}
             className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-xs font-semibold hover:opacity-90 transition-opacity"
+            title="Ouvrir dans l'application musicale"
           >
             <ExternalLink className="w-3 h-3" />
-            Ouvrir dans {musicService === 'spotify' ? 'Spotify' : 'Apple Music'}
+            Ouvrir dans l'app
           </button>
 
           {/* Close */}
@@ -222,9 +258,10 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
         <button
           onClick={openInMusicApp}
           className="sm:hidden w-full mt-2 flex items-center justify-center gap-2 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+          title="Ouvrir dans l'application musicale"
         >
           <ExternalLink className="w-3 h-3" />
-          Ouvrir dans {musicService === 'spotify' ? 'Spotify' : 'Apple Music'}
+          Ouvrir dans l'app
         </button>
       </div>
     </motion.div>
