@@ -128,7 +128,11 @@ export default function App() {
       case 'feed':
         return <FeedView currentUser={currentUser} onPlayTrack={setCurrentTrack} refreshFeed={refreshFeed} />;
       case 'top':
-        return <SearchView onPlayTrack={setCurrentTrack} showTopOnly={true} />;
+        return (
+          <div className="h-full overflow-y-auto">
+            <TrendingBar onPlayTrack={setCurrentTrack} />
+          </div>
+        );
       case 'profile':
         return <ProfileView user={currentUser} onPlayTrack={setCurrentTrack} onUpdateUser={setCurrentUser} />;
       case 'notifications':
