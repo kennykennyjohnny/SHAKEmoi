@@ -1,7 +1,7 @@
 // YouTube Data API v3 Integration
 // Client ID: 335829434000-06sg4hfsrhssub1fr91pg3v5bc9vda6s.apps.googleusercontent.com
 
-const YOUTUBE_API_KEY = 'AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBW4'; // Tu devras remplacer par ta vraie clé
+const YOUTUBE_API_KEY = 'AIzaSyDLXJjHTpAhzir_c2rZ9WeZudcgTkJdZr8'; // Tu devras remplacer par ta vraie clé
 
 export interface YouTubeTrack {
   id: string;
