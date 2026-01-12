@@ -19,16 +19,41 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Convert to base64 for preview and storage
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setFormData({ ...formData, avatar: base64String });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      setLoading(true);
+      
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { supabase } = await import('../../lib/supabase');
+      
+      // Upload file
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      setFormData({ ...formData, avatar: publicUrl });
+      setLoading(false);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      alert('Erreur lors du téléchargement de la photo');
+      setLoading(false);
     }
   };
 
@@ -40,12 +65,18 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
       // Update profile in Supabase
       await updateUserProfile(currentUser.id, {
         username: formData.username,
-        // Store additional fields in profile_color or create new columns
-        // For now, we'll just update username as that's in the schema
+        profile_album_cover_url: formData.avatar,
+        // bio and displayName can be stored when schema supports them
       });
       
       // Create updated user object
-      const updatedUser = { ...currentUser, ...formData };
+      const updatedUser = { 
+        ...currentUser, 
+        username: formData.username,
+        displayName: formData.displayName,
+        bio: formData.bio,
+        avatar: formData.avatar
+      };
       
       // Update localStorage
       localStorage.setItem('shakemoi_user', JSON.stringify(updatedUser));
@@ -107,20 +138,14 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
                 >
                   <Camera className="w-4 h-4" />
-                  Choisir une photo
+                  {loading ? 'Téléchargement...' : 'Choisir une photo'}
                 </button>
-                <input
-                  type="url"
-                  value={formData.avatar.startsWith('data:') ? '' : formData.avatar}
-                  onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="ou coller une URL..."
-                />
                 <p className="text-xs text-gray-500">
-                  📸 Télécharge depuis ton téléphone ou utilise une URL
+                  📸 Télécharge depuis ton téléphone (sauvegardé sur Supabase)
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   {[

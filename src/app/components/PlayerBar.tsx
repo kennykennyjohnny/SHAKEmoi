@@ -17,8 +17,8 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
   const [isLiked, setIsLiked] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Mock preview URL - En production, ce sera la vraie URL de l'API Spotify
-  const previewUrl = track.previewUrl || `https://p.scdn.co/mp3-preview/${track.id}`;
+  // Preview URL from Spotify API
+  const previewUrl = track.previewUrl || track.preview_url;
 
   useEffect(() => {
     if (audioRef.current) {
@@ -102,7 +102,14 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
       className="border-t border-zinc-800 bg-zinc-900/95 backdrop-blur-lg"
     >
       {/* Hidden audio element */}
-      <audio ref={audioRef} src={previewUrl} />
+      <audio 
+        ref={audioRef} 
+        src={previewUrl}
+        onError={(e) => {
+          console.error('Audio error:', e);
+          console.log('Preview URL:', previewUrl);
+        }}
+      />
 
       <div className="px-4 py-2">
         {/* Progress bar */}

@@ -758,16 +758,40 @@ export async function getUserNotifications(userId: string) {
   try {
     const { data, error } = await supabase
       .from('notifications')
-      .select('*')
+      .select(`
+        *,
+        from_user:users_profile!notifications_from_user_id_fkey(id, username, profile_album_cover_url),
+        post:posts!notifications_post_id_fkey(id, track_name, cover_url)
+      `)
       .eq('user_id', userId)
-      .eq('is_read', false)
       .order('created_at', { ascending: false })
       .limit(50);
 
     if (error) throw error;
-    return data || [];
+    
+    // Transform to expected format
+    return (data || []).map((notif: any) => ({
+      id: notif.id,
+      type: notif.type,
+      actor_username: notif.from_user?.username || 'unknown',
+      actor_avatar: notif.from_user?.profile_album_cover_url,
+      post_cover_url: notif.post?.cover_url,
+      content: getNotificationMessage(notif.type),
+      created_at: notif.created_at,
+      is_read: notif.is_read
+    }));
   } catch (error) {
     console.error('Error getting notifications:', error);
     return [];
+  }
+}
+
+function getNotificationMessage(type: string): string {
+  switch (type) {
+    case 'like': return 'a aimé ton shake';
+    case 'comment': return 'a commenté ton shake';
+    case 'reshake': return 'a reshaké ton post';
+    case 'feel': return 't\'a ajouté en ami';
+    default: return 'a interagi avec toi';
   }
 }
