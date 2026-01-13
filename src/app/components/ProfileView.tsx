@@ -1,4 +1,4 @@
-import { Users, Music, Heart, Settings, ExternalLink, Play, Trash2, Repeat2, MessageCircle, Loader2 } from 'lucide-react';
+import { Users, Music, Heart, Settings, ExternalLink, Play, Trash2, Repeat2, MessageCircle, Loader2, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { SettingsDialog } from './SettingsDialog';

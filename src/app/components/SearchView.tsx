@@ -11,7 +11,7 @@ interface SearchViewProps {
 
 export function SearchView({ onPlayTrack, showTopOnly = false }: SearchViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'tracks' | 'artists' | 'users'>('all');
+  const [activeTab, setActiveTab] = useState<'tracks' | 'users'>('tracks');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [userResults, setUserResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,13 +48,14 @@ export function SearchView({ onPlayTrack, showTopOnly = false }: SearchViewProps
   const performSearch = async () => {
     setLoading(true);
     try {
-      if (activeTab === 'tracks' || activeTab === 'all') {
+      if (activeTab === 'tracks') {
         const tracks = await spotify.searchTracks(searchQuery);
         setSearchResults(tracks);
-      }
-      if (activeTab === 'users' || activeTab === 'all') {
+        setUserResults([]);
+      } else if (activeTab === 'users') {
         const users = await searchUsers(searchQuery);
         setUserResults(users);
+        setSearchResults([]);
       }
     } catch (error) {
       console.error('Search error:', error);
@@ -198,27 +199,31 @@ export function SearchView({ onPlayTrack, showTopOnly = false }: SearchViewProps
           />
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - 2 onglets: Sons / Amis */}
         {searchQuery && (
-          <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide">
-            {[
-              { id: 'all', label: 'Tout' },
-              { id: 'tracks', label: 'Sons' },
-              { id: 'artists', label: 'Artistes' },
-              { id: 'users', label: 'Utilisateurs' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-zinc-800 text-gray-400 hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={() => setActiveTab('tracks')}
+              className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                activeTab === 'tracks'
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-zinc-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              <Music className="w-4 h-4" />
+              Sons
+            </button>
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                activeTab === 'users'
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-zinc-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              <User className="w-4 h-4" />
+              Amis
+            </button>
           </div>
         )}
       </div>
