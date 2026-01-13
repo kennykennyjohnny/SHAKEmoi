@@ -8,7 +8,7 @@ interface ShakeTabsDialogProps {
 }
 
 export function ShakeTabsDialog({ onClose }: ShakeTabsDialogProps) {
-  const [activeTab, setActiveTab] = useState<'song' | 'friend'>('song');
+  const [activeTab, setActiveTab] = useState<'song' | 'friend'>('friend'); // Start on friend tab
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -59,10 +59,10 @@ export function ShakeTabsDialog({ onClose }: ShakeTabsDialogProps) {
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'song' ? (
-            <div className="p-4">
-              <p className="text-gray-400 text-center py-8">
-                Fonctionnalité "Shake un son" à venir
-              </p>
+            <div className="p-8 text-center">
+              <Music className="w-16 h-16 mx-auto mb-4 text-purple-500" />
+              <p className="text-gray-400">Fonctionnalité "Shake un son" à venir 🎵</p>
+              <p className="text-gray-500 text-sm mt-2">Bientôt tu pourras partager tes sons favoris !</p>
             </div>
           ) : (
             <div className="h-full">

@@ -25,17 +25,43 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
   const hasSpotifyPreview = track.previewUrl || track.preview_url;
 
   useEffect(() => {
+    console.log('🎵 [PLAYER] Track changed:', track);
+    console.log('🎵 [PLAYER] hasYouTubeVideo:', hasYouTubeVideo, 'hasSpotifyPreview:', hasSpotifyPreview);
+    
+    setIsPlaying(false);
+    setCurrentTime(0);
+    
     // Use YouTube if no Spotify preview or if videoId is provided
     if (hasYouTubeVideo && !hasSpotifyPreview) {
+      console.log('▶️ [PLAYER] Using YouTube player');
       setUseYouTube(true);
       loadYouTubePlayer();
     } else if (hasSpotifyPreview && audioRef.current) {
+      console.log('▶️ [PLAYER] Using Spotify preview');
+      setUseYouTube(false);
       // Auto-play Spotify preview
-      audioRef.current.play().catch(err => {
-        console.error('Auto-play failed, switching to YouTube');
-        setUseYouTube(true);
-        loadYouTubePlayer();
-      });
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+            console.log('✅ [PLAYER] Spotify preview playing');
+          })
+          .catch(err => {
+            console.error('❌ [PLAYER] Auto-play failed:', err);
+            if (hasYouTubeVideo) {
+              console.log('🔄 [PLAYER] Switching to YouTube');
+              setUseYouTube(true);
+              loadYouTubePlayer();
+            }
+          });
+      }
+    } else if (hasYouTubeVideo) {
+      console.log('▶️ [PLAYER] Fallback to YouTube (no preview)');
+      setUseYouTube(true);
+      loadYouTubePlayer();
+    } else {
+      console.warn('⚠️ [PLAYER] No audio source available');
     }
   }, [track]);
 
@@ -57,24 +83,36 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
 
   const createPlayer = () => {
     const videoId = track.youtubeVideoId || track.videoId;
-    if (!videoId) return;
+    console.log('🎬 [PLAYER] Creating YouTube player for videoId:', videoId);
+    if (!videoId) {
+      console.error('❌ [PLAYER] No videoId available');
+      return;
+    }
+
+    // Destroy previous player if exists
+    if (playerRef.current && playerRef.current.destroy) {
+      playerRef.current.destroy();
+    }
 
     playerRef.current = new window.YT.Player('youtube-player', {
       height: '0',
       width: '0',
       videoId: videoId,
       playerVars: {
-        autoplay: 0,
+        autoplay: 1, // Auto-play
         controls: 0,
         modestbranding: 1,
         rel: 0
       },
       events: {
         onReady: (event: any) => {
-          console.log('✅ YouTube player ready');
+          console.log('✅ [PLAYER] YouTube player ready, starting playback');
           setDuration(Math.floor(event.target.getDuration()));
+          event.target.playVideo(); // Start playing immediately
+          setIsPlaying(true);
         },
         onStateChange: (event: any) => {
+          console.log('🎬 [PLAYER] YouTube state:', event.data);
           if (event.data === window.YT.PlayerState.PLAYING) {
             setIsPlaying(true);
             startTimeUpdate();
@@ -84,6 +122,9 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
             setIsPlaying(false);
             setCurrentTime(0);
           }
+        },
+        onError: (event: any) => {
+          console.error('❌ [PLAYER] YouTube error:', event.data);
         }
       }
     });
