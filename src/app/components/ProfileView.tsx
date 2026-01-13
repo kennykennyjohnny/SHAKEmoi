@@ -1,4 +1,4 @@
-import { Users, Music, Heart, Settings, ExternalLink, Play, Trash2, Repeat2, MessageCircle, Loader2, Share2 } from 'lucide-react';
+import { Users, Music, Heart, Settings, ExternalLink, Play, Trash2, Repeat2, MessageCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { SettingsDialog } from './SettingsDialog';
@@ -213,9 +213,6 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
             />
             
             <div className="flex gap-2 pb-2">
-              <button className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded-full transition-colors">
-                <Share2 className="w-4 h-4" />
-              </button>
               <button 
                 onClick={() => setShowSettings(true)}
                 className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded-full transition-colors"

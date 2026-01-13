@@ -24,6 +24,7 @@ export default function App() {
   
   const [currentView, setCurrentView] = useState<View>('feed');
   const [showCreateShake, setShowCreateShake] = useState(false);
+  const [showShakeTabs, setShowShakeTabs] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentTrack, setCurrentTrack] = useState<any>(null);
   const [showAuth, setShowAuth] = useState(false);
@@ -198,12 +199,12 @@ export default function App() {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-auto pb-20">
+        <main className="flex-1 overflow-auto pb-32 lg:pb-20">
           {renderView()}
         </main>
 
         {/* Bottom Navigation Mobile */}
-        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-zinc-800 backdrop-blur-lg bg-black z-50 safe-area-inset-bottom">
+        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-zinc-800 backdrop-blur-lg bg-black/95 z-50">
           <div className="px-2 py-2 flex items-center justify-around max-w-md mx-auto">
             <button
               onClick={() => setCurrentView('feed')}
@@ -226,7 +227,7 @@ export default function App() {
             </button>
             
             <button
-              onClick={() => setShowCreateShake(true)}
+              onClick={() => setShowShakeTabs(true)}
               className="relative -mt-6 p-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full shadow-lg"
             >
               <PlusCircle className="w-6 h-6" />
@@ -254,13 +255,15 @@ export default function App() {
           </div>
         </nav>
 
-        {/* Player Bar */}
+        {/* Player Bar - Fixed above bottom nav */}
         {currentTrack && (
-          <PlayerBar 
-            track={currentTrack} 
-            onClose={() => setCurrentTrack(null)}
-            musicService={currentUser?.musicService}
-          />
+          <div className="fixed bottom-16 lg:bottom-0 left-0 right-0 z-40">
+            <PlayerBar 
+              track={currentTrack} 
+              onClose={() => setCurrentTrack(null)}
+              musicService={currentUser?.musicService}
+            />
+          </div>
         )}
       </div>
 
@@ -333,6 +336,11 @@ export default function App() {
           </div>
         )}
       </aside>
+
+      {/* Shake Tabs Dialog */}
+      {showShakeTabs && (
+        <ShakeTabsDialog onClose={() => setShowShakeTabs(false)} />
+      )}
 
       {/* Create Shake Dialog */}
       {showCreateShake && (
