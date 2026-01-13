@@ -1,485 +1,252 @@
-# 🎯 PLAN D'INTÉGRATION SHAKEMOI V3 - REDESIGN FIGMA
+# 🚀 PLAN INTÉGRATION V3 - EFFET WOW
 
-**Date:** 13 janvier 2026
-**Créé par:** Claude Code (Jerry)
-**Status:** ⏸️ EN ATTENTE AUTORISATION KENNY
-
----
-
-## 📊 ANALYSE COMPLÈTE TERMINÉE
-
-### ✅ Repo SHAKEMOI Actuel (Vanilla)
-- **Stack:** HTML/CSS/JS vanilla
-- **Backend:** Supabase PostgreSQL + Auth
-- **Tables:** users_profile, posts, likes, comments, follows
-- **Fonctionnel:** ✅ Déployé sur shakemoi.fr
-- **Design:** Basique mais tout marche
-
-### ✅ Repo Redesignshakemoi (React)
-- **Stack:** React 18 + TypeScript + Vite + Tailwind CSS 4
-- **Backend:** Edge Function custom + KV Store (non compatible)
-- **UI:** Magnifique, moderne, animations, responsive parfait
-- **Status:** Pas déployé, données mock
-
-### 🔍 Credentials Supabase
-**EXCELLENTE NOUVELLE:** Les deux repos utilisent le MÊME projet Supabase !
-- Project ID: `vbjmhtwrfboqziwibsut`
-- Anon Key: Identique
-- **Implication:** Même base de données, pas de migration de données nécessaire
+**Objectif:** App réseau social musicale complète et cohérente  
+**Deadline:** Demain matin  
+**Temps:** 2h de développement intensif
 
 ---
 
-## 🎯 STRATÉGIE D'INTÉGRATION CHOISIE
+## 📋 ANALYSE DES SOUHAITS NON IMPLÉMENTÉS
 
-### Option Retenue: **MIGRATION VERS REACT + ADAPTATION BACKEND**
+### 🎨 1. COULEURS PASTEL PROFIL (PRIORITÉ 1)
+**Souhait:** "revnons à l'idées d'une couleur de profil pastel choisi à l'incription et modifiable"
 
-**Pourquoi cette approche ?**
-1. ✅ Le redesign React est COMPLET et magnifique
-2. ✅ React est plus maintenable long terme
-3. ✅ Le backend Supabase existant est solide
-4. ✅ On garde TOUTES les données actuelles
-5. ✅ Design moderne vs. recréer en vanilla (trop long)
+**Actions:**
+- [ ] Créer palette 10 couleurs pastels harmonieuses
+- [ ] Ajouter sélecteur dans OnboardingDialog (inscription)
+- [ ] Ajouter sélecteur dans EditProfileDialog (modification)
+- [ ] Colonne `profile_color` dans users_profile (déjà existe?)
+- [ ] Gradient header profil avec couleur choisie
+- [ ] Mini-badge couleur à côté username dans feed
 
-**Ce qu'on fait:**
-- ✅ On utilise le code React du redesign comme base
-- ✅ On adapte les appels API pour utiliser Supabase DIRECT (pas KV Store)
-- ✅ On supprime le système KV Store + bouton "Migrer"
-- ✅ On configure pour déploiement GitHub Pages
-- ✅ On teste tout et on déploie
+**Impact:** UX++, Personnalisation, Effet WOW
 
 ---
 
-## 📝 PLAN D'EXÉCUTION DÉTAILLÉ
+### 📸 2. PHOTOS DE PROFIL (PRIORITÉ 1)
+**Souhait:** "trouver une solution pour les photos de profil"
 
-### PHASE 1: PRÉPARATION (5 min)
+**Solution Supabase Storage:**
+- [ ] Créer bucket `avatars` (public)
+- [ ] Component AvatarUpload dans EditProfileDialog
+- [ ] Resize images côté client (max 500x500)
+- [ ] Upload vers `avatars/{userId}.jpg`
+- [ ] Update `profile_album_cover_url` dans DB
+- [ ] Affichage partout: feed, profil, comments, notifs
+- [ ] Fallback ui-avatars.com si pas d'image
 
-#### 1.1 Backup Sécurité
-```bash
-# Dans SHAKEmoi
-mkdir backup-v1-before-react
-cp -r * backup-v1-before-react/
-git add backup-v1-before-react/
-git commit -m "🔒 BACKUP V1 vanilla avant migration React"
-```
-
-#### 1.2 Créer Branche de Travail
-```bash
-git checkout -b integration-react-v3
-```
+**Impact:** UX+++, Professionnalisme, Effet WOW
 
 ---
 
-### PHASE 2: MIGRATION DU CODE (30 min)
+### 🔁 3. RESHAKES AFFICHÉS (PRIORITÉ 2)
+**Souhait:** "les re-shake ne sont pas afficher" sur le profil
 
-#### 2.1 Copier Structure React
-- Copier `/src` du Redesign vers SHAKEmoi
-- Copier `/styles` pour Tailwind
-- Copier `index.html` (root React)
-- Copier configuration Vite, PostCSS, package.json
+**Actions:**
+- [ ] Vérifier getUserReshakes() dans database.ts
+- [ ] Vérifier que reshakesData est bien mappé dans ProfileView
+- [ ] S'assurer que l'onglet "Reshakes" affiche les données
+- [ ] Debug avec console.log
+- [ ] Afficher "Reshaked by @username" dans feed
 
-#### 2.2 Adapter Configuration
-**`vite.config.ts`** - Configurer pour GitHub Pages:
-```typescript
-export default defineConfig({
-  base: '/', // Pour shakemoi.fr
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-  },
-  plugins: [react(), tailwindcss()]
-});
-```
-
-**`package.json`** - Ajouter scripts:
-```json
-{
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  }
-}
-```
-
-#### 2.3 Installer Dépendances
-```bash
-npm install
-```
+**Impact:** Feature complète
 
 ---
 
-### PHASE 3: ADAPTATION BACKEND (45 min)
+### 👤 4. @RESHAKER DISPLAY (PRIORITÉ 2)
+**Souhait:** "@username qui a reshake doit apparaître en violet"
 
-#### 3.1 Créer Nouveau Fichier `src/lib/supabase.ts`
-```typescript
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL = 'https://vbjmhtwrfboqziwibsut.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGci...'; // Key complète
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+**Code existant:** Ligne 462-465 FeedView.tsx
+```tsx
+{shake.reshakeFrom && (
+  <span className="text-xs text-purple-400 font-medium">
+    @{shake.reshakeFrom.username}
+  </span>
+)}
 ```
 
-#### 3.2 Créer `src/lib/database.ts` (Adaptation de database.js)
-Convertir TOUTES les fonctions de `scripts/database.js` en TypeScript:
-- `getCurrentUser()`
-- `getUserProfile(userId)`
-- `getFeed(limit)`
-- `createPost()`
-- `likePost(postId)` / `unlikePost(postId)`
-- `addComment()` / `getPostComments()`
-- `followUser()` / `unfollowUser()`
-- `searchUsers()` / `searchPosts()`
-- etc.
+**Actions:**
+- [ ] Vérifier que reshakeFrom est bien chargé depuis DB
+- [ ] S'assurer que is_reshake et original_post sont bien récupérés
+- [ ] Test avec un vrai reshake
 
-**Exemple:**
-```typescript
-import { supabase } from './supabase';
-
-export async function getCurrentUser() {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) throw error;
-  return user;
-}
-
-export async function getFeed(limit = 20) {
-  const user = await getCurrentUser();
-  if (!user) return [];
-
-  // Logique existante de database.js
-  // ...
-}
-
-// ... toutes les autres fonctions
-```
-
-#### 3.3 Remplacer Appels API dans Components
-
-**`FeedView.tsx`** - Ligne 55:
-```typescript
-// AVANT
-import * as api from '../utils/api';
-const feedData = await api.getFeed();
-
-// APRÈS
-import * as db from '../../lib/database';
-const feedData = await db.getFeed();
-```
-
-Répéter pour TOUS les components:
-- `FeedView.tsx`
-- `ProfileView.tsx`
-- `SearchView.tsx`
-- `NotificationsView.tsx`
-- `CreateShakeDialog.tsx`
-- etc.
-
-#### 3.4 Adapter Auth Logic
-
-**`App.tsx`** - Remplacer localStorage auth par Supabase Auth:
-```typescript
-// AVANT
-const authToken = localStorage.getItem('shakemoi_auth_token');
-
-// APRÈS
-const { data: { session } } = await supabase.auth.getSession();
-if (session) {
-  const profile = await db.getUserProfile(session.user.id);
-  setCurrentUser(profile);
-}
-```
-
-**`AuthDialog.tsx`** - Utiliser `supabase.auth.signUp()` et `signInWithPassword()`:
-```typescript
-// Signup
-const { data, error } = await supabase.auth.signUp({
-  email,
-  password,
-});
-
-// Créer profil
-await supabase.from('users_profile').insert({
-  id: data.user.id,
-  username,
-  email,
-  color: selectedColor
-});
-```
+**Impact:** Clarté UX
 
 ---
 
-### PHASE 4: NETTOYAGE (15 min)
+### 🎵 5. "SHAKE UN SON" FONCTIONNEL (PRIORITÉ 3)
+**Souhait:** Tab "Shake un son" doit permettre de partager un son
 
-#### 4.1 Supprimer Code Inutile
-- ❌ Supprimer `/supabase/functions` (KV Store)
-- ❌ Supprimer `src/app/utils/api.ts` (ancien système API)
-- ❌ Supprimer `/utils/supabase/info.tsx` (remplacé par supabase.ts)
+**Actions:**
+- [ ] SearchView pour chercher des sons Spotify
+- [ ] Sélection d'un son
+- [ ] Dialog pour ajouter un commentaire
+- [ ] Création du post avec createPost()
+- [ ] Refresh feed après création
 
-#### 4.2 Supprimer Bouton "Migrer"
-**`App.tsx`** - Lignes 79-106 et 168-175:
-```typescript
-// SUPPRIMER cette fonction
-const handleMigrateUsers = async () => { ... }
-
-// SUPPRIMER ce bouton du header
-<button onClick={handleMigrateUsers}>
-  <Music2 className="w-3 h-3" />
-  Migrer
-</button>
-```
+**Impact:** Feature principale app
 
 ---
 
-### PHASE 5: DESIGN POLISH (20 min)
+### 🔔 6. NOTIFICATIONS FONCTIONNELLES (PRIORITÉ 3)
+**Souhait:** "est ce que les notifications arrivent vraiment?"
 
-#### 5.1 Intégrer Police McLaren
-**`src/styles/fonts.css`** - Ajouter:
-```css
-@import url('https://fonts.googleapis.com/css2?family=McLaren&family=Maven+Pro:wght@400;500;600;700&display=swap');
+**À vérifier:**
+- [ ] sendSongNotification() crée bien une notif dans DB
+- [ ] NotificationsView charge bien les notifs
+- [ ] Format des notifs correct (texte + metadata)
+- [ ] Badge compteur sur icône Bell
+- [ ] Action "Shake this song" sur notif de type song_share
 
-/* Titres et Menu avec McLaren */
-h1, h2, .logo, nav button {
-  font-family: 'McLaren', 'Maven Pro', sans-serif !important;
-}
-
-/* Corps de texte avec Maven Pro */
-body {
-  font-family: 'Maven Pro', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-```
-
-#### 5.2 Vérifier Nouveaux Assets
-- Vérifier nouveau logo dans `/src/app/components/Logo.tsx`
-- Vérifier couleurs dans `/src/styles/theme.css`
-- Ajuster si nécessaire
+**Impact:** Engagement utilisateur
 
 ---
 
-### PHASE 6: SPOTIFY PREVIEW 30S (15 min)
+### 🎨 7. UI/UX POLISH (PRIORITÉ 2)
+**Manques identifiés:**
 
-#### 6.1 Vérifier Intégration Player
-Le redesign a déjà un `PlayerBar.tsx` avec preview 30s. Vérifier:
-- ✅ Lecture audio HTML5 fonctionne
-- ✅ Contrôles play/pause
-- ✅ Volume
-- ✅ Timeline
+**Animations:**
+- [ ] Framer Motion sur toutes les listes (stagger)
+- [ ] Transitions page changes
+- [ ] Skeleton loaders pendant chargement
+- [ ] Micro-interactions (hover, click)
 
-#### 6.2 Adapter Spotify API
-**`src/lib/spotify.ts`** - Adapter depuis `scripts/spotify.js`:
-```typescript
-const EDGE_FUNCTION_URL = 'https://vbjmhtwrfboqziwibsut.supabase.co/functions/v1/spotify-proxy';
+**Empty States:**
+- [ ] "Aucun post" avec illustration + CTA
+- [ ] "Aucun follower" avec suggestion d'amis
+- [ ] "Aucune notification" avec illustration
 
-export async function searchTracks(query: string) {
-  const response = await fetch(EDGE_FUNCTION_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-    },
-    body: JSON.stringify({ action: 'search', query })
-  });
+**Loading States:**
+- [ ] Spinner cohérent partout (même style)
+- [ ] Shimmer effect pour cartes
+- [ ] Progressive image loading
 
-  return await response.json();
-}
-```
+**Error Handling:**
+- [ ] Toast notifications pour erreurs
+- [ ] Retry buttons
+- [ ] Messages d'erreur clairs
+
+**Impact:** Professionnalisme, Effet WOW
 
 ---
 
-### PHASE 7: BUILD & TEST (30 min)
+### 🔧 8. INCOHÉRENCES À CORRIGER
 
-#### 7.1 Test Local
-```bash
-npm run dev
-# Tester TOUT:
-# - Login/Signup
-# - Feed affichage
-# - Like/Unlike
-# - Commentaires
-# - Follow/Unfollow
-# - Recherche
-# - Profil
-# - Player 30s
-# - Responsive mobile
-```
+**Database Schema:**
+- [ ] Vérifier que tous les champs existent:
+  - `users_profile.display_name`
+  - `users_profile.profile_color`
+  - `users_profile.profile_album_cover_url`
+  - `posts.is_reshake`
+  - `posts.original_post_id`
+  - `posts.reshake_comment`
 
-#### 7.2 Fix Bugs Identifiés
-- Corriger erreurs TypeScript
-- Corriger erreurs console
-- Ajuster styling si nécessaire
+**Data Flow:**
+- [ ] Profil: avatar vs profile_album_cover_url
+- [ ] Profil: displayName vs username
+- [ ] Posts: track_id vs id vs videoId
+- [ ] Reshakes: original_post relationship
 
-#### 7.3 Build Production
-```bash
-npm run build
-# Vérifie que /dist est créé
-```
+**API Calls:**
+- [ ] Tous les endpoints retournent bien les relations
+- [ ] Compteurs mis à jour (triggers SQL)
 
 ---
 
-### PHASE 8: DÉPLOIEMENT (10 min)
+## 🗓️ PLANNING DÉTAILLÉ
 
-#### 8.1 Configurer GitHub Pages pour Vite
+### Phase 1: SETUP & SQL (15min)
+1. Créer SQL complet pour schema + storage
+2. Exécuter sur Supabase
+3. Vérifier que tout fonctionne
 
-**Créer `.github/workflows/deploy.yml`:**
-```yaml
-name: Deploy to GitHub Pages
+### Phase 2: PHOTOS PROFIL (30min)
+1. Supabase Storage bucket setup
+2. AvatarUpload component
+3. Intégration EditProfileDialog
+4. Display partout
+5. Tests
 
-on:
-  push:
-    branches: [ main ]
+### Phase 3: COULEURS PASTEL (20min)
+1. Palette + composant ColorPicker
+2. OnboardingDialog integration
+3. EditProfileDialog integration
+4. ProfileView gradient header
+5. Mini-badge dans feed
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+### Phase 4: FEATURES SOCIALES (30min)
+1. Reshakes affichés
+2. @reshaker visible
+3. Shake un son fonctionnel
+4. Notifications vérifiées
+5. Compteurs corrects
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+### Phase 5: UX POLISH (20min)
+1. Animations Framer Motion
+2. Empty states
+3. Loading skeletons
+4. Error handling
+5. Micro-interactions
 
-      - name: Install dependencies
-        run: npm install
+### Phase 6: TESTS & DEBUG (15min)
+1. Test complet de chaque feature
+2. Fix bugs trouvés
+3. Vérification mobile responsive
+4. Performance check
 
-      - name: Build
-        run: npm run build
-
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-```
-
-#### 8.2 Commit & Push
-```bash
-git add .
-git commit -m "✨ V3 - Migration vers React + Redesign Figma intégré"
-git push origin integration-react-v3
-```
-
-#### 8.3 Merge vers Main
-```bash
-git checkout main
-git merge integration-react-v3
-git push origin main
-```
-
-#### 8.4 Vérifier Déploiement
-- Attendre GitHub Actions (2-3 min)
-- Visiter https://shakemoi.fr
-- Tester en production
+### Phase 7: BUILD & DEPLOY (10min)
+1. Build production
+2. Git commit propre
+3. Push vers GitHub
+4. Vérification déploiement
+5. Documentation finale
 
 ---
 
-## ⚠️ POINTS D'ATTENTION CRITIQUES
+## 📦 LIVRABLES
 
-### À NE JAMAIS PERDRE
-1. ✅ **Credentials Supabase** - Toujours les mêmes
-2. ✅ **Tables PostgreSQL** - Ne pas toucher au schéma
-3. ✅ **Données utilisateurs** - Aucune perte de données
-4. ✅ **CNAME** - Garder shakemoi.fr
+### Code:
+- ✅ Components propres et commentés
+- ✅ TypeScript types corrects
+- ✅ Pas d'erreurs console
+- ✅ Performance optimale
 
-### Tests Obligatoires
-- [ ] Login avec email/password existant fonctionne
-- [ ] Signup créé bien user dans users_profile
-- [ ] Feed charge les posts des followés
-- [ ] Like incrémente likes_count
-- [ ] Commentaires s'enregistrent
-- [ ] Follow crée bien la relation
-- [ ] Recherche trouve users et tracks
-- [ ] Player lit preview 30s
-- [ ] Mobile responsive parfait
+### Database:
+- ✅ Schema complet SQL
+- ✅ Triggers et functions
+- ✅ Storage buckets configurés
+- ✅ RLS policies correctes
 
----
+### UX:
+- ✅ Animations fluides
+- ✅ Loading states partout
+- ✅ Error handling graceful
+- ✅ Empty states engageants
+- ✅ Mobile responsive parfait
 
-## 📊 CHECKLIST FINALE
-
-### Avant Merge vers Main
-- [ ] Backup V1 créé et committé
-- [ ] Build production réussit sans erreurs
-- [ ] Tous les tests manuels passent
-- [ ] Pas d'erreurs console
-- [ ] Responsive mobile/desktop OK
-- [ ] Performance acceptable (< 3s chargement)
-- [ ] Bouton "Migrer" supprimé
-- [ ] Police McLaren appliquée
-
-### Après Déploiement
-- [ ] shakemoi.fr accessible
-- [ ] HTTPS fonctionne
-- [ ] Login/Signup fonctionnent en prod
-- [ ] Feed s'affiche
-- [ ] Images chargent
-- [ ] Pas de CORS errors
-- [ ] Analytics/monitoring OK (si applicable)
+### Documentation:
+- ✅ Guide setup Supabase
+- ✅ README complet
+- ✅ Guide test features
+- ✅ Screenshots avant/après
 
 ---
 
-## 🎯 RÉSUMÉ POUR KENNY
+## 🎯 EFFET WOW - CHECKLIST FINALE
 
-**CE QUI CHANGE:**
-- ✅ Stack passe de Vanilla JS à React + TypeScript
-- ✅ Design magnifique du redesign Figma
-- ✅ Build avec Vite (plus moderne)
-- ✅ Tailwind CSS 4 (vs. CSS custom)
-- ✅ Animations Motion/React
-- ✅ Police McLaren sur titres
-
-**CE QUI NE CHANGE PAS:**
-- ✅ Même base de données Supabase
-- ✅ Toutes les données utilisateurs préservées
-- ✅ Même domaine shakemoi.fr
-- ✅ Toutes les fonctionnalités existantes
-- ✅ Spotify API fonctionne toujours
-
-**ESTIMATION TEMPS TOTAL:** 2h30
-- Phase 1-2: 35 min (Préparation + Migration code)
-- Phase 3-4: 60 min (Adaptation backend + Nettoyage)
-- Phase 5-6: 35 min (Design + Spotify)
-- Phase 7-8: 40 min (Tests + Déploiement)
-
-**RISQUES:**
-- 🟡 Bugs TypeScript à corriger
-- 🟡 Ajustements styling mineurs
-- 🟢 Perte de données: AUCUN (même DB)
-- 🟢 Rollback possible (backup V1)
+- [ ] 📸 Photos de profil custom ou avatar généré
+- [ ] 🎨 Couleurs pastel personnalisables
+- [ ] 🔁 Reshakes visibles et fonctionnels
+- [ ] 👤 @reshaker affiché en violet
+- [ ] 🎵 "Shake un son" fonctionnel
+- [ ] 🔔 Notifications qui arrivent
+- [ ] ✨ Animations fluides partout
+- [ ] 📊 Compteurs corrects
+- [ ] 🎨 UI cohérente et moderne
+- [ ] 📱 Mobile parfait
+- [ ] ⚡ Rapide et réactif
+- [ ] 🎉 Aucun bug critique
 
 ---
 
-## ✅ AUTORISATION DEMANDÉE
-
-**Kenny, j'ai besoin de ton autorisation GLOBALE pour:**
-
-1. ✅ **Migrer vers React + TypeScript**
-   - Stack plus moderne
-   - Meilleure maintenabilité
-   - Design du redesign Figma
-
-2. ✅ **Adapter tout le backend**
-   - Convertir database.js en TypeScript
-   - Remplacer tous les appels API
-   - Supprimer système KV Store
-
-3. ✅ **Supprimer bouton "Migrer"**
-   - Non nécessaire (on garde PostgreSQL)
-
-4. ✅ **Déployer en production**
-   - GitHub Actions auto-deploy
-   - Sur shakemoi.fr
-
-**SI TU DIS "GO", JE DÉROULE TOUT EN AUTONOME SANS TE REDEMANDER.**
-
-**Temps estimé:** 2h30 de travail
-**Tu n'auras qu'à tester le résultat final sur shakemoi.fr**
-
----
-
-## 🚀 READY TO GO!
-
-**Dis "GO" et je commence immédiatement. 🎵**
-
----
-
-*Document créé le 13 janvier 2026 par Claude Code*
-*Version: 1.0 - Plan complet prêt à exécution*
+**C'EST PARTI ! LET'S BUILD SOMETHING AMAZING ! 🚀**
