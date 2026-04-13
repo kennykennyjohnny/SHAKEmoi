@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X, Heart, ExternalLink, Headphones } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, X, Heart, Headphones } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getPlatformUrl } from '../../lib/odesli';
 

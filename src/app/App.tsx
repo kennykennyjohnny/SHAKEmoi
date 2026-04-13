@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Search, PlusCircle, Bell, User, TrendingUp, Share2 } from 'lucide-react';
+import { Home, Search, PlusCircle, Bell, User, TrendingUp, Share2, Headphones } from 'lucide-react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
 import { ProfileView } from './components/ProfileView';
@@ -27,8 +27,15 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [refreshFeed, setRefreshFeed] = useState(0);
 
+  const buildUserObject = (profile: any) => ({
+    ...profile,
+    avatar: profile.profile_album_cover_url || profile.avatar || `https://ui-avatars.com/api/?name=${profile.username}&background=random`,
+    displayName: profile.display_name || profile.displayName || profile.username,
+    bio: profile.bio || '',
+    musicService: profile.preferred_platform || profile.musicService || 'spotify',
+  });
+
   useEffect(() => {
-    // Check if user is authenticated with Supabase
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -42,25 +49,15 @@ export default function App() {
             setShowOnboarding(true);
           }
         } else {
-          // No profile found, show auth dialog
           setShowAuth(true);
         }
       } else {
-        // No session, show auth dialog
         setShowAuth(true);
       }
     };
 
     checkAuth();
   }, []);
-
-  const buildUserObject = (profile: any) => ({
-    ...profile,
-    avatar: profile.profile_album_cover_url || profile.avatar || `https://ui-avatars.com/api/?name=${profile.username}&background=random`,
-    displayName: profile.display_name || profile.displayName || profile.username,
-    bio: profile.bio || '',
-    musicService: profile.preferred_platform || profile.musicService || 'spotify',
-  });
 
   const handleAuthComplete = (user: any) => {
     setCurrentUser(buildUserObject(user));
