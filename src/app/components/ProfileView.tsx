@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
 import { CommentsDialog } from './CommentsDialog';
+import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, likePost, unlikePost, hasLikedPost } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 
@@ -28,6 +29,7 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
   const [followersList, setFollowersList] = useState<any[]>([]);
   const [followingList, setFollowingList] = useState<any[]>([]);
   const [loadingList, setLoadingList] = useState(false);
+  const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [stats, setStats] = useState({
     shakes: 0,
     followers: 0,
@@ -527,15 +529,20 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
                 ) : (
                   (showFollowersList === 'followers' ? followersList : followingList).map((person: any) => (
                     <div key={person.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-purple-900/30 transition-colors">
-                      <img
-                        src={person.profile_album_cover_url || `https://ui-avatars.com/api/?name=${person.username}&background=random`}
-                        alt={person.username}
-                        className="w-10 h-10 rounded-full object-cover ring-1 ring-purple-700/30"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-white truncate">{person.display_name || person.username}</p>
-                        <p className="text-xs text-purple-400/50 truncate">@{person.username}</p>
-                      </div>
+                      <button
+                        onClick={() => { setShowFollowersList(null); setProfilePreview({ userId: person.id, username: person.username }); }}
+                        className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                      >
+                        <img
+                          src={person.profile_album_cover_url || `https://ui-avatars.com/api/?name=${person.username}&background=random`}
+                          alt={person.username}
+                          className="w-10 h-10 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-purple-500 transition-all"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-white truncate">{person.display_name || person.username}</p>
+                          <p className="text-xs text-purple-400/50 truncate">@{person.username}</p>
+                        </div>
+                      </button>
                       {/* Only show unfollow for "following" list */}
                       {showFollowersList === 'following' && (
                         <button
@@ -585,6 +592,17 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
           onUpdateUser={onUpdateUser}
         />
       )}
+
+      {/* Profile Preview */}
+      <AnimatePresence>
+        {profilePreview && (
+          <ProfilePreviewDialog
+            userId={profilePreview.userId}
+            username={profilePreview.username}
+            onClose={() => setProfilePreview(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

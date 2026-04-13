@@ -12,7 +12,7 @@ import { ShareDialog } from './components/ShareDialog';
 import { AuthDialog } from './components/AuthDialog';
 import { SettingsDialog } from './components/SettingsDialog';
 import { supabase } from '../lib/supabase';
-import { getCurrentUser, getUserProfile } from '../lib/database';
+import { getCurrentUser, getUserProfile, getUserNotifications } from '../lib/database';
 
 type View = 'feed' | 'search' | 'top' | 'profile' | 'notifications';
 
@@ -26,6 +26,7 @@ export default function App() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [refreshFeed, setRefreshFeed] = useState(0);
+  const [unreadNotifs, setUnreadNotifs] = useState(0);
 
   const buildUserObject = (profile: any) => ({
     ...profile,
@@ -58,6 +59,38 @@ export default function App() {
 
     checkAuth();
   }, []);
+
+  // Poll for new notifications every 30s and send browser notification
+  useEffect(() => {
+    if (!currentUser) return;
+    let lastNotifId: string | null = null;
+
+    const checkNewNotifs = async () => {
+      try {
+        const notifs = await getUserNotifications(currentUser.id);
+        const unread = notifs.filter((n: any) => !n.is_read).length;
+        setUnreadNotifs(unread);
+
+        // Send browser notification for new ones
+        if (notifs.length > 0 && lastNotifId && notifs[0].id !== lastNotifId) {
+          const newest = notifs[0];
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            new Notification('SHAKEmoi', {
+              body: `@${newest.actor_username} ${newest.content}`,
+              icon: '/favicon.ico',
+            });
+          }
+        }
+        if (notifs.length > 0) lastNotifId = notifs[0].id;
+      } catch (err) {
+        // silent
+      }
+    };
+
+    checkNewNotifs();
+    const interval = setInterval(checkNewNotifs, 30000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
 
   const handleAuthComplete = (user: any) => {
     setCurrentUser(buildUserObject(user));
@@ -206,12 +239,17 @@ export default function App() {
             </button>
             
             <button
-              onClick={() => setCurrentView('notifications')}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
+              onClick={() => { setCurrentView('notifications'); setUnreadNotifs(0); }}
+              className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors relative ${
                 currentView === 'notifications' ? 'text-purple-500 bg-purple-500/10' : 'text-purple-400/60'
               }`}
             >
               <Bell className="w-5 h-5" />
+              {unreadNotifs > 0 && (
+                <span className="absolute -top-0.5 right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white">
+                  {unreadNotifs > 9 ? '9+' : unreadNotifs}
+                </span>
+              )}
               <span className="text-xs font-medium">Notifs</span>
             </button>
             
@@ -263,12 +301,19 @@ export default function App() {
           </button>
           
           <button
-            onClick={() => setCurrentView('notifications')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
+            onClick={() => { setCurrentView('notifications'); setUnreadNotifs(0); }}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors relative ${
               currentView === 'notifications' ? 'bg-purple-500/10 text-purple-500' : 'text-purple-400/60 hover:bg-purple-900/30'
             }`}
           >
-            <Bell className="w-5 h-5" />
+            <div className="relative">
+              <Bell className="w-5 h-5" />
+              {unreadNotifs > 0 && (
+                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full text-[8px] font-bold flex items-center justify-center text-white">
+                  {unreadNotifs > 9 ? '9+' : unreadNotifs}
+                </span>
+              )}
+            </div>
             <span className="font-medium">Notifications</span>
           </button>
           

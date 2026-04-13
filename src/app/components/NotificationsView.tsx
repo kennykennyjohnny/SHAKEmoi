@@ -1,7 +1,8 @@
 import { Heart, MessageCircle, UserPlus, Music, Repeat2, Loader2, Bell } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { getUserNotifications } from '../../lib/database';
+import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
 interface NotificationsViewProps {
   currentUser: any;
@@ -10,6 +11,7 @@ interface NotificationsViewProps {
 export function NotificationsView({ currentUser }: NotificationsViewProps) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
 
   useEffect(() => {
     loadNotifications();
@@ -98,29 +100,39 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
 
       <div className="space-y-2">
         {notifications.map((notif, index) => (
-          <motion.button
+          <motion.div
             key={notif.id}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.03 }}
-            className="w-full bg-purple-950/25 hover:bg-purple-900/30 rounded-xl p-3 flex items-center gap-3 transition-colors cursor-pointer border border-purple-800/20 text-left"
+            className="w-full bg-purple-950/25 hover:bg-purple-900/30 rounded-xl p-3 flex items-center gap-3 transition-colors border border-purple-800/20"
           >
             {/* Icon */}
             <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${getIconBg(notif.type)}`}>
               {getIcon(notif.type)}
             </div>
 
-            {/* Avatar */}
-            <img
-              src={notif.actor_avatar || `https://ui-avatars.com/api/?name=${notif.actor_username}&background=random`}
-              alt={notif.actor_username}
-              className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-1 ring-purple-700/30"
-            />
+            {/* Avatar - clickable for profile preview */}
+            <button
+              onClick={() => setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username })}
+              className="flex-shrink-0"
+            >
+              <img
+                src={notif.actor_avatar || `https://ui-avatars.com/api/?name=${notif.actor_username}&background=random`}
+                alt={notif.actor_username}
+                className="w-10 h-10 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-purple-500 transition-all"
+              />
+            </button>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white">
-                <span className="font-semibold">@{notif.actor_username}</span>
+                <button
+                  onClick={() => setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username })}
+                  className="font-semibold hover:underline"
+                >
+                  @{notif.actor_username}
+                </button>
                 {' '}
                 <span className="text-purple-300/60">{notif.content}</span>
               </p>
@@ -135,9 +147,20 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
                 className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
               />
             )}
-          </motion.button>
+          </motion.div>
         ))}
       </div>
+
+      {/* Profile Preview */}
+      <AnimatePresence>
+        {profilePreview && (
+          <ProfilePreviewDialog
+            userId={profilePreview.userId}
+            username={profilePreview.username}
+            onClose={() => setProfilePreview(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -810,6 +810,7 @@ export async function getUserNotifications(userId: string) {
     return (data || []).map((notif: any) => ({
       id: notif.id,
       type: notif.type,
+      actor_id: notif.from_user?.id || null,
       actor_username: notif.from_user?.username || 'unknown',
       actor_avatar: notif.from_user?.profile_album_cover_url,
       post_cover_url: notif.post?.cover_url,
@@ -844,16 +845,9 @@ export async function sendSongNotification(recipientId: string, track: any) {
       .from('notifications')
       .insert([{
         user_id: recipientId,
-        actor_id: user.id,
+        from_user_id: user.id,
         type: 'song_share',
         post_id: null,
-        // Store track info in metadata (you may need to add this column)
-        metadata: {
-          track_title: track.title,
-          track_artist: track.artist,
-          track_cover: track.coverUrl || track.thumbnail,
-          track_url: track.spotifyUrl || track.youtubeVideoId
-        }
       }]);
 
     if (error) throw error;

@@ -79,6 +79,8 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
       const shakes = await Promise.all(posts.map(async (post: any) => {
         const isLiked = await db.hasLikedPost(post.id);
         const trackId = post.track_id;
+        // Build embed URL for ALL posts that have a track_id
+        const spotifyEmbedUrl = post.spotify_embed_url || (trackId ? `https://open.spotify.com/embed/track/${trackId}` : null);
         return {
           id: post.id,
           user: {
@@ -95,7 +97,7 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
             duration: '3:00',
             previewUrl: post.preview_url || '',
             spotifyUri: post.spotify_url || '',
-            spotifyEmbedUrl: post.spotify_embed_url || (trackId ? `https://open.spotify.com/embed/track/${trackId}` : null),
+            spotifyEmbedUrl,
           },
           links: {
             spotify_url: post.spotify_url || null,
@@ -211,7 +213,7 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
 
   const handlePlayTrack = (shake: Shake) => {
     if (shake.track.spotifyEmbedUrl) {
-      // Toggle: if already playing this track, close it
+      // Toggle: if already playing this track, close it; otherwise open with autoplay
       setActivePlayerId(activePlayerId === shake.id ? null : shake.id);
     } else {
       onPlayTrack(shake.track);
@@ -356,7 +358,7 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
                 </div>
               )}
 
-              {/* Track Card - always visible (cover + info + play button) */}
+              {/* Track Card - clickable cover to launch embed */}
               <div className="px-4 pb-2">
                 <div
                   className={`rounded-xl p-3 flex gap-3 group cursor-pointer transition-all border ${
@@ -402,7 +404,7 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
                 </div>
               </div>
 
-              {/* Spotify Embed Player - slides in when track is clicked */}
+              {/* Spotify Embed Player - slides open on click, with autoplay */}
               <AnimatePresence>
                 {isPlayerOpen && shake.track.spotifyEmbedUrl && (
                   <motion.div
