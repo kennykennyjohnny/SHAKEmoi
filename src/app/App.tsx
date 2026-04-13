@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Search, PlusCircle, Bell, User, TrendingUp, Headphones, Share2, Settings } from 'lucide-react';
+import { Home, Search, PlusCircle, Bell, User, TrendingUp, Share2 } from 'lucide-react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
 import { ProfileView } from './components/ProfileView';
@@ -11,21 +11,14 @@ import { OnboardingDialog } from './components/OnboardingDialog';
 import { ShareDialog } from './components/ShareDialog';
 import { AuthDialog } from './components/AuthDialog';
 import { SettingsDialog } from './components/SettingsDialog';
-import { ShakeTabsDialog } from './components/ShakeTabsDialog';
-import { Logo } from './components/Logo';
-import { LogoShowcase } from './components/LogoShowcase';
 import { supabase } from '../lib/supabase';
 import { getCurrentUser, getUserProfile } from '../lib/database';
 
 type View = 'feed' | 'search' | 'top' | 'profile' | 'notifications';
 
 export default function App() {
-  // CHANGE THIS TO false WHEN YOU'VE CHOSEN YOUR LOGO
-  const [showLogoShowcase, setShowLogoShowcase] = useState(false);
-  
   const [currentView, setCurrentView] = useState<View>('feed');
   const [showCreateShake, setShowCreateShake] = useState(false);
-  const [showShakeTabs, setShowShakeTabs] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentTrack, setCurrentTrack] = useState<any>(null);
   const [showAuth, setShowAuth] = useState(false);
@@ -40,12 +33,10 @@ export default function App() {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session) {
-        // User is logged in, fetch profile
         const profile = await getUserProfile(session.user.id);
         if (profile) {
-          setCurrentUser(profile);
+          setCurrentUser(buildUserObject(profile));
 
-          // Check onboarding
           const hasCompletedOnboarding = localStorage.getItem('shakemoi_onboarding');
           if (!hasCompletedOnboarding) {
             setShowOnboarding(true);
@@ -63,18 +54,18 @@ export default function App() {
     checkAuth();
   }, []);
 
+  const buildUserObject = (profile: any) => ({
+    ...profile,
+    avatar: profile.profile_album_cover_url || profile.avatar || `https://ui-avatars.com/api/?name=${profile.username}&background=random`,
+    displayName: profile.display_name || profile.displayName || profile.username,
+    bio: profile.bio || '',
+    musicService: profile.preferred_platform || profile.musicService || 'spotify',
+  });
+
   const handleAuthComplete = (user: any) => {
-    // Transform user to match ProfileView expectations
-    const profileUser = {
-      ...user,
-      avatar: user.profile_album_cover_url || user.avatar || `https://ui-avatars.com/api/?name=${user.username}&background=random`,
-      displayName: user.username,
-      bio: user.bio || ''
-    };
-    setCurrentUser(profileUser);
+    setCurrentUser(buildUserObject(user));
     setShowAuth(false);
-    
-    // Check if needs onboarding
+
     const hasCompletedOnboarding = localStorage.getItem('shakemoi_onboarding');
     if (!hasCompletedOnboarding) {
       setShowOnboarding(true);
@@ -87,22 +78,13 @@ export default function App() {
       if (user) {
         const profile = await getUserProfile(user.id);
         if (profile) {
-          // Update with onboarding preferences if they exist
           if (preferences.musicService) {
-            // Update music service preference in profile
             await supabase
               .from('users_profile')
-              .update({ music_service: preferences.musicService })
+              .update({ preferred_platform: preferences.musicService })
               .eq('id', user.id);
           }
-          // Transform to match ProfileView expectations
-          const profileUser = {
-            ...profile,
-            avatar: profile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${profile.username}&background=random`,
-            displayName: profile.username,
-            bio: ''
-          };
-          setCurrentUser(profileUser);
+          setCurrentUser(buildUserObject({ ...profile, musicService: preferences.musicService }));
         }
       }
     } catch (err) {
@@ -115,21 +97,6 @@ export default function App() {
     setShowOnboarding(false);
     await loadUserData(preferences);
   };
-
-  // Logo showcase mode
-  if (showLogoShowcase) {
-    return (
-      <div className="relative">
-        <LogoShowcase />
-        <button
-          onClick={() => setShowLogoShowcase(false)}
-          className="fixed top-4 right-4 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold text-white hover:opacity-90 transition-opacity shadow-xl z-50"
-        >
-          Retour à l'app
-        </button>
-      </div>
-    );
-  }
 
   if (showOnboarding) {
     return <OnboardingDialog onComplete={handleOnboardingComplete} />;
@@ -144,7 +111,7 @@ export default function App() {
       case 'feed':
         return <FeedView currentUser={currentUser} onPlayTrack={setCurrentTrack} refreshFeed={refreshFeed} />;
       case 'search':
-        return <SearchView onPlayTrack={setCurrentTrack} />;
+        return <SearchView currentUser={currentUser} onPlayTrack={setCurrentTrack} onRefreshFeed={() => setRefreshFeed(prev => prev + 1)} />;
       case 'top':
         return (
           <div className="h-full overflow-y-auto">
@@ -161,18 +128,20 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-screen bg-black text-white overflow-hidden flex">
+    <div className="h-screen w-screen bg-[#0a0012] text-white overflow-hidden flex">
       {/* Sidebar gauche - Trending */}
-      <aside className="hidden lg:block w-80 border-r border-zinc-800 overflow-y-auto">
+      <aside className="hidden lg:block w-80 border-r border-purple-900/30 overflow-y-auto">
         <TrendingBar onPlayTrack={setCurrentTrack} />
       </aside>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="border-b border-zinc-800 backdrop-blur-lg bg-black/50 sticky top-0 z-40">
+        <header className="border-b border-purple-900/30 backdrop-blur-lg bg-[#0a0012]/80 sticky top-0 z-40">
           <div className="px-4 py-2 flex items-center justify-between">
-            <Logo size="md" animated={true} />
+            <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
+              SHAKEmoi
+            </span>
             
             <div className="flex items-center gap-2">
               <button
@@ -207,7 +176,7 @@ export default function App() {
         </main>
 
         {/* Bottom Navigation Mobile */}
-        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-zinc-800 backdrop-blur-lg bg-black/95 z-50">
+        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-purple-900/30 backdrop-blur-lg bg-[#0a0012]/95 z-50">
           <div className="px-2 py-2 flex items-center justify-around max-w-md mx-auto">
             <button
               onClick={() => setCurrentView('feed')}
@@ -274,7 +243,7 @@ export default function App() {
       </div>
 
       {/* Sidebar droite - Desktop Navigation */}
-      <aside className="hidden xl:block w-64 border-l border-zinc-800 p-4 overflow-y-auto">
+      <aside className="hidden xl:block w-64 border-l border-purple-900/30 p-4 overflow-y-auto">
         <nav className="space-y-2">
           <button
             onClick={() => setCurrentView('feed')}
@@ -342,11 +311,6 @@ export default function App() {
           </div>
         )}
       </aside>
-
-      {/* Shake Tabs Dialog */}
-      {showShakeTabs && (
-        <ShakeTabsDialog onClose={() => setShowShakeTabs(false)} />
-      )}
 
       {/* Create Shake Dialog */}
       {showCreateShake && (

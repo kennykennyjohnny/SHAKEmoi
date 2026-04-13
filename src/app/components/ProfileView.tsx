@@ -253,7 +253,7 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
       </div>
 
       {/* Tabs */}
-      <div className="border-y border-zinc-800 px-4 sticky top-0 bg-black z-30">
+      <div className="border-y border-purple-900/30 px-4 sticky top-0 bg-[#0a0012] z-30">
         <div className="flex gap-6">
           <button 
             onClick={() => setActiveTab('shakes')}

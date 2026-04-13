@@ -71,12 +71,14 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
       } as any);
       
       // Create updated user object
-      const updatedUser = { 
-        ...currentUser, 
+      const updatedUser = {
+        ...currentUser,
         username: formData.username,
+        display_name: formData.displayName,
         displayName: formData.displayName,
         bio: formData.bio,
-        avatar: formData.avatar
+        avatar: formData.avatar,
+        profile_album_cover_url: formData.avatar,
       };
       
       // Update localStorage

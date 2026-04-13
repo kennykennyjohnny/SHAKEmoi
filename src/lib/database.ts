@@ -115,10 +115,10 @@ export async function getFeed(limit = 20): Promise<Post[]> {
       .from('posts')
       .select(`
         *,
-        user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color),
+        user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color),
         original_post:posts!original_post_id(
           *,
-          user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color)
+          user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
         )
       `)
       .in('user_id', followingIds)
@@ -170,10 +170,10 @@ export async function getUserPosts(userId: string, limit = 50): Promise<Post[]> 
       .from('posts')
       .select(`
         *,
-        user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color),
+        user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color),
         original_post:posts!original_post_id(
           *,
-          user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color)
+          user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
         )
       `)
       .eq('user_id', userId)
@@ -409,7 +409,7 @@ export async function getUserLikedPosts(userId: string, limit = 50): Promise<Pos
       .select(`
         post:posts(
           *,
-          user:users_profile!posts_user_id_fkey(id, username, color, profile_album_cover_url, profile_color)
+          user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
         )
       `)
       .eq('user_id', userId)
@@ -643,7 +643,7 @@ export async function searchPosts(query: string) {
       .from('posts')
       .select(`
         *,
-        user:users_profile!posts_user_id_fkey(id, username, color)
+        user:users_profile!posts_user_id_fkey(id, username, display_name, color)
       `)
       .or(`track_name.ilike.%${query}%,artist.ilike.%${query}%`)
       .order('created_at', { ascending: false })
@@ -772,10 +772,10 @@ export async function getUserReshakes(userId: string) {
       .from('posts')
       .select(`
         *,
-        user:users_profile!posts_user_id_fkey(id, username, color),
+        user:users_profile!posts_user_id_fkey(id, username, display_name, color),
         original_post:posts!posts_original_post_id_fkey(
           *,
-          user:users_profile!posts_user_id_fkey(id, username, color)
+          user:users_profile!posts_user_id_fkey(id, username, display_name, color)
         )
       `)
       .eq('user_id', userId)

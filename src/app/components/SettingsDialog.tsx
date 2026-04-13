@@ -1,6 +1,6 @@
-import { X, Music2, Check, LogOut, User, Bell, Shield, Info, ExternalLink } from 'lucide-react';
+import { X, Music2, Check, LogOut, User, Bell, Info, BellRing } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type MusicPlatform = 'spotify' | 'apple_music' | 'deezer' | 'youtube_music' | 'tidal';
 
@@ -15,15 +15,39 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
   const [musicService, setMusicService] = useState<MusicPlatform>(
     currentUser?.musicService || currentUser?.preferred_platform || 'spotify'
   );
-  const [notifications, setNotifications] = useState({
-    likes: true,
-    comments: true,
-    reshakes: true,
-    follows: true,
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
+    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+  );
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('shakemoi_notif_prefs');
+    return saved ? JSON.parse(saved) : {
+      likes: true,
+      comments: true,
+      reshakes: true,
+      follows: true,
+    };
   });
 
+  useEffect(() => {
+    localStorage.setItem('shakemoi_notif_prefs', JSON.stringify(notifications));
+  }, [notifications]);
+
+  const requestNotifPermission = async () => {
+    if (typeof Notification === 'undefined') {
+      alert('Les notifications ne sont pas supportées sur ce navigateur');
+      return;
+    }
+    const perm = await Notification.requestPermission();
+    setNotifPermission(perm);
+    if (perm === 'granted') {
+      new Notification('SHAKEmoi', {
+        body: 'Les notifications sont activées !',
+        icon: '/favicon.ico',
+      });
+    }
+  };
+
   const handleSave = async () => {
-    // Save platform preference to Supabase
     try {
       const { supabase } = await import('../../lib/supabase');
       await supabase
@@ -59,11 +83,14 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
 
   const platforms = [
     { id: 'spotify', name: 'Spotify', icon: '🟢', color: 'from-green-600 to-green-500' },
-    { id: 'apple_music', name: 'Apple Music', icon: '🔴', color: 'from-pink-600 to-red-500' },
-    { id: 'deezer', name: 'Deezer', icon: '🟣', color: 'from-purple-500 to-purple-400' },
-    { id: 'youtube_music', name: 'YouTube Music', icon: '🔴', color: 'from-red-600 to-red-500' },
-    { id: 'tidal', name: 'Tidal', icon: '🔵', color: 'from-cyan-600 to-cyan-500' },
+    { id: 'apple_music', name: 'Apple Music', icon: '🍎', color: 'from-pink-600 to-red-500' },
+    { id: 'deezer', name: 'Deezer', icon: '🎵', color: 'from-purple-500 to-purple-400' },
+    { id: 'youtube_music', name: 'YouTube Music', icon: '▶️', color: 'from-red-600 to-red-500' },
+    { id: 'tidal', name: 'Tidal', icon: '🌊', color: 'from-cyan-600 to-cyan-500' },
   ];
+
+  const avatar = currentUser?.avatar || currentUser?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${currentUser?.username}&background=random`;
+  const displayName = currentUser?.displayName || currentUser?.display_name || currentUser?.username;
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -71,7 +98,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-zinc-900 rounded-2xl w-full max-w-md border border-zinc-800 max-h-[85vh] overflow-y-auto"
+        className="bg-zinc-900 rounded-2xl w-full max-w-md border border-purple-800/30 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -83,20 +110,35 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
         </div>
 
         <div className="p-4 space-y-6">
-          {/* Compte */}
+          {/* Compte with avatar */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <User className="w-4 h-4 text-purple-400" />
               <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Compte</h3>
             </div>
-            <div className="bg-zinc-800 rounded-xl p-3 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Utilisateur</span>
-                <span className="text-sm text-white font-medium">@{currentUser?.username}</span>
+            <div className="bg-zinc-800 rounded-xl p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <img
+                  src={avatar}
+                  alt={displayName}
+                  className="w-14 h-14 rounded-full object-cover ring-2 ring-purple-500"
+                />
+                <div>
+                  <p className="font-bold text-white">{displayName}</p>
+                  <p className="text-sm text-purple-400">@{currentUser?.username}</p>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Email</span>
-                <span className="text-sm text-white font-medium truncate max-w-[200px]">{currentUser?.email || '—'}</span>
+              <div className="space-y-2 pt-2 border-t border-zinc-700">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-400">Email</span>
+                  <span className="text-sm text-white font-medium truncate max-w-[200px]">{currentUser?.email || '—'}</span>
+                </div>
+                {currentUser?.bio && (
+                  <div className="flex justify-between items-start">
+                    <span className="text-sm text-gray-400">Bio</span>
+                    <span className="text-sm text-white max-w-[200px] text-right">{currentUser.bio}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -141,6 +183,37 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
               <Bell className="w-4 h-4 text-purple-400" />
               <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Notifications</h3>
             </div>
+
+            {/* Push notification permission */}
+            <div className="bg-zinc-800 rounded-xl p-3 mb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BellRing className="w-4 h-4 text-purple-400" />
+                  <div>
+                    <p className="text-sm text-white font-medium">Notifications push</p>
+                    <p className="text-xs text-gray-500">Recevoir les notifs même l'app fermée</p>
+                  </div>
+                </div>
+                <button
+                  onClick={requestNotifPermission}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    notifPermission === 'granted'
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                      : notifPermission === 'denied'
+                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        : 'bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30'
+                  }`}
+                >
+                  {notifPermission === 'granted' ? 'Activées' : notifPermission === 'denied' ? 'Bloquées' : 'Activer'}
+                </button>
+              </div>
+              {notifPermission === 'denied' && (
+                <p className="text-xs text-red-400 mt-2">
+                  Les notifications sont bloquées. Va dans les paramètres de ton navigateur pour les réactiver.
+                </p>
+              )}
+            </div>
+
             <div className="bg-zinc-800 rounded-xl divide-y divide-zinc-700">
               {[
                 { key: 'likes', label: 'Likes sur mes shakes' },
@@ -165,7 +238,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
             </div>
           </div>
 
-          {/* A propos */}
+          {/* À propos */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Info className="w-4 h-4 text-purple-400" />
@@ -174,11 +247,15 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
             <div className="bg-zinc-800 rounded-xl p-3 space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-400">Version</span>
-                <span className="text-sm text-white">1.0.0 Beta</span>
+                <span className="text-sm text-white">1.1.0</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-400">Plateforme</span>
-                <span className="text-sm text-white">SHAKEmoi</span>
+                <span className="text-sm text-white font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">SHAKEmoi</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">Intégrations</span>
+                <span className="text-sm text-white">Spotify, Odesli, YouTube</span>
               </div>
             </div>
           </div>

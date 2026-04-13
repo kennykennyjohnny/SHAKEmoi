@@ -80,8 +80,9 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
         return {
           id: post.id,
           user: {
+            id: post.user?.id || '',
             username: post.user?.username || '',
-            displayName: post.user?.username || '',
+            displayName: post.user?.display_name || post.user?.username || '',
             avatar: post.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${post.user?.username}&background=random`
           },
           track: {
@@ -111,8 +112,9 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
           isLiked,
           isReshaked: false,
           reshakeFrom: post.is_reshake && post.original_post?.user ? {
+            id: post.original_post.user.id,
             username: post.original_post.user.username,
-            displayName: post.original_post.user.username
+            displayName: post.original_post.user.display_name || post.original_post.user.username
           } : undefined
         };
       }));
@@ -178,22 +180,29 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
   };
 
   const openInMusicApp = (shake: Shake) => {
-    // Get user's preferred platform (from currentUser settings)
     const platform = currentUser?.musicService || currentUser?.preferred_platform || 'spotify';
+    const trackId = shake.track.id;
 
-    // Try to get the URL for the user's preferred platform
-    const url = getPlatformUrl(shake.links, platform);
+    // Build complete links including spotify_url
+    const links = {
+      ...shake.links,
+      spotify_url: shake.links.spotify_url || shake.track.spotifyUri || (trackId ? `https://open.spotify.com/track/${trackId}` : null),
+    };
+
+    const url = getPlatformUrl(links, platform);
 
     if (url) {
+      // Try mobile deep link for Spotify
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && platform === 'spotify' && trackId) {
+        window.location.href = `spotify:track:${trackId}`;
+        setTimeout(() => window.open(url, '_blank'), 1500);
+        return;
+      }
       window.open(url, '_blank');
-    } else if (shake.links.spotify_url) {
-      // Fallback to Spotify
-      window.open(shake.links.spotify_url, '_blank');
+    } else if (links.spotify_url) {
+      window.open(links.spotify_url, '_blank');
     } else if (shake.links.odesli_page_url) {
-      // Ultimate fallback: song.link page with all platforms
       window.open(shake.links.odesli_page_url, '_blank');
-    } else if (shake.track.spotifyUri) {
-      window.open(shake.track.spotifyUri, '_blank');
     }
   };
 
@@ -266,16 +275,16 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className="bg-zinc-900 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-all overflow-hidden"
+            className="bg-purple-950/20 rounded-xl border border-purple-800/20 hover:border-purple-700/30 transition-all overflow-hidden"
           >
             {/* Reshake indicator */}
             {shake.reshakeFrom && (
               <div className="px-4 pt-2 flex items-center gap-2 text-xs text-purple-400">
                 <Repeat2 className="w-3 h-3" />
                 <button 
-                  onClick={() => setProfilePreview({ 
-                    userId: shake.reshakeFrom!.username, 
-                    username: shake.reshakeFrom!.username 
+                  onClick={() => setProfilePreview({
+                    userId: shake.reshakeFrom!.id || shake.reshakeFrom!.username,
+                    username: shake.reshakeFrom!.username
                   })}
                   className="hover:underline font-medium"
                 >
@@ -289,8 +298,8 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
             <div className="px-4 py-2 flex items-center gap-2">
               <button 
                 onClick={() => setProfilePreview({ 
-                  userId: shake.user.username, 
-                  username: shake.user.username 
+                  userId: shake.user.id || shake.user.username,
+                  username: shake.user.username
                 })}
               >
                 <img

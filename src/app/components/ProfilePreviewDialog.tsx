@@ -1,7 +1,8 @@
-import { X, Heart, Music, Users, UserPlus, UserCheck } from 'lucide-react';
+import { X, Heart, Music, Users, UserPlus, UserCheck, Play } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing } from '../../lib/database';
+import { supabase } from '../../lib/supabase';
 
 interface ProfilePreviewDialogProps {
   userId: string;
@@ -23,12 +24,32 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
   const loadProfile = async () => {
     try {
       setLoading(true);
-      const [profileData, postsData, followersCount, followingCount, followingStatus] = await Promise.all([
-        getUserProfile(userId),
-        getUserPosts(userId, 3), // Only 3 recent posts
-        getUserFollowersCount(userId),
-        getUserFollowingCount(userId),
-        isFollowing(userId)
+
+      // Try direct UUID lookup first
+      let profileData = await getUserProfile(userId);
+
+      // If not found, try by username
+      if (!profileData && username) {
+        const { data } = await supabase
+          .from('users_profile')
+          .select('*')
+          .eq('username', username)
+          .maybeSingle();
+        profileData = data;
+      }
+
+      if (!profileData) {
+        setLoading(false);
+        return;
+      }
+
+      const actualId = profileData.id;
+
+      const [postsData, followersCount, followingCount, followingStatus] = await Promise.all([
+        getUserPosts(actualId, 6),
+        getUserFollowersCount(actualId),
+        getUserFollowingCount(actualId),
+        isFollowing(actualId)
       ]);
 
       setProfile(profileData);
@@ -47,13 +68,14 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
   };
 
   const handleFollowToggle = async () => {
+    if (!profile) return;
     try {
       if (isFollowingUser) {
-        await unfollowUser(userId);
+        await unfollowUser(profile.id);
         setIsFollowingUser(false);
         setStats({ ...stats, followers: stats.followers - 1 });
       } else {
-        await followUser(userId);
+        await followUser(profile.id);
         setIsFollowingUser(true);
         setStats({ ...stats, followers: stats.followers + 1 });
       }
@@ -64,7 +86,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
 
   if (loading) {
     return (
-      <div 
+      <div
         className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
@@ -77,11 +99,24 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
   }
 
   if (!profile) {
-    return null;
+    return (
+      <div
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <div className="bg-zinc-900 rounded-2xl p-8 text-center">
+          <p className="text-gray-400">Profil introuvable</p>
+          <button onClick={onClose} className="mt-4 px-4 py-2 bg-purple-600 rounded-lg text-sm">Fermer</button>
+        </div>
+      </div>
+    );
   }
 
+  const displayName = profile.display_name || profile.username;
+  const avatar = profile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${profile.username}&background=random`;
+
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
@@ -89,7 +124,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-zinc-900 rounded-2xl w-full max-w-md border border-zinc-800 overflow-hidden"
+        className="bg-zinc-900 rounded-2xl w-full max-w-md border border-purple-800/30 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -107,14 +142,18 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
         <div className="px-4 pb-4">
           <div className="flex items-end justify-between -mt-12 mb-3">
             <img
-              src={profile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${username}&background=random`}
-              alt={username}
+              src={avatar}
+              alt={displayName}
               className="w-20 h-20 rounded-full object-cover border-4 border-zinc-900 ring-2 ring-purple-500"
             />
           </div>
 
-          <h2 className="text-xl font-bold text-white mb-1">{username}</h2>
-          <p className="text-sm text-purple-400 mb-3">@{username}</p>
+          <h2 className="text-xl font-bold text-white mb-0.5">{displayName}</h2>
+          <p className="text-sm text-purple-400 mb-1">@{profile.username}</p>
+
+          {profile.bio && (
+            <p className="text-sm text-gray-300 mb-3">{profile.bio}</p>
+          )}
 
           {/* Stats */}
           <div className="flex gap-4 mb-4 text-sm">
@@ -154,12 +193,12 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
             )}
           </button>
 
-          {/* Recent Posts */}
+          {/* Recent Posts Grid */}
           {posts.length > 0 && (
             <div className="mt-4">
               <h3 className="text-sm font-semibold text-gray-400 mb-2">Derniers shakes</h3>
               <div className="grid grid-cols-3 gap-2">
-                {posts.map((post) => (
+                {posts.slice(0, 6).map((post) => (
                   <div
                     key={post.id}
                     className="aspect-square rounded-lg overflow-hidden group cursor-pointer relative"
@@ -169,10 +208,11 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
                       alt={post.track_name}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="text-center">
-                        <Heart className="w-4 h-4 text-pink-500 mx-auto mb-1" />
-                        <span className="text-xs text-white font-semibold">{post.likes_count || 0}</span>
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-1">
+                      <p className="text-[10px] text-white font-semibold text-center truncate w-full">{post.track_name}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Heart className="w-3 h-3 text-pink-500" />
+                        <span className="text-[10px] text-white">{post.likes_count || 0}</span>
                       </div>
                     </div>
                   </div>
