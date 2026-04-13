@@ -5,10 +5,10 @@ import { Logo } from './Logo';
 import { supabase } from '../../lib/supabase';
 
 interface AuthDialogProps {
-  onAuthComplete: (user: any) => void;
+  onComplete: (user: any) => void;
 }
 
-export function AuthDialog({ onAuthComplete }: AuthDialogProps) {
+export function AuthDialog({ onComplete }: AuthDialogProps) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +73,7 @@ export function AuthDialog({ onAuthComplete }: AuthDialogProps) {
           .eq('id', authData.user.id)
           .single();
 
-        onAuthComplete(profile);
+        onComplete(profile);
       } else {
         // Login with Supabase Auth
         console.log('[AUTH] Login attempt:', { email: formData.email });
@@ -95,7 +95,7 @@ export function AuthDialog({ onAuthComplete }: AuthDialogProps) {
           .eq('id', data.user.id)
           .single();
 
-        onAuthComplete(profile);
+        onComplete(profile);
       }
     } catch (err: any) {
       console.error('Auth error:', err);

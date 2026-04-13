@@ -1,5 +1,6 @@
 // SHAKEMOI - Database Functions (TypeScript)
 import { supabase } from './supabase';
+import { getOdesliLinks } from './odesli';
 
 // ==================== TYPES ====================
 
@@ -200,6 +201,14 @@ export async function createPost(
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
+    // Fetch cross-platform links from Odesli
+    const odesliLinks = spotifyUrl ? await getOdesliLinks(spotifyUrl) : null;
+
+    // Build embed URL from track ID
+    const spotifyEmbedUrl = trackId
+      ? `https://open.spotify.com/embed/track/${trackId}`
+      : null;
+
     const { data, error } = await supabase
       .from('posts')
       .insert([{
@@ -210,7 +219,15 @@ export async function createPost(
         text: text,
         preview_url: previewUrl,
         spotify_url: spotifyUrl,
+        spotify_embed_url: spotifyEmbedUrl,
         track_id: trackId,
+        // Odesli universal links
+        apple_music_url: odesliLinks?.apple_music_url ?? null,
+        deezer_url: odesliLinks?.deezer_url ?? null,
+        youtube_url: odesliLinks?.youtube_url ?? null,
+        youtube_music_url: odesliLinks?.youtube_music_url ?? null,
+        tidal_url: odesliLinks?.tidal_url ?? null,
+        odesli_page_url: odesliLinks?.odesli_page_url ?? null,
         likes_count: 0,
         comments_count: 0,
         is_reshake: false

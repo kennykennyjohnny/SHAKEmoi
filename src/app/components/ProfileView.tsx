@@ -178,15 +178,7 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
   const openInMusicApp = (track: any) => {
     const spotifyUrl = track.spotifyUrl || track.spotify_url;
     if (spotifyUrl) {
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        const deepLink = `spotify:track:${track.id}`;
-        window.location.href = deepLink;
-        setTimeout(() => {
-          window.open(spotifyUrl, '_blank');
-        }, 1000);
-      } else {
-        window.open(spotifyUrl, '_blank');
-      }
+      window.open(spotifyUrl, '_blank');
     }
   };
 

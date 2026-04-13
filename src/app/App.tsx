@@ -11,6 +11,7 @@ import { OnboardingDialog } from './components/OnboardingDialog';
 import { ShareDialog } from './components/ShareDialog';
 import { AuthDialog } from './components/AuthDialog';
 import { SettingsDialog } from './components/SettingsDialog';
+import { ShakeTabsDialog } from './components/ShakeTabsDialog';
 import { Logo } from './components/Logo';
 import { LogoShowcase } from './components/LogoShowcase';
 import { supabase } from '../lib/supabase';
@@ -32,21 +33,6 @@ export default function App() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [refreshFeed, setRefreshFeed] = useState(0);
-
-  // Logo showcase mode
-  if (showLogoShowcase) {
-    return (
-      <div className="relative">
-        <LogoShowcase />
-        <button
-          onClick={() => setShowLogoShowcase(false)}
-          className="fixed top-4 right-4 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold text-white hover:opacity-90 transition-opacity shadow-xl z-50"
-        >
-          Retour à l'app
-        </button>
-      </div>
-    );
-  }
 
   useEffect(() => {
     // Check if user is authenticated with Supabase
@@ -129,6 +115,21 @@ export default function App() {
     setShowOnboarding(false);
     await loadUserData(preferences);
   };
+
+  // Logo showcase mode
+  if (showLogoShowcase) {
+    return (
+      <div className="relative">
+        <LogoShowcase />
+        <button
+          onClick={() => setShowLogoShowcase(false)}
+          className="fixed top-4 right-4 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold text-white hover:opacity-90 transition-opacity shadow-xl z-50"
+        >
+          Retour à l'app
+        </button>
+      </div>
+    );
+  }
 
   if (showOnboarding) {
     return <OnboardingDialog onComplete={handleOnboardingComplete} />;

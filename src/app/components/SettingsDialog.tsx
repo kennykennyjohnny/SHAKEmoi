@@ -2,16 +2,18 @@ import { X, Music2, Check, LogOut } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
+type MusicPlatform = 'spotify' | 'apple_music' | 'deezer' | 'youtube_music' | 'tidal';
+
 interface SettingsDialogProps {
   currentUser: any;
   onClose: () => void;
-  onSave: (settings: { musicService: 'spotify' | 'apple' | 'deezer' }) => void;
+  onSave: (settings: { musicService: MusicPlatform }) => void;
   onLogout?: () => void;
 }
 
 export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: SettingsDialogProps) {
-  const [musicService, setMusicService] = useState<'spotify' | 'apple' | 'deezer'>(
-    currentUser?.musicService || 'spotify'
+  const [musicService, setMusicService] = useState<MusicPlatform>(
+    currentUser?.musicService || currentUser?.preferred_platform || 'spotify'
   );
 
   const handleSave = () => {
@@ -75,8 +77,10 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
             <div className="space-y-2">
               {[
                 { id: 'spotify', name: 'Spotify', color: 'from-green-600 to-green-500' },
-                { id: 'apple', name: 'Apple Music', color: 'from-pink-600 to-red-500' },
-                { id: 'deezer', name: 'Deezer', color: 'from-orange-600 to-orange-500' }
+                { id: 'apple_music', name: 'Apple Music', color: 'from-pink-600 to-red-500' },
+                { id: 'deezer', name: 'Deezer', color: 'from-purple-500 to-purple-400' },
+                { id: 'youtube_music', name: 'YouTube Music', color: 'from-red-600 to-red-500' },
+                { id: 'tidal', name: 'Tidal', color: 'from-cyan-600 to-cyan-500' },
               ].map((service) => (
                 <button
                   key={service.id}

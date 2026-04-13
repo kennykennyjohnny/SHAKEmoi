@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Repeat2, ExternalLink, Play, MoreHorizontal, Loader2, UserPlus, UserCheck, Send } from 'lucide-react';
+import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, UserPlus, Send, Headphones } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
+import { getPlatformUrl } from '../../lib/odesli';
 import { ReshakeDialog } from './ReshakeDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
@@ -21,7 +22,17 @@ interface Shake {
     duration: string;
     previewUrl: string;
     spotifyUri: string;
-    appleMusicUrl: string;
+    spotifyEmbedUrl: string | null;
+  };
+  // Odesli universal links
+  links: {
+    spotify_url: string | null;
+    apple_music_url: string | null;
+    deezer_url: string | null;
+    youtube_url: string | null;
+    youtube_music_url: string | null;
+    tidal_url: string | null;
+    odesli_page_url: string | null;
   };
   caption?: string;
   likes: number;
@@ -76,10 +87,19 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
             title: post.track_name,
             artist: post.artist,
             coverUrl: post.cover_url,
-            duration: '3:00', // Placeholder
+            duration: '3:00',
             previewUrl: post.preview_url || '',
             spotifyUri: post.spotify_url || '',
-            appleMusicUrl: ''
+            spotifyEmbedUrl: post.spotify_embed_url || (post.track_id ? `https://open.spotify.com/embed/track/${post.track_id}` : null),
+          },
+          links: {
+            spotify_url: post.spotify_url || null,
+            apple_music_url: post.apple_music_url || null,
+            deezer_url: post.deezer_url || null,
+            youtube_url: post.youtube_url || null,
+            youtube_music_url: post.youtube_music_url || null,
+            tidal_url: post.tidal_url || null,
+            odesli_page_url: post.odesli_page_url || null,
           },
           caption: post.text,
           likes: post.likes_count || 0,
@@ -87,7 +107,7 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
           reshakes: post.reshakes_count || 0,
           timestamp: post.created_at,
           isLiked,
-          isReshaked: false, // TODO: implement check
+          isReshaked: false,
           reshakeFrom: post.is_reshake && post.original_post?.user ? {
             username: post.original_post.user.username,
             displayName: post.original_post.user.username
@@ -155,26 +175,23 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
     }
   };
 
-  const openInMusicApp = (track: any) => {
-    if (track.spotifyUri || track.spotifyUrl) {
-      // Try to open in Spotify app first (deep link)
-      const spotifyUrl = track.spotifyUri?.startsWith('http') 
-        ? track.spotifyUri 
-        : track.spotifyUrl || `https://open.spotify.com/track/${track.id}`;
-      
-      // For mobile, use spotify:// protocol
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        const deepLink = `spotify:track:${track.id}`;
-        window.location.href = deepLink;
-        // Fallback to web if app not installed
-        setTimeout(() => {
-          window.open(spotifyUrl, '_blank');
-        }, 1000);
-      } else {
-        window.open(spotifyUrl, '_blank');
-      }
-    } else if (track.appleMusicUrl) {
-      window.open(track.appleMusicUrl, '_blank');
+  const openInMusicApp = (shake: Shake) => {
+    // Get user's preferred platform (from currentUser settings)
+    const platform = currentUser?.musicService || currentUser?.preferred_platform || 'spotify';
+
+    // Try to get the URL for the user's preferred platform
+    const url = getPlatformUrl(shake.links, platform);
+
+    if (url) {
+      window.open(url, '_blank');
+    } else if (shake.links.spotify_url) {
+      // Fallback to Spotify
+      window.open(shake.links.spotify_url, '_blank');
+    } else if (shake.links.odesli_page_url) {
+      // Ultimate fallback: song.link page with all platforms
+      window.open(shake.links.odesli_page_url, '_blank');
+    } else if (shake.track.spotifyUri) {
+      window.open(shake.track.spotifyUri, '_blank');
     }
   };
 
@@ -342,13 +359,13 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
                       )}
                       <button
                         onClick={() => {
-                          openInMusicApp(shake.track);
+                          openInMusicApp(shake);
                           setMenuOpenId(null);
                         }}
                         className="w-full px-4 py-2.5 text-left text-sm hover:bg-zinc-700 transition-colors flex items-center gap-2"
                       >
-                        <ExternalLink className="w-4 h-4" />
-                        Ouvrir dans l'app
+                        <Headphones className="w-4 h-4" />
+                        Écouter
                       </button>
                     </motion.div>
                   )}
@@ -356,36 +373,53 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
               </div>
             </div>
 
-            {/* Track Card */}
-            <div className="px-4 pb-3">
-              <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg p-3 flex gap-3 group cursor-pointer hover:from-zinc-700 hover:to-zinc-800 transition-all">
-                <div className="relative flex-shrink-0">
-                  <img
-                    src={shake.track.coverUrl}
-                    alt={shake.track.title}
-                    className="w-16 h-16 rounded-md object-cover"
-                  />
-                  <button
-                    onClick={() => onPlayTrack(shake.track)}
-                    className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md"
-                  >
-                    <Play className="w-6 h-6 text-white fill-white" />
-                  </button>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-sm truncate">{shake.track.title}</h3>
-                  <p className="text-xs text-gray-400 truncate">{shake.track.artist}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-gray-500">{shake.track.duration}</span>
+            {/* Spotify Embed */}
+            {shake.track.spotifyEmbedUrl && (
+              <div className="px-4 pb-2">
+                <iframe
+                  src={`${shake.track.spotifyEmbedUrl}?theme=0&utm_source=generator`}
+                  width="100%"
+                  height="80"
+                  frameBorder="0"
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                  className="rounded-lg"
+                  title={`${shake.track.title} - ${shake.track.artist}`}
+                />
+              </div>
+            )}
+
+            {/* Track Card (fallback when no embed) */}
+            {!shake.track.spotifyEmbedUrl && (
+              <div className="px-4 pb-3">
+                <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg p-3 flex gap-3 group cursor-pointer hover:from-zinc-700 hover:to-zinc-800 transition-all">
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={shake.track.coverUrl}
+                      alt={shake.track.title}
+                      className="w-16 h-16 rounded-md object-cover"
+                    />
+                    <button
+                      onClick={() => onPlayTrack(shake.track)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md"
+                    >
+                      <Play className="w-6 h-6 text-white fill-white" />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-sm truncate">{shake.track.title}</h3>
+                    <p className="text-xs text-gray-400 truncate">{shake.track.artist}</p>
                   </div>
                 </div>
               </div>
+            )}
 
-              {/* Caption */}
-              {shake.caption && (
-                <p className="mt-2 text-sm leading-relaxed">{shake.caption}</p>
-              )}
-            </div>
+            {/* Caption */}
+            {shake.caption && (
+              <div className="px-4 pb-2">
+                <p className="text-sm leading-relaxed">{shake.caption}</p>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="px-4 pb-2 flex items-center gap-6">
@@ -433,12 +467,13 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
                 </span>
               )}
 
-              <button 
-                onClick={() => openInMusicApp(shake.track)}
-                className="flex items-center gap-1.5 group ml-auto"
-                title="Ouvrir dans l'application"
+              <button
+                onClick={() => openInMusicApp(shake)}
+                className="flex items-center gap-1.5 group ml-auto px-3 py-1 rounded-full bg-purple-600/10 hover:bg-purple-600/20 transition-colors"
+                title="Écouter sur ta plateforme"
               >
-                <ExternalLink className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+                <Headphones className="w-4 h-4 text-purple-400 group-hover:text-purple-300 transition-colors" />
+                <span className="text-xs font-medium text-purple-400 group-hover:text-purple-300 hidden sm:inline">Écouter</span>
               </button>
             </div>
           </motion.article>
