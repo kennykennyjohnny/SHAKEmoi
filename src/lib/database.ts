@@ -570,7 +570,7 @@ export async function getUserFollowers(userId: string, limit = 100) {
     const { data, error } = await supabase
       .from('follows')
       .select(`
-        follower:users_profile!follows_follower_id_fkey(id, username, color, feels_count, feelings_count)
+        follower:users_profile!follows_follower_id_fkey(id, username, display_name, color, profile_album_cover_url)
       `)
       .eq('following_id', userId)
       .order('created_at', { ascending: false })
@@ -589,7 +589,7 @@ export async function getUserFollowing(userId: string, limit = 100) {
     const { data, error } = await supabase
       .from('follows')
       .select(`
-        following:users_profile!follows_following_id_fkey(id, username, color, feels_count, feelings_count)
+        following:users_profile!follows_following_id_fkey(id, username, display_name, color, profile_album_cover_url)
       `)
       .eq('follower_id', userId)
       .order('created_at', { ascending: false })

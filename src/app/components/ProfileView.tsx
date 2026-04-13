@@ -1,10 +1,11 @@
-import { Users, Music, Heart, Settings, ExternalLink, Play, Trash2, Repeat2, MessageCircle, Loader2, Edit3 } from 'lucide-react';
+import { Users, Music, Heart, Settings, Play, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, Headphones, UserMinus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
 import { CommentsDialog } from './CommentsDialog';
-import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, likePost, unlikePost, hasLikedPost } from '../../lib/database';
+import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, likePost, unlikePost, hasLikedPost } from '../../lib/database';
+import { getPlatformUrl } from '../../lib/odesli';
 
 interface ProfileViewProps {
   user: any;
@@ -22,6 +23,11 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
   const [userReshakes, setUserReshakes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
+  const [expandedShakeId, setExpandedShakeId] = useState<string | null>(null);
+  const [showFollowersList, setShowFollowersList] = useState<'followers' | 'following' | null>(null);
+  const [followersList, setFollowersList] = useState<any[]>([]);
+  const [followingList, setFollowingList] = useState<any[]>([]);
+  const [loadingList, setLoadingList] = useState(false);
   const [stats, setStats] = useState({
     shakes: 0,
     followers: 0,
@@ -58,6 +64,14 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
             spotifyUrl: post.spotify_url,
             spotifyEmbedUrl: post.spotify_embed_url || (post.track_id ? `https://open.spotify.com/embed/track/${post.track_id}?theme=0` : null),
           },
+          links: {
+            spotify_url: post.spotify_url || null,
+            apple_music_url: post.apple_music_url || null,
+            deezer_url: post.deezer_url || null,
+            youtube_url: post.youtube_url || null,
+            youtube_music_url: post.youtube_music_url || null,
+            tidal_url: post.tidal_url || null,
+          },
           caption: post.text,
           likes: post.likes_count || 0,
           reshakes: post.reshakes_count || 0,
@@ -79,6 +93,14 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
             previewUrl: post.preview_url,
             spotifyUrl: post.spotify_url,
             spotifyEmbedUrl: post.spotify_embed_url || (post.track_id ? `https://open.spotify.com/embed/track/${post.track_id}?theme=0` : null),
+          },
+          links: {
+            spotify_url: post.spotify_url || null,
+            apple_music_url: post.apple_music_url || null,
+            deezer_url: post.deezer_url || null,
+            youtube_url: post.youtube_url || null,
+            youtube_music_url: post.youtube_music_url || null,
+            tidal_url: post.tidal_url || null,
           },
           caption: post.text,
           likes: post.likes_count || 0,
@@ -139,6 +161,7 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
       setUserShakes(userShakes.filter(shake => shake.id !== shakeId));
       setUserReshakes(userReshakes.filter(shake => shake.id !== shakeId));
       setStats({ ...stats, shakes: stats.shakes - 1 });
+      if (expandedShakeId === shakeId) setExpandedShakeId(null);
     } catch (error) {
       console.error('Failed to delete shake:', error);
       alert('Erreur lors de la suppression');
@@ -156,16 +179,12 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
       if (shake.isLiked) {
         await unlikePost(shakeId);
         setCurrentList(currentList.map(s =>
-          s.id === shakeId
-            ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) }
-            : s
+          s.id === shakeId ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) } : s
         ));
       } else {
         await likePost(shakeId);
         setCurrentList(currentList.map(s =>
-          s.id === shakeId
-            ? { ...s, isLiked: true, likes: s.likes + 1 }
-            : s
+          s.id === shakeId ? { ...s, isLiked: true, likes: s.likes + 1 } : s
         ));
       }
     } catch (error) {
@@ -173,11 +192,54 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
     }
   };
 
+  const openInMusicApp = (shake: any) => {
+    const platform = user?.musicService || user?.preferred_platform || 'spotify';
+    const links = {
+      ...shake.links,
+      spotify_url: shake.links?.spotify_url || shake.track.spotifyUrl || null,
+    };
+    const url = getPlatformUrl(links, platform);
+    if (url) {
+      window.open(url, '_blank');
+    } else {
+      const q = encodeURIComponent(`${shake.track.title} ${shake.track.artist}`);
+      window.open(`https://open.spotify.com/search/${q}`, '_blank');
+    }
+  };
+
+  const loadFollowersList = async (type: 'followers' | 'following') => {
+    setShowFollowersList(type);
+    setLoadingList(true);
+    try {
+      if (type === 'followers') {
+        const data = await getUserFollowers(user.id);
+        setFollowersList(data);
+      } else {
+        const data = await getUserFollowing(user.id);
+        setFollowingList(data);
+      }
+    } catch (err) {
+      console.error('Error loading list:', err);
+    } finally {
+      setLoadingList(false);
+    }
+  };
+
+  const handleUnfollow = async (targetUserId: string) => {
+    try {
+      await unfollowUser(targetUserId);
+      setFollowingList(followingList.filter(u => u.id !== targetUserId));
+      setStats({ ...stats, following: Math.max(0, stats.following - 1) });
+    } catch (err) {
+      console.error('Error unfollowing:', err);
+    }
+  };
+
   const currentShakes = activeTab === 'shakes' ? userShakes : userReshakes;
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Profile Header - No cover photo, compact layout */}
+      {/* Profile Header */}
       <div className="px-4 pt-6 pb-4">
         <div className="flex items-start gap-4">
           {/* Avatar */}
@@ -192,29 +254,27 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
             }}
           />
 
-          {/* Stats + Actions on the right */}
+          {/* Info + Stats */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-lg font-bold text-white truncate">{user.displayName}</h1>
-            </div>
+            <h1 className="text-lg font-bold text-white truncate">{user.displayName}</h1>
             <p className="text-sm text-purple-400/70 mb-3">@{user.username}</p>
 
-            {/* Stats Row */}
+            {/* Stats Row - clickable for own profile */}
             <div className="flex items-center gap-5">
               <div className="text-center">
                 <p className="font-bold text-white text-lg leading-tight">{stats.shakes}</p>
                 <p className="text-[10px] text-purple-400/50 uppercase tracking-wider">Shakes</p>
               </div>
               <div className="w-px h-8 bg-purple-800/30" />
-              <div className="text-center">
+              <button onClick={() => loadFollowersList('followers')} className="text-center hover:opacity-80 transition-opacity">
                 <p className="font-bold text-white text-lg leading-tight">{stats.followers}</p>
                 <p className="text-[10px] text-purple-400/50 uppercase tracking-wider">Abonnés</p>
-              </div>
+              </button>
               <div className="w-px h-8 bg-purple-800/30" />
-              <div className="text-center">
+              <button onClick={() => loadFollowersList('following')} className="text-center hover:opacity-80 transition-opacity">
                 <p className="font-bold text-white text-lg leading-tight">{stats.following}</p>
                 <p className="text-[10px] text-purple-400/50 uppercase tracking-wider">Suivis</p>
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -246,7 +306,7 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
       <div className="border-y border-purple-800/20 px-4 sticky top-0 bg-[#0a0012] z-30">
         <div className="flex gap-6">
           <button
-            onClick={() => setActiveTab('shakes')}
+            onClick={() => { setActiveTab('shakes'); setExpandedShakeId(null); }}
             className={`py-3 border-b-2 font-semibold text-sm transition-colors ${
               activeTab === 'shakes'
                 ? 'border-purple-500 text-purple-400'
@@ -256,7 +316,7 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
             Mes shakes
           </button>
           <button
-            onClick={() => setActiveTab('reshakes')}
+            onClick={() => { setActiveTab('reshakes'); setExpandedShakeId(null); }}
             className={`py-3 border-b-2 font-semibold text-sm transition-colors ${
               activeTab === 'reshakes'
                 ? 'border-green-500 text-green-400'
@@ -268,119 +328,149 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
         </div>
       </div>
 
-      {/* Shakes List */}
-      <div className="p-4 space-y-3">
+      {/* Cover Art Grid */}
+      <div className="p-3">
         {loading ? (
           <div className="text-center py-8">
             <Loader2 className="w-8 h-8 text-purple-500 animate-spin mx-auto mb-2" />
             <p className="text-purple-400/50">Chargement...</p>
           </div>
         ) : currentShakes.length > 0 ? (
-          currentShakes.map((shake, index) => (
-            <motion.div
-              key={shake.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="bg-purple-950/25 rounded-xl border border-purple-800/20 hover:border-purple-700/30 transition-all overflow-hidden"
-            >
-              {/* Reshake indicator */}
-              {activeTab === 'reshakes' && shake.originalUser && (
-                <div className="flex items-center gap-2 text-xs text-green-400/80 px-4 pt-2">
-                  <Repeat2 className="w-3 h-3" />
-                  <span>Reshake de @{shake.originalUser.username}</span>
-                </div>
-              )}
-
-              <div className="p-4">
-                {/* Caption */}
-                {shake.caption && (
-                  <p className="text-sm text-purple-200/80 mb-3">{shake.caption}</p>
-                )}
-
-                {/* Spotify Embed or Track Card */}
-                {shake.track.spotifyEmbedUrl ? (
-                  <div className="rounded-lg overflow-hidden mb-3">
-                    <iframe
-                      src={shake.track.spotifyEmbedUrl}
-                      width="100%"
-                      height="152"
-                      frameBorder="0"
-                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                      loading="lazy"
-                      className="rounded-lg"
-                    />
+          <>
+            {/* Grid of covers */}
+            <div className="grid grid-cols-3 gap-1.5">
+              {currentShakes.map((shake, index) => (
+                <motion.button
+                  key={shake.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.03 }}
+                  onClick={() => setExpandedShakeId(expandedShakeId === shake.id ? null : shake.id)}
+                  className={`relative aspect-square rounded-lg overflow-hidden group transition-all ${
+                    expandedShakeId === shake.id ? 'ring-2 ring-purple-500 scale-[0.97]' : 'hover:opacity-90'
+                  }`}
+                >
+                  <img
+                    src={shake.track.coverUrl}
+                    alt={shake.track.title}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Overlay on hover */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                    <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                   </div>
-                ) : (
-                  <div className="flex gap-3 mb-3">
-                    <div className="relative group flex-shrink-0">
-                      <img
-                        src={shake.track.coverUrl}
-                        alt={shake.track.title}
-                        className="w-16 h-16 rounded-lg object-cover"
-                      />
-                      <button
-                        onClick={() => onPlayTrack(shake.track)}
-                        className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
-                      >
-                        <Play className="w-6 h-6 text-white fill-white" />
-                      </button>
+                  {/* Reshake badge */}
+                  {activeTab === 'reshakes' && shake.originalUser && (
+                    <div className="absolute top-1 left-1 bg-green-500/80 rounded-full p-0.5">
+                      <Repeat2 className="w-2.5 h-2.5 text-white" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-sm text-white truncate">{shake.track.title}</h4>
-                      <p className="text-xs text-purple-300/60 truncate">{shake.track.artist}</p>
-                    </div>
+                  )}
+                  {/* Like count */}
+                  <div className="absolute bottom-1 right-1 bg-black/60 rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
+                    <Heart className="w-2.5 h-2.5 text-pink-400" />
+                    <span className="text-[9px] text-white font-medium">{shake.likes}</span>
                   </div>
-                )}
+                </motion.button>
+              ))}
+            </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-4 pt-2 border-t border-purple-800/20">
-                  <button
-                    onClick={() => toggleLike(shake.id)}
-                    className="flex items-center gap-1.5 group"
+            {/* Expanded Detail View */}
+            <AnimatePresence>
+              {expandedShakeId && (() => {
+                const shake = currentShakes.find(s => s.id === expandedShakeId);
+                if (!shake) return null;
+
+                return (
+                  <motion.div
+                    key={expandedShakeId}
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden mt-3"
                   >
-                    <Heart
-                      className={`w-5 h-5 transition-all ${
-                        shake.isLiked
-                          ? 'text-pink-500 fill-pink-500'
-                          : 'text-purple-400/50 group-hover:text-pink-500'
-                      }`}
-                    />
-                    <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-400/50'}`}>
-                      {shake.likes}
-                    </span>
-                  </button>
+                    <div className="bg-purple-950/40 rounded-xl border border-purple-800/30 overflow-hidden">
+                      {/* Reshake indicator */}
+                      {activeTab === 'reshakes' && shake.originalUser && (
+                        <div className="flex items-center gap-2 text-xs text-green-400/80 px-4 pt-3">
+                          <Repeat2 className="w-3 h-3" />
+                          <span>Reshake de @{shake.originalUser.username}</span>
+                        </div>
+                      )}
 
-                  <button
-                    onClick={() => setCommentsPostId(shake.id)}
-                    className="flex items-center gap-1.5 group"
-                  >
-                    <MessageCircle className="w-5 h-5 text-purple-400/50 group-hover:text-blue-400 transition-colors" />
-                    <span className="text-xs font-medium text-purple-400/50">{shake.comments}</span>
-                  </button>
+                      <div className="p-4">
+                        {/* Caption */}
+                        {shake.caption && (
+                          <p className="text-sm text-purple-200/80 mb-3">{shake.caption}</p>
+                        )}
 
-                  <button className="flex items-center gap-1.5 group">
-                    <Repeat2 className="w-5 h-5 text-purple-400/50 group-hover:text-green-400 transition-colors" />
-                    <span className="text-xs font-medium text-purple-400/50">{shake.reshakes}</span>
-                  </button>
+                        {/* Spotify Embed */}
+                        {shake.track.spotifyEmbedUrl ? (
+                          <div className="rounded-lg overflow-hidden mb-3">
+                            <iframe
+                              src={`${shake.track.spotifyEmbedUrl}&utm_source=generator`}
+                              width="100%"
+                              height="152"
+                              frameBorder="0"
+                              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                              loading="lazy"
+                              className="rounded-lg"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex gap-3 mb-3">
+                            <img src={shake.track.coverUrl} alt={shake.track.title} className="w-14 h-14 rounded-lg object-cover" />
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                              <h4 className="font-bold text-sm text-white truncate">{shake.track.title}</h4>
+                              <p className="text-xs text-purple-300/60 truncate">{shake.track.artist}</p>
+                            </div>
+                          </div>
+                        )}
 
-                  <span className="text-xs text-purple-500/40 ml-auto">{shake.timestamp}</span>
+                        {/* Open in app */}
+                        <button
+                          onClick={() => openInMusicApp(shake)}
+                          className="w-full py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity mb-3"
+                        >
+                          <Headphones className="w-3.5 h-3.5" />
+                          Ouvrir dans l'app
+                        </button>
 
-                  <button
-                    onClick={() => {
-                      if (confirm('Supprimer ce shake ?')) {
-                        handleDeleteShake(shake.id);
-                      }
-                    }}
-                    className="p-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-colors"
-                    title="Supprimer"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-400" />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))
+                        {/* Actions */}
+                        <div className="flex items-center gap-4 pt-2 border-t border-purple-800/20">
+                          <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group">
+                            <Heart className={`w-5 h-5 transition-all ${shake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-400/50 group-hover:text-pink-500'}`} />
+                            <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-400/50'}`}>{shake.likes}</span>
+                          </button>
+
+                          <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
+                            <MessageCircle className="w-5 h-5 text-purple-400/50 group-hover:text-blue-400 transition-colors" />
+                            <span className="text-xs font-medium text-purple-400/50">{shake.comments}</span>
+                          </button>
+
+                          <button className="flex items-center gap-1.5 group">
+                            <Repeat2 className="w-5 h-5 text-purple-400/50 group-hover:text-green-400 transition-colors" />
+                            <span className="text-xs font-medium text-purple-400/50">{shake.reshakes}</span>
+                          </button>
+
+                          <span className="text-xs text-purple-500/40 ml-auto">{shake.timestamp}</span>
+
+                          <button
+                            onClick={() => {
+                              if (confirm('Supprimer ce shake ?')) handleDeleteShake(shake.id);
+                            }}
+                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-400" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })()}
+            </AnimatePresence>
+          </>
         ) : (
           <div className="text-center py-12">
             <div className="w-16 h-16 mx-auto mb-4 bg-purple-950/40 rounded-full flex items-center justify-center border border-purple-800/20">
@@ -396,6 +486,76 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
           </div>
         )}
       </div>
+
+      {/* Followers / Following List Dialog */}
+      <AnimatePresence>
+        {showFollowersList && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowFollowersList(null)}
+          >
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#0f0020] rounded-2xl w-full max-w-sm max-h-[70vh] flex flex-col border border-purple-800/30"
+            >
+              {/* Header */}
+              <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
+                <h3 className="font-bold text-white">
+                  {showFollowersList === 'followers' ? `Abonnés (${stats.followers})` : `Abonnements (${stats.following})`}
+                </h3>
+                <button onClick={() => setShowFollowersList(null)} className="p-1.5 hover:bg-purple-900/40 rounded-full">
+                  <X className="w-5 h-5 text-purple-300/60" />
+                </button>
+              </div>
+
+              {/* List */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {loadingList ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+                  </div>
+                ) : (showFollowersList === 'followers' ? followersList : followingList).length === 0 ? (
+                  <p className="text-center text-purple-400/50 py-8">
+                    {showFollowersList === 'followers' ? 'Aucun abonné' : 'Aucun abonnement'}
+                  </p>
+                ) : (
+                  (showFollowersList === 'followers' ? followersList : followingList).map((person: any) => (
+                    <div key={person.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-purple-900/30 transition-colors">
+                      <img
+                        src={person.profile_album_cover_url || `https://ui-avatars.com/api/?name=${person.username}&background=random`}
+                        alt={person.username}
+                        className="w-10 h-10 rounded-full object-cover ring-1 ring-purple-700/30"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-white truncate">{person.display_name || person.username}</p>
+                        <p className="text-xs text-purple-400/50 truncate">@{person.username}</p>
+                      </div>
+                      {/* Only show unfollow for "following" list */}
+                      {showFollowersList === 'following' && (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Ne plus suivre @${person.username} ?`)) handleUnfollow(person.id);
+                          }}
+                          className="p-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-colors"
+                          title="Ne plus suivre"
+                        >
+                          <UserMinus className="w-4 h-4 text-red-400" />
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Comments Dialog */}
       <AnimatePresence>
