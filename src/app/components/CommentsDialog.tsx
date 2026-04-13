@@ -1,0 +1,136 @@
+import { useState, useEffect } from 'react';
+import { X, Send, Loader2 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { getPostComments, addComment } from '../../lib/database';
+
+interface CommentsDialogProps {
+  postId: string;
+  onClose: () => void;
+  onCommentAdded?: () => void;
+}
+
+export function CommentsDialog({ postId, onClose, onCommentAdded }: CommentsDialogProps) {
+  const [comments, setComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    loadComments();
+  }, [postId]);
+
+  const loadComments = async () => {
+    setLoading(true);
+    try {
+      const data = await getPostComments(postId);
+      setComments(data);
+    } catch (error) {
+      console.error('Error loading comments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!newComment.trim() || sending) return;
+    setSending(true);
+    try {
+      const result = await addComment(postId, newComment.trim());
+      if (result.success) {
+        setNewComment('');
+        await loadComments();
+        onCommentAdded?.();
+      }
+    } catch (error) {
+      console.error('Error sending comment:', error);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffMins < 1) return "À l'instant";
+    if (diffMins < 60) return `${diffMins}min`;
+    if (diffHours < 24) return `${diffHours}h`;
+    return `${diffDays}j`;
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        exit={{ y: 100 }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-zinc-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80vh] flex flex-col border border-zinc-800"
+      >
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+          <h3 className="font-bold text-white">Commentaires ({comments.length})</h3>
+          <button onClick={onClose} className="p-1.5 hover:bg-zinc-800 rounded-full transition-colors">
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        {/* Comments list */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+            </div>
+          ) : comments.length === 0 ? (
+            <p className="text-center text-gray-400 py-8">Aucun commentaire. Sois le premier !</p>
+          ) : (
+            comments.map((comment: any) => (
+              <div key={comment.id} className="flex gap-3">
+                <img
+                  src={comment.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${comment.user?.username || 'U'}&background=random`}
+                  alt=""
+                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm text-white">@{comment.user?.username || 'inconnu'}</span>
+                    <span className="text-xs text-gray-500">{formatTime(comment.created_at)}</span>
+                  </div>
+                  <p className="text-sm text-gray-300 mt-0.5">{comment.text}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Input */}
+        <div className="px-4 py-3 border-t border-zinc-800 flex items-center gap-2">
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            placeholder="Écrire un commentaire..."
+            className="flex-1 bg-zinc-800 border border-zinc-700 rounded-full px-4 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!newComment.trim() || sending}
+            className="p-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-30 rounded-full transition-colors"
+          >
+            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}

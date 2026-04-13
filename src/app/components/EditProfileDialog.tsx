@@ -65,8 +65,10 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
       // Update profile in Supabase
       await updateUserProfile(currentUser.id, {
         username: formData.username,
+        display_name: formData.displayName,
+        bio: formData.bio,
         profile_album_cover_url: formData.avatar,
-      });
+      } as any);
       
       // Create updated user object
       const updatedUser = { 
@@ -83,11 +85,6 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
       if (onUpdateUser) {
         onUpdateUser(updatedUser);
       }
-      
-      // Force reload after 500ms to ensure changes are visible
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
       
       onClose();
     } catch (error) {

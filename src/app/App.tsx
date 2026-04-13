@@ -17,7 +17,7 @@ import { LogoShowcase } from './components/LogoShowcase';
 import { supabase } from '../lib/supabase';
 import { getCurrentUser, getUserProfile } from '../lib/database';
 
-type View = 'feed' | 'top' | 'profile' | 'notifications';
+type View = 'feed' | 'search' | 'top' | 'profile' | 'notifications';
 
 export default function App() {
   // CHANGE THIS TO false WHEN YOU'VE CHOSEN YOUR LOGO
@@ -143,6 +143,8 @@ export default function App() {
     switch (currentView) {
       case 'feed':
         return <FeedView currentUser={currentUser} onPlayTrack={setCurrentTrack} refreshFeed={refreshFeed} />;
+      case 'search':
+        return <SearchView onPlayTrack={setCurrentTrack} />;
       case 'top':
         return (
           <div className="h-full overflow-y-auto">
@@ -228,10 +230,13 @@ export default function App() {
             </button>
             
             <button
-              onClick={() => setShowShakeTabs(true)}
-              className="relative -mt-6 p-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full shadow-lg"
+              onClick={() => setCurrentView('search')}
+              className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
+                currentView === 'search' ? 'text-purple-500 bg-purple-500/10' : 'text-gray-400'
+              }`}
             >
-              <PlusCircle className="w-6 h-6" />
+              <Search className="w-5 h-5" />
+              <span className="text-xs font-medium">Recherche</span>
             </button>
             
             <button

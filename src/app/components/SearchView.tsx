@@ -1,48 +1,52 @@
 import { useState, useEffect } from 'react';
-import { Search as SearchIcon, TrendingUp, Clock, Play, User, Music, Flame } from 'lucide-react';
+import { Search as SearchIcon, Play, User, Music, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { spotify } from '../../lib/spotify';
 import { searchUsers, getTopPosts } from '../../lib/database';
 
 interface SearchViewProps {
   onPlayTrack: (track: any) => void;
-  showTopOnly?: boolean;
 }
 
-export function SearchView({ onPlayTrack, showTopOnly = false }: SearchViewProps) {
+export function SearchView({ onPlayTrack }: SearchViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'tracks' | 'users'>('tracks');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [trackResults, setTrackResults] = useState<any[]>([]);
   const [userResults, setUserResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [topPosts, setTopPosts] = useState<any[]>([]);
+  const [loadingTop, setLoadingTop] = useState(true);
 
-  // Load TOP posts if showTopOnly
+  // Load top posts on mount for default view
   useEffect(() => {
-    if (showTopOnly) {
-      loadTopPosts();
-    }
-  }, [showTopOnly]);
+    loadTopPosts();
+  }, []);
 
   const loadTopPosts = async () => {
-    setLoading(true);
+    setLoadingTop(true);
     try {
-      const posts = await getTopPosts(50);
+      const posts = await getTopPosts(20);
       setTopPosts(posts);
     } catch (error) {
       console.error('Error loading top posts:', error);
     } finally {
-      setLoading(false);
+      setLoadingTop(false);
     }
   };
 
+  // Debounced search
   useEffect(() => {
-    if (searchQuery.length >= 2) {
-      performSearch();
-    } else {
-      setSearchResults([]);
+    if (searchQuery.length < 2) {
+      setTrackResults([]);
       setUserResults([]);
+      return;
     }
+
+    const timer = setTimeout(() => {
+      performSearch();
+    }, 400);
+
+    return () => clearTimeout(timer);
   }, [searchQuery, activeTab]);
 
   const performSearch = async () => {
@@ -50,12 +54,19 @@ export function SearchView({ onPlayTrack, showTopOnly = false }: SearchViewProps
     try {
       if (activeTab === 'tracks') {
         const tracks = await spotify.searchTracks(searchQuery);
-        setSearchResults(tracks);
-        setUserResults([]);
-      } else if (activeTab === 'users') {
+        setTrackResults(tracks.map((t: any) => ({
+          id: t.id,
+          title: t.name,
+          artist: t.artist,
+          artists: t.artists,
+          album: t.album,
+          coverUrl: t.cover,
+          previewUrl: t.preview_url,
+          spotifyUrl: t.spotify_url,
+        })));
+      } else {
         const users = await searchUsers(searchQuery);
         setUserResults(users);
-        setSearchResults([]);
       }
     } catch (error) {
       console.error('Search error:', error);
@@ -64,125 +75,7 @@ export function SearchView({ onPlayTrack, showTopOnly = false }: SearchViewProps
     }
   };
 
-  const trendingTracks = [
-    {
-      id: '1',
-      title: 'As It Was',
-      artist: 'Harry Styles',
-      shakes: '12.5K',
-      coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200&h=200&fit=crop',
-      duration: '2:47'
-    },
-    {
-      id: '2',
-      title: 'Heat Waves',
-      artist: 'Glass Animals',
-      shakes: '9.8K',
-      coverUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop',
-      duration: '3:59'
-    },
-    {
-      id: '3',
-      title: 'Levitating',
-      artist: 'Dua Lipa',
-      shakes: '8.2K',
-      coverUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200&h=200&fit=crop',
-      duration: '3:23'
-    }
-  ];
-
-  const trendingArtists = [
-    {
-      id: '1',
-      name: 'The Weeknd',
-      followers: '89.5M',
-      avatar: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop'
-    },
-    {
-      id: '2',
-      name: 'Billie Eilish',
-      followers: '67.3M',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop'
-    }
-  ];
-
-  const recentSearches = [
-    { id: '1', query: 'Drake', type: 'artist' },
-    { id: '2', query: 'One Dance', type: 'track' },
-    { id: '3', query: 'Rap français', type: 'genre' }
-  ];
-
-  // Si mode TOP only, afficher directement les top posts
-  if (showTopOnly) {
-    return (
-      <div className="max-w-2xl mx-auto p-4">
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Flame className="w-6 h-6 text-orange-500" />
-            <h1 className="text-2xl font-bold">TOP SHAKEMOI</h1>
-          </div>
-          <p className="text-gray-400 text-sm">Les sons les plus secoués du moment 🔥</p>
-        </div>
-
-        {loading ? (
-          <div className="text-center text-gray-400 py-12">Chargement...</div>
-        ) : topPosts.length > 0 ? (
-          <div className="space-y-3">
-            {topPosts.map((post, index) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-zinc-900 rounded-lg p-4 hover:bg-zinc-800 transition-colors cursor-pointer group"
-                onClick={() => onPlayTrack({
-                  title: post.track_name,
-                  artist: post.artist,
-                  coverUrl: post.cover_url,
-                  previewUrl: post.preview_url,
-                  spotifyUrl: post.spotify_url
-                })}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex-shrink-0 relative">
-                    <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-6 h-6 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-xs font-bold">
-                      {index + 1}
-                    </div>
-                    <img
-                      src={post.cover_url}
-                      alt={post.track_name}
-                      className="w-16 h-16 rounded object-cover"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded">
-                      <Play className="w-6 h-6 text-white fill-white" />
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold truncate">{post.track_name}</h3>
-                    <p className="text-sm text-gray-400 truncate">{post.artist}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        ❤️ {post.likes_count || 0} likes
-                      </span>
-                      {post.user && (
-                        <span>par @{post.user.username}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center text-gray-400 py-12">
-            <Music className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>Aucun post pour le moment</p>
-          </div>
-        )}
-      </div>
-    );
-  }
+  const hasQuery = searchQuery.length >= 2;
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -194,13 +87,14 @@ export function SearchView({ onPlayTrack, showTopOnly = false }: SearchViewProps
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher sons, artistes, utilisateurs..."
+            placeholder="Rechercher un son, artiste ou @ami..."
             className="w-full pl-11 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-full text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
+            autoFocus
           />
         </div>
 
-        {/* Tabs - 2 onglets: Sons / Amis */}
-        {searchQuery && (
+        {/* Tabs */}
+        {hasQuery && (
           <div className="flex gap-2 mt-3">
             <button
               onClick={() => setActiveTab('tracks')}
@@ -228,99 +122,129 @@ export function SearchView({ onPlayTrack, showTopOnly = false }: SearchViewProps
         )}
       </div>
 
-      {/* Content */}
-      {!searchQuery ? (
-        <>
-          {/* Trending Tracks */}
-          <section className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-5 h-5 text-purple-500" />
-              <h2 className="text-lg font-bold text-white">Tendances</h2>
+      {/* Results */}
+      {loading && (
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+        </div>
+      )}
+
+      {/* Track results */}
+      {hasQuery && activeTab === 'tracks' && !loading && (
+        <div className="space-y-2">
+          {trackResults.length > 0 ? (
+            trackResults.map((track, index) => (
+              <motion.button
+                key={track.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
+                onClick={() => onPlayTrack(track)}
+                className="w-full bg-zinc-900 hover:bg-zinc-800 rounded-lg p-3 flex items-center gap-3 transition-colors border border-zinc-800 group"
+              >
+                <div className="relative flex-shrink-0">
+                  <img src={track.coverUrl} alt={track.title} className="w-14 h-14 rounded object-cover" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded">
+                    <Play className="w-5 h-5 text-white fill-white" />
+                  </div>
+                </div>
+                <div className="flex-1 text-left min-w-0">
+                  <h3 className="font-semibold text-sm text-white truncate">{track.title}</h3>
+                  <p className="text-xs text-gray-400 truncate">{track.artists || track.artist}</p>
+                  <p className="text-xs text-gray-500 truncate">{track.album}</p>
+                </div>
+              </motion.button>
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <Music className="w-10 h-10 text-gray-600 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">Aucun résultat pour "{searchQuery}"</p>
             </div>
-            
+          )}
+        </div>
+      )}
+
+      {/* User results */}
+      {hasQuery && activeTab === 'users' && !loading && (
+        <div className="space-y-2">
+          {userResults.length > 0 ? (
+            userResults.map((user: any, index) => (
+              <motion.div
+                key={user.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
+                className="bg-zinc-900 hover:bg-zinc-800 rounded-lg p-3 flex items-center gap-3 transition-colors border border-zinc-800"
+              >
+                <img
+                  src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
+                  alt={user.username}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm text-white truncate">{user.username}</h3>
+                  <p className="text-xs text-gray-400">{user.feels_count || 0} abonnés</p>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <User className="w-10 h-10 text-gray-600 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">Aucun utilisateur trouvé pour "{searchQuery}"</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Default view: Top posts */}
+      {!hasQuery && (
+        <div>
+          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+            <span className="text-orange-500">🔥</span> Top Shakemoi
+          </h2>
+          {loadingTop ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+            </div>
+          ) : topPosts.length > 0 ? (
             <div className="space-y-2">
-              {trendingTracks.map((track, index) => (
+              {topPosts.map((post, index) => (
                 <motion.button
-                  key={track.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => onPlayTrack(track)}
-                  className="w-full bg-zinc-900 hover:bg-zinc-800 rounded-lg p-2.5 flex items-center gap-3 transition-colors border border-zinc-800 group"
+                  key={post.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  onClick={() => onPlayTrack({
+                    id: post.track_id,
+                    title: post.track_name,
+                    artist: post.artist,
+                    coverUrl: post.cover_url,
+                    previewUrl: post.preview_url,
+                    spotifyUrl: post.spotify_url,
+                  })}
+                  className="w-full bg-zinc-900 hover:bg-zinc-800 rounded-lg p-3 flex items-center gap-3 transition-colors border border-zinc-800 group"
                 >
-                  <span className="text-lg font-bold text-purple-500 w-6">{index + 1}</span>
-                  <div className="relative">
-                    <img
-                      src={track.coverUrl}
-                      alt={track.title}
-                      className="w-12 h-12 rounded object-cover"
-                    />
+                  <span className="text-lg font-bold text-purple-500 w-7 text-center">{index + 1}</span>
+                  <div className="relative flex-shrink-0">
+                    <img src={post.cover_url} alt={post.track_name} className="w-14 h-14 rounded object-cover" />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded">
                       <Play className="w-5 h-5 text-white fill-white" />
                     </div>
                   </div>
                   <div className="flex-1 text-left min-w-0">
-                    <h3 className="font-semibold text-sm text-white truncate">{track.title}</h3>
-                    <p className="text-xs text-gray-400 truncate">{track.artist}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-semibold text-purple-400">{track.shakes}</p>
-                    <p className="text-xs text-gray-500">{track.duration}</p>
+                    <h3 className="font-semibold text-sm text-white truncate">{post.track_name}</h3>
+                    <p className="text-xs text-gray-400 truncate">{post.artist}</p>
+                    <p className="text-xs text-gray-500">❤️ {post.likes_count || 0} {post.user ? `· @${post.user.username}` : ''}</p>
                   </div>
                 </motion.button>
               ))}
             </div>
-          </section>
-
-          {/* Trending Artists */}
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-white mb-3">Artistes populaires</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {trendingArtists.map((artist) => (
-                <button
-                  key={artist.id}
-                  className="bg-zinc-900 hover:bg-zinc-800 rounded-lg p-3 flex flex-col items-center gap-2 transition-colors border border-zinc-800"
-                >
-                  <img
-                    src={artist.avatar}
-                    alt={artist.name}
-                    className="w-20 h-20 rounded-full object-cover"
-                  />
-                  <h3 className="font-semibold text-sm text-white">{artist.name}</h3>
-                  <p className="text-xs text-gray-400">{artist.followers} abonnés</p>
-                </button>
-              ))}
+          ) : (
+            <div className="text-center py-12 text-gray-400">
+              <Music className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>Aucun post pour le moment</p>
             </div>
-          </section>
-
-          {/* Recent Searches */}
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="w-5 h-5 text-gray-400" />
-              <h2 className="text-lg font-bold text-white">Récents</h2>
-            </div>
-            
-            <div className="space-y-2">
-              {recentSearches.map((search) => (
-                <button
-                  key={search.id}
-                  className="w-full bg-zinc-900 hover:bg-zinc-800 rounded-lg px-3 py-2.5 flex items-center justify-between transition-colors border border-zinc-800"
-                >
-                  <div className="flex items-center gap-3">
-                    <SearchIcon className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-white">{search.query}</span>
-                  </div>
-                  <span className="text-xs text-gray-500 uppercase">{search.type}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        </>
-      ) : (
-        <div className="text-center py-12">
-          <SearchIcon className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400">Recherche de "{searchQuery}"...</p>
-          <p className="text-sm text-gray-500 mt-2">Intégration Spotify API à venir</p>
+          )}
         </div>
       )}
     </div>

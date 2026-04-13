@@ -6,6 +6,7 @@ import { getPlatformUrl } from '../../lib/odesli';
 import { ReshakeDialog } from './ReshakeDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
+import { CommentsDialog } from './CommentsDialog';
 
 interface Shake {
   id: string;
@@ -61,6 +62,7 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [sendSongTrack, setSendSongTrack] = useState<any>(null);
+  const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
 
   useEffect(() => {
     loadFeed();
@@ -439,7 +441,7 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
                 </span>
               </button>
 
-              <button className="flex items-center gap-1.5 group">
+              <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
                 <MessageCircle className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
                 <span className="text-xs font-medium text-gray-400">{shake.comments}</span>
               </button>
@@ -508,6 +510,21 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
           <SendSongDialog
             track={sendSongTrack}
             onClose={() => setSendSongTrack(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Comments Dialog */}
+      <AnimatePresence>
+        {commentsPostId && (
+          <CommentsDialog
+            postId={commentsPostId}
+            onClose={() => setCommentsPostId(null)}
+            onCommentAdded={() => {
+              setShakes(shakes.map(s =>
+                s.id === commentsPostId ? { ...s, comments: s.comments + 1 } : s
+              ));
+            }}
           />
         )}
       </AnimatePresence>

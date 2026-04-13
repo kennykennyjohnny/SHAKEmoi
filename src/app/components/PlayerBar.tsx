@@ -248,6 +248,7 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
   }, [useYouTube]);
 
   const previewUrl = track.previewUrl || track.preview_url;
+  const noAudioSource = !previewUrl && !hasYouTubeVideo;
 
   return (
     <motion.div
@@ -257,17 +258,16 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
       className="border-t border-zinc-800 bg-zinc-900/95 backdrop-blur-lg"
     >
       {/* Hidden audio element for Spotify */}
-      {!useYouTube && (
-        <audio 
-          ref={audioRef} 
+      {!useYouTube && previewUrl && (
+        <audio
+          ref={audioRef}
           src={previewUrl}
-          onError={(e) => {
-            console.error('❌ Spotify preview failed, switching to YouTube');
-            setUseYouTube(true);
-            loadYouTubePlayer();
+          onError={() => {
+            if (hasYouTubeVideo) {
+              setUseYouTube(true);
+              loadYouTubePlayer();
+            }
           }}
-          onLoadStart={() => console.log('🎵 Loading Spotify preview...')}
-          onCanPlay={() => console.log('✅ Spotify preview ready')}
         />
       )}
 
@@ -291,7 +291,7 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
           <div className="flex justify-between items-center text-xs text-gray-400 mt-1">
             <span>{formatTime(currentTime)}</span>
             <span className="text-purple-400 text-[10px] uppercase">
-              {useYouTube ? '🎥 YouTube' : '🎧 Preview 30s'}
+              {noAudioSource ? 'Pas de preview' : useYouTube ? '🎥 YouTube' : '🎧 Preview 30s'}
             </span>
             <span>{formatTime(duration)}</span>
           </div>
