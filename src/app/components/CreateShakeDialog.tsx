@@ -130,19 +130,19 @@ export function CreateShakeDialog({ currentUser, onClose }: CreateShakeDialogPro
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-zinc-900 rounded-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col border border-zinc-800"
+          className="bg-[#0f0020] rounded-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col border border-purple-800/20"
         >
           {/* Header */}
-          <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-500" />
               <h2 className="text-lg font-bold text-white">Shake un son</h2>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-zinc-800 rounded-full transition-colors"
+              className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
             >
-              <X className="w-5 h-5 text-gray-400" />
+              <X className="w-5 h-5 text-purple-300/60" />
             </button>
           </div>
 
@@ -160,13 +160,13 @@ export function CreateShakeDialog({ currentUser, onClose }: CreateShakeDialogPro
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-white truncate">{selectedTrack.title}</h4>
                     <p className="text-sm text-purple-300 truncate">{selectedTrack.artist}</p>
-                    <p className="text-xs text-gray-400 truncate">{selectedTrack.albumName || ''}</p>
+                    <p className="text-xs text-purple-300/60 truncate">{selectedTrack.albumName || ''}</p>
                   </div>
                   <button
                     onClick={() => setSelectedTrack(null)}
-                    className="p-1.5 hover:bg-zinc-800 rounded-full transition-colors"
+                    className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
                   >
-                    <X className="w-4 h-4 text-gray-400" />
+                    <X className="w-4 h-4 text-purple-300/60" />
                   </button>
                 </div>
 
@@ -175,7 +175,7 @@ export function CreateShakeDialog({ currentUser, onClose }: CreateShakeDialogPro
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
                   placeholder="Ajoute un commentaire... (optionnel)"
-                  className="w-full mt-3 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors resize-none"
+                  className="w-full mt-3 px-3 py-2 bg-purple-950/40 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors resize-none"
                   rows={3}
                 />
               </div>
@@ -184,13 +184,13 @@ export function CreateShakeDialog({ currentUser, onClose }: CreateShakeDialogPro
                 {/* Search */}
                 <div className="mb-4">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Rechercher un titre, artiste..."
-                      className="w-full pl-10 pr-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
+                      className="w-full pl-10 pr-4 py-2.5 bg-purple-950/40 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors"
                       autoFocus
                     />
                   </div>
@@ -198,18 +198,18 @@ export function CreateShakeDialog({ currentUser, onClose }: CreateShakeDialogPro
 
                 {/* Suggestions */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-400 mb-3">Suggestions pour toi</h3>
+                  <h3 className="text-sm font-semibold text-purple-300/60 mb-3">Suggestions pour toi</h3>
                   <div className="space-y-2">
                     {isLoadingRecommendations ? (
                       <div className="flex justify-center">
-                        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                        <Loader2 className="w-4 h-4 animate-spin text-purple-300/60" />
                       </div>
                     ) : (
                       displayTracks.map((track) => (
                         <button
                           key={track.id}
                           onClick={() => setSelectedTrack(track)}
-                          className="w-full p-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center gap-3 transition-colors text-left"
+                          className="w-full p-2 bg-purple-950/40 hover:bg-purple-800/40 rounded-lg flex items-center gap-3 transition-colors text-left"
                         >
                           <img
                             src={track.coverUrl}
@@ -218,10 +218,10 @@ export function CreateShakeDialog({ currentUser, onClose }: CreateShakeDialogPro
                           />
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-sm text-white truncate">{track.title}</h4>
-                            <p className="text-xs text-gray-400 truncate">{track.artist} · {track.albumName || ''}</p>
+                            <p className="text-xs text-purple-300/60 truncate">{track.artist} · {track.albumName || ''}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">{track.duration}</span>
+                            <span className="text-xs text-purple-400/50">{track.duration}</span>
                             <Music2 className="w-4 h-4 text-purple-400" />
                           </div>
                         </button>
@@ -234,8 +234,8 @@ export function CreateShakeDialog({ currentUser, onClose }: CreateShakeDialogPro
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-zinc-800 flex justify-between items-center">
-            <p className="text-xs text-gray-400">
+          <div className="px-4 py-3 border-t border-purple-800/20 flex justify-between items-center">
+            <p className="text-xs text-purple-300/60">
               {selectedTrack ? 'Prêt à shaker ?' : 'Sélectionne un son'}
             </p>
             <button

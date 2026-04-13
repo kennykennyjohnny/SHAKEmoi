@@ -111,10 +111,10 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden"
+          className="bg-[#0f0020] rounded-2xl border border-purple-800/20 overflow-hidden"
         >
           {/* Header */}
-          <div className="p-8 text-center border-b border-zinc-800">
+          <div className="p-8 text-center border-b border-purple-800/20">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -126,7 +126,7 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
             <h1 className="text-2xl font-bold mb-2">
               {mode === 'login' ? 'Bienvenue sur Shakemoi' : 'Rejoins Shakemoi'}
             </h1>
-            <p className="text-gray-400 text-sm">
+            <p className="text-purple-300/60 text-sm">
               {mode === 'login' 
                 ? 'Connecte-toi pour découvrir de la musique' 
                 : 'Crée ton compte et partage tes sons préférés'}
@@ -154,34 +154,34 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
             {mode === 'signup' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-purple-200/80 mb-2">
                     Nom d'utilisateur
                   </label>
                   <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/60" />
                     <input
                       type="text"
                       required
                       value={formData.username}
                       onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="musiclover"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-purple-200/80 mb-2">
                     Nom complet
                   </label>
                   <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/60" />
                     <input
                       type="text"
                       required
                       value={formData.displayName}
                       onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="Music Lover"
                     />
                   </div>
@@ -191,17 +191,17 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-purple-200/80 mb-2">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/60" />
                 <input
                   type="email"
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="ton@email.com"
                 />
               </div>
@@ -209,23 +209,23 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-purple-200/80 mb-2">
                 Mot de passe
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/60" />
                 <input
                   type="password"
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="••••••••"
                   minLength={6}
                 />
               </div>
               {mode === 'signup' && (
-                <p className="text-xs text-gray-500 mt-1">Minimum 6 caractères</p>
+                <p className="text-xs text-purple-400/50 mt-1">Minimum 6 caractères</p>
               )}
             </div>
 
@@ -246,8 +246,8 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
             </button>
 
             {/* Switch mode */}
-            <div className="text-center pt-4 border-t border-zinc-800">
-              <p className="text-gray-400 text-sm">
+            <div className="text-center pt-4 border-t border-purple-800/20">
+              <p className="text-purple-300/60 text-sm">
                 {mode === 'login' ? "Pas encore de compte ?" : "Déjà un compte ?"}
                 {' '}
                 <button
@@ -266,7 +266,7 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
         </motion.div>
 
         {/* Footer */}
-        <p className="text-center text-gray-500 text-xs mt-4">
+        <p className="text-center text-purple-400/50 text-xs mt-4">
           En continuant, tu acceptes nos conditions d'utilisation
         </p>
       </div>

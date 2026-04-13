@@ -98,14 +98,14 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-zinc-900 rounded-2xl w-full max-w-md border border-purple-800/30 max-h-[85vh] overflow-y-auto"
+        className="bg-[#0f0020] rounded-2xl w-full max-w-md border border-purple-800/30 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between sticky top-0 bg-zinc-900 z-10">
+        <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between sticky top-0 bg-[#0f0020] z-10">
           <h2 className="text-lg font-bold text-white">Paramètres</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-zinc-800 rounded-full transition-colors">
-            <X className="w-5 h-5 text-gray-400" />
+          <button onClick={onClose} className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors">
+            <X className="w-5 h-5 text-purple-300/60" />
           </button>
         </div>
 
@@ -114,9 +114,9 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
           <div>
             <div className="flex items-center gap-2 mb-3">
               <User className="w-4 h-4 text-purple-400" />
-              <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Compte</h3>
+              <h3 className="text-sm font-semibold text-purple-200/80 uppercase tracking-wide">Compte</h3>
             </div>
-            <div className="bg-zinc-800 rounded-xl p-4">
+            <div className="bg-purple-950/40 rounded-xl p-4">
               <div className="flex items-center gap-3 mb-3">
                 <img
                   src={avatar}
@@ -128,14 +128,14 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
                   <p className="text-sm text-purple-400">@{currentUser?.username}</p>
                 </div>
               </div>
-              <div className="space-y-2 pt-2 border-t border-zinc-700">
+              <div className="space-y-2 pt-2 border-t border-purple-800/30">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Email</span>
+                  <span className="text-sm text-purple-300/60">Email</span>
                   <span className="text-sm text-white font-medium truncate max-w-[200px]">{currentUser?.email || '—'}</span>
                 </div>
                 {currentUser?.bio && (
                   <div className="flex justify-between items-start">
-                    <span className="text-sm text-gray-400">Bio</span>
+                    <span className="text-sm text-purple-300/60">Bio</span>
                     <span className="text-sm text-white max-w-[200px] text-right">{currentUser.bio}</span>
                   </div>
                 )}
@@ -147,9 +147,9 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Music2 className="w-4 h-4 text-purple-400" />
-              <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Plateforme musicale</h3>
+              <h3 className="text-sm font-semibold text-purple-200/80 uppercase tracking-wide">Plateforme musicale</h3>
             </div>
-            <p className="text-xs text-gray-500 mb-3">
+            <p className="text-xs text-purple-400/50 mb-3">
               Le bouton "Écouter" ouvrira les morceaux dans cette app
             </p>
             <div className="space-y-2">
@@ -160,7 +160,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
                   className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
                     musicService === service.id
                       ? 'border-purple-500 bg-purple-500/10'
-                      : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
+                      : 'border-purple-800/30 bg-purple-950/40 hover:border-purple-700/40'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -181,17 +181,17 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Bell className="w-4 h-4 text-purple-400" />
-              <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Notifications</h3>
+              <h3 className="text-sm font-semibold text-purple-200/80 uppercase tracking-wide">Notifications</h3>
             </div>
 
             {/* Push notification permission */}
-            <div className="bg-zinc-800 rounded-xl p-3 mb-3">
+            <div className="bg-purple-950/40 rounded-xl p-3 mb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BellRing className="w-4 h-4 text-purple-400" />
                   <div>
                     <p className="text-sm text-white font-medium">Notifications push</p>
-                    <p className="text-xs text-gray-500">Recevoir les notifs même l'app fermée</p>
+                    <p className="text-xs text-purple-400/50">Recevoir les notifs même l'app fermée</p>
                   </div>
                 </div>
                 <button
@@ -214,7 +214,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
               )}
             </div>
 
-            <div className="bg-zinc-800 rounded-xl divide-y divide-zinc-700">
+            <div className="bg-purple-950/40 rounded-xl divide-y divide-purple-800/20">
               {[
                 { key: 'likes', label: 'Likes sur mes shakes' },
                 { key: 'comments', label: 'Commentaires' },
@@ -226,7 +226,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
                   <button
                     onClick={() => setNotifications({ ...notifications, [item.key]: !notifications[item.key as keyof typeof notifications] })}
                     className={`w-10 h-6 rounded-full transition-colors ${
-                      notifications[item.key as keyof typeof notifications] ? 'bg-purple-500' : 'bg-zinc-600'
+                      notifications[item.key as keyof typeof notifications] ? 'bg-purple-500' : 'bg-purple-900/50'
                     }`}
                   >
                     <div className={`w-4 h-4 bg-white rounded-full transition-transform mx-1 ${
@@ -242,19 +242,19 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Info className="w-4 h-4 text-purple-400" />
-              <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">À propos</h3>
+              <h3 className="text-sm font-semibold text-purple-200/80 uppercase tracking-wide">À propos</h3>
             </div>
-            <div className="bg-zinc-800 rounded-xl p-3 space-y-2">
+            <div className="bg-purple-950/40 rounded-xl p-3 space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Version</span>
+                <span className="text-sm text-purple-300/60">Version</span>
                 <span className="text-sm text-white">1.1.0</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Plateforme</span>
+                <span className="text-sm text-purple-300/60">Plateforme</span>
                 <span className="text-sm text-white font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">SHAKEmoi</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Intégrations</span>
+                <span className="text-sm text-purple-300/60">Intégrations</span>
                 <span className="text-sm text-white">Spotify, Odesli, YouTube</span>
               </div>
             </div>

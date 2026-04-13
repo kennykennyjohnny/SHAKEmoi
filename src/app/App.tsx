@@ -143,10 +143,10 @@ export default function App() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowShareDialog(true)}
-                className="p-2 hover:bg-zinc-800 rounded-full transition-colors group"
+                className="p-2 hover:bg-purple-900/30 rounded-full transition-colors group"
                 title="Partager Shakemoi"
               >
-                <Share2 className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+                <Share2 className="w-5 h-5 text-purple-400/60 group-hover:text-purple-500 transition-colors" />
               </button>
 
               <button
@@ -178,7 +178,7 @@ export default function App() {
             <button
               onClick={() => setCurrentView('feed')}
               className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
-                currentView === 'feed' ? 'text-purple-500 bg-purple-500/10' : 'text-gray-400'
+                currentView === 'feed' ? 'text-purple-500 bg-purple-500/10' : 'text-purple-400/60'
               }`}
             >
               <Home className="w-5 h-5" />
@@ -188,7 +188,7 @@ export default function App() {
             <button
               onClick={() => setCurrentView('top')}
               className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
-                currentView === 'top' ? 'text-purple-500 bg-purple-500/10' : 'text-gray-400'
+                currentView === 'top' ? 'text-purple-500 bg-purple-500/10' : 'text-purple-400/60'
               }`}
             >
               <TrendingUp className="w-5 h-5" />
@@ -198,7 +198,7 @@ export default function App() {
             <button
               onClick={() => setCurrentView('search')}
               className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
-                currentView === 'search' ? 'text-purple-500 bg-purple-500/10' : 'text-gray-400'
+                currentView === 'search' ? 'text-purple-500 bg-purple-500/10' : 'text-purple-400/60'
               }`}
             >
               <Search className="w-5 h-5" />
@@ -208,7 +208,7 @@ export default function App() {
             <button
               onClick={() => setCurrentView('notifications')}
               className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
-                currentView === 'notifications' ? 'text-purple-500 bg-purple-500/10' : 'text-gray-400'
+                currentView === 'notifications' ? 'text-purple-500 bg-purple-500/10' : 'text-purple-400/60'
               }`}
             >
               <Bell className="w-5 h-5" />
@@ -218,7 +218,7 @@ export default function App() {
             <button
               onClick={() => setCurrentView('profile')}
               className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
-                currentView === 'profile' ? 'text-purple-500 bg-purple-500/10' : 'text-gray-400'
+                currentView === 'profile' ? 'text-purple-500 bg-purple-500/10' : 'text-purple-400/60'
               }`}
             >
               <User className="w-5 h-5" />
@@ -245,7 +245,7 @@ export default function App() {
           <button
             onClick={() => setCurrentView('feed')}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-              currentView === 'feed' ? 'bg-purple-500/10 text-purple-500' : 'text-gray-400 hover:bg-zinc-800'
+              currentView === 'feed' ? 'bg-purple-500/10 text-purple-500' : 'text-purple-400/60 hover:bg-purple-900/30'
             }`}
           >
             <Home className="w-5 h-5" />
@@ -255,7 +255,7 @@ export default function App() {
           <button
             onClick={() => setCurrentView('top')}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-              currentView === 'top' ? 'bg-purple-500/10 text-purple-500' : 'text-gray-400 hover:bg-zinc-800'
+              currentView === 'top' ? 'bg-purple-500/10 text-purple-500' : 'text-purple-400/60 hover:bg-purple-900/30'
             }`}
           >
             <TrendingUp className="w-5 h-5" />
@@ -265,7 +265,7 @@ export default function App() {
           <button
             onClick={() => setCurrentView('notifications')}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-              currentView === 'notifications' ? 'bg-purple-500/10 text-purple-500' : 'text-gray-400 hover:bg-zinc-800'
+              currentView === 'notifications' ? 'bg-purple-500/10 text-purple-500' : 'text-purple-400/60 hover:bg-purple-900/30'
             }`}
           >
             <Bell className="w-5 h-5" />
@@ -275,20 +275,20 @@ export default function App() {
           <button
             onClick={() => setCurrentView('profile')}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-              currentView === 'profile' ? 'bg-purple-500/10 text-purple-500' : 'text-gray-400 hover:bg-zinc-800'
+              currentView === 'profile' ? 'bg-purple-500/10 text-purple-500' : 'text-purple-400/60 hover:bg-purple-900/30'
             }`}
           >
             <User className="w-5 h-5" />
             <span className="font-medium">Profil</span>
           </button>
 
-          <div className="border-t border-zinc-800 my-4 pt-4">
-            <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-400 hover:bg-zinc-800 transition-colors">
+          <div className="border-t border-purple-800/20 my-4 pt-4">
+            <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-purple-400/50 hover:bg-purple-900/30 transition-colors">
               <TrendingUp className="w-5 h-5" />
               <span className="font-medium">Tendances</span>
             </button>
-            
-            <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-400 hover:bg-zinc-800 transition-colors">
+
+            <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-purple-400/50 hover:bg-purple-900/30 transition-colors">
               <Headphones className="w-5 h-5" />
               <span className="font-medium">Playlists</span>
             </button>
@@ -297,12 +297,12 @@ export default function App() {
 
         {/* User card */}
         {currentUser && (
-          <div className="mt-auto pt-4 border-t border-zinc-800">
-            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer">
+          <div className="mt-auto pt-4 border-t border-purple-800/20">
+            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-purple-900/30 transition-colors cursor-pointer">
               <img src={currentUser.avatar} alt={currentUser.displayName} className="w-10 h-10 rounded-full" />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm truncate">{currentUser.displayName}</p>
-                <p className="text-xs text-gray-400 truncate">@{currentUser.username}</p>
+                <p className="text-xs text-purple-400/60 truncate">@{currentUser.username}</p>
               </div>
             </div>
           </div>

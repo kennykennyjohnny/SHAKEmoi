@@ -52,16 +52,16 @@ export function CreatePostDialog({ currentUser, onClose }: CreatePostDialogProps
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-zinc-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-zinc-800"
+          className="bg-[#0f0020] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-purple-800/20"
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-purple-800/20 flex items-center justify-between">
             <h2 className="text-xl font-bold text-white">Partager un son</h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
+              className="p-2 hover:bg-purple-900/40 rounded-full transition-colors"
             >
-              <X className="w-5 h-5 text-gray-400" />
+              <X className="w-5 h-5 text-purple-300/60" />
             </button>
           </div>
 
@@ -76,7 +76,7 @@ export function CreatePostDialog({ currentUser, onClose }: CreatePostDialogProps
               />
               <div>
                 <h3 className="font-semibold text-white">{currentUser?.displayName}</h3>
-                <p className="text-sm text-gray-400">@{currentUser?.username}</p>
+                <p className="text-sm text-purple-300/60">@{currentUser?.username}</p>
               </div>
             </div>
 
@@ -85,7 +85,7 @@ export function CreatePostDialog({ currentUser, onClose }: CreatePostDialogProps
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Partagez votre découverte musicale..."
-              className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors resize-none mb-6"
+              className="w-full px-4 py-3 bg-purple-950/40 border border-purple-800/30 rounded-xl text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors resize-none mb-6"
               rows={3}
             />
 
@@ -103,38 +103,38 @@ export function CreatePostDialog({ currentUser, onClose }: CreatePostDialogProps
                 </div>
                 <button
                   onClick={() => setSelectedTrack(null)}
-                  className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
+                  className="p-2 hover:bg-purple-900/40 rounded-full transition-colors"
                 >
-                  <X className="w-5 h-5 text-gray-400" />
+                  <X className="w-5 h-5 text-purple-300/60" />
                 </button>
               </div>
             ) : (
               <>
                 {/* Search Track */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-purple-200/80 mb-2">
                     Rechercher un morceau
                   </label>
                   <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/60" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Titre, artiste, album..."
-                      className="w-full pl-12 pr-4 py-3 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
+                      className="w-full pl-12 pr-4 py-3 bg-purple-950/40 border border-purple-800/30 rounded-xl text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors"
                     />
                   </div>
                 </div>
 
                 {/* Suggested Tracks */}
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-400 mb-3">Suggestions</p>
+                  <p className="text-sm font-medium text-purple-300/60 mb-3">Suggestions</p>
                   {suggestedTracks.map((track) => (
                     <button
                       key={track.id}
                       onClick={() => setSelectedTrack(track)}
-                      className="w-full p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center gap-3 transition-colors text-left"
+                      className="w-full p-3 bg-purple-950/40 hover:bg-purple-800/40 rounded-lg flex items-center gap-3 transition-colors text-left"
                     >
                       <img
                         src={track.coverUrl}
@@ -143,7 +143,7 @@ export function CreatePostDialog({ currentUser, onClose }: CreatePostDialogProps
                       />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold text-white truncate">{track.title}</h4>
-                        <p className="text-sm text-gray-400 truncate">{track.artist}</p>
+                        <p className="text-sm text-purple-300/60 truncate">{track.artist}</p>
                       </div>
                       <Music2 className="w-5 h-5 text-purple-400" />
                     </button>
@@ -154,22 +154,22 @@ export function CreatePostDialog({ currentUser, onClose }: CreatePostDialogProps
 
             {/* Media Options */}
             <div className="mt-6 flex gap-4">
-              <button className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                <ImageIcon className="w-5 h-5 text-gray-400" />
-                <span className="text-sm font-medium text-gray-300">Image</span>
+              <button className="flex-1 py-3 bg-purple-950/40 hover:bg-purple-800/40 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                <ImageIcon className="w-5 h-5 text-purple-300/60" />
+                <span className="text-sm font-medium text-purple-200/80">Image</span>
               </button>
-              <button className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                <Music2 className="w-5 h-5 text-gray-400" />
-                <span className="text-sm font-medium text-gray-300">Audio</span>
+              <button className="flex-1 py-3 bg-purple-950/40 hover:bg-purple-800/40 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                <Music2 className="w-5 h-5 text-purple-300/60" />
+                <span className="text-sm font-medium text-purple-200/80">Audio</span>
               </button>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-zinc-800 flex justify-end gap-3">
+          <div className="px-6 py-4 border-t border-purple-800/20 flex justify-end gap-3">
             <button
               onClick={onClose}
-              className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-full font-semibold transition-colors"
+              className="px-6 py-2 bg-purple-950/40 hover:bg-purple-800/40 rounded-full font-semibold transition-colors"
             >
               Annuler
             </button>

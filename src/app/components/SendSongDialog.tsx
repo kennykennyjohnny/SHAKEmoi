@@ -60,26 +60,26 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-zinc-900 rounded-2xl w-full max-w-md border border-zinc-800"
+        className="bg-[#0f0020] rounded-2xl w-full max-w-md border border-purple-800/20"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Send className="w-5 h-5 text-purple-500" />
             <h2 className="text-lg font-bold">Envoyer ce son</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-zinc-800 rounded-full transition-colors"
+            className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5 text-purple-300/60" />
           </button>
         </div>
 
         {/* Track Preview */}
-        <div className="p-4 border-b border-zinc-800">
-          <div className="flex gap-3 bg-zinc-800 rounded-lg p-3">
+        <div className="p-4 border-b border-purple-800/20">
+          <div className="flex gap-3 bg-purple-950/40 rounded-lg p-3">
             <img
               src={track.coverUrl || track.thumbnail}
               alt={track.title}
@@ -87,7 +87,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
             />
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-sm truncate">{track.title}</h3>
-              <p className="text-xs text-gray-400 truncate">{track.artist}</p>
+              <p className="text-xs text-purple-300/60 truncate">{track.artist}</p>
             </div>
           </div>
         </div>
@@ -95,13 +95,13 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
         {/* Search User */}
         <div className="p-4">
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher un ami..."
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               autoFocus
             />
           </div>
@@ -113,7 +113,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
                 <Loader2 className="w-6 h-6 text-purple-500 animate-spin mx-auto" />
               </div>
             ) : users.length === 0 ? (
-              <div className="text-center py-8 text-gray-400 text-sm">
+              <div className="text-center py-8 text-purple-300/60 text-sm">
                 {searchQuery.length >= 2 ? 'Aucun utilisateur trouvé' : 'Tape au moins 2 caractères'}
               </div>
             ) : (
@@ -124,7 +124,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
                   className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
                     selectedUser?.id === user.id
                       ? 'bg-purple-600 border-2 border-purple-500'
-                      : 'bg-zinc-800 hover:bg-zinc-700 border-2 border-transparent'
+                      : 'bg-purple-950/40 hover:bg-purple-800/40 border-2 border-transparent'
                   }`}
                 >
                   <img
@@ -134,7 +134,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
                   />
                   <div className="flex-1 text-left">
                     <p className="font-semibold text-sm">{user.username}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-purple-300/60">
                       {user.feels_count || 0} abonnés
                     </p>
                   </div>
@@ -150,7 +150,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
         </div>
 
         {/* Send Button */}
-        <div className="p-4 border-t border-zinc-800">
+        <div className="p-4 border-t border-purple-800/20">
           <button
             onClick={handleSend}
             disabled={!selectedUser || sending}

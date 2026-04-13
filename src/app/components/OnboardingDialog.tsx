@@ -44,7 +44,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                 Bienvenue sur Shakemoi
               </h1>
               
-              <p className="text-gray-400 text-lg mb-8">
+              <p className="text-purple-300/60 text-lg mb-8">
                 Le réseau social musical que tu ouvres <span className="text-purple-400 font-semibold">avant</span> Spotify
               </p>
 
@@ -55,7 +55,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white mb-1">Shake tes sons préférés</h3>
-                    <p className="text-sm text-gray-400">Partage ce que tu écoutes avec tes amis</p>
+                    <p className="text-sm text-purple-300/60">Partage ce que tu écoutes avec tes amis</p>
                   </div>
                 </div>
 
@@ -65,7 +65,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white mb-1">Découvre en temps réel</h3>
-                    <p className="text-sm text-gray-400">Vois ce que tes amis shakent maintenant</p>
+                    <p className="text-sm text-purple-300/60">Vois ce que tes amis shakent maintenant</p>
                   </div>
                 </div>
 
@@ -75,7 +75,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white mb-1">Écoute et reshake</h3>
-                    <p className="text-sm text-gray-400">Previews 30s ou écoute complète sur ton app</p>
+                    <p className="text-sm text-purple-300/60">Previews 30s ou écoute complète sur ton app</p>
                   </div>
                 </div>
               </div>
@@ -97,7 +97,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
               className="text-center"
             >
               <h2 className="text-2xl font-bold mb-2 text-white">Choisis ton service musical</h2>
-              <p className="text-gray-400 mb-6">
+              <p className="text-purple-300/60 mb-6">
                 Tu pourras écouter les previews et ouvrir les sons dans ton app préférée
               </p>
 
@@ -107,7 +107,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                   className={`w-full p-4 rounded-xl border-2 transition-all ${
                     selectedService === 'spotify'
                       ? 'border-green-500 bg-green-500/10'
-                      : 'border-zinc-800 bg-zinc-900 hover:border-zinc-700'
+                      : 'border-purple-800/20 bg-[#0f0020] hover:border-purple-800/30'
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -118,7 +118,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                     </div>
                     <div className="flex-1 text-left">
                       <h3 className="font-bold text-white text-lg">Spotify</h3>
-                      <p className="text-sm text-gray-400">Le plus populaire - 500M+ utilisateurs</p>
+                      <p className="text-sm text-purple-300/60">Le plus populaire - 500M+ utilisateurs</p>
                     </div>
                     {selectedService === 'spotify' && (
                       <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
@@ -135,7 +135,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                   className={`w-full p-4 rounded-xl border-2 transition-all ${
                     selectedService === 'apple'
                       ? 'border-pink-500 bg-pink-500/10'
-                      : 'border-zinc-800 bg-zinc-900 hover:border-zinc-700'
+                      : 'border-purple-800/20 bg-[#0f0020] hover:border-purple-800/30'
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -146,7 +146,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                     </div>
                     <div className="flex-1 text-left">
                       <h3 className="font-bold text-white text-lg">Apple Music</h3>
-                      <p className="text-sm text-gray-400">Parfait pour les utilisateurs Apple</p>
+                      <p className="text-sm text-purple-300/60">Parfait pour les utilisateurs Apple</p>
                     </div>
                     {selectedService === 'apple' && (
                       <div className="w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center">
@@ -159,7 +159,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                 </button>
               </div>
 
-              <p className="text-xs text-gray-500 mb-4">
+              <p className="text-xs text-purple-400/50 mb-4">
                 Tu pourras changer ce paramètre à tout moment dans ton profil
               </p>
 

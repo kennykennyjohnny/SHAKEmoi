@@ -15,15 +15,15 @@ export function ShakeTabsDialog({ onClose }: ShakeTabsDialogProps) {
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-zinc-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+        className="bg-[#0f0020] rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
       >
         {/* Header avec tabs */}
-        <div className="border-b border-zinc-800 p-4">
+        <div className="border-b border-purple-800/20 p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">Shake</h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
+              className="p-2 hover:bg-purple-900/40 rounded-full transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -36,7 +36,7 @@ export function ShakeTabsDialog({ onClose }: ShakeTabsDialogProps) {
               className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'song'
                   ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                  : 'bg-zinc-800 text-gray-400 hover:text-white'
+                  : 'bg-purple-950/40 text-purple-300/60 hover:text-white'
               }`}
             >
               <Music className="w-5 h-5" />
@@ -47,7 +47,7 @@ export function ShakeTabsDialog({ onClose }: ShakeTabsDialogProps) {
               className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'friend'
                   ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                  : 'bg-zinc-800 text-gray-400 hover:text-white'
+                  : 'bg-purple-950/40 text-purple-300/60 hover:text-white'
               }`}
             >
               <UserPlus className="w-5 h-5" />
@@ -61,8 +61,8 @@ export function ShakeTabsDialog({ onClose }: ShakeTabsDialogProps) {
           {activeTab === 'song' ? (
             <div className="p-8 text-center">
               <Music className="w-16 h-16 mx-auto mb-4 text-purple-500" />
-              <p className="text-gray-400">Fonctionnalité "Shake un son" à venir 🎵</p>
-              <p className="text-gray-500 text-sm mt-2">Bientôt tu pourras partager tes sons favoris !</p>
+              <p className="text-purple-300/60">Fonctionnalité "Shake un son" à venir 🎵</p>
+              <p className="text-purple-400/50 text-sm mt-2">Bientôt tu pourras partager tes sons favoris !</p>
             </div>
           ) : (
             <div className="h-full">

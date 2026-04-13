@@ -35,7 +35,7 @@ export function ShareDialog({ onClose }: ShareDialogProps) {
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-purple-900/20 rounded-2xl w-full max-w-md border border-zinc-800 overflow-hidden relative"
+          className="bg-gradient-to-br from-[#0f0020] via-[#0f0020] to-purple-900/20 rounded-2xl w-full max-w-md border border-purple-800/20 overflow-hidden relative"
         >
           {/* Animated background */}
           <div className="absolute inset-0 overflow-hidden">
@@ -56,16 +56,16 @@ export function ShareDialog({ onClose }: ShareDialogProps) {
           {/* Content */}
           <div className="relative">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-zinc-800/50 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-purple-800/20/50 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Share2 className="w-5 h-5 text-purple-400" />
                 <h2 className="text-lg font-bold text-white">Partage Shakemoi</h2>
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 hover:bg-zinc-800 rounded-full transition-colors"
+                className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
               >
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-5 h-5 text-purple-300/60" />
               </button>
             </div>
 
@@ -91,15 +91,15 @@ export function ShareDialog({ onClose }: ShareDialogProps) {
                 Invite tes amis sur Shakemoi <Sparkles className="w-5 h-5 text-yellow-400" />
               </h3>
               
-              <p className="text-gray-400 text-sm mb-6">
+              <p className="text-purple-300/60 text-sm mb-6">
                 Partage tes sons préférés avec tes amis et découvrez ensemble les meilleures vibes musicales ! 🎵
               </p>
 
               {/* URL Box */}
-              <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 mb-4">
+              <div className="bg-purple-950/40/50 border border-purple-800/30 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-500 mb-1">Lien de partage</p>
+                    <p className="text-xs text-purple-400/50 mb-1">Lien de partage</p>
                     <p className="text-white font-mono text-sm truncate">{shareUrl}</p>
                   </div>
                   <button
@@ -144,23 +144,23 @@ export function ShareDialog({ onClose }: ShareDialogProps) {
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="bg-zinc-800/30 rounded-lg p-3">
+                <div className="bg-purple-950/40/30 rounded-lg p-3">
                   <p className="text-2xl font-bold text-purple-400">12.5K</p>
-                  <p className="text-xs text-gray-500">Shakers</p>
+                  <p className="text-xs text-purple-400/50">Shakers</p>
                 </div>
-                <div className="bg-zinc-800/30 rounded-lg p-3">
+                <div className="bg-purple-950/40/30 rounded-lg p-3">
                   <p className="text-2xl font-bold text-pink-400">89K</p>
-                  <p className="text-xs text-gray-500">Shakes</p>
+                  <p className="text-xs text-purple-400/50">Shakes</p>
                 </div>
-                <div className="bg-zinc-800/30 rounded-lg p-3">
+                <div className="bg-purple-950/40/30 rounded-lg p-3">
                   <p className="text-2xl font-bold text-blue-400">245K</p>
-                  <p className="text-xs text-gray-500">Plays</p>
+                  <p className="text-xs text-purple-400/50">Plays</p>
                 </div>
               </div>
 
               {/* Encouragement */}
               <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg p-4">
-                <p className="text-sm text-gray-300">
+                <p className="text-sm text-purple-200/80">
                   <span className="font-semibold text-white">Pourquoi Shakemoi ?</span>
                   <br />
                   Découvre ce que tes amis écoutent AVANT d'ouvrir Spotify. 

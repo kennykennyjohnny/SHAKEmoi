@@ -464,7 +464,7 @@ export async function getPostComments(postId: string) {
       .from('comments')
       .select(`
         *,
-        user:users_profile(id, username, color)
+        user:users_profile(id, username, color, profile_album_cover_url)
       `)
       .eq('post_id', postId)
       .order('created_at', { ascending: true });

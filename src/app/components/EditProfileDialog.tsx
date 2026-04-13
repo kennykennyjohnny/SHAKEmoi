@@ -103,17 +103,17 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-zinc-900 rounded-2xl w-full max-w-md border border-zinc-800"
+        className="bg-[#0f0020] rounded-2xl w-full max-w-md border border-purple-800/20"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Modifier le profil</h2>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-zinc-800 rounded-full transition-colors"
+            className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5 text-purple-300/60" />
           </button>
         </div>
 
@@ -121,7 +121,7 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {/* Avatar */}
           <div className="space-y-3">
-            <label className="block text-sm font-medium text-gray-300">
+            <label className="block text-sm font-medium text-purple-200/80">
               Photo de profil
             </label>
             <div className="flex items-center gap-4">
@@ -148,7 +148,7 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
                   <Camera className="w-4 h-4" />
                   {loading ? 'Téléchargement...' : 'Choisir une photo'}
                 </button>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-purple-400/50">
                   📸 Télécharge depuis ton téléphone (sauvegardé sur Supabase)
                 </p>
                 <div className="flex gap-2 flex-wrap">
@@ -174,17 +174,17 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
 
           {/* Display Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-purple-200/80 mb-2">
               Nom d'affichage
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
               <input
                 type="text"
                 required
                 value={formData.displayName}
                 onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Ton nom"
               />
             </div>
@@ -192,17 +192,17 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
 
           {/* Username */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-purple-200/80 mb-2">
               Nom d'utilisateur
             </label>
             <div className="relative">
-              <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
               <input
                 type="text"
                 required
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="username"
               />
             </div>
@@ -210,21 +210,21 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
 
           {/* Bio */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-purple-200/80 mb-2">
               Bio
             </label>
             <div className="relative">
-              <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+              <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-purple-300/60" />
               <textarea
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                 rows={3}
                 maxLength={160}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                 placeholder="Parle-nous de tes goûts musicaux..."
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1 text-right">
+            <p className="text-xs text-purple-400/50 mt-1 text-right">
               {formData.bio.length}/160
             </p>
           </div>
@@ -234,7 +234,7 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg font-medium transition-colors"
+              className="flex-1 px-4 py-2 bg-purple-950/40 hover:bg-purple-800/40 rounded-lg font-medium transition-colors"
             >
               Annuler
             </button>

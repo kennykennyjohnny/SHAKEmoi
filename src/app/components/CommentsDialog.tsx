@@ -74,13 +74,13 @@ export function CommentsDialog({ postId, onClose, onCommentAdded }: CommentsDial
         animate={{ y: 0 }}
         exit={{ y: 100 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-zinc-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80vh] flex flex-col border border-zinc-800"
+        className="bg-[#0f0020] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80vh] flex flex-col border border-purple-800/30"
       >
         {/* Header */}
-        <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
           <h3 className="font-bold text-white">Commentaires ({comments.length})</h3>
-          <button onClick={onClose} className="p-1.5 hover:bg-zinc-800 rounded-full transition-colors">
-            <X className="w-5 h-5 text-gray-400" />
+          <button onClick={onClose} className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors">
+            <X className="w-5 h-5 text-purple-300/60" />
           </button>
         </div>
 
@@ -91,21 +91,23 @@ export function CommentsDialog({ postId, onClose, onCommentAdded }: CommentsDial
               <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
             </div>
           ) : comments.length === 0 ? (
-            <p className="text-center text-gray-400 py-8">Aucun commentaire. Sois le premier !</p>
+            <p className="text-center text-purple-400/50 py-8">Aucun commentaire. Sois le premier !</p>
           ) : (
             comments.map((comment: any) => (
               <div key={comment.id} className="flex gap-3">
                 <img
                   src={comment.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${comment.user?.username || 'U'}&background=random`}
                   alt=""
-                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                  className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-purple-700/30"
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm text-white">@{comment.user?.username || 'inconnu'}</span>
-                    <span className="text-xs text-gray-500">{formatTime(comment.created_at)}</span>
+                  <div className="bg-purple-950/40 rounded-xl px-3 py-2 border border-purple-800/15">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-white">@{comment.user?.username || 'inconnu'}</span>
+                      <span className="text-xs text-purple-500/50">{formatTime(comment.created_at)}</span>
+                    </div>
+                    <p className="text-sm text-purple-200/80 mt-0.5">{comment.text}</p>
                   </div>
-                  <p className="text-sm text-gray-300 mt-0.5">{comment.text}</p>
                 </div>
               </div>
             ))
@@ -113,19 +115,19 @@ export function CommentsDialog({ postId, onClose, onCommentAdded }: CommentsDial
         </div>
 
         {/* Input */}
-        <div className="px-4 py-3 border-t border-zinc-800 flex items-center gap-2">
+        <div className="px-4 py-3 border-t border-purple-800/20 flex items-center gap-2">
           <input
             type="text"
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Écrire un commentaire..."
-            className="flex-1 bg-zinc-800 border border-zinc-700 rounded-full px-4 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+            className="flex-1 bg-purple-950/40 border border-purple-800/30 rounded-full px-4 py-2 text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors"
           />
           <button
             onClick={handleSend}
             disabled={!newComment.trim() || sending}
-            className="p-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-30 rounded-full transition-colors"
+            className="p-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 disabled:opacity-30 rounded-full transition-all"
           >
             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </button>

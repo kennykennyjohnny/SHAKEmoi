@@ -90,9 +90,9 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
         className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <div className="bg-zinc-900 rounded-2xl p-8 text-center">
+        <div className="bg-[#0f0020] rounded-2xl p-8 text-center">
           <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-400">Chargement du profil...</p>
+          <p className="text-purple-300/60">Chargement du profil...</p>
         </div>
       </div>
     );
@@ -104,8 +104,8 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
         className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <div className="bg-zinc-900 rounded-2xl p-8 text-center">
-          <p className="text-gray-400">Profil introuvable</p>
+        <div className="bg-[#0f0020] rounded-2xl p-8 text-center">
+          <p className="text-purple-300/60">Profil introuvable</p>
           <button onClick={onClose} className="mt-4 px-4 py-2 bg-purple-600 rounded-lg text-sm">Fermer</button>
         </div>
       </div>
@@ -124,7 +124,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-zinc-900 rounded-2xl w-full max-w-md border border-purple-800/30 overflow-hidden"
+        className="bg-[#0f0020] rounded-2xl w-full max-w-md border border-purple-800/30 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -144,7 +144,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
             <img
               src={avatar}
               alt={displayName}
-              className="w-20 h-20 rounded-full object-cover border-4 border-zinc-900 ring-2 ring-purple-500"
+              className="w-20 h-20 rounded-full object-cover border-4 border-[#0f0020] ring-2 ring-purple-500"
             />
           </div>
 
@@ -152,22 +152,22 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
           <p className="text-sm text-purple-400 mb-1">@{profile.username}</p>
 
           {profile.bio && (
-            <p className="text-sm text-gray-300 mb-3">{profile.bio}</p>
+            <p className="text-sm text-purple-200/80 mb-3">{profile.bio}</p>
           )}
 
           {/* Stats */}
           <div className="flex gap-4 mb-4 text-sm">
             <div>
               <span className="font-bold text-white">{stats.posts}</span>
-              <span className="text-gray-400 ml-1">shakes</span>
+              <span className="text-purple-300/60 ml-1">shakes</span>
             </div>
             <div>
               <span className="font-bold text-white">{stats.followers}</span>
-              <span className="text-gray-400 ml-1">abonnés</span>
+              <span className="text-purple-300/60 ml-1">abonnés</span>
             </div>
             <div>
               <span className="font-bold text-white">{stats.following}</span>
-              <span className="text-gray-400 ml-1">abonnements</span>
+              <span className="text-purple-300/60 ml-1">abonnements</span>
             </div>
           </div>
 
@@ -176,7 +176,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
             onClick={handleFollowToggle}
             className={`w-full py-2.5 rounded-full font-semibold transition-all flex items-center justify-center gap-2 ${
               isFollowingUser
-                ? 'bg-zinc-800 hover:bg-zinc-700 text-white'
+                ? 'bg-purple-950/40 hover:bg-purple-800/40 text-white'
                 : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white'
             }`}
           >
@@ -196,7 +196,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
           {/* Recent Posts Grid */}
           {posts.length > 0 && (
             <div className="mt-4">
-              <h3 className="text-sm font-semibold text-gray-400 mb-2">Derniers shakes</h3>
+              <h3 className="text-sm font-semibold text-purple-300/60 mb-2">Derniers shakes</h3>
               <div className="grid grid-cols-3 gap-2">
                 {posts.slice(0, 6).map((post) => (
                   <div

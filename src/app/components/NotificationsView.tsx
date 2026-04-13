@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, UserPlus, Music, Repeat2, Loader2 } from 'lucide-react';
+import { Heart, MessageCircle, UserPlus, Music, Repeat2, Loader2, Bell } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { getUserNotifications } from '../../lib/database';
@@ -17,7 +17,7 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
 
   const loadNotifications = async () => {
     if (!currentUser) return;
-    
+
     try {
       setLoading(true);
       const data = await getUserNotifications(currentUser.id);
@@ -33,7 +33,7 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-3" />
-        <p className="text-sm text-gray-400">Chargement des notifications...</p>
+        <p className="text-sm text-purple-400/50">Chargement des notifications...</p>
       </div>
     );
   }
@@ -41,11 +41,11 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
   if (notifications.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4">
-        <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center mb-4">
-          <Heart className="w-8 h-8 text-gray-600" />
+        <div className="w-16 h-16 bg-purple-950/40 rounded-full flex items-center justify-center mb-4 border border-purple-800/20">
+          <Bell className="w-8 h-8 text-purple-600" />
         </div>
         <h3 className="text-lg font-semibold text-white mb-2">Aucune notification</h3>
-        <p className="text-sm text-gray-400 text-center">
+        <p className="text-sm text-purple-400/50 text-center">
           Les interactions avec tes shakes apparaîtront ici
         </p>
       </div>
@@ -57,13 +57,23 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
       case 'like':
         return <Heart className="w-4 h-4 fill-current text-red-500" />;
       case 'comment':
-        return <MessageCircle className="w-4 h-4 text-blue-500" />;
+        return <MessageCircle className="w-4 h-4 text-blue-400" />;
       case 'follow':
-        return <UserPlus className="w-4 h-4 text-purple-500" />;
+        return <UserPlus className="w-4 h-4 text-purple-400" />;
       case 'reshake':
-        return <Repeat2 className="w-4 h-4 text-green-500" />;
+        return <Repeat2 className="w-4 h-4 text-green-400" />;
       default:
-        return <Music className="w-4 h-4 text-gray-500" />;
+        return <Music className="w-4 h-4 text-purple-400" />;
+    }
+  };
+
+  const getIconBg = (type: string) => {
+    switch (type) {
+      case 'like': return 'bg-red-500/10 border-red-500/20';
+      case 'comment': return 'bg-blue-500/10 border-blue-500/20';
+      case 'follow': return 'bg-purple-500/10 border-purple-500/20';
+      case 'reshake': return 'bg-green-500/10 border-green-500/20';
+      default: return 'bg-purple-500/10 border-purple-500/20';
     }
   };
 
@@ -74,7 +84,7 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
-    
+
     if (minutes < 1) return 'maintenant';
     if (minutes < 60) return `${minutes}min`;
     if (hours < 24) return `${hours}h`;
@@ -85,7 +95,7 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
   return (
     <div className="max-w-2xl mx-auto p-4">
       <h1 className="text-xl font-bold text-white mb-4">Notifications</h1>
-      
+
       <div className="space-y-2">
         {notifications.map((notif, index) => (
           <motion.button
@@ -93,10 +103,10 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.03 }}
-            className="w-full bg-zinc-900 hover:bg-zinc-800 rounded-lg p-3 flex items-center gap-3 transition-colors cursor-pointer border border-zinc-800 text-left"
+            className="w-full bg-purple-950/25 hover:bg-purple-900/30 rounded-xl p-3 flex items-center gap-3 transition-colors cursor-pointer border border-purple-800/20 text-left"
           >
             {/* Icon */}
-            <div className="flex-shrink-0">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${getIconBg(notif.type)}`}>
               {getIcon(notif.type)}
             </div>
 
@@ -104,7 +114,7 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
             <img
               src={notif.actor_avatar || `https://ui-avatars.com/api/?name=${notif.actor_username}&background=random`}
               alt={notif.actor_username}
-              className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+              className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-1 ring-purple-700/30"
             />
 
             {/* Content */}
@@ -112,9 +122,9 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
               <p className="text-sm text-white">
                 <span className="font-semibold">@{notif.actor_username}</span>
                 {' '}
-                <span className="text-gray-400">{notif.content}</span>
+                <span className="text-purple-300/60">{notif.content}</span>
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">{formatTimestamp(notif.created_at)}</p>
+              <p className="text-xs text-purple-500/40 mt-0.5">{formatTimestamp(notif.created_at)}</p>
             </div>
 
             {/* Track Cover if available */}
@@ -122,7 +132,7 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
               <img
                 src={notif.post_cover_url}
                 alt="Track"
-                className="w-10 h-10 rounded object-cover flex-shrink-0"
+                className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
               />
             )}
           </motion.button>

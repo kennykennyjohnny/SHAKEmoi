@@ -141,12 +141,12 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
               max={duration}
               value={currentTime}
               onChange={handleSeek}
-              className="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+              className="w-full h-1 bg-purple-900/50 rounded-lg appearance-none cursor-pointer"
               style={{
                 background: `linear-gradient(to right, rgb(168, 85, 247) 0%, rgb(168, 85, 247) ${(currentTime / duration) * 100}%, rgb(63, 63, 70) ${(currentTime / duration) * 100}%, rgb(63, 63, 70) 100%)`
               }}
             />
-            <div className="flex justify-between items-center text-xs text-gray-400 mt-1">
+            <div className="flex justify-between items-center text-xs text-purple-300/60 mt-1">
               <span>{formatTime(currentTime)}</span>
               <span className="text-purple-400 text-[10px] uppercase">Preview 30s</span>
               <span>{formatTime(duration)}</span>
@@ -164,11 +164,11 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
             />
             <div className="flex-1 min-w-0">
               <h4 className="font-semibold text-sm text-white truncate">{track.title || track.track_name}</h4>
-              <p className="text-xs text-gray-400 truncate">{track.artist}</p>
+              <p className="text-xs text-purple-300/60 truncate">{track.artist}</p>
             </div>
             <button
               onClick={() => setIsLiked(!isLiked)}
-              className={`transition-colors ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+              className={`transition-colors ${isLiked ? 'text-red-500' : 'text-purple-300/60 hover:text-red-500'}`}
             >
               <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
             </button>
@@ -189,7 +189,7 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
               </button>
             </div>
           ) : (
-            <span className="text-xs text-gray-500 px-2">Pas de preview</span>
+            <span className="text-xs text-purple-400/50 px-2">Pas de preview</span>
           )}
 
           {/* Volume (desktop) */}
@@ -197,7 +197,7 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
             <div className="hidden md:flex items-center gap-2">
               <button
                 onClick={() => setIsMuted(!isMuted)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-purple-300/60 hover:text-white transition-colors"
               >
                 {isMuted || volume === 0 ? (
                   <VolumeX className="w-4 h-4" />
@@ -212,7 +212,7 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
                 step="0.01"
                 value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
-                className="w-20 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+                className="w-20 h-1 bg-purple-900/50 rounded-lg appearance-none cursor-pointer"
                 style={{
                   background: `linear-gradient(to right, rgb(168, 85, 247) 0%, rgb(168, 85, 247) ${volume * 100}%, rgb(63, 63, 70) ${volume * 100}%, rgb(63, 63, 70) 100%)`
                 }}
@@ -233,7 +233,7 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
           {/* Close */}
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-purple-300/60 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
