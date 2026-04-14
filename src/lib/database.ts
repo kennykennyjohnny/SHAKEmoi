@@ -109,8 +109,9 @@ export async function getFeed(limit = 20): Promise<Post[]> {
       .eq('follower_id', user.id);
 
     const followingIds = follows ? follows.map(f => f.following_id) : [];
+    // Include own posts + followed users' posts
+    const feedUserIds = [...followingIds, user.id];
 
-    // Get posts from followed users only
     const { data: posts, error } = await supabase
       .from('posts')
       .select(`
@@ -121,7 +122,7 @@ export async function getFeed(limit = 20): Promise<Post[]> {
           user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
         )
       `)
-      .in('user_id', followingIds)
+      .in('user_id', feedUserIds)
       .order('created_at', { ascending: false })
       .limit(limit);
 
