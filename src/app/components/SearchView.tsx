@@ -7,11 +7,10 @@ import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
 interface SearchViewProps {
   currentUser?: any;
-  onPlayTrack: (track: any) => void;
   onRefreshFeed?: () => void;
 }
 
-export function SearchView({ currentUser, onPlayTrack, onRefreshFeed }: SearchViewProps) {
+export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'tracks' | 'users'>('tracks');
   const [trackResults, setTrackResults] = useState<any[]>([]);
@@ -370,12 +369,7 @@ export function SearchView({ currentUser, onPlayTrack, onRefreshFeed }: SearchVi
                       <span className="text-lg font-bold text-purple-500 w-7 text-center flex-shrink-0">{index + 1}</span>
                       <div
                         className="relative flex-shrink-0 cursor-pointer"
-                        onClick={() => embedUrl ? toggleEmbed(`top-${post.id}`) : onPlayTrack({
-                          id: post.track_id,
-                          title: post.track_name,
-                          artist: post.artist,
-                          coverUrl: post.cover_url,
-                        })}
+                        onClick={() => toggleEmbed(`top-${post.id}`)}
                       >
                         <img src={post.cover_url} alt={post.track_name} className={`w-14 h-14 rounded-lg object-cover transition-all ${isEmbedOpen ? 'ring-2 ring-purple-500/50' : ''}`} />
                         <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${

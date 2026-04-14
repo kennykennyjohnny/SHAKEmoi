@@ -4,10 +4,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getTopPosts } from '../../lib/database';
 import { SendSongDialog } from './SendSongDialog';
 
-interface TrendingBarProps {
-  onPlayTrack: (track: any) => void;
-}
-
 // Spotify mood playlists - curated embeds
 const MOOD_PLAYLISTS = [
   {
@@ -54,7 +50,7 @@ const MOOD_PLAYLISTS = [
 
 type TabType = 'top' | 'moods';
 
-export function TrendingBar({ onPlayTrack }: TrendingBarProps) {
+export function TrendingBar() {
   const [activeTab, setActiveTab] = useState<TabType>('top');
   const [likesTop, setLikesTop] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

@@ -51,11 +51,10 @@ interface Shake {
 
 interface FeedViewProps {
   currentUser: any;
-  onPlayTrack: (track: any) => void;
   refreshFeed?: number;
 }
 
-export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProps) {
+export function FeedView({ currentUser, refreshFeed }: FeedViewProps) {
   const [shakes, setShakes] = useState<Shake[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,23 +80,28 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
         const trackId = post.track_id;
         // Build embed URL for ALL posts that have a track_id
         const spotifyEmbedUrl = post.spotify_embed_url || (trackId ? `https://open.spotify.com/embed/track/${trackId}` : null);
+        // For reshakes: show original post with original user, reshaker as badge
+        const isReshake = post.is_reshake && post.original_post?.user;
+        const displayUser = isReshake ? post.original_post.user : post.user;
+        const displayTrack = isReshake ? post.original_post : post;
+
         return {
           id: post.id,
           user: {
-            id: post.user?.id || '',
-            username: post.user?.username || '',
-            displayName: post.user?.display_name || post.user?.username || '',
-            avatar: post.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${post.user?.username}&background=random`
+            id: displayUser?.id || '',
+            username: displayUser?.username || '',
+            displayName: displayUser?.display_name || displayUser?.username || '',
+            avatar: displayUser?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${displayUser?.username}&background=random`
           },
           track: {
-            id: trackId || post.id,
-            title: post.track_name,
-            artist: post.artist,
-            coverUrl: post.cover_url,
+            id: displayTrack.track_id || trackId || post.id,
+            title: displayTrack.track_name || post.track_name,
+            artist: displayTrack.artist || post.artist,
+            coverUrl: displayTrack.cover_url || post.cover_url,
             duration: '3:00',
-            previewUrl: post.preview_url || '',
-            spotifyUri: post.spotify_url || '',
-            spotifyEmbedUrl,
+            previewUrl: displayTrack.preview_url || post.preview_url || '',
+            spotifyUri: displayTrack.spotify_url || post.spotify_url || '',
+            spotifyEmbedUrl: displayTrack.spotify_embed_url || (displayTrack.track_id ? `https://open.spotify.com/embed/track/${displayTrack.track_id}` : spotifyEmbedUrl),
           },
           links: {
             spotify_url: post.spotify_url || null,
@@ -115,10 +119,11 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
           timestamp: post.created_at,
           isLiked,
           isReshaked: false,
-          reshakeFrom: post.is_reshake && post.original_post?.user ? {
-            id: post.original_post.user.id,
-            username: post.original_post.user.username,
-            displayName: post.original_post.user.display_name || post.original_post.user.username
+          // reshakeFrom = the person who reshaked (your friend), shown as badge
+          reshakeFrom: isReshake ? {
+            id: post.user?.id || '',
+            username: post.user?.username || '',
+            displayName: post.user?.display_name || post.user?.username || ''
           } : undefined
         };
       }));
@@ -212,12 +217,7 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
   };
 
   const handlePlayTrack = (shake: Shake) => {
-    if (shake.track.spotifyEmbedUrl) {
-      // Toggle: if already playing this track, close it; otherwise open with autoplay
-      setActivePlayerId(activePlayerId === shake.id ? null : shake.id);
-    } else {
-      onPlayTrack(shake.track);
-    }
+    setActivePlayerId(activePlayerId === shake.id ? null : shake.id);
   };
 
   if (loading) {
@@ -274,20 +274,20 @@ export function FeedView({ currentUser, onPlayTrack, refreshFeed }: FeedViewProp
                   : 'bg-purple-950/25 border-purple-800/20 hover:border-purple-700/40'
               }`}
             >
-              {/* Reshake indicator */}
+              {/* Reshake indicator — "reshaké par @friend" */}
               {shake.reshakeFrom && (
-                <div className="px-4 pt-2 flex items-center gap-2 text-xs text-purple-400">
+                <div className="px-4 pt-2 flex items-center gap-2 text-xs text-green-400/80">
                   <Repeat2 className="w-3 h-3" />
+                  <span className="text-purple-400/50">Reshaké par</span>
                   <button
                     onClick={() => setProfilePreview({
                       userId: shake.reshakeFrom!.id || shake.reshakeFrom!.username,
                       username: shake.reshakeFrom!.username
                     })}
-                    className="hover:underline font-medium"
+                    className="hover:underline font-medium text-green-400"
                   >
                     @{shake.reshakeFrom.username}
                   </button>
-                  <span className="text-purple-500/40">a reshake</span>
                 </div>
               )}
 

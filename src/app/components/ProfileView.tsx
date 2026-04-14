@@ -10,13 +10,12 @@ import { getPlatformUrl } from '../../lib/odesli';
 
 interface ProfileViewProps {
   user: any;
-  onPlayTrack: (track: any) => void;
   onUpdateUser?: (updatedUser: any) => void;
 }
 
 type TabType = 'shakes' | 'reshakes';
 
-export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProps) {
+export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('shakes');
@@ -85,16 +84,18 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
 
       const reshakesData = await Promise.all(reshakes.map(async (post: any) => {
         const isLiked = await hasLikedPost(post.id);
+        // Use original post data for display
+        const orig = post.original_post || post;
         return {
           id: post.id,
           track: {
-            id: post.track_id || post.id,
-            title: post.track_name,
-            artist: post.artist,
-            coverUrl: post.cover_url,
-            previewUrl: post.preview_url,
-            spotifyUrl: post.spotify_url,
-            spotifyEmbedUrl: post.spotify_embed_url || (post.track_id ? `https://open.spotify.com/embed/track/${post.track_id}?theme=0` : null),
+            id: orig.track_id || post.track_id || post.id,
+            title: orig.track_name || post.track_name,
+            artist: orig.artist || post.artist,
+            coverUrl: orig.cover_url || post.cover_url,
+            previewUrl: orig.preview_url || post.preview_url,
+            spotifyUrl: orig.spotify_url || post.spotify_url,
+            spotifyEmbedUrl: orig.spotify_embed_url || post.spotify_embed_url || ((orig.track_id || post.track_id) ? `https://open.spotify.com/embed/track/${orig.track_id || post.track_id}?theme=0` : null),
           },
           links: {
             spotify_url: post.spotify_url || null,
@@ -110,7 +111,9 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
           comments: post.comments_count || 0,
           isLiked,
           originalUser: post.original_post?.user ? {
+            id: post.original_post.user.id,
             username: post.original_post.user.username,
+            displayName: post.original_post.user.display_name || post.original_post.user.username,
             avatar: post.original_post.user.profile_album_cover_url
           } : null,
           timestamp: new Date(post.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
@@ -392,11 +395,17 @@ export function ProfileView({ user, onPlayTrack, onUpdateUser }: ProfileViewProp
                     className="overflow-hidden mt-3"
                   >
                     <div className="bg-purple-950/40 rounded-xl border border-purple-800/30 overflow-hidden">
-                      {/* Reshake indicator */}
+                      {/* Original user info for reshakes */}
                       {activeTab === 'reshakes' && shake.originalUser && (
-                        <div className="flex items-center gap-2 text-xs text-green-400/80 px-4 pt-3">
-                          <Repeat2 className="w-3 h-3" />
-                          <span>Reshake de @{shake.originalUser.username}</span>
+                        <div className="flex items-center gap-2 px-4 pt-3">
+                          <img
+                            src={shake.originalUser.avatar || `https://ui-avatars.com/api/?name=${shake.originalUser.username}&background=random`}
+                            alt={shake.originalUser.username}
+                            className="w-6 h-6 rounded-full object-cover"
+                          />
+                          <span className="text-xs text-white font-medium">@{shake.originalUser.username}</span>
+                          <Repeat2 className="w-3 h-3 text-green-400" />
+                          <span className="text-xs text-green-400/60">Reshaké par toi</span>
                         </div>
                       )}
 

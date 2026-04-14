@@ -5,7 +5,7 @@ import { SearchView } from './components/SearchView';
 import { ProfileView } from './components/ProfileView';
 import { NotificationsView } from './components/NotificationsView';
 import { CreateShakeDialog } from './components/CreateShakeDialog';
-import { PlayerBar } from './components/PlayerBar';
+// PlayerBar removed — all playback is now inline Spotify embeds
 import { TrendingBar } from './components/TrendingBar';
 import { OnboardingDialog } from './components/OnboardingDialog';
 import { ShareDialog } from './components/ShareDialog';
@@ -21,7 +21,6 @@ export default function App() {
   const [currentView, setCurrentView] = useState<View>('feed');
   const [showCreateShake, setShowCreateShake] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [currentTrack, setCurrentTrack] = useState<any>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -148,21 +147,21 @@ export default function App() {
   const renderView = () => {
     switch (currentView) {
       case 'feed':
-        return <FeedView currentUser={currentUser} onPlayTrack={setCurrentTrack} refreshFeed={refreshFeed} />;
+        return <FeedView currentUser={currentUser} refreshFeed={refreshFeed} />;
       case 'search':
-        return <SearchView currentUser={currentUser} onPlayTrack={setCurrentTrack} onRefreshFeed={() => setRefreshFeed(prev => prev + 1)} />;
+        return <SearchView currentUser={currentUser} onRefreshFeed={() => setRefreshFeed(prev => prev + 1)} />;
       case 'top':
         return (
           <div className="h-full overflow-y-auto">
-            <TrendingBar onPlayTrack={setCurrentTrack} />
+            <TrendingBar />
           </div>
         );
       case 'profile':
-        return <ProfileView user={currentUser} onPlayTrack={setCurrentTrack} onUpdateUser={setCurrentUser} />;
+        return <ProfileView user={currentUser} onUpdateUser={setCurrentUser} />;
       case 'notifications':
         return <NotificationsView currentUser={currentUser} />;
       default:
-        return <FeedView currentUser={currentUser} onPlayTrack={setCurrentTrack} refreshFeed={refreshFeed} />;
+        return <FeedView currentUser={currentUser} refreshFeed={refreshFeed} />;
     }
   };
 
@@ -170,7 +169,7 @@ export default function App() {
     <div className="h-screen w-screen bg-[#0a0012] text-white overflow-hidden flex">
       {/* Sidebar gauche - Trending */}
       <aside className="hidden lg:block w-80 border-r border-purple-900/30 overflow-y-auto">
-        <TrendingBar onPlayTrack={setCurrentTrack} />
+        <TrendingBar />
       </aside>
 
       {/* Main Content */}
@@ -210,7 +209,7 @@ export default function App() {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-auto pb-32 lg:pb-20">
+        <main className="flex-1 overflow-auto pb-20">
           {renderView()}
         </main>
 
@@ -274,16 +273,6 @@ export default function App() {
           </div>
         </nav>
 
-        {/* Player Bar - Fixed above bottom nav */}
-        {currentTrack && (
-          <div className="fixed bottom-16 lg:bottom-0 left-0 right-0 z-40">
-            <PlayerBar 
-              track={currentTrack} 
-              onClose={() => setCurrentTrack(null)}
-              musicService={currentUser?.musicService}
-            />
-          </div>
-        )}
       </div>
 
       {/* Sidebar droite - Desktop Navigation */}

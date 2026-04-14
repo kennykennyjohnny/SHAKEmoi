@@ -66,7 +66,7 @@ export function ShakeTabsDialog({ onClose }: ShakeTabsDialogProps) {
             </div>
           ) : (
             <div className="h-full">
-              <SearchView onPlayTrack={() => {}} />
+              <SearchView />
             </div>
           )}
         </div>
