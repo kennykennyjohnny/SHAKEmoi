@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Music2, Mail, Lock, User as UserIcon, Loader2, AlertCircle } from 'lucide-react';
-import { Logo } from './Logo';
+import { Music2, Mail, Lock, User as UserIcon, Loader2, AlertCircle, Headphones } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface AuthDialogProps {
@@ -12,7 +11,7 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -27,10 +26,8 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
 
     try {
       if (mode === 'signup') {
-        // Create account with Supabase Auth
         console.log('[AUTH] Signup attempt:', { email: formData.email, username: formData.username });
 
-        // Check if username exists
         const { data: existingUser } = await supabase
           .from('users_profile')
           .select('username')
@@ -41,7 +38,6 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
           throw new Error('Ce nom d\'utilisateur est déjà pris');
         }
 
-        // Create auth user
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password
@@ -50,23 +46,20 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
         if (authError) throw authError;
         if (!authData.user) throw new Error('Erreur lors de la création du compte');
 
-        // Create user profile
         const { error: profileError } = await supabase
           .from('users_profile')
           .insert([{
             id: authData.user.id,
             username: formData.username,
+            display_name: formData.displayName || formData.username,
             email: formData.email,
-            color: '#B4A7D6', // Default color
+            color: '#B4A7D6',
             feels_count: 0,
             feelings_count: 0
           }]);
 
         if (profileError) throw new Error('Erreur lors de la création du profil');
 
-        console.log('[AUTH] Signup success');
-
-        // Fetch the created profile
         const { data: profile } = await supabase
           .from('users_profile')
           .select('*')
@@ -75,7 +68,6 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
 
         onComplete(profile);
       } else {
-        // Login with Supabase Auth
         console.log('[AUTH] Login attempt:', { email: formData.email });
 
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -86,9 +78,6 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
         if (error) throw error;
         if (!data.user) throw new Error('Erreur de connexion');
 
-        console.log('[AUTH] Login success');
-
-        // Fetch user profile
         const { data: profile } = await supabase
           .from('users_profile')
           .select('*')
@@ -106,36 +95,35 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="fixed inset-0 bg-[#0a0012] z-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-sm">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#0f0020] rounded-2xl border border-purple-800/20 overflow-hidden"
+          className="bg-[#0f0020] rounded-2xl border border-purple-800/30 overflow-hidden shadow-2xl shadow-purple-900/20"
         >
-          {/* Header */}
-          <div className="p-8 text-center border-b border-purple-800/20">
+          {/* Header - text based, no Logo */}
+          <div className="p-6 text-center">
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1, type: 'spring' }}
-              className="mb-4 flex justify-center"
+              className="mb-3 flex justify-center"
             >
-              <Logo size="lg" animated={true} showText={false} />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                <Headphones className="w-7 h-7 text-white" />
+              </div>
             </motion.div>
-            <h1 className="text-2xl font-bold mb-2">
-              {mode === 'login' ? 'Bienvenue sur Shakemoi' : 'Rejoins Shakemoi'}
+            <h1 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
+              SHAKEmoi
             </h1>
-            <p className="text-purple-300/60 text-sm">
-              {mode === 'login' 
-                ? 'Connecte-toi pour découvrir de la musique' 
-                : 'Crée ton compte et partage tes sons préférés'}
+            <p className="text-purple-300/50 text-sm mt-1">
+              {mode === 'login' ? 'Content de te revoir' : 'Partage tes sons préférés'}
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            {/* Error message */}
+          <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-3">
             <AnimatePresence>
               {error && (
                 <motion.div
@@ -150,112 +138,76 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
               )}
             </AnimatePresence>
 
-            {/* Signup fields */}
             {mode === 'signup' && (
               <>
-                <div>
-                  <label className="block text-sm font-medium text-purple-200/80 mb-2">
-                    Nom d'utilisateur
-                  </label>
-                  <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/60" />
-                    <input
-                      type="text"
-                      required
-                      value={formData.username}
-                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                      className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="musiclover"
-                    />
-                  </div>
+                <div className="relative">
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
+                  <input
+                    type="text"
+                    required
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-400/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                    placeholder="Nom d'utilisateur"
+                  />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-purple-200/80 mb-2">
-                    Nom complet
-                  </label>
-                  <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/60" />
-                    <input
-                      type="text"
-                      required
-                      value={formData.displayName}
-                      onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                      className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="Music Lover"
-                    />
-                  </div>
+                <div className="relative">
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
+                  <input
+                    type="text"
+                    value={formData.displayName}
+                    onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                    className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-400/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                    placeholder="Nom affiché (optionnel)"
+                  />
                 </div>
               </>
             )}
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-purple-200/80 mb-2">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/60" />
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="ton@email.com"
-                />
-              </div>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-400/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                placeholder="Email"
+              />
             </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-purple-200/80 mb-2">
-                Mot de passe
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/60" />
-                <input
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="••••••••"
-                  minLength={6}
-                />
-              </div>
-              {mode === 'signup' && (
-                <p className="text-xs text-purple-400/50 mt-1">Minimum 6 caractères</p>
-              )}
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
+              <input
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-400/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                placeholder="Mot de passe"
+                minLength={6}
+              />
             </div>
 
-            {/* Submit button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
             >
               {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {mode === 'login' ? 'Connexion...' : 'Création...'}
-                </>
+                <><Loader2 className="w-4 h-4 animate-spin" /> {mode === 'login' ? 'Connexion...' : 'Création...'}</>
               ) : (
                 mode === 'login' ? 'Se connecter' : "S'inscrire"
               )}
             </button>
 
-            {/* Switch mode */}
-            <div className="text-center pt-4 border-t border-purple-800/20">
-              <p className="text-purple-300/60 text-sm">
+            <div className="text-center pt-3 border-t border-purple-800/20">
+              <p className="text-purple-300/50 text-sm">
                 {mode === 'login' ? "Pas encore de compte ?" : "Déjà un compte ?"}
                 {' '}
                 <button
                   type="button"
-                  onClick={() => {
-                    setMode(mode === 'login' ? 'signup' : 'login');
-                    setError(null);
-                  }}
+                  onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(null); }}
                   className="text-purple-400 hover:text-purple-300 font-semibold transition-colors"
                 >
                   {mode === 'login' ? "S'inscrire" : "Se connecter"}
@@ -265,8 +217,7 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
           </form>
         </motion.div>
 
-        {/* Footer */}
-        <p className="text-center text-purple-400/50 text-xs mt-4">
+        <p className="text-center text-purple-400/30 text-xs mt-4">
           En continuant, tu acceptes nos conditions d'utilisation
         </p>
       </div>

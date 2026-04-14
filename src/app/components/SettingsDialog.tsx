@@ -32,19 +32,38 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
     localStorage.setItem('shakemoi_notif_prefs', JSON.stringify(notifications));
   }, [notifications]);
 
-  const requestNotifPermission = async () => {
+  const [pushEnabled, setPushEnabled] = useState(() => {
+    return localStorage.getItem('shakemoi_push_enabled') === 'true';
+  });
+
+  const togglePushNotifications = async () => {
     if (typeof Notification === 'undefined') {
       alert('Les notifications ne sont pas supportées sur ce navigateur');
       return;
     }
-    const perm = await Notification.requestPermission();
-    setNotifPermission(perm);
-    if (perm === 'granted') {
-      new Notification('SHAKEmoi', {
-        body: 'Les notifications sont activées !',
-        icon: '/favicon.ico',
-      });
+
+    if (pushEnabled) {
+      // Disable
+      setPushEnabled(false);
+      localStorage.setItem('shakemoi_push_enabled', 'false');
+      return;
     }
+
+    // Enable - request permission if needed
+    if (Notification.permission === 'default') {
+      const perm = await Notification.requestPermission();
+      setNotifPermission(perm);
+      if (perm !== 'granted') return;
+    } else if (Notification.permission === 'denied') {
+      return; // Can't enable, blocked by browser
+    }
+
+    setPushEnabled(true);
+    localStorage.setItem('shakemoi_push_enabled', 'true');
+    new Notification('SHAKEmoi', {
+      body: 'Bienvenue sur SHAKEmoi ! Tu recevras tes notifications ici.',
+      icon: '/favicon.ico',
+    });
   };
 
   const handleSave = async () => {
@@ -195,16 +214,19 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
                   </div>
                 </div>
                 <button
-                  onClick={requestNotifPermission}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                    notifPermission === 'granted'
-                      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                      : notifPermission === 'denied'
-                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                        : 'bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30'
+                  onClick={togglePushNotifications}
+                  className={`w-10 h-6 rounded-full transition-colors ${
+                    notifPermission === 'denied'
+                      ? 'bg-red-900/50 cursor-not-allowed'
+                      : pushEnabled && notifPermission === 'granted'
+                        ? 'bg-purple-500'
+                        : 'bg-purple-900/50'
                   }`}
+                  disabled={notifPermission === 'denied'}
                 >
-                  {notifPermission === 'granted' ? 'Activées' : notifPermission === 'denied' ? 'Bloquées' : 'Activer'}
+                  <div className={`w-4 h-4 bg-white rounded-full transition-transform mx-1 ${
+                    pushEnabled && notifPermission === 'granted' ? 'translate-x-4' : 'translate-x-0'
+                  }`} />
                 </button>
               </div>
               {notifPermission === 'denied' && (

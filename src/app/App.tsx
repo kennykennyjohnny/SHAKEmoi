@@ -11,6 +11,7 @@ import { OnboardingDialog } from './components/OnboardingDialog';
 import { ShareDialog } from './components/ShareDialog';
 import { AuthDialog } from './components/AuthDialog';
 import { SettingsDialog } from './components/SettingsDialog';
+import { CompleteProfileDialog } from './components/CompleteProfileDialog';
 import { supabase } from '../lib/supabase';
 import { getCurrentUser, getUserProfile, getUserNotifications } from '../lib/database';
 
@@ -25,6 +26,7 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCompleteProfile, setShowCompleteProfile] = useState(false);
   const [refreshFeed, setRefreshFeed] = useState(0);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
 
@@ -49,6 +51,12 @@ export default function App() {
           if (!hasCompletedOnboarding) {
             setShowOnboarding(true);
           }
+
+          // Old accounts: prompt to complete profile if missing display_name or avatar
+          const profileCompleted = localStorage.getItem('shakemoi_profile_completed');
+          if (!profileCompleted && (!profile.display_name || !profile.profile_album_cover_url)) {
+            setShowCompleteProfile(true);
+          }
         } else {
           setShowAuth(true);
         }
@@ -71,8 +79,9 @@ export default function App() {
         const unread = notifs.filter((n: any) => !n.is_read).length;
         setUnreadNotifs(unread);
 
-        // Send browser notification for new ones
-        if (notifs.length > 0 && lastNotifId && notifs[0].id !== lastNotifId) {
+        // Send browser notification for new ones (only if push enabled)
+        const pushEnabled = localStorage.getItem('shakemoi_push_enabled') === 'true';
+        if (pushEnabled && notifs.length > 0 && lastNotifId && notifs[0].id !== lastNotifId) {
           const newest = notifs[0];
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
             new Notification('SHAKEmoi', {
@@ -369,6 +378,17 @@ export default function App() {
       {/* Share Dialog */}
       {showShareDialog && (
         <ShareDialog onClose={() => setShowShareDialog(false)} />
+      )}
+
+      {/* Complete Profile Dialog (old accounts) */}
+      {showCompleteProfile && (
+        <CompleteProfileDialog
+          user={currentUser}
+          onComplete={(updatedUser) => {
+            setCurrentUser(buildUserObject(updatedUser));
+            setShowCompleteProfile(false);
+          }}
+        />
       )}
 
       {/* Settings Dialog */}

@@ -1,7 +1,7 @@
-import { X, Heart, Music, Users, UserPlus, UserCheck, Play, Headphones } from 'lucide-react';
+import { X, Heart, Play, UserPlus, UserCheck, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing } from '../../lib/database';
+import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing, getUserReshakes } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 
 interface ProfilePreviewDialogProps {
@@ -12,10 +12,12 @@ interface ProfilePreviewDialogProps {
 
 export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePreviewDialogProps) {
   const [profile, setProfile] = useState<any>(null);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [shakes, setShakes] = useState<any[]>([]);
+  const [reshakes, setReshakes] = useState<any[]>([]);
   const [stats, setStats] = useState({ followers: 0, following: 0, posts: 0 });
   const [isFollowingUser, setIsFollowingUser] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'shakes' | 'reshakes'>('shakes');
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,15 +46,20 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
 
       const actualId = profileData.id;
 
-      const [postsData, followersCount, followingCount, followingStatus] = await Promise.all([
+      const [postsData, reshakesData, followersCount, followingCount, followingStatus] = await Promise.all([
         getUserPosts(actualId, 9),
+        getUserReshakes(actualId),
         getUserFollowersCount(actualId),
         getUserFollowingCount(actualId),
         isFollowing(actualId)
       ]);
 
+      // Separate original shakes from reshakes
+      const originalShakes = postsData.filter((p: any) => !p.is_reshake);
+
       setProfile(profileData);
-      setPosts(postsData);
+      setShakes(originalShakes.slice(0, 9));
+      setReshakes((reshakesData || []).slice(0, 9));
       setStats({
         followers: followersCount,
         following: followingCount,
@@ -85,10 +92,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
 
   if (loading) {
     return (
-      <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
         <div className="bg-[#0f0020] rounded-2xl p-8 text-center">
           <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-purple-300/60">Chargement du profil...</p>
@@ -99,10 +103,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
 
   if (!profile) {
     return (
-      <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
         <div className="bg-[#0f0020] rounded-2xl p-8 text-center">
           <p className="text-purple-300/60">Profil introuvable</p>
           <button onClick={onClose} className="mt-4 px-4 py-2 bg-purple-600 rounded-lg text-sm">Fermer</button>
@@ -114,52 +115,47 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
   const displayName = profile.display_name || profile.username;
   const avatar = profile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${profile.username}&background=random`;
 
-  const expandedPost = expandedPostId ? posts.find(p => p.id === expandedPostId) : null;
+  const currentPosts = activeTab === 'shakes' ? shakes : reshakes;
+  const expandedPost = expandedPostId ? currentPosts.find(p => p.id === expandedPostId) : null;
   const expandedEmbedUrl = expandedPost?.track_id ? `https://open.spotify.com/embed/track/${expandedPost.track_id}?theme=0&utm_source=generator` : null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-[#0f0020] rounded-2xl w-full max-w-md border border-purple-800/30 overflow-hidden max-h-[85vh] overflow-y-auto"
+        className="bg-[#0f0020] rounded-2xl w-full max-w-md border border-purple-800/30 overflow-hidden max-h-[85vh] overflow-y-auto relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors z-10"
+          className="absolute top-3 right-3 p-1.5 bg-black/50 hover:bg-black/70 rounded-full transition-colors z-10"
         >
-          <X className="w-5 h-5 text-white" />
+          <X className="w-4 h-4 text-white" />
         </button>
 
-        {/* Header with gradient */}
-        <div className="relative h-20 bg-gradient-to-br from-purple-900 via-pink-900 to-purple-900" />
-
-        {/* Profile Info */}
-        <div className="px-4 pb-4">
-          <div className="flex items-end justify-between -mt-10 mb-3">
+        {/* Profile Info - No cover photo, compact */}
+        <div className="px-4 pt-4 pb-4">
+          <div className="flex items-center gap-3 mb-3">
             <img
               src={avatar}
               alt={displayName}
-              className="w-18 h-18 rounded-full object-cover border-4 border-[#0f0020] ring-2 ring-purple-500"
-              style={{ width: '72px', height: '72px' }}
+              className="w-16 h-16 rounded-full object-cover ring-2 ring-purple-500"
             />
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-white truncate">{displayName}</h2>
+              <p className="text-sm text-purple-400">@{profile.username}</p>
+            </div>
           </div>
-
-          <h2 className="text-lg font-bold text-white mb-0.5">{displayName}</h2>
-          <p className="text-sm text-purple-400 mb-1">@{profile.username}</p>
 
           {profile.bio && (
             <p className="text-sm text-purple-200/80 mb-3">{profile.bio}</p>
           )}
 
           {/* Stats */}
-          <div className="flex gap-4 mb-4 text-sm">
+          <div className="flex gap-4 mb-3 text-sm">
             <div>
               <span className="font-bold text-white">{stats.posts}</span>
               <span className="text-purple-300/60 ml-1">shakes</span>
@@ -177,31 +173,44 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
           {/* Follow Button */}
           <button
             onClick={handleFollowToggle}
-            className={`w-full py-2.5 rounded-full font-semibold transition-all flex items-center justify-center gap-2 ${
+            className={`w-full py-2 rounded-full font-semibold transition-all flex items-center justify-center gap-2 text-sm ${
               isFollowingUser
                 ? 'bg-purple-950/40 border border-purple-800/30 hover:bg-purple-800/40 text-white'
                 : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white'
             }`}
           >
             {isFollowingUser ? (
-              <>
-                <UserCheck className="w-4 h-4" />
-                Abonné
-              </>
+              <><UserCheck className="w-4 h-4" /> Abonné</>
             ) : (
-              <>
-                <UserPlus className="w-4 h-4" />
-                S'abonner
-              </>
+              <><UserPlus className="w-4 h-4" /> S'abonner</>
             )}
           </button>
 
-          {/* Recent Posts Grid */}
-          {posts.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-sm font-semibold text-purple-300/60 mb-2">Derniers shakes</h3>
+          {/* Tabs: Shakes / Reshakes */}
+          <div className="flex mt-4 border-b border-purple-800/30">
+            <button
+              onClick={() => { setActiveTab('shakes'); setExpandedPostId(null); }}
+              className={`flex-1 py-2 text-sm font-semibold text-center transition-colors ${
+                activeTab === 'shakes' ? 'text-purple-400 border-b-2 border-purple-500' : 'text-purple-300/40'
+              }`}
+            >
+              Shakes
+            </button>
+            <button
+              onClick={() => { setActiveTab('reshakes'); setExpandedPostId(null); }}
+              className={`flex-1 py-2 text-sm font-semibold text-center transition-colors flex items-center justify-center gap-1 ${
+                activeTab === 'reshakes' ? 'text-purple-400 border-b-2 border-purple-500' : 'text-purple-300/40'
+              }`}
+            >
+              <RefreshCw className="w-3 h-3" /> Reshakes
+            </button>
+          </div>
+
+          {/* Posts Grid */}
+          {currentPosts.length > 0 ? (
+            <div className="mt-3">
               <div className="grid grid-cols-3 gap-1.5">
-                {posts.slice(0, 9).map((post) => (
+                {currentPosts.slice(0, 9).map((post) => (
                   <button
                     key={post.id}
                     onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)}
@@ -209,11 +218,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
                       expandedPostId === post.id ? 'ring-2 ring-purple-500 scale-[0.95]' : ''
                     }`}
                   >
-                    <img
-                      src={post.cover_url}
-                      alt={post.track_name}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={post.cover_url} alt={post.track_name} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
                       <Play className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                     </div>
@@ -237,7 +242,6 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
                     className="overflow-hidden mt-2"
                   >
                     <div className="bg-purple-950/40 rounded-xl border border-purple-800/30 p-3">
-                      {/* Track info */}
                       <div className="flex items-center gap-2 mb-2">
                         <img src={expandedPost.cover_url} alt="" className="w-10 h-10 rounded-md object-cover" />
                         <div className="flex-1 min-w-0">
@@ -249,13 +253,9 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
                           <span className="text-xs font-medium">{expandedPost.likes_count || 0}</span>
                         </div>
                       </div>
-
-                      {/* Caption */}
                       {expandedPost.text && (
                         <p className="text-xs text-purple-200/70 mb-2">{expandedPost.text}</p>
                       )}
-
-                      {/* Spotify Embed */}
                       {expandedEmbedUrl && (
                         <iframe
                           src={expandedEmbedUrl}
@@ -272,6 +272,12 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
+          ) : (
+            <div className="mt-4 text-center py-6">
+              <p className="text-purple-300/40 text-sm">
+                {activeTab === 'shakes' ? 'Aucun shake pour le moment' : 'Aucun reshake pour le moment'}
+              </p>
             </div>
           )}
         </div>
