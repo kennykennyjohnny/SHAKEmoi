@@ -42,6 +42,7 @@ export default function App() {
   const [hasPostedToday, setHasPostedToday] = useState(true);
   const [circles, setCircles] = useState<any[]>([]);
   const [activeFeedCircleId, setActiveFeedCircleId] = useState<string | null>(null);
+  const [viewOptions, setViewOptions] = useState<any>({});
 
   const loadUserCircles = async () => {
     try {
@@ -156,7 +157,7 @@ export default function App() {
             circles={circles}
             activeCircleId={activeFeedCircleId}
             onSelectCircle={openCircleFeed}
-            onCreateCircle={() => setCurrentView('messages')}
+            onCreateCircle={() => { setCurrentView('messages'); setViewOptions({ initialTab: 'circles', initialShowCreate: true }); }}
           />
         );
       case 'search':
@@ -164,7 +165,7 @@ export default function App() {
       case 'top':
         return <TopFriendsView currentUser={currentUser} />;
       case 'messages':
-        return <MessagesView currentUser={currentUser} onOpenCircle={openCircleFeed} onCircleCreated={handleCircleCreated} />;
+        return <MessagesView currentUser={currentUser} onOpenCircle={openCircleFeed} onCircleCreated={handleCircleCreated} viewOptions={viewOptions} />;
       case 'wrap':
         return <WeeklyWrapView currentUser={currentUser} />;
       case 'profile':

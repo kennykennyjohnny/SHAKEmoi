@@ -14,10 +14,12 @@ interface MessagesViewProps {
   currentUser: any;
   onOpenCircle?: (circleId: string | null) => void;
   onCircleCreated?: (circleId: string) => void;
+  viewOptions?: any;
 }
 
-export function MessagesView({ currentUser, onOpenCircle, onCircleCreated }: MessagesViewProps) {
-  const [tab, setTab] = useState<'dms' | 'circles'>('dms');
+export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewOptions }: MessagesViewProps) {
+  const { initialTab = 'dms', initialShowCreate = false } = viewOptions || {};
+  const [tab, setTab] = useState<'dms' | 'circles'>(initialTab);
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-full">
@@ -37,7 +39,7 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated }: Mes
 
       {tab === 'dms'
         ? <DmsPanel currentUser={currentUser} />
-        : <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} />
+        : <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} initialShowCreate={initialShowCreate} />
       }
     </div>
   );
@@ -257,10 +259,10 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
 
 // ==================== Cercles ====================
 
-function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void }) {
+function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated, initialShowCreate }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; initialShowCreate?: boolean }) {
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
+  const [showCreate, setShowCreate] = useState(initialShowCreate || false);
 
   useEffect(() => { load(); }, []);
 
