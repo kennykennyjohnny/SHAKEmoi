@@ -104,8 +104,8 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
         const originalPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
         const originalUser = Array.isArray(originalPost?.user) ? originalPost?.user[0] : originalPost?.user;
         const isReshake = !!post.is_reshake;
-        const displayUser = isReshake ? originalUser : reshakerUser;
-        const displayTrack = isReshake ? originalPost : post;
+        const displayUser = isReshake && originalUser ? originalUser : reshakerUser;
+        const displayTrack = isReshake && originalPost ? originalPost : post;
 
         return {
           id: post.id,
@@ -141,7 +141,7 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
           timestamp: post.created_at,
           isLiked,
           isReshaked: false,
-          reshakeFrom: post.is_reshake && reshakerUser ? {
+          reshakeFrom: isReshake && originalUser ? {
             id: reshakerUser.id || reshakerUser.username || '',
             username: reshakerUser.username || '',
             displayName: reshakerUser.display_name || reshakerUser.username || ''
@@ -406,9 +406,9 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
                     >
                       {shake.user.displayName}
                     </button>
-                    <span className="text-rose-500/50 text-xs">@{shake.user.username}</span>
-                    <span className="text-rose-600/40 text-xs">·</span>
-                    <span className="text-rose-500/50 text-xs">{formatTimestamp(shake.timestamp)}</span>
+                    <span className="text-pink-400/50 text-xs">@{shake.user.username}</span>
+                    <span className="text-pink-500/40 text-xs">·</span>
+                    <span className="text-pink-400/50 text-xs">{formatTimestamp(shake.timestamp)}</span>
                   </div>
                 </div>
 
