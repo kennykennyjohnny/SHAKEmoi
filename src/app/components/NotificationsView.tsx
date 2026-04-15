@@ -1,17 +1,20 @@
-import { Heart, MessageCircle, UserPlus, Music, Repeat2, Loader2, Bell } from 'lucide-react';
+import { Heart, MessageCircle, UserPlus, UserCheck, Music, Repeat2, Loader2, Bell, Users, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { getUserNotifications } from '../../lib/database';
+import { getUserNotifications, followUser, isFollowing } from '../../lib/database';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
 interface NotificationsViewProps {
   currentUser: any;
+  onNavigateToPost?: (postId: string) => void;
 }
 
-export function NotificationsView({ currentUser }: NotificationsViewProps) {
+export function NotificationsView({ currentUser, onNavigateToPost }: NotificationsViewProps) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
+  const [followedBack, setFollowedBack] = useState<Set<string>>(new Set());
+  const [followingState, setFollowingState] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadNotifications();
@@ -24,10 +27,28 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
       setLoading(true);
       const data = await getUserNotifications(currentUser.id);
       setNotifications(data);
+      
+      // Check follow state for follow notifications
+      const followNotifs = data.filter((n: any) => n.type === 'follow' && n.actor_id);
+      const states: Record<string, boolean> = {};
+      await Promise.all(followNotifs.map(async (n: any) => {
+        try { states[n.actor_id] = await isFollowing(n.actor_id); } catch { states[n.actor_id] = false; }
+      }));
+      setFollowingState(states);
     } catch (error) {
       console.error('Error loading notifications:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFollowBack = async (userId: string) => {
+    try {
+      await followUser(userId);
+      setFollowedBack(new Set([...followedBack, userId]));
+      setFollowingState({ ...followingState, [userId]: true });
+    } catch (err) {
+      console.error('Error following back:', err);
     }
   };
 
@@ -99,56 +120,83 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
       <h1 className="text-xl font-bold text-white mb-4">Notifications</h1>
 
       <div className="space-y-2">
-        {notifications.map((notif, index) => (
-          <motion.div
-            key={notif.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.03 }}
-            className="w-full bg-purple-950/25 hover:bg-purple-900/30 rounded-xl p-3 flex items-center gap-3 transition-colors border border-purple-800/20"
-          >
-            {/* Icon */}
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${getIconBg(notif.type)}`}>
-              {getIcon(notif.type)}
-            </div>
+        {notifications.map((notif, index) => {
+          const isFollowNotif = notif.type === 'follow';
+          const alreadyFollowing = followingState[notif.actor_id] || followedBack.has(notif.actor_id);
+          const hasPost = !!notif.post_cover_url;
 
-            {/* Avatar - clickable for profile preview */}
-            <button
-              onClick={() => setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username })}
-              className="flex-shrink-0"
+          return (
+            <motion.div
+              key={notif.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.03 }}
+              className={`w-full bg-purple-950/25 hover:bg-purple-900/30 rounded-xl p-4 flex items-start gap-3 transition-colors border border-purple-800/20 ${!notif.is_read ? 'border-l-2 border-l-fuchsia-500' : ''}`}
             >
-              <img
-                src={notif.actor_avatar || `https://ui-avatars.com/api/?name=${notif.actor_username}&background=random`}
-                alt={notif.actor_username}
-                className="w-10 h-10 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-purple-500 transition-all"
-              />
-            </button>
+              {/* Icon */}
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border ${getIconBg(notif.type)}`}>
+                {getIcon(notif.type)}
+              </div>
 
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-white">
+              {/* Avatar - clickable for profile preview */}
+              <button
+                onClick={() => setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username })}
+                className="flex-shrink-0"
+              >
+                <img
+                  src={notif.actor_avatar || `https://ui-avatars.com/api/?name=${notif.actor_username}&background=random`}
+                  alt={notif.actor_username}
+                  className="w-11 h-11 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-purple-500 transition-all"
+                />
+              </button>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-white leading-relaxed">
+                  <button
+                    onClick={() => setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username })}
+                    className="font-bold hover:underline text-fuchsia-400"
+                  >
+                    @{notif.actor_username}
+                  </button>
+                  {' '}
+                  <span className="text-purple-200/70">{notif.content}</span>
+                </p>
+                <p className="text-xs text-purple-500/40 mt-1">{formatTimestamp(notif.created_at)}</p>
+
+                {/* Follow-back button for follow notifications */}
+                {isFollowNotif && !alreadyFollowing && (
+                  <button
+                    onClick={() => handleFollowBack(notif.actor_id)}
+                    className="mt-2 px-4 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-xs font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                  >
+                    <UserPlus className="w-3 h-3" /> Suivre en retour
+                  </button>
+                )}
+                {isFollowNotif && alreadyFollowing && (
+                  <span className="mt-2 inline-flex items-center gap-1 text-xs text-fuchsia-400/60">
+                    <UserCheck className="w-3 h-3" /> Suivi(e)
+                  </span>
+                )}
+              </div>
+
+              {/* Track Cover if available - clickable to navigate to post */}
+              {hasPost && (
                 <button
-                  onClick={() => setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username })}
-                  className="font-semibold hover:underline"
+                  onClick={() => {/* Navigate to post in feed would require post_id from notification - future */}}
+                  className="flex-shrink-0 group"
+                  title="Voir le shake"
                 >
-                  @{notif.actor_username}
+                  <img
+                    src={notif.post_cover_url}
+                    alt="Track"
+                    className="w-12 h-12 rounded-xl object-cover ring-1 ring-purple-700/20 group-hover:ring-2 group-hover:ring-fuchsia-500/50 transition-all"
+                  />
                 </button>
-                {' '}
-                <span className="text-purple-300/60">{notif.content}</span>
-              </p>
-              <p className="text-xs text-purple-500/40 mt-0.5">{formatTimestamp(notif.created_at)}</p>
-            </div>
-
-            {/* Track Cover if available */}
-            {notif.post_cover_url && (
-              <img
-                src={notif.post_cover_url}
-                alt="Track"
-                className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-              />
-            )}
-          </motion.div>
-        ))}
+              )}
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Profile Preview */}

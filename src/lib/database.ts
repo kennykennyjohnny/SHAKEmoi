@@ -667,6 +667,25 @@ export async function getUserFollowing(userId: string, limit = 100) {
   }
 }
 
+export async function removeFollower(followerId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('follows')
+      .delete()
+      .eq('follower_id', followerId)
+      .eq('following_id', user.id);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error removing follower:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 // ==================== SEARCH ====================
 
 export async function searchUsers(query: string) {
@@ -732,6 +751,7 @@ export async function getTopPosts(limit = 10) {
         *,
         user:users_profile!posts_user_id_fkey(*)
       `)
+      .eq('is_reshake', false)
       .order('likes_count', { ascending: false })
       .limit(50); // Get more to deduplicate
 
@@ -1073,7 +1093,7 @@ export async function getMessages(partnerId: string, limit = 50): Promise<any[]>
   }
 }
 
-export async function sendMessage(receiverId: string, text?: string, track?: any) {
+export async function sendMessage(receiverId: string, text?: string, track?: any, imageUrl?: string) {
   try {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
@@ -1082,6 +1102,7 @@ export async function sendMessage(receiverId: string, text?: string, track?: any
       sender_id: user.id,
       receiver_id: receiverId,
       text: text || null,
+      image_url: imageUrl || null,
     };
 
     // If sending a track
@@ -1378,6 +1399,21 @@ export async function getUserCircles(): Promise<any[]> {
   } catch (error) {
     console.error('Error getting user circles:', error);
     return [];
+  }
+}
+
+export async function getCircleById(circleId: string): Promise<any | null> {
+  try {
+    const { data, error } = await supabase
+      .from('circles')
+      .select('id, name, created_by, invite_code, created_at')
+      .eq('id', circleId)
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error getting circle by id:', error);
+    return null;
   }
 }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Send, Search, Music, Play, Loader2, ExternalLink, Users, Plus, Copy, Check, X, Settings, LogOut } from 'lucide-react';
+import { ArrowLeft, Send, Search, Music, Play, Loader2, ExternalLink, Users, Plus, Copy, Check, X, Settings, LogOut, Camera, Smile, Image } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   getConversations, getMessages, sendMessage, getUserFollowing,
@@ -60,6 +60,13 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
   const [showNewConvo, setShowNewConvo] = useState(false);
   const [friends, setFriends] = useState<any[]>([]);
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
+  const [showGifSearch, setShowGifSearch] = useState(false);
+  const [gifQuery, setGifQuery] = useState('');
+  const [gifResults, setGifResults] = useState<any[]>([]);
+  const [gifSearching, setGifSearching] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadConversations(); }, []);
@@ -101,6 +108,77 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
     setSending(false);
   };
 
+  const handleSendImage = async (file: File) => {
+    if (!activeConversation) return;
+    setSending(true);
+    try {
+      const { supabase } = await import('../../lib/supabase');
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('circle-media')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('circle-media').getPublicUrl(fileName);
+      const r = await sendMessage(activeConversation.id, undefined, undefined, publicUrl);
+      if (r.success) setMessages(await getMessages(activeConversation.id));
+    } catch (err) {
+      console.error('Error uploading photo:', err);
+    }
+    setSending(false);
+    setPhotoPreview(null);
+    setPhotoFile(null);
+  };
+
+  const handleSendGif = async (gifUrl: string) => {
+    if (!activeConversation || !gifUrl) return;
+    setSending(true);
+    try {
+      const r = await sendMessage(activeConversation.id, undefined, undefined, gifUrl);
+      if (r.success) setMessages(await getMessages(activeConversation.id));
+    } catch {}
+    setSending(false);
+    setShowGifSearch(false);
+    setGifQuery('');
+    setGifResults([]);
+  };
+
+  const handlePhotoSelect = (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { alert('Photo trop lourde (max 10 Mo)'); return; }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  // GIF search
+  useEffect(() => {
+    if (!showGifSearch) return;
+    if (gifQuery.length < 2) {
+      // Load trending
+      (async () => {
+        setGifSearching(true);
+        try {
+          const res = await fetch(`https://tenor.googleapis.com/v2/featured?key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ&client_key=shakemoi&limit=20&media_filter=tinygif,gif`);
+          const data = await res.json();
+          setGifResults(data.results || []);
+        } catch { setGifResults([]); }
+        setGifSearching(false);
+      })();
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setGifSearching(true);
+      try {
+        const res = await fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(gifQuery)}&key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ&client_key=shakemoi&limit=20&media_filter=tinygif,gif`);
+        const data = await res.json();
+        setGifResults(data.results || []);
+      } catch { setGifResults([]); }
+      setGifSearching(false);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [gifQuery, showGifSearch]);
+
   const formatTime = (ts: string) => new Date(ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
   if (activeConversation) {
@@ -127,6 +205,11 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
               <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] rounded-2xl overflow-hidden ${isMine ? 'bg-purple-600/30 border border-purple-500/30' : 'bg-violet-950/25 border border-purple-500/25'}`}>
                   {msg.text && <p className="px-3 py-2 text-sm">{msg.text}</p>}
+                  {msg.image_url && (
+                    <div className="p-1">
+                      <img src={msg.image_url} alt="" className="max-w-full max-h-64 rounded-xl object-cover" loading="lazy" />
+                    </div>
+                  )}
                   {isTrack && (
                     <div className="p-2">
                       <div className="flex gap-2 items-center cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : msg.id)}>
@@ -182,12 +265,54 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
               </div>
             </motion.div>
           )}
+          {showGifSearch && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-72 overflow-hidden border-t border-purple-500/25 bg-[#0a0012] flex flex-col flex-shrink-0">
+              <div className="p-3 pb-0">
+                <div className="relative mb-2">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
+                  <input autoFocus type="text" value={gifQuery} onChange={(e: any) => setGifQuery(e.target.value)} placeholder="Rechercher un GIF..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto px-3 pb-3">
+                {gifSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
+                <div className="grid grid-cols-2 gap-2">
+                  {gifResults.map((gif: any) => (
+                    <button key={gif.id} onClick={() => handleSendGif(gif.media_formats?.gif?.url || gif.media_formats?.tinygif?.url)} className="rounded-lg overflow-hidden hover:ring-2 hover:ring-purple-500 transition-all">
+                      <img src={gif.media_formats?.tinygif?.url || gif.media_formats?.gif?.url} alt="" className="w-full h-24 object-cover" loading="lazy" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+          {photoPreview && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="p-3 border-t border-purple-500/25 bg-[#0a0012] flex-shrink-0">
+              <div className="flex items-end gap-3">
+                <div className="relative inline-block">
+                  <img src={photoPreview} alt="Aperçu" className="max-h-40 rounded-lg object-cover" />
+                  <button onClick={() => { setPhotoFile(null); if (photoPreview) URL.revokeObjectURL(photoPreview); setPhotoPreview(null); }} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                </div>
+                <button onClick={() => photoFile && handleSendImage(photoFile)} disabled={sending} className="px-4 py-2 bg-purple-600 rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors">
+                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Envoyer'}
+                </button>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
 
         <div className="px-4 py-3 pb-[calc(0.75rem+4rem)] lg:pb-3 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0">
-          <button onClick={() => setShowTrackSearch(!showTrackSearch)} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
+          <button onClick={() => { setShowTrackSearch(!showTrackSearch); setShowGifSearch(false); }} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
             <Music className="w-5 h-5" />
           </button>
+          <button onClick={() => { setShowGifSearch(!showGifSearch); setShowTrackSearch(false); }} className={`p-2 rounded-full transition-colors ${showGifSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
+            <Smile className="w-5 h-5" />
+          </button>
+          <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full hover:bg-purple-900/40 text-purple-400 transition-colors">
+            <Camera className="w-5 h-5" />
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoSelect} />
           <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Envoie un message..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
           <button onClick={() => handleSend()} disabled={sending || !newMessage.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
             {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}

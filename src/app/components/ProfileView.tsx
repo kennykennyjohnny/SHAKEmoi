@@ -5,7 +5,7 @@ import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
-import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, likePost, unlikePost, hasLikedPost } from '../../lib/database';
+import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPost } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 
 interface ProfileViewProps {
@@ -240,6 +240,16 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
     }
   };
 
+  const handleRemoveFollower = async (followerId: string) => {
+    try {
+      await removeFollower(followerId);
+      setFollowersList(followersList.filter(u => u.id !== followerId));
+      setStats({ ...stats, followers: Math.max(0, stats.followers - 1) });
+    } catch (err) {
+      console.error('Error removing follower:', err);
+    }
+  };
+
   const currentShakes = activeTab === 'shakes' ? userShakes : userReshakes;
 
   return (
@@ -342,145 +352,140 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           </div>
         ) : currentShakes.length > 0 ? (
           <>
-            {/* Grid of covers */}
+            {/* Grid of covers with inline expanded embeds */}
             <div className="grid grid-cols-3 gap-1.5">
-              {currentShakes.map((shake, index) => (
-                <motion.button
-                  key={shake.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.03 }}
-                  onClick={() => setExpandedShakeId(expandedShakeId === shake.id ? null : shake.id)}
-                  className={`relative aspect-square rounded-lg overflow-hidden group transition-all ${
-                    expandedShakeId === shake.id ? 'ring-2 ring-purple-500 scale-[0.97]' : 'hover:opacity-90'
-                  }`}
-                >
-                  <img
-                    src={shake.track.coverUrl}
-                    alt={shake.track.title}
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Overlay on hover */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                    <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                  </div>
-                  {/* Reshake badge */}
-                  {activeTab === 'reshakes' && shake.originalUser && (
-                    <div className="absolute top-1 left-1 bg-fuchsia-500/80 rounded-full p-0.5">
-                      <Repeat2 className="w-2.5 h-2.5 text-white" />
-                    </div>
-                  )}
-                  {/* Like count */}
-                  <div className="absolute bottom-1 right-1 bg-black/60 rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
-                    <Heart className="w-2.5 h-2.5 text-pink-400" />
-                    <span className="text-[9px] text-white font-medium">{shake.likes}</span>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-
-            {/* Expanded Detail View */}
-            <AnimatePresence>
-              {expandedShakeId && (() => {
-                const shake = currentShakes.find(s => s.id === expandedShakeId);
-                if (!shake) return null;
-
+              {currentShakes.map((shake, index) => {
+                const isExpanded = expandedShakeId === shake.id;
+                
                 return (
-                  <motion.div
-                    key={expandedShakeId}
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden mt-3"
-                  >
-                    <div className="bg-purple-950/40 rounded-xl border border-purple-800/30 overflow-hidden">
-                      {/* Original user info for reshakes */}
-                      {activeTab === 'reshakes' && shake.originalUser && (
-                        <div className="flex items-center gap-2 px-4 pt-3">
-                          <img
-                            src={shake.originalUser.avatar || `https://ui-avatars.com/api/?name=${shake.originalUser.username}&background=random`}
-                            alt={shake.originalUser.username}
-                            className="w-6 h-6 rounded-full object-cover"
-                          />
-                          <span className="text-xs text-white font-medium">@{shake.originalUser.username}</span>
-                          <Repeat2 className="w-3 h-3 text-fuchsia-400" />
-                          <span className="text-xs text-fuchsia-400/60">Reshaké par toi</span>
+                  <div key={shake.id} className={isExpanded ? 'col-span-3' : ''}>
+                    {!isExpanded ? (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.03 }}
+                        onClick={() => setExpandedShakeId(shake.id)}
+                        className="relative aspect-square rounded-lg overflow-hidden group transition-all w-full hover:opacity-90"
+                      >
+                        <img
+                          src={shake.track.coverUrl}
+                          alt={shake.track.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                          <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                         </div>
-                      )}
-
-                      <div className="p-4">
-                        {/* Caption */}
-                        {shake.caption && (
-                          <p className="text-sm text-purple-200/80 mb-3">{shake.caption}</p>
+                        {activeTab === 'reshakes' && shake.originalUser && (
+                          <div className="absolute top-1 left-1 bg-fuchsia-500/80 rounded-full p-0.5">
+                            <Repeat2 className="w-2.5 h-2.5 text-white" />
+                          </div>
+                        )}
+                        <div className="absolute bottom-1 right-1 bg-black/60 rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
+                          <Heart className="w-2.5 h-2.5 text-pink-400" />
+                          <span className="text-[9px] text-white font-medium">{shake.likes}</span>
+                        </div>
+                      </motion.button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-purple-950/40 rounded-xl border border-purple-800/30 overflow-hidden"
+                      >
+                        {activeTab === 'reshakes' && shake.originalUser && (
+                          <div className="flex items-center gap-2 px-4 pt-3">
+                            <img
+                              src={shake.originalUser.avatar || `https://ui-avatars.com/api/?name=${shake.originalUser.username}&background=random`}
+                              alt={shake.originalUser.username}
+                              className="w-6 h-6 rounded-full object-cover"
+                            />
+                            <span className="text-xs text-white font-medium">@{shake.originalUser.username}</span>
+                            <Repeat2 className="w-3 h-3 text-fuchsia-400" />
+                            <span className="text-xs text-fuchsia-400/60">Reshaké par toi</span>
+                          </div>
                         )}
 
-                        {/* Spotify Embed */}
-                        {shake.track.spotifyEmbedUrl ? (
-                          <div className="rounded-lg overflow-hidden mb-3">
-                            <iframe
-                              src={`${shake.track.spotifyEmbedUrl}&utm_source=generator`}
-                              width="100%"
-                              height="152"
-                              frameBorder="0"
-                              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                              loading="lazy"
-                              className="rounded-lg"
-                            />
-                          </div>
-                        ) : (
-                          <div className="flex gap-3 mb-3">
-                            <img src={shake.track.coverUrl} alt={shake.track.title} className="w-14 h-14 rounded-lg object-cover" />
-                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex-1 min-w-0">
                               <h4 className="font-bold text-sm text-white truncate">{shake.track.title}</h4>
                               <p className="text-xs text-purple-300/60 truncate">{shake.track.artist}</p>
                             </div>
+                            <button
+                              onClick={() => setExpandedShakeId(null)}
+                              className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors ml-2"
+                            >
+                              <X className="w-4 h-4 text-purple-300/50" />
+                            </button>
                           </div>
-                        )}
 
-                        {/* Open in app */}
-                        <button
-                          onClick={() => openInMusicApp(shake)}
-                          className="w-full py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity mb-3"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          Ouvrir dans l'app
-                        </button>
+                          {shake.caption && (
+                            <p className="text-sm text-purple-200/80 mb-3">{shake.caption}</p>
+                          )}
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-4 pt-2 border-t border-purple-800/20">
-                          <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group">
-                            <Heart className={`w-5 h-5 transition-all ${shake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-400/50 group-hover:text-pink-500'}`} />
-                            <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-400/50'}`}>{shake.likes}</span>
-                          </button>
-
-                          <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
-                            <MessageCircle className="w-5 h-5 text-purple-400/50 group-hover:text-fuchsia-400 transition-colors" />
-                            <span className="text-xs font-medium text-purple-400/50">{shake.comments}</span>
-                          </button>
-
-                          <button className="flex items-center gap-1.5 group">
-                            <Repeat2 className="w-5 h-5 text-purple-400/50 group-hover:text-fuchsia-400 transition-colors" />
-                            <span className="text-xs font-medium text-purple-400/50">{shake.reshakes}</span>
-                          </button>
-
-                          <span className="text-xs text-purple-500/40 ml-auto">{shake.timestamp}</span>
+                          {shake.track.spotifyEmbedUrl ? (
+                            <div className="rounded-lg overflow-hidden mb-3">
+                              <iframe
+                                src={`${shake.track.spotifyEmbedUrl}&utm_source=generator`}
+                                width="100%"
+                                height="152"
+                                frameBorder="0"
+                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                loading="lazy"
+                                className="rounded-lg"
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex gap-3 mb-3">
+                              <img src={shake.track.coverUrl} alt={shake.track.title} className="w-14 h-14 rounded-lg object-cover" />
+                              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <h4 className="font-bold text-sm text-white truncate">{shake.track.title}</h4>
+                                <p className="text-xs text-purple-300/60 truncate">{shake.track.artist}</p>
+                              </div>
+                            </div>
+                          )}
 
                           <button
-                            onClick={() => {
-                              if (confirm('Supprimer ce shake ?')) handleDeleteShake(shake.id);
-                            }}
-                            className="p-1.5 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg transition-colors"
+                            onClick={() => openInMusicApp(shake)}
+                            className="w-full py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity mb-3"
                           >
-                            <Trash2 className="w-4 h-4 text-pink-400" />
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            Ouvrir dans l'app
                           </button>
+
+                          <div className="flex items-center gap-4 pt-2 border-t border-purple-800/20">
+                            <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group">
+                              <Heart className={`w-5 h-5 transition-all ${shake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-400/50 group-hover:text-pink-500'}`} />
+                              <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-400/50'}`}>{shake.likes}</span>
+                            </button>
+
+                            <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
+                              <MessageCircle className="w-5 h-5 text-purple-400/50 group-hover:text-fuchsia-400 transition-colors" />
+                              <span className="text-xs font-medium text-purple-400/50">{shake.comments}</span>
+                            </button>
+
+                            <button className="flex items-center gap-1.5 group">
+                              <Repeat2 className="w-5 h-5 text-purple-400/50 group-hover:text-fuchsia-400 transition-colors" />
+                              <span className="text-xs font-medium text-purple-400/50">{shake.reshakes}</span>
+                            </button>
+
+                            <span className="text-xs text-purple-500/40 ml-auto">{shake.timestamp}</span>
+
+                            <button
+                              onClick={() => {
+                                if (confirm('Supprimer ce shake ?')) handleDeleteShake(shake.id);
+                              }}
+                              className="p-1.5 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4 text-pink-400" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </motion.div>
+                      </motion.div>
+                    )}
+                  </div>
                 );
-              })()}
-            </AnimatePresence>
+              })}
+            </div>
           </>
         ) : (
           <div className="text-center py-12">
@@ -552,7 +557,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           <p className="text-xs text-purple-400/50 truncate">@{person.username}</p>
                         </div>
                       </button>
-                      {/* Only show unfollow for "following" list */}
+                      {/* Only show unfollow for "following" list, remove for "followers" */}
                       {showFollowersList === 'following' && (
                         <button
                           onClick={() => {
@@ -562,6 +567,17 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           title="Ne plus suivre"
                         >
                           <UserMinus className="w-4 h-4 text-pink-400" />
+                        </button>
+                      )}
+                      {showFollowersList === 'followers' && (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Retirer @${person.username} de tes abonnés ?`)) handleRemoveFollower(person.id);
+                          }}
+                          className="p-2 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg transition-colors"
+                          title="Retirer cet abonné"
+                        >
+                          <X className="w-4 h-4 text-pink-400" />
                         </button>
                       )}
                     </div>

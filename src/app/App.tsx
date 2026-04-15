@@ -15,6 +15,7 @@ import { MessagesView } from './components/MessagesView';
 import { TopFriendsView } from './components/TopFriendsView';
 import { SharedPostView } from './components/SharedPostView';
 import { WeeklyWrapView } from './components/WeeklyWrapView';
+import { CircleInviteView } from './components/CircleInviteView';
 import { NotificationsDropdown } from './components/NotificationsDropdown';
 import { supabase } from '../lib/supabase';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, getUserCircles } from '../lib/database';
@@ -24,6 +25,12 @@ type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'wrap';
 function getSharedPostId(): string | null {
   const hash = window.location.hash;
   const m = hash.match(/\/s\/([a-f0-9-]+)/i) || window.location.pathname.match(/\/s\/([a-f0-9-]+)/i);
+  return m ? m[1] : null;
+}
+
+function getCircleInviteId(): string | null {
+  const hash = window.location.hash;
+  const m = hash.match(/\/circle\/([a-f0-9-]+)/i);
   return m ? m[1] : null;
 }
 
@@ -155,6 +162,24 @@ export default function App() {
     } catch {}
   };
 
+  // Circle invite — show landing page
+  const circleInviteId = getCircleInviteId();
+  if (circleInviteId) {
+    return (
+      <CircleInviteView
+        circleId={circleInviteId}
+        currentUser={currentUser}
+        onJoin={async () => {
+          window.location.hash = '';
+          await loadUserCircles();
+          setActiveFeedCircleId(circleInviteId);
+          setCurrentView('feed');
+        }}
+        onSignUp={() => { window.location.hash = ''; setShowAuth(true); }}
+      />
+    );
+  }
+
   // Shared post — public, no auth
   const sharedPostId = getSharedPostId();
   if (sharedPostId && !currentUser) {
@@ -243,7 +268,7 @@ export default function App() {
           <div className="px-2 py-2 flex items-center justify-around max-w-md mx-auto">
             {([
               { view: 'feed' as View, icon: Home, label: 'Feed' },
-              { view: 'top' as View, icon: TrendingUp, label: 'TOP' },
+              { view: 'wrap' as View, icon: BarChart3, label: 'Résumé' },
               { view: 'search' as View, icon: Search, label: 'Recherche' },
               { view: 'messages' as View, icon: MessageCircle, label: 'DMs' },
               { view: 'profile' as View, icon: User, label: 'Profil' },
@@ -251,12 +276,11 @@ export default function App() {
               <button
                 key={view}
                 onClick={() => setCurrentView(view)}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
-                  currentView === view ? 'text-purple-400 bg-purple-500/10' : 'text-purple-300/60'
+                className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all ${
+                  currentView === view ? 'text-fuchsia-400 bg-fuchsia-500/15 shadow-lg shadow-fuchsia-500/10' : 'text-purple-300/60 hover:text-purple-200'
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-xs font-medium">{label}</span>
+                <Icon className={`w-5 h-5 ${currentView === view ? 'drop-shadow-[0_0_6px_rgba(217,70,239,0.5)]' : ''}`} />
               </button>
             ))}
           </div>

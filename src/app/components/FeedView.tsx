@@ -276,7 +276,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
   };
 
   return (
-    <div className="sticky bottom-16 lg:bottom-0 z-30 bg-[#0a0012]/95 backdrop-blur-lg border-t border-purple-500/25">
+    <div className="sticky bottom-16 lg:bottom-0 z-30 bg-[#0a0012]/95 backdrop-blur-xl border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
       <AnimatePresence>
         {showChatTrackSearch && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-purple-500/25 bg-[#0a0012]">
@@ -734,7 +734,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined}>
-      <div className={`p-4 space-y-3 ${currentFeedId ? 'flex-1' : ''}`}>
+      <div className={`p-4 space-y-3 ${currentFeedId ? 'flex-1 pb-32 lg:pb-20' : ''}`}>
         {/* Horizontal feed selector */}
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
         {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
@@ -983,7 +983,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                           Ouvrir dans {
-                            currentUser?.musicService === 'apple_music' ? 'Apple Music' :
+                            currentUser?.musicService === 'apple_music' || currentUser?.musicService === 'apple' ? 'Apple Music' :
                             currentUser?.musicService === 'youtube_music' ? 'YouTube Music' :
                             currentUser?.musicService === 'deezer' ? 'Deezer' :
                             currentUser?.musicService === 'tidal' ? 'Tidal' :

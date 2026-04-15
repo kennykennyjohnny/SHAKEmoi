@@ -61,23 +61,53 @@ export async function getOdesliLinks(spotifyUrl: string): Promise<OdesliLinks> {
 }
 
 // Maps platform preference to the correct URL from OdesliLinks
+// On mobile, attempts native app deep links first
 export function getPlatformUrl(
   links: OdesliLinks & { spotify_url?: string | null },
   platform: string
 ): string | null {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   switch (platform) {
-    case 'spotify':
-      return links.spotify_url ?? null;
+    case 'spotify': {
+      const url = links.spotify_url ?? null;
+      if (!url) return null;
+      // Convert web URL to native URI on mobile: spotify:track:ID
+      if (isMobile) {
+        const trackMatch = url.match(/track\/([a-zA-Z0-9]+)/);
+        if (trackMatch) return `spotify:track:${trackMatch[1]}`;
+        const albumMatch = url.match(/album\/([a-zA-Z0-9]+)/);
+        if (albumMatch) return `spotify:album:${albumMatch[1]}`;
+      }
+      return url;
+    }
+    case 'apple':
     case 'apple_music':
       return links.apple_music_url;
-    case 'deezer':
-      return links.deezer_url;
+    case 'deezer': {
+      const url = links.deezer_url ?? null;
+      if (!url) return null;
+      // Convert to deezer:// deep link on mobile
+      if (isMobile) {
+        const trackMatch = url.match(/track\/(\d+)/);
+        if (trackMatch) return `deezer://www.deezer.com/track/${trackMatch[1]}`;
+      }
+      return url;
+    }
     case 'youtube':
       return links.youtube_url;
     case 'youtube_music':
       return links.youtube_music_url;
-    case 'tidal':
-      return links.tidal_url;
+    case 'tidal': {
+      const url = links.tidal_url ?? null;
+      if (!url) return null;
+      // Tidal deep link
+      if (isMobile) {
+        const trackMatch = url.match(/track\/(\d+)/);
+        if (trackMatch) return `tidal://track/${trackMatch[1]}`;
+      }
+      return url;
+    }
     default:
       return links.odesli_page_url;
   }
