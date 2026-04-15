@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   getConversations, getMessages, sendMessage, getUserFollowing,
   createCircle, getUserCircles, getCircleFeed, getCircleMembers,
-  searchUsers, addCircleMember, removeCircleMember, getCurrentUser
+  searchUsers, addCircleMember, removeCircleMember, getCurrentUser,
+  createPost
 } from '../../lib/database';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -324,6 +325,7 @@ function CreateCircleFlow({ currentUser, onDone, onBack }: { currentUser: any; o
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [name, setName] = useState('');
   const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
   const [createdCircle, setCreatedCircle] = useState<any>(null);
   const [friends, setFriends] = useState<any[]>([]);
   const [friendSearch, setFriendSearch] = useState('');
@@ -344,10 +346,18 @@ function CreateCircleFlow({ currentUser, onDone, onBack }: { currentUser: any; o
   const handleCreate = async () => {
     if (!name.trim()) return;
     setCreating(true);
+    setCreateError('');
     try {
       const r = await createCircle(name.trim());
-      if (r.success) { setCreatedCircle(r.data); setStep(2); }
-    } catch {}
+      if (r.success) {
+        setCreatedCircle(r.data);
+        setStep(2);
+      } else {
+        setCreateError(r.error || 'Erreur lors de la création');
+      }
+    } catch (e: any) {
+      setCreateError(e?.message || 'Erreur inconnue');
+    }
     setCreating(false);
   };
 
@@ -406,6 +416,9 @@ function CreateCircleFlow({ currentUser, onDone, onBack }: { currentUser: any; o
             className="w-full px-4 py-3 bg-rose-950/20 border border-rose-800/30 rounded-xl text-white placeholder-rose-300/40 focus:outline-none focus:border-purple-500 text-center text-lg font-medium"
             onKeyDown={e => e.key === 'Enter' && name.trim() && handleCreate()}
           />
+          {createError && (
+            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">{createError}</p>
+          )}
           <button onClick={handleCreate} disabled={creating || !name.trim()} className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity">
             {creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Créer le cercle →'}
           </button>
@@ -516,7 +529,6 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const [trackResults, setTrackResults] = useState<any[]>([]);
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { createPost } = require('../../lib/database');
 
   useEffect(() => { loadData(); }, []);
 
