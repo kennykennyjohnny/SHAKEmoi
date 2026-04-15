@@ -10,6 +10,70 @@ import { SendSongDialog } from './SendSongDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { MusicReactionsDialog } from './MusicReactionsDialog';
 
+// Extracted tab bar so it renders even in loading/empty states
+function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { circles: any[]; currentFeedId: string | null; onSelectFeed?: (id: string | null) => void; onCreateCircle?: () => void }) {
+  return (
+    <div className="mb-3 overflow-x-auto no-scrollbar">
+      <div className="inline-flex items-center gap-2 min-w-max px-1">
+        <button onClick={() => onSelectFeed?.(null)} className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${!currentFeedId ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}>
+          Feed
+        </button>
+        {circles.map(circle => (
+          <button key={circle.id} onClick={() => onSelectFeed?.(circle.id)} className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${currentFeedId === circle.id ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}>
+            {circle.name}
+          </button>
+        ))}
+        {onCreateCircle && (
+          <button onClick={onCreateCircle} className="w-8 h-8 rounded-full bg-purple-950/30 text-purple-300 hover:bg-purple-900/60 flex items-center justify-center text-lg font-bold transition-colors">+</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Extracted chat bar for circles
+function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch, setShowChatTrackSearch, chatTrackQuery, setChatTrackQuery, chatTrackResults, chatSearching, handleChatSendText, handleChatSendTrack }: any) {
+  return (
+    <div className="sticky bottom-16 lg:bottom-0 z-30 bg-[#0a0012]/95 backdrop-blur-lg border-t border-rose-800/25">
+      <AnimatePresence>
+        {showChatTrackSearch && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-rose-800/25 bg-[#0a0012]">
+            <div className="p-3">
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-300/50" />
+                <input autoFocus type="text" value={chatTrackQuery} onChange={(e: any) => setChatTrackQuery(e.target.value)} placeholder="Rechercher un son..." className="w-full pl-9 pr-3 py-2 bg-rose-950/20 border border-rose-800/30 rounded-lg text-sm text-white placeholder-rose-300/50 focus:outline-none focus:border-purple-500" />
+              </div>
+              {chatSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
+              {chatTrackResults.map((track: any) => (
+                <button key={track.id} onClick={() => handleChatSendTrack(track)} className="w-full flex items-center gap-2 p-2 hover:bg-rose-900/25 rounded-lg transition-colors">
+                  <img src={track.cover} alt="" className="w-10 h-10 rounded-md object-cover" />
+                  <div className="flex-1 text-left min-w-0"><p className="text-sm font-medium truncate">{track.name}</p><p className="text-xs text-rose-200/70 truncate">{track.artist}</p></div>
+                  <Send className="w-4 h-4 text-purple-400" />
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="px-3 py-2 flex items-center gap-2">
+        <button onClick={() => setShowChatTrackSearch(!showChatTrackSearch)} className={`p-2 rounded-full transition-colors ${showChatTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-rose-900/25 text-rose-300/60'}`}>
+          <Music className="w-5 h-5" />
+        </button>
+        <button className="p-2 rounded-full hover:bg-rose-900/25 text-rose-300/60 transition-colors" title="GIF (bientôt)">
+          <Smile className="w-5 h-5" />
+        </button>
+        <button className="p-2 rounded-full hover:bg-rose-900/25 text-rose-300/60 transition-colors" title="Photo (bientôt)">
+          <Camera className="w-5 h-5" />
+        </button>
+        <input type="text" value={chatText} onChange={(e: any) => setChatText(e.target.value)} placeholder="Message au cercle..." className="flex-1 px-3 py-2 bg-rose-950/20 border border-rose-800/30 rounded-full text-sm text-white placeholder-rose-300/50 focus:outline-none focus:border-purple-500" onKeyDown={(e: any) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSendText(); } }} />
+        <button onClick={handleChatSendText} disabled={chatSending || !chatText.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
+          {chatSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 interface Shake {
   id: string;
   user: {
@@ -304,77 +368,55 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto p-8 flex flex-col items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-4" />
-        <p className="text-rose-300/70">Chargement du feed...</p>
+      <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined}>
+        {/* Always show feed selector even while loading */}
+        <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
+        <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-4" />
+          <p className="text-rose-300/70">Chargement du feed...</p>
+        </div>
+        {currentFeedId && <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} />}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto p-8">
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
-          <p className="text-red-400 mb-4">{error}</p>
-          <button onClick={loadFeed} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors">
-            Réessayer
-          </button>
+      <div className="max-w-2xl mx-auto flex flex-col">
+        <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
+        <div className="p-8">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button onClick={loadFeed} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors">
+              Réessayer
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (shakes.length === 0) {
-    return (
-      <div className="max-w-2xl mx-auto p-8">
-        <div className="bg-purple-950/20 border border-purple-800/25 rounded-xl p-12 text-center">
-          <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
-            <Play className="w-10 h-10 text-white" />
-          </div>
-          <h3 className="text-xl font-bold mb-2">Aucun shake pour le moment</h3>
-          <p className="text-purple-300/70 mb-6">Sois le premier à partager un son !</p>
-        </div>
-      </div>
-    );
-  }
+  // Empty state is now rendered inline, not as early return
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined}>
       <div className={`p-4 space-y-3 ${currentFeedId ? 'flex-1' : ''}`}>
         {/* Horizontal feed selector */}
-        <div className="mb-3 overflow-x-auto no-scrollbar">
-          <div className="inline-flex items-center gap-2 min-w-max px-1">
-            <button
-              onClick={() => onSelectFeed?.(null)}
-              className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${!currentFeedId ? 'bg-purple-500 text-black' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}
-            >
-              All
-            </button>
-            {circles.map(circle => (
-              <button
-                key={circle.id}
-                onClick={() => onSelectFeed?.(circle.id)}
-                className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${currentFeedId === circle.id ? 'bg-purple-500 text-black' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}
-              >
-                {circle.name}
-              </button>
-            ))}
-            {onCreateCircle && (
-              <button
-                onClick={onCreateCircle}
-                className="px-3 py-2 rounded-full text-sm font-semibold bg-purple-950/30 text-purple-200 hover:bg-purple-900/60"
-              >
-                +
-              </button>
-            )}
-          </div>
-        </div>
+        <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
         {activeCircle && (
           <div className="mb-3 px-4 py-3 rounded-2xl border border-purple-800/30 bg-purple-950/20 text-sm text-purple-200">
             <span className="font-semibold text-white">Cercle privé :</span> {activeCircle.name} · contenu visible uniquement aux membres
           </div>
         )}
-        {currentFeedId ? (
+        {shakes.length === 0 ? (
+          <div className="py-12 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
+              {currentFeedId ? <Music className="w-7 h-7 text-white" /> : <Play className="w-8 h-8 text-white" />}
+            </div>
+            <h3 className="text-lg font-bold mb-1">{currentFeedId ? 'Aucun message' : 'Aucun shake'}</h3>
+            <p className="text-purple-300/60 text-sm">{currentFeedId ? 'Envoie un son ou un message ci-dessous !' : 'Sois le premier à partager un son !'}</p>
+          </div>
+        ) : currentFeedId ? (
           // Group conversation layout for circles
           <div className="space-y-4">
             {shakes.map((shake, index) => (
@@ -651,32 +693,6 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         )}
       </div>
 
-      {/* Circle input bar - temporarily disabled
-      {currentFeedId && (
-        <div className="fixed bottom-16 left-0 right-0 bg-rose-950/95 backdrop-blur-lg border-t border-rose-800/50 p-4">
-          <div className="max-w-2xl mx-auto flex items-center gap-3">
-            <input
-              type="text"
-              placeholder="Écris quelque chose..."
-              className="flex-1 px-4 py-2 bg-rose-900/50 border border-rose-700/50 rounded-full text-white placeholder-rose-300/70 focus:outline-none focus:border-purple-500"
-            />
-            <button className="p-2 bg-purple-600/20 hover:bg-purple-600/30 rounded-full transition-colors">
-              <Music className="w-5 h-5 text-purple-400" />
-            </button>
-            <button className="p-2 bg-purple-600/20 hover:bg-purple-600/30 rounded-full transition-colors">
-              <span className="text-purple-400 font-bold">GIF</span>
-            </button>
-            <button className="p-2 bg-purple-600/20 hover:bg-purple-600/30 rounded-full transition-colors">
-              <span className="text-purple-400">📷</span>
-            </button>
-            <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity">
-              Envoyer
-            </button>
-          </div>
-        </div>
-      )}
-      */}
-
       <AnimatePresence>
         {reshakeDialogShake && (
           <ReshakeDialog shake={reshakeDialogShake} onClose={() => setReshakeDialogShake(null)} onConfirm={confirmReshake} />
@@ -720,80 +736,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       </AnimatePresence>
 
       {/* Circle chat input bar — sticky at bottom when viewing a circle */}
-      {currentFeedId && (
-        <div className="sticky bottom-16 lg:bottom-0 z-30 bg-[#0a0012]/95 backdrop-blur-lg border-t border-rose-800/25">
-          {/* Track search overlay */}
-          <AnimatePresence>
-            {showChatTrackSearch && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="max-h-60 overflow-y-auto border-b border-rose-800/25 bg-[#0a0012]"
-              >
-                <div className="p-3">
-                  <div className="relative mb-2">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-300/50" />
-                    <input
-                      type="text"
-                      value={chatTrackQuery}
-                      onChange={(e) => setChatTrackQuery(e.target.value)}
-                      placeholder="Rechercher un son..."
-                      className="w-full pl-9 pr-3 py-2 bg-rose-950/20 border border-rose-800/30 rounded-lg text-sm text-white placeholder-rose-300/50 focus:outline-none focus:border-purple-500"
-                      autoFocus
-                    />
-                  </div>
-                  {chatSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
-                  {chatTrackResults.map((track: any) => (
-                    <button
-                      key={track.id}
-                      onClick={() => handleChatSendTrack(track)}
-                      className="w-full flex items-center gap-2 p-2 hover:bg-rose-900/25 rounded-lg transition-colors"
-                    >
-                      <img src={track.cover} alt="" className="w-10 h-10 rounded-md object-cover" />
-                      <div className="flex-1 text-left min-w-0">
-                        <p className="text-sm font-medium truncate">{track.name}</p>
-                        <p className="text-xs text-rose-200/70 truncate">{track.artist}</p>
-                      </div>
-                      <Send className="w-4 h-4 text-purple-400" />
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="px-3 py-2 flex items-center gap-2">
-            <button
-              onClick={() => setShowChatTrackSearch(!showChatTrackSearch)}
-              className={`p-2 rounded-full transition-colors ${showChatTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-rose-900/25 text-rose-300/60'}`}
-            >
-              <Music className="w-5 h-5" />
-            </button>
-            <button className="p-2 rounded-full hover:bg-rose-900/25 text-rose-300/60 transition-colors" title="GIF (bientot)">
-              <Smile className="w-5 h-5" />
-            </button>
-            <button className="p-2 rounded-full hover:bg-rose-900/25 text-rose-300/60 transition-colors" title="Photo (bientot)">
-              <Camera className="w-5 h-5" />
-            </button>
-            <input
-              type="text"
-              value={chatText}
-              onChange={(e) => setChatText(e.target.value)}
-              placeholder="Message au cercle..."
-              className="flex-1 px-3 py-2 bg-rose-950/20 border border-rose-800/30 rounded-full text-sm text-white placeholder-rose-300/50 focus:outline-none focus:border-purple-500"
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSendText(); } }}
-            />
-            <button
-              onClick={handleChatSendText}
-              disabled={chatSending || !chatText.trim()}
-              className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors"
-            >
-              {chatSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-      )}
+      {currentFeedId && <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} />}
     </div>
   );
 }
