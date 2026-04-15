@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Send, Search, Music, Play, Loader2, ExternalLink, Users, Plus, Copy, Check, X, Settings, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -24,7 +24,7 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-full">
       {/* Tab bar */}
-      <div className="flex border-b border-pink-500/25 px-4 pt-3 gap-6">
+      <div className="flex border-b border-purple-500/25 px-4 pt-3 gap-6">
         {(['dms', 'circles'] as const).map(t => (
           <button
             key={t}
@@ -106,7 +106,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
   if (activeConversation) {
     return (
       <div className="flex flex-col flex-1 overflow-hidden">
-        <div className="px-4 py-3 border-b border-pink-500/25 flex items-center gap-3 flex-shrink-0">
+        <div className="px-4 py-3 border-b border-purple-500/25 flex items-center gap-3 flex-shrink-0">
           <button onClick={() => setActiveConversation(null)} className="p-1 hover:bg-violet-900/25 rounded-full">
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -125,7 +125,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
             const embedUrl = msg.track_id ? `https://open.spotify.com/embed/track/${msg.track_id}` : null;
             return (
               <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] rounded-2xl overflow-hidden ${isMine ? 'bg-purple-600/30 border border-purple-500/30' : 'bg-violet-950/25 border border-pink-500/25'}`}>
+                <div className={`max-w-[80%] rounded-2xl overflow-hidden ${isMine ? 'bg-purple-600/30 border border-purple-500/30' : 'bg-violet-950/25 border border-purple-500/25'}`}>
                   {msg.text && <p className="px-3 py-2 text-sm">{msg.text}</p>}
                   {isTrack && (
                     <div className="p-2">
@@ -166,11 +166,11 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
 
         <AnimatePresence>
           {showTrackSearch && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-pink-500/25 bg-[#0a0012] max-h-60 overflow-y-auto flex-shrink-0">
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-purple-500/25 bg-[#0a0012] max-h-60 overflow-y-auto flex-shrink-0">
               <div className="p-3">
                 <div className="relative mb-2">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/70" />
-                  <input autoFocus type="text" value={trackQuery} onChange={e => setTrackQuery(e.target.value)} placeholder="Rechercher un son à envoyer..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-pink-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
+                  <input autoFocus type="text" value={trackQuery} onChange={e => setTrackQuery(e.target.value)} placeholder="Rechercher un son à envoyer..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
                 </div>
                 {trackResults.map((t: any) => (
                   <button key={t.id} onClick={() => handleSend(t)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
@@ -184,11 +184,11 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
           )}
         </AnimatePresence>
 
-        <div className="px-4 py-3 border-t border-pink-500/25 flex items-center gap-2 flex-shrink-0">
+        <div className="px-4 py-3 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0">
           <button onClick={() => setShowTrackSearch(!showTrackSearch)} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
             <Music className="w-5 h-5" />
           </button>
-          <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Envoie un message..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-pink-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
+          <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Envoie un message..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
           <button onClick={() => handleSend()} disabled={sending || !newMessage.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
             {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
           </button>
@@ -207,7 +207,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
       </div>
 
       {showNewConvo && (
-        <div className="mb-4 bg-violet-950/20 rounded-xl border border-pink-500/25 p-3">
+        <div className="mb-4 bg-violet-950/20 rounded-xl border border-purple-500/25 p-3">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium">Envoyer à :</p>
             <button onClick={() => setShowNewConvo(false)}><X className="w-4 h-4 text-purple-300/50" /></button>
@@ -240,7 +240,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
               </div>
               <div className="flex-1 text-left min-w-0">
                 <p className="font-semibold text-sm">{c.partner?.display_name || c.partner?.username}</p>
-                <p className="text-xs text-purple-200/70 truncate">{c.lastMessage?.track_name ? `🎵 ${c.lastMessage.track_name}` : c.lastMessage?.text || '...'}</p>
+                <p className="text-xs text-purple-200/70 truncate">{c.lastMessage?.track_name ? `?? ${c.lastMessage.track_name}` : c.lastMessage?.text || '...'}</p>
               </div>
               <span className="text-xs text-purple-300/50">{new Date(c.lastMessage?.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
             </button>
@@ -290,7 +290,7 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentU
       ) : circles.length > 0 ? (
         <div className="space-y-2">
           {circles.map((c) => (
-            <button key={c.id} onClick={() => onOpenCircle?.(c.id)} className="w-full flex items-center gap-3 p-3 bg-violet-950/20 hover:bg-violet-950/30 rounded-xl border border-pink-500/25 transition-all">
+            <button key={c.id} onClick={() => onOpenCircle?.(c.id)} className="w-full flex items-center gap-3 p-3 bg-violet-950/20 hover:bg-violet-950/30 rounded-xl border border-purple-500/25 transition-all">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <Users className="w-5 h-5 text-white" />
               </div>
@@ -412,14 +412,14 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
           <input
             autoFocus type="text" value={name} onChange={e => setName(e.target.value)}
             placeholder="Ex: Les potes du lycée, Crew 94..."
-            className="w-full px-4 py-3 bg-violet-950/20 border border-pink-500/30 rounded-xl text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-500 text-center text-lg font-medium"
+            className="w-full px-4 py-3 bg-violet-950/20 border border-purple-500/30 rounded-xl text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-500 text-center text-lg font-medium"
             onKeyDown={e => e.key === 'Enter' && name.trim() && handleCreate()}
           />
           {createError && (
             <p className="text-xs text-pink-400 bg-orange-500/10 border border-orange-500/20 rounded-lg px-3 py-2 text-center">{createError}</p>
           )}
           <button onClick={handleCreate} disabled={creating || !name.trim()} className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity">
-            {creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Créer le cercle →'}
+            {creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Créer le cercle ?'}
           </button>
         </motion.div>
       )}
@@ -433,7 +433,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
           </div>
 
           {selectedFriends.length > 0 && (
-            <div className="flex flex-wrap gap-2 p-3 bg-violet-950/15 rounded-xl border border-pink-500/20">
+            <div className="flex flex-wrap gap-2 p-3 bg-violet-950/15 rounded-xl border border-purple-500/20">
               {selectedFriends.map(f => (
                 <span key={f.id} className="flex items-center gap-1 bg-purple-600/20 border border-purple-500/30 rounded-full px-2.5 py-1 text-xs">
                   <img src={f.profile_album_cover_url || `https://ui-avatars.com/api/?name=${f.username}&background=random`} className="w-4 h-4 rounded-full" alt="" />
@@ -446,7 +446,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
-            <input type="text" value={friendSearch} onChange={e => setFriendSearch(e.target.value)} placeholder="Rechercher un ami..." className="w-full pl-9 pr-3 py-2.5 bg-violet-950/20 border border-pink-500/30 rounded-xl text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-500" />
+            <input type="text" value={friendSearch} onChange={e => setFriendSearch(e.target.value)} placeholder="Rechercher un ami..." className="w-full pl-9 pr-3 py-2.5 bg-violet-950/20 border border-purple-500/30 rounded-xl text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-500" />
           </div>
 
           <div className="space-y-1 max-h-56 overflow-y-auto">
@@ -469,11 +469,11 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button onClick={() => setStep(3)} className="flex-1 py-3 bg-violet-950/20 border border-pink-500/25 rounded-xl text-sm text-purple-300/60 hover:text-white transition-colors">
+            <button onClick={() => setStep(3)} className="flex-1 py-3 bg-violet-950/20 border border-purple-500/25 rounded-xl text-sm text-purple-300/60 hover:text-white transition-colors">
               Passer
             </button>
             <button onClick={handleAddMembers} disabled={addingMembers || selectedFriends.length === 0} className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 text-sm">
-              {addingMembers ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : `Ajouter (${selectedFriends.length}) →`}
+              {addingMembers ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : `Ajouter (${selectedFriends.length}) ?`}
             </button>
           </div>
         </motion.div>
@@ -502,7 +502,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
             </div>
           )}
 
-          <div className="bg-violet-950/20 border border-pink-500/25 rounded-xl p-4 text-left">
+          <div className="bg-violet-950/20 border border-purple-500/25 rounded-xl p-4 text-left">
             <p className="text-xs text-purple-300/50 mb-2 font-medium uppercase tracking-wider">Lien d'invitation</p>
             <p className="text-xs font-mono text-white/70 break-all leading-relaxed mb-3 select-all">{shareLink}</p>
             <button onClick={copyLink} className={`w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all ${copied ? 'bg-green-500/20 border border-green-500/30 text-green-400' : 'bg-purple-600/20 border border-purple-500/30 text-purple-300 hover:bg-purple-600/30'}`}>
@@ -616,7 +616,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* Circle header */}
-      <div className="px-4 py-3 border-b border-pink-500/25 flex items-center gap-3 flex-shrink-0">
+      <div className="px-4 py-3 border-b border-purple-500/25 flex items-center gap-3 flex-shrink-0">
         <button onClick={onBack} className="p-1 hover:bg-violet-900/25 rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -638,7 +638,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       {/* Settings drawer */}
       <AnimatePresence>
         {showSettings && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-pink-500/25 bg-[#0a0012] flex-shrink-0">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-purple-500/25 bg-[#0a0012] flex-shrink-0">
             <div className="p-4 space-y-3">
               {/* Invite Code */}
               {circle.invite_code && (
@@ -650,7 +650,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
               <p className="text-xs font-semibold text-purple-300/50 uppercase tracking-wider">Membres ({members.length})</p>
               <div className="flex flex-wrap gap-2">
                 {members.map(m => (
-                  <span key={m.id} className="flex items-center gap-1 bg-violet-950/30 rounded-full px-2.5 py-1 text-xs border border-pink-500/20">
+                  <span key={m.id} className="flex items-center gap-1 bg-violet-950/30 rounded-full px-2.5 py-1 text-xs border border-purple-500/20">
                     <img src={m.profile_album_cover_url || `https://ui-avatars.com/api/?name=${m.username}&background=random`} className="w-4 h-4 rounded-full" alt="" />
                     @{m.username}
                     {m.id !== currentUser?.id && <button onClick={() => removeMember(m.id)} className="text-purple-300/40 hover:text-pink-400 ml-0.5"><X className="w-3 h-3" /></button>}
@@ -659,7 +659,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-purple-300/40" />
-                <input type="text" value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Ajouter un ami..." className="w-full pl-8 pr-3 py-2 bg-violet-950/20 border border-pink-500/25 rounded-lg text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-500" />
+                <input type="text" value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Ajouter un ami..." className="w-full pl-8 pr-3 py-2 bg-violet-950/20 border border-purple-500/25 rounded-lg text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-500" />
               </div>
               {searchRes.filter(u => !members.find((m: any) => m.id === u.id)).slice(0, 4).map(u => (
                 <button key={u.id} onClick={() => addMember(u.id)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg text-sm">
@@ -687,7 +687,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
           const user = post.user;
           if (!post.track_name && !post.text) return null;
           return (
-            <div key={post.id} className={`rounded-xl border transition-all overflow-hidden ${isOpen ? 'bg-violet-950/30 border-purple-600/30' : 'bg-violet-950/15 border-pink-500/20'}`}>
+            <div key={post.id} className={`rounded-xl border transition-all overflow-hidden ${isOpen ? 'bg-violet-950/30 border-purple-600/30' : 'bg-violet-950/15 border-purple-500/20'}`}>
               <div className="p-2.5 flex items-center gap-2">
                 <img src={user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user?.username}&background=random`} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
                 <span className="text-xs font-medium text-purple-200/80">@{user?.username}</span>
@@ -733,11 +733,11 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       {/* Track search overlay */}
       <AnimatePresence>
         {showTrackSearch && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-pink-500/25 bg-[#0a0012] max-h-52 overflow-y-auto flex-shrink-0">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-purple-500/25 bg-[#0a0012] max-h-52 overflow-y-auto flex-shrink-0">
             <div className="p-3">
               <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
-                <input autoFocus type="text" value={trackQuery} onChange={e => setTrackQuery(e.target.value)} placeholder="Rechercher un son..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-pink-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
+                <input autoFocus type="text" value={trackQuery} onChange={e => setTrackQuery(e.target.value)} placeholder="Rechercher un son..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
               </div>
               {trackResults.map((t: any) => (
                 <button key={t.id} onClick={() => sendChatTrack(t)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
@@ -752,11 +752,11 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       </AnimatePresence>
 
       {/* Chat bar */}
-      <div className="px-3 py-2.5 border-t border-pink-500/25 flex items-center gap-2 flex-shrink-0 bg-[#0a0012]/95 backdrop-blur-lg">
+      <div className="px-3 py-2.5 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0 bg-[#0a0012]/95 backdrop-blur-lg">
         <button onClick={() => setShowTrackSearch(!showTrackSearch)} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
           <Music className="w-5 h-5" />
         </button>
-        <input type="text" value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Message au cercle..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-pink-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatText(); } }} />
+        <input type="text" value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Message au cercle..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatText(); } }} />
         <button onClick={sendChatText} disabled={chatSending || !chatText.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
           {chatSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
         </button>

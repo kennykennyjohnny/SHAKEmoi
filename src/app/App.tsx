@@ -1,5 +1,5 @@
-﻿import { useState, useEffect } from 'react';
-import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, BarChart3, ArrowLeft, Settings, Link2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, BarChart3 } from 'lucide-react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
 import { ProfileView } from './components/ProfileView';
@@ -202,67 +202,35 @@ export default function App() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#0a0012]/80 sticky top-0 z-40">
-          {currentView === 'feed' && activeFeedCircleId && circles.find(c => c.id === activeFeedCircleId) ? (
-            /* Circle-specific header */
-            <div className="px-4 py-2 flex items-center gap-3">
-              <button onClick={() => { setActiveFeedCircleId(null); }} className="p-1.5 hover:bg-violet-900/25 rounded-full transition-colors">
-                <ArrowLeft className="w-5 h-5 text-purple-300/70" />
+          <div className="px-4 py-2 flex items-center justify-between">
+            <button onClick={() => { setActiveFeedCircleId(null); setCurrentView('feed'); }} className="focus:outline-none">
+              <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
+                SHAKEmoi
+              </span>
+            </button>
+
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => setShowShareDialog(true)} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors">
+                <Share2 className="w-5 h-5 text-purple-300/60" />
               </button>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold text-white truncate">{circles.find(c => c.id === activeFeedCircleId)?.name}</h2>
-                <p className="text-xs text-purple-300/40">{circles.find(c => c.id === activeFeedCircleId)?.member_count || ''} cercle privé</p>
-              </div>
+
+              {currentUser && (
+                <NotificationsDropdown
+                  userId={currentUser.id}
+                  unreadCount={unreadNotifs}
+                  onRead={() => setUnreadNotifs(0)}
+                />
+              )}
+
               <button
-                onClick={() => {
-                  const circle = circles.find(c => c.id === activeFeedCircleId);
-                  if (circle?.invite_code) {
-                    navigator.clipboard.writeText(circle.invite_code);
-                  }
-                }}
-                className="p-2 hover:bg-violet-900/25 rounded-full transition-colors" title="Copier le code d'invitation"
+                onClick={() => setShowCreateShake(true)}
+                className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
               >
-                <Link2 className="w-5 h-5 text-purple-300/60" />
-              </button>
-              <button
-                onClick={() => { setCurrentView('messages'); setViewOptions({ initialTab: 'circles', openCircleId: activeFeedCircleId }); }}
-                className="p-2 hover:bg-violet-900/25 rounded-full transition-colors" title="Paramètres du cercle"
-              >
-                <Settings className="w-5 h-5 text-purple-300/60" />
+                <PlusCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Shake</span>
               </button>
             </div>
-          ) : (
-            /* Standard header */
-            <div className="px-4 py-2 flex items-center justify-between">
-              <button onClick={() => { setActiveFeedCircleId(null); setCurrentView('feed'); }} className="focus:outline-none">
-                <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
-                  SHAKEmoi
-                </span>
-              </button>
-
-              <div className="flex items-center gap-1.5">
-                <button onClick={() => setShowShareDialog(true)} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors">
-                  <Share2 className="w-5 h-5 text-purple-300/60" />
-                </button>
-
-                {/* Notifications bell — always visible */}
-                {currentUser && (
-                  <NotificationsDropdown
-                    userId={currentUser.id}
-                    unreadCount={unreadNotifs}
-                    onRead={() => setUnreadNotifs(0)}
-                  />
-                )}
-
-                <button
-                  onClick={() => setShowCreateShake(true)}
-                  className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
-                >
-                  <PlusCircle className="w-4 h-4" />
-                  <span className="hidden sm:inline">Shake</span>
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
         </header>
 
         {/* Content */}
@@ -329,7 +297,7 @@ export default function App() {
         </nav>
 
         {currentUser && (
-          <div className="mt-auto pt-4 border-t border-pink-500/25">
+          <div className="mt-auto pt-4 border-t border-purple-500/25">
             <button
               onClick={() => setCurrentView('profile')}
               className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-violet-900/25 transition-colors"

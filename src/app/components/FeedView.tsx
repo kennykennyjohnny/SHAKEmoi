@@ -1,5 +1,5 @@
-﻿import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Image } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
 import { spotify } from '../../lib/spotify';
@@ -10,41 +10,136 @@ import { SendSongDialog } from './SendSongDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { MusicReactionsDialog } from './MusicReactionsDialog';
 
-// Sleek underline-style tab bar
+// Sleek underline-style tab bar with pink border hint for scroll
 function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { circles: any[]; currentFeedId: string | null; onSelectFeed?: (id: string | null) => void; onCreateCircle?: () => void }) {
   const truncName = (name: string) => name.length > 9 ? name.slice(0, 9) + '…' : name;
   return (
-    <div className="overflow-x-auto no-scrollbar border-b border-purple-500/10">
-      <div className="inline-flex items-center gap-0 min-w-max">
-        <button onClick={() => onSelectFeed?.(null)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${!currentFeedId ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}>
-          Feed
-          {!currentFeedId && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full" />}
-        </button>
-        {circles.map(circle => (
-          <button key={circle.id} onClick={() => onSelectFeed?.(circle.id)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${currentFeedId === circle.id ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}>
-            {truncName(circle.name)}
-            {currentFeedId === circle.id && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full" />}
+    <div className="relative">
+      <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style>{`.feed-tabs::-webkit-scrollbar { display: none; }`}</style>
+        <div className="feed-tabs inline-flex items-center gap-0 min-w-max border-b border-pink-400/15">
+          <button onClick={() => onSelectFeed?.(null)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${!currentFeedId ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}>
+            Feed
+            {!currentFeedId && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full" />}
           </button>
-        ))}
-        {onCreateCircle && (
-          <button onClick={onCreateCircle} className="ml-1 w-7 h-7 rounded-full text-purple-400/60 hover:text-purple-300 hover:bg-purple-500/10 flex items-center justify-center text-sm transition-colors">+</button>
-        )}
+          {circles.map(circle => (
+            <button key={circle.id} onClick={() => onSelectFeed?.(circle.id)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${currentFeedId === circle.id ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}>
+              {truncName(circle.name)}
+              {currentFeedId === circle.id && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full" />}
+            </button>
+          ))}
+          {onCreateCircle && (
+            <button onClick={onCreateCircle} className="ml-1 w-7 h-7 rounded-full text-purple-400/60 hover:text-purple-300 hover:bg-purple-500/10 flex items-center justify-center text-sm transition-colors">+</button>
+          )}
+        </div>
       </div>
+      {/* Pink fade hint on right edge to indicate scrollability */}
+      {circles.length > 2 && (
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0a0012] to-transparent pointer-events-none" />
+      )}
     </div>
   );
 }
 
-// Extracted chat bar for circles
-function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch, setShowChatTrackSearch, chatTrackQuery, setChatTrackQuery, chatTrackResults, chatSearching, handleChatSendText, handleChatSendTrack }: any) {
+// Circle sub-header shown below tabs when viewing a circle
+function CircleHeader({ circle, onBack, onSettings }: { circle: any; onBack: () => void; onSettings: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const copyCode = () => {
+    if (circle?.invite_code) {
+      navigator.clipboard.writeText(circle.invite_code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
   return (
-    <div className="sticky bottom-16 lg:bottom-0 z-30 bg-[#0a0012]/95 backdrop-blur-lg border-t border-pink-500/25">
+    <div className="px-4 py-2.5 flex items-center gap-3 border-b border-pink-400/10 bg-violet-950/20">
+      <button onClick={onBack} className="p-1 hover:bg-violet-900/25 rounded-full transition-colors">
+        <ArrowLeft className="w-4 h-4 text-purple-300/60" />
+      </button>
+      <div className="flex-1 min-w-0">
+        <h2 className="text-base font-bold text-white truncate">{circle.name}</h2>
+        <p className="text-[11px] text-purple-300/40">cercle privé</p>
+      </div>
+      <button onClick={copyCode} className={`p-1.5 rounded-full transition-colors ${copied ? 'text-green-400' : 'text-purple-300/50 hover:text-purple-200 hover:bg-violet-900/25'}`} title="Copier le code">
+        {copied ? <span className="text-xs font-medium px-1">Copié !</span> : <Link2 className="w-4 h-4" />}
+      </button>
+      <button onClick={onSettings} className="p-1.5 hover:bg-violet-900/25 rounded-full transition-colors text-purple-300/50 hover:text-purple-200" title="Paramètres">
+        <Settings className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+// Extracted chat bar for circles with photo upload and GIF picker
+function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch, setShowChatTrackSearch, chatTrackQuery, setChatTrackQuery, chatTrackResults, chatSearching, handleChatSendText, handleChatSendTrack, handleChatSendImage, handleChatSendGif }: any) {
+  const [showGifSearch, setShowGifSearch] = useState(false);
+  const [gifQuery, setGifQuery] = useState('');
+  const [gifResults, setGifResults] = useState<any[]>([]);
+  const [gifSearching, setGifSearching] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const fileInputRef = { current: null as HTMLInputElement | null };
+
+  // GIF search via Tenor
+  useEffect(() => {
+    if (gifQuery.length < 2) { setGifResults([]); return; }
+    const timer = setTimeout(async () => {
+      setGifSearching(true);
+      try {
+        const res = await fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(gifQuery)}&key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ&client_key=shakemoi&limit=20&media_filter=tinygif,gif`);
+        const data = await res.json();
+        setGifResults(data.results || []);
+      } catch { setGifResults([]); }
+      setGifSearching(false);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [gifQuery]);
+
+  // Trending GIFs on open
+  useEffect(() => {
+    if (showGifSearch && gifResults.length === 0 && !gifQuery) {
+      (async () => {
+        setGifSearching(true);
+        try {
+          const res = await fetch(`https://tenor.googleapis.com/v2/featured?key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ&client_key=shakemoi&limit=20&media_filter=tinygif,gif`);
+          const data = await res.json();
+          setGifResults(data.results || []);
+        } catch {}
+        setGifSearching(false);
+      })();
+    }
+  }, [showGifSearch]);
+
+  const handlePhotoSelect = (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { alert('Photo trop lourde (max 10 Mo)'); return; }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const sendPhoto = async () => {
+    if (!photoFile || !handleChatSendImage) return;
+    await handleChatSendImage(photoFile);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+  };
+
+  const cancelPhoto = () => {
+    setPhotoFile(null);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(null);
+  };
+
+  return (
+    <div className="sticky bottom-16 lg:bottom-0 z-30 bg-[#0a0012]/95 backdrop-blur-lg border-t border-purple-500/25">
       <AnimatePresence>
         {showChatTrackSearch && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-pink-500/25 bg-[#0a0012]">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-purple-500/25 bg-[#0a0012]">
             <div className="p-3">
               <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
-                <input autoFocus type="text" value={chatTrackQuery} onChange={(e: any) => setChatTrackQuery(e.target.value)} placeholder="Rechercher un son..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-pink-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
+                <input autoFocus type="text" value={chatTrackQuery} onChange={(e: any) => setChatTrackQuery(e.target.value)} placeholder="Rechercher un son..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
               </div>
               {chatSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
               {chatTrackResults.map((track: any) => (
@@ -57,18 +152,54 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
             </div>
           </motion.div>
         )}
+        {showGifSearch && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-72 overflow-hidden border-b border-purple-500/25 bg-[#0a0012] flex flex-col">
+            <div className="p-3 pb-0">
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
+                <input autoFocus type="text" value={gifQuery} onChange={(e: any) => setGifQuery(e.target.value)} placeholder="Rechercher un GIF..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto px-3 pb-3">
+              {gifSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
+              <div className="grid grid-cols-2 gap-2">
+                {gifResults.map((gif: any) => (
+                  <button key={gif.id} onClick={() => { handleChatSendGif?.(gif.media_formats?.gif?.url || gif.media_formats?.tinygif?.url); setShowGifSearch(false); setGifQuery(''); setGifResults([]); }} className="rounded-lg overflow-hidden hover:ring-2 hover:ring-purple-500 transition-all">
+                    <img src={gif.media_formats?.tinygif?.url || gif.media_formats?.gif?.url} alt="" className="w-full h-24 object-cover" loading="lazy" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+        {photoPreview && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="p-3 border-b border-purple-500/25 bg-[#0a0012]">
+            <div className="flex items-end gap-3">
+              <div className="relative inline-block">
+                <img src={photoPreview} alt="Aperçu" className="max-h-40 rounded-lg object-cover" />
+                <button onClick={cancelPhoto} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                  <X className="w-3 h-3 text-white" />
+                </button>
+              </div>
+              <button onClick={sendPhoto} disabled={chatSending} className="px-4 py-2 bg-purple-600 rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors">
+                {chatSending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Envoyer'}
+              </button>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
       <div className="px-3 py-2 flex items-center gap-2">
-        <button onClick={() => setShowChatTrackSearch(!showChatTrackSearch)} className={`p-2 rounded-full transition-colors ${showChatTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
+        <button onClick={() => { setShowChatTrackSearch(!showChatTrackSearch); setShowGifSearch(false); }} className={`p-2 rounded-full transition-colors ${showChatTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
           <Music className="w-5 h-5" />
         </button>
-        <button className="p-2 rounded-full hover:bg-violet-900/25 text-purple-300/60 transition-colors" title="GIF (bientôt)">
+        <button onClick={() => { setShowGifSearch(!showGifSearch); setShowChatTrackSearch(false); }} className={`p-2 rounded-full transition-colors ${showGifSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
           <Smile className="w-5 h-5" />
         </button>
-        <button className="p-2 rounded-full hover:bg-violet-900/25 text-purple-300/60 transition-colors" title="Photo (bientôt)">
+        <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full hover:bg-violet-900/25 text-purple-300/60 transition-colors">
           <Camera className="w-5 h-5" />
         </button>
-        <input type="text" value={chatText} onChange={(e: any) => setChatText(e.target.value)} placeholder="Message au cercle..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-pink-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={(e: any) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSendText(); } }} />
+        <input ref={(el) => { fileInputRef.current = el; }} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoSelect} />
+        <input type="text" value={chatText} onChange={(e: any) => setChatText(e.target.value)} placeholder="Message au cercle..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={(e: any) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSendText(); } }} />
         <button onClick={handleChatSendText} disabled={chatSending || !chatText.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
           {chatSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
         </button>
@@ -105,6 +236,7 @@ interface Shake {
     odesli_page_url: string | null;
   };
   caption?: string;
+  imageUrl?: string | null;
   likes: number;
   comments: number;
   reshakes: number;
@@ -217,6 +349,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             odesli_page_url: post.odesli_page_url || null,
           },
           caption: post.text,
+          imageUrl: post.image_url || null,
           likes: post.likes_count || 0,
           comments: post.comments_count || 0,
           reshakes: post.reshakes_count || 0,
@@ -369,16 +502,49 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     setChatSending(false);
   };
 
+  const handleChatSendImage = async (file: File) => {
+    setChatSending(true);
+    try {
+      const { supabase } = await import('../../lib/supabase');
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('circle-media')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('circle-media').getPublicUrl(fileName);
+      await db.createPost('', '', '', '', null, null, null, false, currentFeedId, publicUrl);
+      await loadFeed();
+    } catch (err) {
+      console.error('Error uploading photo:', err);
+      alert('Erreur lors de l\'envoi de la photo');
+    }
+    setChatSending(false);
+  };
+
+  const handleChatSendGif = async (gifUrl: string) => {
+    if (!gifUrl) return;
+    setChatSending(true);
+    try {
+      await db.createPost('', '', '', '', null, null, null, false, currentFeedId, gifUrl);
+      await loadFeed();
+    } catch (err) {
+      console.error('Error sending GIF:', err);
+    }
+    setChatSending(false);
+  };
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined}>
         {/* Always show feed selector even while loading */}
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
+        {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onSettings={() => {}} />}
         <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-4" />
           <p className="text-purple-300/70">Chargement du feed...</p>
         </div>
-        {currentFeedId && <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} />}
+        {currentFeedId && <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} handleChatSendImage={handleChatSendImage} handleChatSendGif={handleChatSendGif} />}
       </div>
     );
   }
@@ -387,6 +553,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     return (
       <div className="max-w-2xl mx-auto flex flex-col">
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
+        {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onSettings={() => {}} />}
         <div className="p-8">
           <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-6 text-center">
             <p className="text-pink-400 mb-4">{error}</p>
@@ -406,6 +573,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       <div className={`p-4 space-y-3 ${currentFeedId ? 'flex-1' : ''}`}>
         {/* Horizontal feed selector */}
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
+        {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onSettings={() => {}} />}
         {shakes.length === 0 ? (
           <div className="py-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
@@ -440,6 +608,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   {shake.caption && (
                     <p className="text-sm text-purple-200/80 mb-2">{shake.caption}</p>
                   )}
+                  {shake.imageUrl && (
+                    <div className="mb-2 rounded-lg overflow-hidden">
+                      <img src={shake.imageUrl} alt="" className="max-w-full max-h-64 rounded-lg object-cover" loading="lazy" />
+                    </div>
+                  )}
+                  {shake.track.title && (
                   <div className="flex items-center gap-2 p-2 bg-purple-950/30 rounded-lg border border-purple-800/20">
                     <img
                       src={shake.track.coverUrl}
@@ -457,6 +631,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                       <Play className="w-4 h-4 text-purple-400" />
                     </button>
                   </div>
+                  )}
                   {shake.reshakeFrom && (
                     <div className="mt-1 text-xs text-green-400/80">
                       <Repeat2 className="w-3 h-3 inline mr-1" />
@@ -481,7 +656,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 className={`rounded-xl border transition-all overflow-hidden ${
                   isPlayerOpen
                     ? 'bg-violet-950/25 border-purple-600/40 shadow-lg shadow-purple-500/10'
-                    : 'bg-violet-950/20 border-pink-500/25 hover:border-purple-700/40'
+                    : 'bg-violet-950/20 border-purple-500/25 hover:border-purple-700/40'
                 }`}
               >
                 {/* Reshake indicator — "reshaké par @friend" */}
@@ -734,7 +909,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       </AnimatePresence>
 
       {/* Circle chat input bar — sticky at bottom when viewing a circle */}
-      {currentFeedId && <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} />}
+      {currentFeedId && <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} handleChatSendImage={handleChatSendImage} handleChatSendGif={handleChatSendGif} />}
     </div>
   );
 }

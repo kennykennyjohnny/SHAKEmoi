@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, Play, Users, Loader2, ExternalLink, Music, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getFriendsTrending } from '../../lib/database';
@@ -56,7 +56,7 @@ export function TopFriendsView({ currentUser }: TopFriendsViewProps) {
           </h2>
           <p className="text-xs text-purple-300/50 mt-0.5">Sons les plus partagés dans ton réseau</p>
         </div>
-        <div className="flex bg-violet-950/25 rounded-full p-0.5 border border-pink-500/20">
+        <div className="flex bg-violet-950/25 rounded-full p-0.5 border border-purple-500/20">
           {([7, 30] as const).map(p => (
             <button
               key={p}
@@ -130,7 +130,7 @@ export function TopFriendsView({ currentUser }: TopFriendsViewProps) {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.03 }}
-                      className={`rounded-xl border transition-all overflow-hidden ${isOpen ? 'bg-violet-950/30 border-purple-600/40' : 'bg-violet-950/15 hover:bg-violet-950/25 border-pink-500/20'}`}
+                      className={`rounded-xl border transition-all overflow-hidden ${isOpen ? 'bg-violet-950/30 border-purple-600/40' : 'bg-violet-950/15 hover:bg-violet-950/25 border-purple-500/20'}`}
                     >
                       <div className="p-3 flex items-center gap-3">
                         <span className="text-sm font-bold text-purple-300/50 w-6 text-center flex-shrink-0">{realIndex + 1}</span>

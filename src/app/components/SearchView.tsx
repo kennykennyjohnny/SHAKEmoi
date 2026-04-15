@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
@@ -111,7 +111,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Rechercher un son, artiste ou @ami..."
-            className="w-full pl-11 pr-4 py-3 bg-violet-950/20 border border-pink-500/30 rounded-full text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500 transition-colors"
+            className="w-full pl-11 pr-4 py-3 bg-violet-950/20 border border-purple-500/30 rounded-full text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500 transition-colors"
             autoFocus
           />
         </div>
@@ -178,7 +178,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                   className={`rounded-xl border transition-all overflow-hidden ${
                     isEmbedOpen
                       ? 'bg-violet-950/25 border-purple-600/40 shadow-lg shadow-purple-500/10'
-                      : 'bg-violet-950/20 hover:bg-violet-950/25 border-pink-500/25'
+                      : 'bg-violet-950/20 hover:bg-violet-950/25 border-purple-500/25'
                   }`}
                 >
                   <div className="p-3 flex items-center gap-3">
@@ -284,7 +284,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                             onClick={() => { setShowCaptionFor(null); setShakeCaption(''); }}
                             className="px-2 py-2 text-purple-300/70 hover:text-white"
                           >
-                            ✕
+                            ?
                           </button>
                         </div>
                       </motion.div>
@@ -313,7 +313,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03 }}
                 onClick={() => setProfilePreview({ userId: user.id, username: user.username })}
-                className="w-full bg-violet-950/20 hover:bg-violet-950/25 rounded-xl p-3 flex items-center gap-3 transition-colors border border-pink-500/25"
+                className="w-full bg-violet-950/20 hover:bg-violet-950/25 rounded-xl p-3 flex items-center gap-3 transition-colors border border-purple-500/25"
               >
                 <img
                   src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
@@ -345,7 +345,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03 }}
-                className="bg-violet-950/20 hover:bg-violet-950/25 rounded-xl p-3 flex items-center gap-3 border border-pink-500/25"
+                className="bg-violet-950/20 hover:bg-violet-950/25 rounded-xl p-3 flex items-center gap-3 border border-purple-500/25"
               >
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-5 h-5 text-white" />
@@ -393,7 +393,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
               <button
                 key={genre}
                 onClick={() => setSearchQuery(genre)}
-                className="px-3 py-1.5 bg-violet-950/25 border border-pink-500/25 rounded-full text-sm text-purple-200/60 hover:text-white hover:border-purple-600/40 transition-colors"
+                className="px-3 py-1.5 bg-violet-950/25 border border-purple-500/25 rounded-full text-sm text-purple-200/60 hover:text-white hover:border-purple-600/40 transition-colors"
               >
                 {genre}
               </button>

@@ -230,7 +230,8 @@ export async function createPost(
   spotifyUrl: string | null = null,
   trackId: string | null = null,
   isPrivate: boolean = false,
-  circleId: string | null = null
+  circleId: string | null = null,
+  imageUrl: string | null = null
 ) {
   try {
     const user = await getCurrentUser();
@@ -267,7 +268,8 @@ export async function createPost(
         comments_count: 0,
         is_reshake: false,
         is_private: isPrivate,
-        circle_id: circleId || null
+        circle_id: circleId || null,
+        image_url: imageUrl || null
       }])
       .select()
       .single();

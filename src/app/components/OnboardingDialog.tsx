@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { ChevronRight, Music, Users, Repeat2, Zap, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -178,7 +178,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                   onClick={() => setSelectedService('apple')}
                   className={`w-full p-4 rounded-2xl border-2 transition-all ${
                     selectedService === 'apple'
-                      ? 'border-pink-500/60 bg-pink-500/5'
+                      ? 'border-purple-500/60 bg-pink-500/5'
                       : 'border-purple-800/20 bg-violet-950/20 hover:border-purple-800/30'
                   }`}
                 >

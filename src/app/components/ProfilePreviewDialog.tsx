@@ -1,4 +1,4 @@
-﻿import { X, Heart, Play, UserPlus, UserCheck, RefreshCw } from 'lucide-react';
+import { X, Heart, Play, UserPlus, UserCheck, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing, getUserReshakes, getCachedTasteMatch, calculateTasteMatch } from '../../lib/database';
@@ -185,7 +185,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
 
           {/* Taste Match Badge */}
           {tasteMatch && tasteMatch.percent > 0 && (
-            <div className="mb-3 p-2 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-lg border border-pink-500/20">
+            <div className="mb-3 p-2 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-lg border border-purple-500/20">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-purple-300/70">Compatibilité musicale</span>
                 <span className="text-sm font-bold text-pink-400">{tasteMatch.percent}% match</span>

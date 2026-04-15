@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Send, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getPostComments, addComment } from '../../lib/database';
@@ -74,7 +74,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded }: CommentsDial
         animate={{ y: 0 }}
         exit={{ y: 100 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-[#0f0020] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80vh] flex flex-col border border-pink-500/30 mb-[env(safe-area-inset-bottom)] sm:mb-0"
+        className="bg-[#0f0020] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80vh] flex flex-col border border-purple-500/30 mb-[env(safe-area-inset-bottom)] sm:mb-0"
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
@@ -115,7 +115,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded }: CommentsDial
         </div>
 
         {/* Input - safe area for mobile nav */}
-        <div className="px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-3 border-t border-pink-500/25 flex items-center gap-2">
+        <div className="px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-3 border-t border-purple-500/25 flex items-center gap-2">
           <input
             type="text"
             value={newComment}
