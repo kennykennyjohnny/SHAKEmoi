@@ -104,6 +104,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         const originalPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
         const originalUser = originalPost?.user ? (Array.isArray(originalPost.user) ? originalPost.user[0] : originalPost.user) : null;
         const isReshake = !!post.is_reshake;
+        // Fix: displayTrack logic
+        const displayTrack = isReshake && originalPost ? originalPost : post;
         // For reshakes, user = original user, reshakeFrom = reshaker
         // For normal posts, user = post user, reshakeFrom = undefined
         return {
