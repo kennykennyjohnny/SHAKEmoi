@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Music2, Mail, Lock, User as UserIcon, Loader2, AlertCircle, Music } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { Logo } from './Logo';
 
 interface AuthDialogProps {
   onComplete: (user: any) => void;
@@ -102,7 +103,7 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
           animate={{ opacity: 1, y: 0 }}
           className="bg-[#0f0020] rounded-2xl border border-purple-800/30 overflow-hidden shadow-2xl shadow-purple-900/20"
         >
-          {/* Header - text based, no Logo */}
+          {/* Header */}
           <div className="p-6 text-center">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -110,9 +111,7 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
               transition={{ delay: 0.1, type: 'spring' }}
               className="mb-3 flex justify-center"
             >
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-                <Music className="w-7 h-7 text-white" />
-              </div>
+              <Logo size="md" animated={true} showText={false} />
             </motion.div>
             <h1 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
               SHAKEmoi

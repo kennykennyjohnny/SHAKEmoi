@@ -744,7 +744,7 @@ export async function searchPosts(query: string) {
 
 export async function getTopPosts(limit = 10) {
   try {
-    // Get all posts ordered by likes
+    // Get recent posts (not reshakes) with user info
     const { data, error } = await supabase
       .from('posts')
       .select(`
@@ -752,14 +752,32 @@ export async function getTopPosts(limit = 10) {
         user:users_profile!posts_user_id_fkey(*)
       `)
       .eq('is_reshake', false)
-      .order('likes_count', { ascending: false })
-      .limit(50); // Get more to deduplicate
+      .order('created_at', { ascending: false })
+      .limit(200);
 
     if (error) throw error;
+    if (!data || data.length === 0) return [];
+
+    // Get real like counts from the likes table
+    const postIds = data.map((p: any) => p.id);
+    const { data: likes } = await supabase
+      .from('likes')
+      .select('post_id')
+      .in('post_id', postIds);
+
+    const likeCountMap = new Map<string, number>();
+    (likes || []).forEach((l: any) => {
+      likeCountMap.set(l.post_id, (likeCountMap.get(l.post_id) || 0) + 1);
+    });
+
+    // Attach real counts
+    data.forEach((post: any) => {
+      post.likes_count = likeCountMap.get(post.id) || 0;
+    });
     
     // Deduplicate by track_name + artist, keep highest likes
     const uniqueTracks = new Map();
-    (data || []).forEach((post: any) => {
+    data.forEach((post: any) => {
       const key = `${post.track_name}-${post.artist}`.toLowerCase();
       const existing = uniqueTracks.get(key);
       if (!existing || (post.likes_count || 0) > (existing.likes_count || 0)) {
@@ -767,7 +785,7 @@ export async function getTopPosts(limit = 10) {
       }
     });
     
-    // Convert back to array and limit
+    // Sort by real likes and return
     return Array.from(uniqueTracks.values())
       .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
       .slice(0, limit);
