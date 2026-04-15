@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
-import { searchUsers, createPost, searchCircles, joinCircle } from '../../lib/database';
+import { searchUsers, createPost, searchCircles, joinCircle, joinCircleByCode } from '../../lib/database';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
 interface SearchViewProps {

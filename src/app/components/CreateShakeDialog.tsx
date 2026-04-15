@@ -7,9 +7,10 @@ import { spotify } from '../../lib/spotify';
 interface CreateShakeDialogProps {
   currentUser: any;
   onClose: () => void;
+  circleId?: string | null;
 }
 
-export function CreateShakeDialog({ currentUser, onClose }: CreateShakeDialogProps) {
+export function CreateShakeDialog({ currentUser, onClose, circleId }: CreateShakeDialogProps) {
   const [caption, setCaption] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTrack, setSelectedTrack] = useState<any>(null);
@@ -98,7 +99,9 @@ export function CreateShakeDialog({ currentUser, onClose }: CreateShakeDialogPro
         caption,
         selectedTrack.previewUrl,
         selectedTrack.spotifyUri,
-        selectedTrack.id
+        selectedTrack.id,
+        false,
+        circleId
       );
 
       if (result.success) {

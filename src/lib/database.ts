@@ -124,10 +124,22 @@ export async function getFeed(limit = 20): Promise<Post[]> {
       `)
       .in('user_id', feedUserIds)
       .neq('is_private', true)
+      .is('circle_id', null)
       .order('created_at', { ascending: false })
       .limit(limit);
 
     if (error) {
+      // Retry without circle_id filter if column doesn't exist
+      if (error.message?.includes('circle_id') || error.code === '42703') {
+        const { data: fallback } = await supabase
+          .from('posts')
+          .select(`*, user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color), original_post:posts!original_post_id(*, user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color))`)
+          .in('user_id', feedUserIds)
+          .neq('is_private', true)
+          .order('created_at', { ascending: false })
+          .limit(limit);
+        if (fallback) return fallback;
+      }
       console.error('Error fetching feed:', error);
       throw error;
     }
@@ -166,6 +178,24 @@ export async function getFeed(limit = 20): Promise<Post[]> {
   }
 }
 
+// Fetch a single post by ID (used as fallback for reshake self-join)
+export async function getPostById(postId: string): Promise<any> {
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
+      `)
+      .eq('id', postId)
+      .single();
+    if (error) throw error;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 export async function getUserPosts(userId: string, limit = 50): Promise<Post[]> {
   try {
     const { data, error } = await supabase
@@ -199,7 +229,8 @@ export async function createPost(
   previewUrl: string | null = null,
   spotifyUrl: string | null = null,
   trackId: string | null = null,
-  isPrivate: boolean = false
+  isPrivate: boolean = false,
+  circleId: string | null = null
 ) {
   try {
     const user = await getCurrentUser();
@@ -235,7 +266,8 @@ export async function createPost(
         likes_count: 0,
         comments_count: 0,
         is_reshake: false,
-        is_private: isPrivate
+        is_private: isPrivate,
+        circle_id: circleId || null
       }])
       .select()
       .single();
@@ -1265,11 +1297,22 @@ export async function createCircle(name: string): Promise<any> {
 
     const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    const { data, error } = await supabase
+    // Try with invite_code first, fallback without it if column doesn't exist
+    let data: any, error: any;
+    ({ data, error } = await supabase
       .from('circles')
       .insert([{ name, created_by: user.id, invite_code: inviteCode }])
       .select()
-      .single();
+      .single());
+
+    // Retry without invite_code if column doesn't exist
+    if (error && (error.message?.includes('invite_code') || error.code === '42703')) {
+      ({ data, error } = await supabase
+        .from('circles')
+        .insert([{ name, created_by: user.id }])
+        .select()
+        .single());
+    }
 
     if (error) throw error;
 
@@ -1356,15 +1399,6 @@ export async function removeCircleMember(circleId: string, userId: string) {
 
 export async function getCircleFeed(circleId: string, limit = 30): Promise<Post[]> {
   try {
-    // Get member IDs
-    const { data: members } = await supabase
-      .from('circle_members')
-      .select('user_id')
-      .eq('circle_id', circleId);
-
-    if (!members || members.length === 0) return [];
-    const memberIds = members.map(m => m.user_id);
-
     const { data: posts, error } = await supabase
       .from('posts')
       .select(`
@@ -1375,15 +1409,72 @@ export async function getCircleFeed(circleId: string, limit = 30): Promise<Post[
           user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
         )
       `)
-      .in('user_id', memberIds)
+      .eq('circle_id', circleId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (error) throw error;
+    if (error) {
+      // Fallback: filter by member IDs if circle_id column doesn't exist
+      if (error.message?.includes('circle_id') || error.code === '42703') {
+        const { data: members } = await supabase
+          .from('circle_members')
+          .select('user_id')
+          .eq('circle_id', circleId);
+        if (!members || members.length === 0) return [];
+        const memberIds = members.map(m => m.user_id);
+        const { data: fallbackPosts } = await supabase
+          .from('posts')
+          .select(`*, user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)`)
+          .in('user_id', memberIds)
+          .order('created_at', { ascending: false })
+          .limit(limit);
+        return fallbackPosts || [];
+      }
+      throw error;
+    }
     return posts || [];
   } catch (error) {
     console.error('Error getting circle feed:', error);
     return [];
+  }
+}
+
+export async function joinCircleByCode(inviteCode: string): Promise<any> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Find circle by invite code
+    const { data: circle, error: circleError } = await supabase
+      .from('circles')
+      .select('id, name, created_by')
+      .eq('invite_code', inviteCode.toUpperCase())
+      .maybeSingle();
+
+    if (circleError) throw circleError;
+    if (!circle) throw new Error('Cercle non trouvé');
+
+    // Check if already member
+    const { data: existing } = await supabase
+      .from('circle_members')
+      .select('*')
+      .eq('circle_id', circle.id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (existing) throw new Error('Déjà membre de ce cercle');
+
+    // Add as member
+    const { error: memberError } = await supabase
+      .from('circle_members')
+      .insert([{ circle_id: circle.id, user_id: user.id }]);
+
+    if (memberError) throw memberError;
+
+    return { success: true, data: circle };
+  } catch (error: any) {
+    console.error('Error joining circle by code:', error);
+    return { success: false, error: error.message };
   }
 }
 
@@ -1392,7 +1483,7 @@ export async function searchCircles(query: string): Promise<any[]> {
     const { data, error } = await supabase
       .from('circles')
       .select('*')
-      .ilike('name', `%${query}%`)
+      .or(`name.ilike.%${query}%,invite_code.ilike.%${query}%`)
       .limit(20);
 
     if (error) throw error;

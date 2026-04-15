@@ -101,9 +101,18 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         // Build embed URL for ALL posts that have a track_id
         const spotifyEmbedUrl = post.spotify_embed_url || (trackId ? `https://open.spotify.com/embed/track/${trackId}` : null);
         // Normalize original_post: Supabase self-join may return array (both levels)
-        const originalPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
-        const originalUser = originalPost?.user ? (Array.isArray(originalPost.user) ? originalPost.user[0] : originalPost.user) : null;
+        let originalPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
+        
+        // RESHAKE FIX: If is_reshake but no original_post from join, fetch it manually
         const isReshake = !!post.is_reshake;
+        if (isReshake && !originalPost && post.original_post_id) {
+          try {
+            const fetched = await db.getPostById(post.original_post_id);
+            if (fetched) originalPost = fetched;
+          } catch {}
+        }
+        
+        const originalUser = originalPost?.user ? (Array.isArray(originalPost.user) ? originalPost.user[0] : originalPost.user) : null;
         // Fix: displayTrack logic
         const displayTrack = isReshake && originalPost ? originalPost : post;
         // For reshakes, user = original user, reshakeFrom = reshaker
@@ -268,7 +277,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     if (!chatText.trim() || chatSending) return;
     setChatSending(true);
     try {
-      await db.createPost('', '', '', chatText.trim(), null, null, null);
+      await db.createPost('', '', '', chatText.trim(), null, null, null, false, currentFeedId);
       setChatText('');
       await loadFeed();
     } catch (err) {
@@ -281,7 +290,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     setChatSending(true);
     try {
       await db.createPost(
-        track.name, track.artist, track.cover, '', track.preview_url, track.spotify_url, track.id
+        track.name, track.artist, track.cover, '', track.preview_url, track.spotify_url, track.id, false, currentFeedId
       );
       setShowChatTrackSearch(false);
       setChatTrackQuery('');

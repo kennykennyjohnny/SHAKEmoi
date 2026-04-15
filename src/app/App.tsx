@@ -61,10 +61,10 @@ export default function App() {
     setCurrentView('feed');
   };
 
-  const handleCircleCreated = (circleId: string) => {
+  const handleCircleCreated = async (circleId: string) => {
+    await loadUserCircles();
     setActiveFeedCircleId(circleId);
     setCurrentView('feed');
-    loadUserCircles();
   };
 
   const buildUserObject = (profile: any) => ({
@@ -307,7 +307,7 @@ export default function App() {
 
       {/* Dialogs */}
       {showCreateShake && (
-        <CreateShakeDialog currentUser={currentUser} onClose={() => { setShowCreateShake(false); setRefreshFeed(p => p + 1); }} />
+        <CreateShakeDialog currentUser={currentUser} circleId={activeFeedCircleId} onClose={() => { setShowCreateShake(false); setRefreshFeed(p => p + 1); }} />
       )}
       {showShareDialog && <ShareDialog currentUser={currentUser} onClose={() => setShowShareDialog(false)} />}
       {showCompleteProfile && (

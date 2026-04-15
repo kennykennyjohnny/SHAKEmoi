@@ -559,7 +559,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
     if (!chatText.trim() || chatSending) return;
     setChatSending(true);
     try {
-      await createPost('', '', '', chatText.trim(), null, null, null);
+      await createPost('', '', '', chatText.trim(), null, null, null, false, circle?.id);
       setChatText('');
       await loadData();
     } catch {}
@@ -569,7 +569,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const sendChatTrack = async (track: any) => {
     setChatSending(true);
     try {
-      await createPost(track.name, track.artist, track.cover, '', track.preview_url, track.spotify_url, track.id);
+      await createPost(track.name, track.artist, track.cover, '', track.preview_url, track.spotify_url, track.id, false, circle?.id);
       setShowTrackSearch(false);
       setTrackQuery('');
       setTrackResults([]);
