@@ -9,12 +9,12 @@ interface LogoProps {
 
 export function Logo({ size = 'md', animated = true, showText = true }: LogoProps) {
   const sizes = {
-    sm: { container: 'w-8 h-8', text: 'text-lg' },
-    md: { container: 'w-12 h-12', text: 'text-2xl' },
-    lg: { container: 'w-20 h-20', text: 'text-4xl' }
+    sm: { container: 'w-8 h-8', text: 'text-lg', fontSize: 52 },
+    md: { container: 'w-12 h-12', text: 'text-2xl', fontSize: 52 },
+    lg: { container: 'w-20 h-20', text: 'text-4xl', fontSize: 52 }
   };
 
-  const { container, text } = sizes[size];
+  const { container, text, fontSize } = sizes[size];
 
   return (
     <div className="flex items-center gap-3">
@@ -25,25 +25,25 @@ export function Logo({ size = 'md', animated = true, showText = true }: LogoProp
           <defs>
             <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#d946ef" />
+              <stop offset="50%" stopColor="#e879f9" />
               <stop offset="100%" stopColor="#ec4899" />
             </linearGradient>
           </defs>
           <circle cx="50" cy="50" r="48" fill="url(#logoGrad)" />
-          {/* S tilted, resting on H */}
           <motion.text
             x="50"
-            y="56"
+            y="54"
             textAnchor="middle"
             dominantBaseline="central"
             fill="white"
             fontWeight="900"
-            fontSize="42"
+            fontSize={fontSize}
             fontFamily="'Maven Pro', sans-serif"
-            animate={animated ? { rotate: [-3, 3, -3] } : {}}
-            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            style={{ transformOrigin: '50px 56px' }}
+            letterSpacing="-2"
+            animate={animated ? { rotate: [-8, -8] } : { rotate: -8 }}
+            style={{ transformOrigin: '50px 54px' }}
           >
-            SH
+            S
           </motion.text>
         </svg>
       </motion.div>

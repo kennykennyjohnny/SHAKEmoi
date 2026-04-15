@@ -1647,6 +1647,24 @@ export async function getCircleWeeklyShakes(circleId: string): Promise<any[]> {
   }
 }
 
+// ==================== APP STATS ====================
+export async function getAppStats(): Promise<{ users: number; shakes: number; likes: number }> {
+  try {
+    const [usersRes, shakesRes, likesRes] = await Promise.all([
+      supabase.from('users_profile').select('id', { count: 'exact', head: true }),
+      supabase.from('posts').select('id', { count: 'exact', head: true }),
+      supabase.from('likes').select('id', { count: 'exact', head: true }),
+    ]);
+    return {
+      users: usersRes.count ?? 0,
+      shakes: shakesRes.count ?? 0,
+      likes: likesRes.count ?? 0,
+    };
+  } catch {
+    return { users: 0, shakes: 0, likes: 0 };
+  }
+}
+
 // Send song to friend (notification)
 export async function sendSongNotification(recipientId: string, track: any) {
   try {

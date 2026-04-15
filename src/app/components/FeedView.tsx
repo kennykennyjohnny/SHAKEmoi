@@ -276,7 +276,8 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
   };
 
   return (
-    <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 z-40 bg-[#0a0012]/95 backdrop-blur-xl border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+    <div className="fixed bottom-[4.5rem] lg:bottom-0 left-0 right-0 z-40 pointer-events-none">
+      <div className="max-w-2xl mx-auto pointer-events-auto bg-[#0a0012] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
       <AnimatePresence>
         {showChatTrackSearch && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-purple-500/25 bg-[#0a0012]">
@@ -347,6 +348,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
         <button onClick={handleChatSendText} disabled={chatSending || !chatText.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
           {chatSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
         </button>
+      </div>
       </div>
     </div>
   );
@@ -734,7 +736,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined}>
-      <div className={`p-4 space-y-3 ${currentFeedId ? 'flex-1 pb-32 lg:pb-20' : ''}`}>
+      <div className={`p-4 space-y-3 ${currentFeedId ? 'flex-1 pb-40 lg:pb-24' : ''}`}>
         {/* Horizontal feed selector */}
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
         {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
@@ -965,7 +967,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     >
                       <div className="px-4 pb-2">
                         <iframe
-                          src={`${shake.track.spotifyEmbedUrl}?theme=0&utm_source=generator`}
+                          src={shake.track.spotifyEmbedUrl.includes('?') ? shake.track.spotifyEmbedUrl : `${shake.track.spotifyEmbedUrl}?theme=0&utm_source=generator`}
                           width="100%"
                           height="152"
                           frameBorder="0"

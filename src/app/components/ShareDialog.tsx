@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Copy, Check, Share2, Sparkles, Heart, Music2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Logo } from './Logo';
+import { getAppStats } from '../../lib/database';
 
 interface ShareDialogProps {
   currentUser: any;
@@ -10,7 +11,17 @@ interface ShareDialogProps {
 
 export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
+  const [stats, setStats] = useState({ users: 0, shakes: 0, likes: 0 });
   const shareUrl = currentUser ? `https://shakemoi.fr?ref=${currentUser.username}` : 'https://shakemoi.fr';
+
+  useEffect(() => {
+    getAppStats().then(setStats);
+  }, []);
+
+  const formatNumber = (n: number) => {
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return n.toString();
+  };
 
   const handleCopy = async () => {
     try {
@@ -146,16 +157,16 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
               {/* Stats */}
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <div className="bg-purple-950/40/30 rounded-lg p-3">
-                  <p className="text-2xl font-bold text-purple-400">12.5K</p>
+                  <p className="text-2xl font-bold text-purple-400">{formatNumber(stats.users)}</p>
                   <p className="text-xs text-purple-400/50">Shakers</p>
                 </div>
                 <div className="bg-purple-950/40/30 rounded-lg p-3">
-                  <p className="text-2xl font-bold text-pink-400">89K</p>
+                  <p className="text-2xl font-bold text-pink-400">{formatNumber(stats.shakes)}</p>
                   <p className="text-xs text-purple-400/50">Shakes</p>
                 </div>
                 <div className="bg-purple-950/40/30 rounded-lg p-3">
-                  <p className="text-2xl font-bold text-fuchsia-400">245K</p>
-                  <p className="text-xs text-purple-400/50">Plays</p>
+                  <p className="text-2xl font-bold text-fuchsia-400">{formatNumber(stats.likes)}</p>
+                  <p className="text-xs text-purple-400/50">Likes</p>
                 </div>
               </div>
 

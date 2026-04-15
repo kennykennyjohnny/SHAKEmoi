@@ -1,8 +1,9 @@
 ﻿import { useState, useEffect } from 'react';
-import { Play, ExternalLink, Loader2, UserPlus } from 'lucide-react';
+import { Play, ExternalLink, Loader2, UserPlus, Pause, Headphones } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../../lib/supabase';
 import { getPlatformUrl } from '../../lib/odesli';
+import { Logo } from './Logo';
 
 interface Props {
   postId: string;
@@ -59,58 +60,79 @@ export function SharedPostView({ postId, onJoin }: Props) {
   };
 
   const platforms = [
-    { key: 'spotify', label: 'Spotify', color: 'from-green-500 to-green-600' },
-    { key: 'apple_music', label: 'Apple Music', color: 'from-pink-500 to-pink-600' },
-    { key: 'deezer', label: 'Deezer', color: 'from-purple-500 to-purple-600' },
-    { key: 'youtube_music', label: 'YouTube Music', color: 'from-pink-600 to-orange-500' },
+    { key: 'spotify', label: 'Spotify', color: 'from-green-500 to-green-600', icon: '🎵' },
+    { key: 'apple_music', label: 'Apple Music', color: 'from-pink-500 to-pink-600', icon: '🎧' },
+    { key: 'deezer', label: 'Deezer', color: 'from-purple-500 to-purple-600', icon: '💿' },
+    { key: 'youtube_music', label: 'YouTube Music', color: 'from-red-500 to-orange-500', icon: '▶️' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0012] text-white flex flex-col items-center justify-center p-4">
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm">
+    <div className="min-h-screen bg-[#0a0012] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Background: blurred cover */}
+      {post.cover_url && (
+        <div className="absolute inset-0 pointer-events-none">
+          <img src={post.cover_url} className="w-full h-full object-cover opacity-15 blur-3xl scale-110" alt="" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0012]/80 via-[#0a0012]/60 to-[#0a0012]" />
+        </div>
+      )}
+
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm relative z-10">
         {/* Branding */}
-        <p className="text-center mb-6">
-          <span className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">SHAKEmoi</span>
-        </p>
+        <div className="flex justify-center mb-6">
+          <Logo size="sm" animated={true} showText={true} />
+        </div>
 
         {/* Sender badge */}
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <img src={avatar} className="w-8 h-8 rounded-full object-cover" alt="" />
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="flex items-center justify-center gap-2.5 mb-5"
+        >
+          <img src={avatar} className="w-9 h-9 rounded-full object-cover border-2 border-fuchsia-500/30" alt="" />
           <p className="text-sm text-purple-300/80">
-            <span className="font-semibold text-white">@{post.user?.username}</span> t'a envoyé ce son
+            <span className="font-bold text-white">@{post.user?.username}</span> t'a envoyé ce son
           </p>
-        </div>
+        </motion.div>
 
-        {/* Track card */}
-        <div className="bg-purple-950/40 rounded-2xl border border-purple-800/30 overflow-hidden">
-          <div className="p-4 flex gap-4 items-center cursor-pointer group" onClick={() => setShowEmbed(!showEmbed)}>
-            <div className="relative flex-shrink-0">
-              <img src={post.cover_url} className="w-20 h-20 rounded-xl object-cover shadow-lg" alt="" />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-xl transition-opacity">
-                <Play className="w-8 h-8 text-white fill-white" />
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-bold truncate">{post.track_name}</h2>
-              <p className="text-sm text-purple-300/60 truncate">{post.artist}</p>
-              {post.text && <p className="text-xs text-purple-200/70 mt-2 line-clamp-2">"{post.text}"</p>}
-            </div>
-          </div>
-
-          {/* Embed */}
-          <AnimatePresence>
-            {showEmbed && embedUrl && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                <div className="px-4 pb-4">
-                  <iframe src={embedUrl} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
-                </div>
-              </motion.div>
+        {/* Big album cover */}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2, type: 'spring' }}
+          className="relative mb-5 cursor-pointer group"
+          onClick={() => setShowEmbed(!showEmbed)}
+        >
+          <img src={post.cover_url} className="w-full aspect-square rounded-2xl object-cover shadow-2xl shadow-fuchsia-500/20" alt="" />
+          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-2xl transition-opacity">
+            {showEmbed ? (
+              <Pause className="w-14 h-14 text-white fill-white drop-shadow-lg" />
+            ) : (
+              <Play className="w-14 h-14 text-white fill-white drop-shadow-lg" />
             )}
-          </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* Track info */}
+        <div className="text-center mb-4">
+          <h2 className="text-xl font-bold truncate">{post.track_name}</h2>
+          <p className="text-sm text-purple-300/60 truncate">{post.artist}</p>
+          {post.text && (
+            <p className="text-xs text-purple-200/50 mt-2 italic line-clamp-2">"{post.text}"</p>
+          )}
         </div>
+
+        {/* Embed */}
+        <AnimatePresence>
+          {showEmbed && embedUrl && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mb-4">
+              <iframe src={embedUrl} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Platform buttons */}
-        <div className="mt-4 space-y-2">
+        <div className="space-y-2 mb-5">
           {platforms.map(p => (
             <button key={p.key} onClick={() => openPlatform(p.key)}
               className={`w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r ${p.color} hover:opacity-90 transition-opacity flex items-center justify-center gap-2`}
@@ -122,11 +144,11 @@ export function SharedPostView({ postId, onJoin }: Props) {
         </div>
 
         {/* CTA Join */}
-        <div className="mt-6 text-center">
+        <div className="text-center">
           <p className="text-xs text-purple-400/50 mb-2">Envie de répondre à @{post.user?.username} ?</p>
-          <button onClick={onJoin} className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-bold hover:opacity-90 flex items-center justify-center gap-2 mx-auto">
+          <button onClick={onJoin} className="w-full py-3.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-xl font-bold hover:opacity-90 flex items-center justify-center gap-2">
             <UserPlus className="w-4 h-4" />
-            Rejoins SHAKEmoi
+            Rejoins SHAKEmoi gratuitement
           </button>
         </div>
 

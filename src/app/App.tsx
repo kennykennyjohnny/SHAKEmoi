@@ -235,6 +235,9 @@ export default function App() {
             </button>
 
             <div className="flex items-center gap-1.5">
+              <button onClick={() => setCurrentView('wrap')} className={`p-2 rounded-full transition-colors ${currentView === 'wrap' ? 'bg-fuchsia-500/15 text-fuchsia-400' : 'hover:bg-violet-900/25 text-purple-300/60'}`} title="Mon résumé">
+                <BarChart3 className="w-5 h-5" />
+              </button>
               <button onClick={() => setShowShareDialog(true)} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors">
                 <Share2 className="w-5 h-5 text-purple-300/60" />
               </button>
@@ -259,16 +262,16 @@ export default function App() {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-auto pb-20">
+        <main className="flex-1 overflow-auto pb-24 lg:pb-4">
           {renderView()}
         </main>
 
         {/* Bottom Navigation Mobile — Feed, Top, Search, DMs, Profile */}
         <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-violet-900/30 backdrop-blur-lg bg-[#0a0012]/95 z-50">
-          <div className="px-2 py-2 flex items-center justify-around max-w-md mx-auto">
+          <div className="px-4 py-2.5 flex items-center justify-around max-w-lg mx-auto">
             {([
               { view: 'feed' as View, icon: Home, label: 'Feed' },
-              { view: 'wrap' as View, icon: BarChart3, label: 'Résumé' },
+              { view: 'top' as View, icon: TrendingUp, label: 'TOP' },
               { view: 'search' as View, icon: Search, label: 'Recherche' },
               { view: 'messages' as View, icon: MessageCircle, label: 'DMs' },
               { view: 'profile' as View, icon: User, label: 'Profil' },
@@ -276,11 +279,11 @@ export default function App() {
               <button
                 key={view}
                 onClick={() => setCurrentView(view)}
-                className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all ${
+                className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all ${
                   currentView === view ? 'text-fuchsia-400 bg-fuchsia-500/15 shadow-lg shadow-fuchsia-500/10' : 'text-purple-300/60 hover:text-purple-200'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${currentView === view ? 'drop-shadow-[0_0_6px_rgba(217,70,239,0.5)]' : ''}`} />
+                <Icon className={`w-6 h-6 ${currentView === view ? 'drop-shadow-[0_0_6px_rgba(217,70,239,0.5)]' : ''}`} />
               </button>
             ))}
           </div>
