@@ -3,6 +3,11 @@
 -- Add invite_code to circles
 ALTER TABLE circles ADD COLUMN IF NOT EXISTS invite_code TEXT UNIQUE;
 
+-- Fix users_profile RLS to allow reading public info
+DROP POLICY IF EXISTS "Users can read their own profile" ON users_profile;
+CREATE POLICY "Users can read public user info" ON users_profile
+  FOR SELECT USING (true);
+
 -- Create helper function
 CREATE OR REPLACE FUNCTION is_circle_member(circle_id UUID, user_id UUID) RETURNS BOOLEAN AS $$
 BEGIN

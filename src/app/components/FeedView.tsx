@@ -579,7 +579,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         })}
       </div>
 
-      {/* Circle input bar */}
+      {/* Circle input bar - temporarily disabled
       {currentFeedId && (
         <div className="fixed bottom-16 left-0 right-0 bg-rose-950/95 backdrop-blur-lg border-t border-rose-800/50 p-4">
           <div className="max-w-2xl mx-auto flex items-center gap-3">
@@ -603,6 +603,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           </div>
         </div>
       )}
+      */}
 
       <AnimatePresence>
         {reshakeDialogShake && (
