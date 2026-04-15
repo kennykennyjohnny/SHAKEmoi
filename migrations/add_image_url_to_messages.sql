@@ -10,13 +10,21 @@ VALUES ('circle-media', 'circle-media', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Storage policy: authenticated users can upload to circle-media
-CREATE POLICY IF NOT EXISTS "Authenticated users can upload circle media"
-  ON storage.objects FOR INSERT
-  TO authenticated
-  WITH CHECK (bucket_id = 'circle-media');
+DO $$
+BEGIN
+  CREATE POLICY "Authenticated users can upload circle media"
+    ON storage.objects FOR INSERT
+    TO authenticated
+    WITH CHECK (bucket_id = 'circle-media');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Storage policy: public read access for circle-media
-CREATE POLICY IF NOT EXISTS "Public read access for circle media"
-  ON storage.objects FOR SELECT
-  TO public
-  USING (bucket_id = 'circle-media');
+DO $$
+BEGIN
+  CREATE POLICY "Public read access for circle media"
+    ON storage.objects FOR SELECT
+    TO public
+    USING (bucket_id = 'circle-media');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;

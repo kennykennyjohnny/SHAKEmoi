@@ -276,7 +276,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
   };
 
   return (
-    <div className="sticky bottom-16 lg:bottom-0 z-30 bg-[#0a0012]/95 backdrop-blur-xl border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+    <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 z-40 bg-[#0a0012]/95 backdrop-blur-xl border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
       <AnimatePresence>
         {showChatTrackSearch && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-purple-500/25 bg-[#0a0012]">
