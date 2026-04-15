@@ -1,4 +1,4 @@
-﻿import { Heart, MessageCircle, UserPlus, Music, Repeat2, Loader2, Bell } from 'lucide-react';
+import { Heart, MessageCircle, UserPlus, Music, Repeat2, Loader2, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { getUserNotifications } from '../../lib/database';
@@ -59,11 +59,11 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
       case 'like':
         return <Heart className="w-4 h-4 fill-current text-pink-500" />;
       case 'comment':
-        return <MessageCircle className="w-4 h-4 text-blue-400" />;
+        return <MessageCircle className="w-4 h-4 text-fuchsia-400" />;
       case 'follow':
         return <UserPlus className="w-4 h-4 text-purple-400" />;
       case 'reshake':
-        return <Repeat2 className="w-4 h-4 text-green-400" />;
+        return <Repeat2 className="w-4 h-4 text-fuchsia-400" />;
       default:
         return <Music className="w-4 h-4 text-purple-400" />;
     }
@@ -71,10 +71,10 @@ export function NotificationsView({ currentUser }: NotificationsViewProps) {
 
   const getIconBg = (type: string) => {
     switch (type) {
-      case 'like': return 'bg-orange-500/10 border-orange-500/20';
-      case 'comment': return 'bg-blue-500/10 border-blue-500/20';
+      case 'like': return 'bg-pink-500/10 border-pink-500/20';
+      case 'comment': return 'bg-fuchsia-500/10 border-fuchsia-500/20';
       case 'follow': return 'bg-purple-500/10 border-purple-500/20';
-      case 'reshake': return 'bg-green-500/10 border-green-500/20';
+      case 'reshake': return 'bg-fuchsia-500/10 border-fuchsia-500/20';
       default: return 'bg-purple-500/10 border-purple-500/20';
     }
   };

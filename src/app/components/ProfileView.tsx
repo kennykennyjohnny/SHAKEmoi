@@ -1,4 +1,4 @@
-﻿import { Users, Music, Heart, Settings, Play, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, ExternalLink, UserMinus } from 'lucide-react';
+import { Users, Music, Heart, Settings, Play, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, ExternalLink, UserMinus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { SettingsDialog } from './SettingsDialog';
@@ -324,7 +324,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
             onClick={() => { setActiveTab('reshakes'); setExpandedShakeId(null); }}
             className={`py-3 border-b-2 font-semibold text-sm transition-colors ${
               activeTab === 'reshakes'
-                ? 'border-green-500 text-green-400'
+                ? 'border-fuchsia-500 text-fuchsia-400'
                 : 'border-transparent text-purple-500/40 hover:text-purple-300'
             }`}
           >
@@ -366,7 +366,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                   </div>
                   {/* Reshake badge */}
                   {activeTab === 'reshakes' && shake.originalUser && (
-                    <div className="absolute top-1 left-1 bg-green-500/80 rounded-full p-0.5">
+                    <div className="absolute top-1 left-1 bg-fuchsia-500/80 rounded-full p-0.5">
                       <Repeat2 className="w-2.5 h-2.5 text-white" />
                     </div>
                   )}
@@ -404,8 +404,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                             className="w-6 h-6 rounded-full object-cover"
                           />
                           <span className="text-xs text-white font-medium">@{shake.originalUser.username}</span>
-                          <Repeat2 className="w-3 h-3 text-green-400" />
-                          <span className="text-xs text-green-400/60">Reshaké par toi</span>
+                          <Repeat2 className="w-3 h-3 text-fuchsia-400" />
+                          <span className="text-xs text-fuchsia-400/60">Reshaké par toi</span>
                         </div>
                       )}
 
@@ -455,12 +455,12 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           </button>
 
                           <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
-                            <MessageCircle className="w-5 h-5 text-purple-400/50 group-hover:text-blue-400 transition-colors" />
+                            <MessageCircle className="w-5 h-5 text-purple-400/50 group-hover:text-fuchsia-400 transition-colors" />
                             <span className="text-xs font-medium text-purple-400/50">{shake.comments}</span>
                           </button>
 
                           <button className="flex items-center gap-1.5 group">
-                            <Repeat2 className="w-5 h-5 text-purple-400/50 group-hover:text-green-400 transition-colors" />
+                            <Repeat2 className="w-5 h-5 text-purple-400/50 group-hover:text-fuchsia-400 transition-colors" />
                             <span className="text-xs font-medium text-purple-400/50">{shake.reshakes}</span>
                           </button>
 
@@ -470,7 +470,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                             onClick={() => {
                               if (confirm('Supprimer ce shake ?')) handleDeleteShake(shake.id);
                             }}
-                            className="p-1.5 bg-orange-500/10 hover:bg-pink-500/20 border border-orange-500/20 rounded-lg transition-colors"
+                            className="p-1.5 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4 text-pink-400" />
                           </button>
@@ -558,7 +558,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           onClick={() => {
                             if (confirm(`Ne plus suivre @${person.username} ?`)) handleUnfollow(person.id);
                           }}
-                          className="p-2 bg-orange-500/10 hover:bg-pink-500/20 border border-orange-500/20 rounded-lg transition-colors"
+                          className="p-2 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg transition-colors"
                           title="Ne plus suivre"
                         >
                           <UserMinus className="w-4 h-4 text-pink-400" />

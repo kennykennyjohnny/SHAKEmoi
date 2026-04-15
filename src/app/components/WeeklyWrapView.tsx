@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { BarChart3, Music, Users, Repeat2, TrendingUp, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { supabase } from '../../lib/supabase';
@@ -99,10 +99,10 @@ export function WeeklyWrapView({ currentUser }: Props) {
 
   const stats = [
     { icon: Music, label: 'Shakes cette semaine', value: wrap.shakesCount, color: 'text-purple-400' },
-    { icon: Repeat2, label: 'Reshakes', value: wrap.reshakesCount, color: 'text-green-400' },
+    { icon: Repeat2, label: 'Reshakes', value: wrap.reshakesCount, color: 'text-fuchsia-400' },
     { icon: TrendingUp, label: 'Artiste dominant', value: wrap.topArtist || '-', color: 'text-pink-400' },
-    { icon: Users, label: 'Ami le plus actif', value: wrap.mostActiveFriend ? `@${wrap.mostActiveFriend}` : '-', color: 'text-blue-400' },
-    { icon: BarChart3, label: 'Morceau le + reshaké', value: wrap.mostReshakedTrack || '-', color: 'text-orange-400' },
+    { icon: Users, label: 'Ami le plus actif', value: wrap.mostActiveFriend ? `@${wrap.mostActiveFriend}` : '-', color: 'text-fuchsia-400' },
+    { icon: BarChart3, label: 'Morceau le + reshaké', value: wrap.mostReshakedTrack || '-', color: 'text-pink-400' },
   ];
 
   return (

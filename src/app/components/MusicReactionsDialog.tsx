@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Search, Play, Loader2, Music, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getMusicReactions, addMusicReaction } from '../../lib/database';
@@ -61,7 +61,7 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
         onClick={e => e.stopPropagation()}>
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Music className="w-5 h-5 text-orange-400" />
+            <Music className="w-5 h-5 text-pink-400" />
             <h2 className="text-lg font-bold">Réactions musicales</h2>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-purple-900/40 rounded-full"><X className="w-5 h-5 text-purple-300/60" /></button>
@@ -124,7 +124,7 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
               </>
             ) : (
               <div className="space-y-2">
-                <div className="flex gap-2 items-center bg-purple-950/40 rounded-lg p-2 border border-orange-500/30">
+                <div className="flex gap-2 items-center bg-purple-950/40 rounded-lg p-2 border border-pink-500/30">
                   <img src={selectedTrack.cover} className="w-10 h-10 rounded-md object-cover" alt="" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{selectedTrack.name}</p>
@@ -132,7 +132,7 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
                   </div>
                   <button onClick={() => setSelectedTrack(null)} className="text-purple-400/50 hover:text-white"><X className="w-4 h-4" /></button>
                 </div>
-                <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Commentaire (optionnel)" className="w-full px-3 py-2 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-orange-500" maxLength={200} />
+                <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Commentaire (optionnel)" className="w-full px-3 py-2 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-pink-500" maxLength={200} />
                 <button onClick={() => handleSend(selectedTrack)} disabled={sending} className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2">
                   {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" /> Envoyer la réaction</>}
                 </button>

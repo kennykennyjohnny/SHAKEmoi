@@ -184,7 +184,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
           )}
         </AnimatePresence>
 
-        <div className="px-4 py-3 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0">
+        <div className="px-4 py-3 pb-[calc(0.75rem+4rem)] lg:pb-3 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0">
           <button onClick={() => setShowTrackSearch(!showTrackSearch)} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
             <Music className="w-5 h-5" />
           </button>
@@ -416,7 +416,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
             onKeyDown={e => e.key === 'Enter' && name.trim() && handleCreate()}
           />
           {createError && (
-            <p className="text-xs text-pink-400 bg-orange-500/10 border border-orange-500/20 rounded-lg px-3 py-2 text-center">{createError}</p>
+            <p className="text-xs text-pink-400 bg-pink-500/10 border border-pink-500/20 rounded-lg px-3 py-2 text-center">{createError}</p>
           )}
           <button onClick={handleCreate} disabled={creating || !name.trim()} className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity">
             {creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Créer le cercle ?'}
@@ -483,10 +483,10 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
       {step === 3 && (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4 text-center">
           <div className="py-4">
-            <div className="w-20 h-20 mx-auto mb-3 bg-gradient-to-br from-green-500/30 to-purple-500/30 rounded-full flex items-center justify-center border border-green-500/30">
-              <Check className="w-9 h-9 text-green-400" />
+            <div className="w-20 h-20 mx-auto mb-3 bg-gradient-to-br from-green-500/30 to-purple-500/30 rounded-full flex items-center justify-center border border-fuchsia-500/30">
+              <Check className="w-9 h-9 text-fuchsia-400" />
             </div>
-            <h3 className="font-bold text-xl text-green-400">Cercle créé !</h3>
+            <h3 className="font-bold text-xl text-fuchsia-400">Cercle créé !</h3>
             <p className="text-sm text-purple-300/60 mt-1">
               <span className="text-white font-semibold">{createdCircle?.name}</span> est prêt
               {selectedFriends.length > 0 && ` · ${selectedFriends.length} membre${selectedFriends.length > 1 ? 's' : ''} ajouté${selectedFriends.length > 1 ? 's' : ''}`}
@@ -505,7 +505,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
           <div className="bg-violet-950/20 border border-purple-500/25 rounded-xl p-4 text-left">
             <p className="text-xs text-purple-300/50 mb-2 font-medium uppercase tracking-wider">Lien d'invitation</p>
             <p className="text-xs font-mono text-white/70 break-all leading-relaxed mb-3 select-all">{shareLink}</p>
-            <button onClick={copyLink} className={`w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all ${copied ? 'bg-green-500/20 border border-green-500/30 text-green-400' : 'bg-purple-600/20 border border-purple-500/30 text-purple-300 hover:bg-purple-600/30'}`}>
+            <button onClick={copyLink} className={`w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all ${copied ? 'bg-fuchsia-500/20 border border-fuchsia-500/30 text-fuchsia-400' : 'bg-purple-600/20 border border-purple-500/30 text-purple-300 hover:bg-purple-600/30'}`}>
               {copied ? <><Check className="w-4 h-4" /> Copié !</> : <><Copy className="w-4 h-4" /> Copier le lien</>}
             </button>
           </div>
@@ -627,7 +627,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
           <p className="font-semibold text-sm">{circle.name}</p>
           <p className="text-xs text-purple-300/60">{members.length} membre{members.length > 1 ? 's' : ''}</p>
         </div>
-        <button onClick={copyLink} className={`p-2 rounded-full transition-colors ${copied ? 'text-green-400' : 'text-purple-300/50 hover:text-white hover:bg-violet-900/25'}`} title="Copier le lien d'invitation">
+        <button onClick={copyLink} className={`p-2 rounded-full transition-colors ${copied ? 'text-fuchsia-400' : 'text-purple-300/50 hover:text-white hover:bg-violet-900/25'}`} title="Copier le lien d'invitation">
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
         </button>
         <button onClick={() => setShowSettings(!showSettings)} className={`p-2 rounded-full transition-colors ${showSettings ? 'bg-violet-900/40 text-white' : 'text-purple-300/50 hover:text-white hover:bg-violet-900/25'}`}>
@@ -752,7 +752,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       </AnimatePresence>
 
       {/* Chat bar */}
-      <div className="px-3 py-2.5 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0 bg-[#0a0012]/95 backdrop-blur-lg">
+      <div className="px-3 py-2.5 pb-[calc(0.625rem+4rem)] lg:pb-2.5 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0 bg-[#0a0012]/95 backdrop-blur-lg">
         <button onClick={() => setShowTrackSearch(!showTrackSearch)} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
           <Music className="w-5 h-5" />
         </button>

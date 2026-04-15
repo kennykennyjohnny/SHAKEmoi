@@ -1426,6 +1426,19 @@ export async function removeCircleMember(circleId: string, userId: string) {
   }
 }
 
+export async function updateCircleName(circleId: string, newName: string) {
+  try {
+    const { error } = await supabase
+      .from('circles')
+      .update({ name: newName })
+      .eq('id', circleId);
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 // ==================== CIRCLE FEED ====================
 
 export async function getCircleFeed(circleId: string, limit = 30): Promise<Post[]> {

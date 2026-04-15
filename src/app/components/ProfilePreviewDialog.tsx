@@ -258,7 +258,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
                       </div>
                       {activeTab === 'reshakes' && origPost?.user && (
                         <div className="absolute top-0.5 left-0.5 bg-black/60 rounded-full px-1.5 py-0.5">
-                          <span className="text-[8px] text-green-400 font-medium">@{origPost.user.username}</span>
+                          <span className="text-[8px] text-fuchsia-400 font-medium">@{origPost.user.username}</span>
                         </div>
                       )}
                       <div className="absolute bottom-0.5 right-0.5 bg-black/60 rounded-full px-1 py-0.5 flex items-center gap-0.5">
@@ -284,7 +284,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
                     <div className="bg-purple-950/40 rounded-xl border border-purple-800/30 p-3">
                       {expandedOriginal?.user && (
                         <p className="text-xs text-purple-400/60 mb-2">
-                          Shake original de <span className="text-green-400 font-medium">@{expandedOriginal.user.username}</span>
+                          Shake original de <span className="text-fuchsia-400 font-medium">@{expandedOriginal.user.username}</span>
                         </p>
                       )}
                       <div className="flex items-center gap-2 mb-2">

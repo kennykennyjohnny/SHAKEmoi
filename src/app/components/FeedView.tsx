@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Image } from 'lucide-react';
+import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Image, Copy, Users, LogOut, Check, Share2, Edit3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
 import { spotify } from '../../lib/spotify';
@@ -42,31 +42,175 @@ function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { ci
 }
 
 // Circle sub-header shown below tabs when viewing a circle
-function CircleHeader({ circle, onBack, onSettings }: { circle: any; onBack: () => void; onSettings: () => void }) {
-  const [copied, setCopied] = useState(false);
+function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUser }: { circle: any; onBack: () => void; onLeaveCircle: () => void; onRenameCircle: (name: string) => void; currentUser: any }) {
+  const [showShare, setShowShare] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [members, setMembers] = useState<any[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+
+  const shareLink = `${window.location.origin}${window.location.pathname}#/circle/${circle.id}`;
+
   const copyCode = () => {
-    if (circle?.invite_code) {
-      navigator.clipboard.writeText(circle.invite_code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    navigator.clipboard.writeText(circle.invite_code || '');
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
   };
+  const copyLink = () => {
+    navigator.clipboard.writeText(shareLink);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const openSettings = async () => {
+    setShowSettings(true);
+    setShowShare(false);
+    setEditName(circle.name);
+    setLoadingMembers(true);
+    try {
+      const m = await db.getCircleMembers(circle.id);
+      setMembers(m);
+    } catch {}
+    setLoadingMembers(false);
+  };
+
+  const saveRename = () => {
+    if (editName.trim() && editName.trim() !== circle.name) {
+      onRenameCircle(editName.trim());
+    }
+    setEditing(false);
+  };
+
   return (
-    <div className="px-4 py-2.5 flex items-center gap-3 border-b border-pink-400/10 bg-violet-950/20">
-      <button onClick={onBack} className="p-1 hover:bg-violet-900/25 rounded-full transition-colors">
-        <ArrowLeft className="w-4 h-4 text-purple-300/60" />
-      </button>
-      <div className="flex-1 min-w-0">
-        <h2 className="text-base font-bold text-white truncate">{circle.name}</h2>
-        <p className="text-[11px] text-purple-300/40">cercle privé</p>
+    <>
+      <div className="px-4 py-2.5 flex items-center gap-3 border-b border-pink-400/10 bg-violet-950/20">
+        <button onClick={onBack} className="p-1 hover:bg-violet-900/25 rounded-full transition-colors">
+          <ArrowLeft className="w-4 h-4 text-purple-300/60" />
+        </button>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-base font-bold text-white truncate">{circle.name}</h2>
+          <p className="text-[11px] text-purple-300/40">cercle privé</p>
+        </div>
+        <button onClick={() => { setShowShare(!showShare); setShowSettings(false); }} className={`p-1.5 rounded-full transition-colors ${showShare ? 'bg-fuchsia-500/20 text-fuchsia-400' : 'text-purple-300/50 hover:text-purple-200 hover:bg-violet-900/25'}`} title="Partager">
+          <Share2 className="w-4 h-4" />
+        </button>
+        <button onClick={openSettings} className={`p-1.5 rounded-full transition-colors ${showSettings ? 'bg-fuchsia-500/20 text-fuchsia-400' : 'text-purple-300/50 hover:text-purple-200 hover:bg-violet-900/25'}`} title="Paramètres">
+          <Settings className="w-4 h-4" />
+        </button>
       </div>
-      <button onClick={copyCode} className={`p-1.5 rounded-full transition-colors ${copied ? 'text-green-400' : 'text-purple-300/50 hover:text-purple-200 hover:bg-violet-900/25'}`} title="Copier le code">
-        {copied ? <span className="text-xs font-medium px-1">Copié !</span> : <Link2 className="w-4 h-4" />}
-      </button>
-      <button onClick={onSettings} className="p-1.5 hover:bg-violet-900/25 rounded-full transition-colors text-purple-300/50 hover:text-purple-200" title="Paramètres">
-        <Settings className="w-4 h-4" />
-      </button>
-    </div>
+
+      {/* Share Popup */}
+      <AnimatePresence>
+        {showShare && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-purple-500/15 bg-[#0d0018]">
+            <div className="p-4 space-y-3">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-sm font-bold text-white">Partager ce cercle</h3>
+                <button onClick={() => setShowShare(false)} className="p-1 hover:bg-violet-900/25 rounded-full"><X className="w-3.5 h-3.5 text-purple-300/50" /></button>
+              </div>
+
+              {/* Invite Code */}
+              <div className="bg-violet-950/30 rounded-xl p-3 border border-purple-500/15">
+                <p className="text-[11px] text-purple-300/50 mb-1.5 uppercase tracking-wider font-medium">Code d'invitation</p>
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 font-mono text-lg font-bold text-fuchsia-400 tracking-[0.2em]">{circle.invite_code || '—'}</span>
+                  <button onClick={copyCode} className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${copiedCode ? 'bg-fuchsia-500/20 text-fuchsia-400' : 'bg-purple-600/20 text-purple-300 hover:bg-purple-600/30'}`}>
+                    {copiedCode ? <><Check className="w-3.5 h-3.5" /> Copié</> : <><Copy className="w-3.5 h-3.5" /> Copier</>}
+                  </button>
+                </div>
+              </div>
+
+              {/* Share Link */}
+              <div className="bg-violet-950/30 rounded-xl p-3 border border-purple-500/15">
+                <p className="text-[11px] text-purple-300/50 mb-1.5 uppercase tracking-wider font-medium">Lien de partage</p>
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 text-xs text-purple-200/70 truncate">{shareLink}</span>
+                  <button onClick={copyLink} className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${copiedLink ? 'bg-fuchsia-500/20 text-fuchsia-400' : 'bg-purple-600/20 text-purple-300 hover:bg-purple-600/30'}`}>
+                    {copiedLink ? <><Check className="w-3.5 h-3.5" /> Copié</> : <><Link2 className="w-3.5 h-3.5" /> Copier</>}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Settings Panel */}
+      <AnimatePresence>
+        {showSettings && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-purple-500/15 bg-[#0d0018]">
+            <div className="p-4 space-y-3">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-sm font-bold text-white">Paramètres du cercle</h3>
+                <button onClick={() => setShowSettings(false)} className="p-1 hover:bg-violet-900/25 rounded-full"><X className="w-3.5 h-3.5 text-purple-300/50" /></button>
+              </div>
+
+              {/* Rename */}
+              <div className="bg-violet-950/30 rounded-xl p-3 border border-purple-500/15">
+                <p className="text-[11px] text-purple-300/50 mb-1.5 uppercase tracking-wider font-medium">Nom du cercle</p>
+                {editing ? (
+                  <div className="flex items-center gap-2">
+                    <input type="text" value={editName} onChange={(e: any) => setEditName(e.target.value)} className="flex-1 px-3 py-1.5 bg-violet-950/40 border border-purple-500/25 rounded-lg text-sm text-white focus:outline-none focus:border-fuchsia-500" maxLength={30} autoFocus onKeyDown={(e: any) => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') setEditing(false); }} />
+                    <button onClick={saveRename} className="px-3 py-1.5 bg-fuchsia-600 rounded-lg text-xs font-semibold hover:bg-fuchsia-700 transition-colors">OK</button>
+                    <button onClick={() => setEditing(false)} className="px-2 py-1.5 text-xs text-purple-300/50 hover:text-white">Annuler</button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="flex-1 text-sm font-semibold text-white">{circle.name}</span>
+                    <button onClick={() => setEditing(true)} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600/20 text-purple-300 hover:bg-purple-600/30 flex items-center gap-1.5 transition-all">
+                      <Edit3 className="w-3.5 h-3.5" /> Modifier
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Members */}
+              <div className="bg-violet-950/30 rounded-xl p-3 border border-purple-500/15">
+                <p className="text-[11px] text-purple-300/50 mb-2 uppercase tracking-wider font-medium">
+                  Membres {members.length > 0 && <span className="text-purple-300/30">({members.length})</span>}
+                </p>
+                {loadingMembers ? (
+                  <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto" />
+                ) : (
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {members.map((m: any) => {
+                      const user = Array.isArray(m.user) ? m.user[0] : m.user;
+                      if (!user) return null;
+                      return (
+                        <div key={m.user_id} className="flex items-center gap-2">
+                          <img src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`} alt="" className="w-7 h-7 rounded-full object-cover" />
+                          <span className="text-sm text-white flex-1 truncate">{user.display_name || user.username}</span>
+                          <span className="text-[10px] text-purple-300/40">@{user.username}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Leave circle */}
+              <div className="pt-1">
+                {confirmLeave ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-pink-400 flex-1">Quitter ce cercle ?</span>
+                    <button onClick={() => { onLeaveCircle(); setConfirmLeave(false); }} className="px-3 py-1.5 bg-red-600 rounded-lg text-xs font-semibold hover:bg-red-700 transition-colors">Oui, quitter</button>
+                    <button onClick={() => setConfirmLeave(false)} className="px-3 py-1.5 text-xs text-purple-300/50 hover:text-white">Annuler</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmLeave(true)} className="w-full py-2.5 rounded-xl text-sm font-medium text-red-400/80 hover:text-red-400 hover:bg-red-500/10 border border-red-500/15 transition-all flex items-center justify-center gap-2">
+                    <LogOut className="w-4 h-4" /> Quitter le cercle
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -534,12 +678,32 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     setChatSending(false);
   };
 
+  const handleLeaveCircle = async () => {
+    if (!currentFeedId || !currentUser) return;
+    try {
+      await db.removeCircleMember(currentFeedId, currentUser.id);
+      onSelectFeed?.(null);
+    } catch (err) {
+      console.error('Error leaving circle:', err);
+    }
+  };
+
+  const handleRenameCircle = async (newName: string) => {
+    if (!currentFeedId) return;
+    try {
+      await db.updateCircleName(currentFeedId, newName);
+      // Circle name will update on next data refresh
+    } catch (err) {
+      console.error('Error renaming circle:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined}>
         {/* Always show feed selector even while loading */}
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
-        {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onSettings={() => {}} />}
+        {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
         <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-4" />
           <p className="text-purple-300/70">Chargement du feed...</p>
@@ -553,9 +717,9 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     return (
       <div className="max-w-2xl mx-auto flex flex-col">
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
-        {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onSettings={() => {}} />}
+        {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
         <div className="p-8">
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-6 text-center">
+          <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-6 text-center">
             <p className="text-pink-400 mb-4">{error}</p>
             <button onClick={loadFeed} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors">
               Réessayer
@@ -573,7 +737,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       <div className={`p-4 space-y-3 ${currentFeedId ? 'flex-1' : ''}`}>
         {/* Horizontal feed selector */}
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
-        {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onSettings={() => {}} />}
+        {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
         {shakes.length === 0 ? (
           <div className="py-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
@@ -633,7 +797,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   </div>
                   )}
                   {shake.reshakeFrom && (
-                    <div className="mt-1 text-xs text-green-400/80">
+                    <div className="mt-1 text-xs text-fuchsia-400/80">
                       <Repeat2 className="w-3 h-3 inline mr-1" />
                       Reshaké par @{shake.reshakeFrom.username}
                     </div>
@@ -661,7 +825,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
               >
                 {/* Reshake indicator — "reshaké par @friend" */}
                 {shake.reshakeFrom && (
-                  <div className="px-4 pt-2 flex items-center gap-2 text-xs text-green-400/80">
+                  <div className="px-4 pt-2 flex items-center gap-2 text-xs text-fuchsia-400/80">
                     <Repeat2 className="w-3 h-3" />
                     <span className="text-purple-300/70">Reshaké par</span>
                     <button
@@ -669,7 +833,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                         userId: shake.reshakeFrom!.id || shake.reshakeFrom!.username,
                         username: shake.reshakeFrom!.username
                       })}
-                      className="hover:underline font-medium text-green-400"
+                      className="hover:underline font-medium text-fuchsia-400"
                     >
                       @{shake.reshakeFrom.username}
                     </button>
@@ -839,25 +1003,25 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   </button>
 
                   <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
-                    <MessageCircle className="w-5 h-5 text-purple-300/70 group-hover:text-blue-400 transition-colors" />
+                    <MessageCircle className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
                     <span className="text-xs font-medium text-purple-300/70">{shake.comments}</span>
                   </button>
 
                   <button onClick={() => setReshakeDialogShake(shake)} className="flex items-center gap-1.5 group">
-                    <Repeat2 className={`w-5 h-5 transition-all ${shake.isReshaked ? 'text-green-500' : 'text-purple-300/70 group-hover:text-green-500'}`} />
-                    <span className={`text-xs font-medium ${shake.isReshaked ? 'text-green-500' : 'text-purple-300/70'}`}>{shake.reshakes}</span>
+                    <Repeat2 className={`w-5 h-5 transition-all ${shake.isReshaked ? 'text-fuchsia-500' : 'text-purple-300/70 group-hover:text-fuchsia-500'}`} />
+                    <span className={`text-xs font-medium ${shake.isReshaked ? 'text-fuchsia-500' : 'text-purple-300/70'}`}>{shake.reshakes}</span>
                   </button>
 
                   <button onClick={() => setMusicReactionsPostId(shake.id)} className="flex items-center gap-1.5 group" title="Réagir avec un son">
-                    <Music className="w-5 h-5 text-purple-300/70 group-hover:text-orange-400 transition-colors" />
+                    <Music className="w-5 h-5 text-purple-300/70 group-hover:text-pink-400 transition-colors" />
                   </button>
 
                   <button
                     onClick={() => openInMusicApp(shake)}
-                    className="flex items-center gap-1.5 group ml-auto px-3 py-1 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors"
+                    className="flex items-center gap-1.5 group ml-auto px-3 py-1 rounded-full bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors"
                   >
-                    <ExternalLink className="w-4 h-4 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
-                    <span className="text-xs font-medium text-cyan-400 group-hover:text-cyan-300 hidden sm:inline">Écouter</span>
+                    <ExternalLink className="w-4 h-4 text-fuchsia-400 group-hover:text-fuchsia-300 transition-colors" />
+                    <span className="text-xs font-medium text-fuchsia-400 group-hover:text-fuchsia-300 hidden sm:inline">Écouter</span>
                   </button>
                 </div>
               </motion.article>

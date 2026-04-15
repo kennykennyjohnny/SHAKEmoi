@@ -1,4 +1,4 @@
-﻿import { X, Repeat2, Loader2 } from 'lucide-react';
+import { X, Repeat2, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
@@ -42,7 +42,7 @@ export function ReshakeDialog({ shake, onClose, onConfirm }: ReshakeDialogProps)
         {/* Header */}
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Repeat2 className="w-5 h-5 text-green-500" />
+            <Repeat2 className="w-5 h-5 text-fuchsia-500" />
             <h2 className="text-lg font-bold">Reshake ce son</h2>
           </div>
           <button
@@ -93,8 +93,8 @@ export function ReshakeDialog({ shake, onClose, onConfirm }: ReshakeDialogProps)
           </div>
 
           {/* Info */}
-          <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-            <p className="text-xs text-green-400">
+          <div className="mb-4 p-3 bg-fuchsia-500/10 border border-fuchsia-500/20 rounded-lg">
+            <p className="text-xs text-fuchsia-400">
               ✨ Ce reshake apparaîtra dans le feed de tes abonnés avec ton nom et ton commentaire
             </p>
           </div>
@@ -111,7 +111,7 @@ export function ReshakeDialog({ shake, onClose, onConfirm }: ReshakeDialogProps)
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 bg-fuchsia-600 hover:bg-fuchsia-700 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

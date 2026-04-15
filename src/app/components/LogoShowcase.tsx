@@ -1,4 +1,4 @@
-﻿import { Logo } from './Logo';
+import { Logo } from './Logo';
 
 export function LogoShowcase() {
   const variants = [
@@ -126,11 +126,11 @@ export function LogoShowcase() {
             </div>
 
             <div className="text-center">
-              <div className="bg-black/50 rounded-2xl p-8 mb-4 border-2 border-orange-500/30">
+              <div className="bg-black/50 rounded-2xl p-8 mb-4 border-2 border-pink-500/30">
                 <Logo variant={3} size="lg" animated={true} showText={false} />
               </div>
               <div className="text-2xl mb-2">🥉</div>
-              <div className="font-bold text-lg text-orange-400">#3 Minimal Lines</div>
+              <div className="font-bold text-lg text-pink-400">#3 Minimal Lines</div>
               <p className="text-xs text-gray-400 mt-2">Le plus simple. Minimaliste et moderne.</p>
             </div>
           </div>

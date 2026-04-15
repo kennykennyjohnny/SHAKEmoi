@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Music2, Mail, Lock, User as UserIcon, Loader2, AlertCircle, Music } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -130,7 +130,7 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 flex items-center gap-2"
+                  className="bg-pink-500/10 border border-pink-500/20 rounded-lg p-3 flex items-center gap-2"
                 >
                   <AlertCircle className="w-4 h-4 text-pink-400 flex-shrink-0" />
                   <p className="text-pink-400 text-sm">{error}</p>

@@ -213,7 +213,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
 
                     {/* Shake button */}
                     {shakedIds.has(track.id) ? (
-                      <span className="text-xs text-green-400 font-semibold px-3 py-1.5">Shaké !</span>
+                      <span className="text-xs text-fuchsia-400 font-semibold px-3 py-1.5">Shaké !</span>
                     ) : showCaptionFor === track.id ? null : (
                       <button
                         onClick={() => setShowCaptionFor(track.id)}
@@ -355,7 +355,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                   <p className="text-xs text-purple-300/70">{circle.invite_code ? `Code: ${circle.invite_code}` : 'Cercle'}</p>
                 </div>
                 {joinedCircleIds.has(circle.id) ? (
-                  <span className="text-xs text-green-400 font-semibold px-3">Rejoint !</span>
+                  <span className="text-xs text-fuchsia-400 font-semibold px-3">Rejoint !</span>
                 ) : (
                   <button
                     onClick={async () => {

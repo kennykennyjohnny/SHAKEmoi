@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { X, Copy, Check, Share2, Sparkles, Heart, Music2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Logo } from './Logo';
@@ -107,7 +107,7 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
                     onClick={handleCopy}
                     className={`px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 ${
                       copied
-                        ? 'bg-green-500 text-white'
+                        ? 'bg-fuchsia-500 text-white'
                         : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90'
                     }`}
                   >
@@ -133,9 +133,9 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4"
+                    className="bg-fuchsia-500/10 border border-fuchsia-500/20 rounded-lg p-3 mb-4"
                   >
-                    <p className="text-green-400 text-sm font-medium flex items-center justify-center gap-2">
+                    <p className="text-fuchsia-400 text-sm font-medium flex items-center justify-center gap-2">
                       <Heart className="w-4 h-4 fill-current" />
                       Lien copié ! Partage-le avec tes amis 🔥
                     </p>
@@ -154,7 +154,7 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
                   <p className="text-xs text-purple-400/50">Shakes</p>
                 </div>
                 <div className="bg-purple-950/40/30 rounded-lg p-3">
-                  <p className="text-2xl font-bold text-blue-400">245K</p>
+                  <p className="text-2xl font-bold text-fuchsia-400">245K</p>
                   <p className="text-xs text-purple-400/50">Plays</p>
                 </div>
               </div>

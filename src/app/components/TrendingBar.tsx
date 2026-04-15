@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Flame, Play, Loader2, Heart, MoreHorizontal, Send, ExternalLink, MessageCircle, Crown, Medal, Award, Music, Sparkles, Zap, Moon, Sun, Coffee, PartyPopper } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getTopPosts } from '../../lib/database';
@@ -122,7 +122,7 @@ export function TrendingBar() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-2">
           <div className="relative">
-            <Flame className="w-6 h-6 text-orange-500" />
+            <Flame className="w-6 h-6 text-pink-500" />
             <Sparkles className="w-3 h-3 text-yellow-400 absolute -top-1 -right-1 animate-pulse" />
           </div>
           <div>
