@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, Headphones, X, Music, Search, Camera, Smile } from 'lucide-react';
+﻿import { useState, useEffect } from 'react';
+import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
 import { spotify } from '../../lib/spotify';
@@ -10,22 +10,24 @@ import { SendSongDialog } from './SendSongDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { MusicReactionsDialog } from './MusicReactionsDialog';
 
-// Extracted tab bar so it renders even in loading/empty states
+// Sleek underline-style tab bar
 function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { circles: any[]; currentFeedId: string | null; onSelectFeed?: (id: string | null) => void; onCreateCircle?: () => void }) {
-  const truncName = (name: string) => name.length > 7 ? name.slice(0, 7) + '…' : name;
+  const truncName = (name: string) => name.length > 9 ? name.slice(0, 9) + '…' : name;
   return (
-    <div className="mb-3 overflow-x-auto no-scrollbar">
-      <div className="inline-flex items-center gap-2 min-w-max px-1">
-        <button onClick={() => onSelectFeed?.(null)} className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${!currentFeedId ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}>
+    <div className="overflow-x-auto no-scrollbar border-b border-purple-500/10">
+      <div className="inline-flex items-center gap-0 min-w-max">
+        <button onClick={() => onSelectFeed?.(null)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${!currentFeedId ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}>
           Feed
+          {!currentFeedId && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full" />}
         </button>
         {circles.map(circle => (
-          <button key={circle.id} onClick={() => onSelectFeed?.(circle.id)} className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${currentFeedId === circle.id ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}>
+          <button key={circle.id} onClick={() => onSelectFeed?.(circle.id)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${currentFeedId === circle.id ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}>
             {truncName(circle.name)}
+            {currentFeedId === circle.id && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full" />}
           </button>
         ))}
         {onCreateCircle && (
-          <button onClick={onCreateCircle} className="w-8 h-8 rounded-full bg-purple-950/30 text-purple-300 hover:bg-purple-900/60 flex items-center justify-center text-lg font-bold transition-colors">+</button>
+          <button onClick={onCreateCircle} className="ml-1 w-7 h-7 rounded-full text-purple-400/60 hover:text-purple-300 hover:bg-purple-500/10 flex items-center justify-center text-sm transition-colors">+</button>
         )}
       </div>
     </div>
@@ -35,20 +37,20 @@ function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { ci
 // Extracted chat bar for circles
 function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch, setShowChatTrackSearch, chatTrackQuery, setChatTrackQuery, chatTrackResults, chatSearching, handleChatSendText, handleChatSendTrack }: any) {
   return (
-    <div className="sticky bottom-16 lg:bottom-0 z-30 bg-[#0a0012]/95 backdrop-blur-lg border-t border-rose-800/25">
+    <div className="sticky bottom-16 lg:bottom-0 z-30 bg-[#0a0012]/95 backdrop-blur-lg border-t border-pink-500/25">
       <AnimatePresence>
         {showChatTrackSearch && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-rose-800/25 bg-[#0a0012]">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-pink-500/25 bg-[#0a0012]">
             <div className="p-3">
               <div className="relative mb-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-300/50" />
-                <input autoFocus type="text" value={chatTrackQuery} onChange={(e: any) => setChatTrackQuery(e.target.value)} placeholder="Rechercher un son..." className="w-full pl-9 pr-3 py-2 bg-rose-950/20 border border-rose-800/30 rounded-lg text-sm text-white placeholder-rose-300/50 focus:outline-none focus:border-purple-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
+                <input autoFocus type="text" value={chatTrackQuery} onChange={(e: any) => setChatTrackQuery(e.target.value)} placeholder="Rechercher un son..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-pink-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
               </div>
               {chatSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
               {chatTrackResults.map((track: any) => (
-                <button key={track.id} onClick={() => handleChatSendTrack(track)} className="w-full flex items-center gap-2 p-2 hover:bg-rose-900/25 rounded-lg transition-colors">
+                <button key={track.id} onClick={() => handleChatSendTrack(track)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
                   <img src={track.cover} alt="" className="w-10 h-10 rounded-md object-cover" />
-                  <div className="flex-1 text-left min-w-0"><p className="text-sm font-medium truncate">{track.name}</p><p className="text-xs text-rose-200/70 truncate">{track.artist}</p></div>
+                  <div className="flex-1 text-left min-w-0"><p className="text-sm font-medium truncate">{track.name}</p><p className="text-xs text-purple-200/70 truncate">{track.artist}</p></div>
                   <Send className="w-4 h-4 text-purple-400" />
                 </button>
               ))}
@@ -57,16 +59,16 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
         )}
       </AnimatePresence>
       <div className="px-3 py-2 flex items-center gap-2">
-        <button onClick={() => setShowChatTrackSearch(!showChatTrackSearch)} className={`p-2 rounded-full transition-colors ${showChatTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-rose-900/25 text-rose-300/60'}`}>
+        <button onClick={() => setShowChatTrackSearch(!showChatTrackSearch)} className={`p-2 rounded-full transition-colors ${showChatTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
           <Music className="w-5 h-5" />
         </button>
-        <button className="p-2 rounded-full hover:bg-rose-900/25 text-rose-300/60 transition-colors" title="GIF (bientôt)">
+        <button className="p-2 rounded-full hover:bg-violet-900/25 text-purple-300/60 transition-colors" title="GIF (bientôt)">
           <Smile className="w-5 h-5" />
         </button>
-        <button className="p-2 rounded-full hover:bg-rose-900/25 text-rose-300/60 transition-colors" title="Photo (bientôt)">
+        <button className="p-2 rounded-full hover:bg-violet-900/25 text-purple-300/60 transition-colors" title="Photo (bientôt)">
           <Camera className="w-5 h-5" />
         </button>
-        <input type="text" value={chatText} onChange={(e: any) => setChatText(e.target.value)} placeholder="Message au cercle..." className="flex-1 px-3 py-2 bg-rose-950/20 border border-rose-800/30 rounded-full text-sm text-white placeholder-rose-300/50 focus:outline-none focus:border-purple-500" onKeyDown={(e: any) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSendText(); } }} />
+        <input type="text" value={chatText} onChange={(e: any) => setChatText(e.target.value)} placeholder="Message au cercle..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-pink-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={(e: any) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSendText(); } }} />
         <button onClick={handleChatSendText} disabled={chatSending || !chatText.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
           {chatSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
         </button>
@@ -374,7 +376,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
         <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-4" />
-          <p className="text-rose-300/70">Chargement du feed...</p>
+          <p className="text-purple-300/70">Chargement du feed...</p>
         </div>
         {currentFeedId && <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} />}
       </div>
@@ -386,8 +388,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       <div className="max-w-2xl mx-auto flex flex-col">
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
         <div className="p-8">
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
-            <p className="text-red-400 mb-4">{error}</p>
+          <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-6 text-center">
+            <p className="text-pink-400 mb-4">{error}</p>
             <button onClick={loadFeed} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors">
               Réessayer
             </button>
@@ -404,11 +406,6 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       <div className={`p-4 space-y-3 ${currentFeedId ? 'flex-1' : ''}`}>
         {/* Horizontal feed selector */}
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
-        {activeCircle && (
-          <div className="mb-3 px-4 py-3 rounded-2xl border border-purple-800/30 bg-purple-950/20 text-sm text-purple-200">
-            <span className="font-semibold text-white">Cercle privé :</span> {activeCircle.name} · contenu visible uniquement aux membres
-          </div>
-        )}
         {shakes.length === 0 ? (
           <div className="py-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
@@ -483,15 +480,15 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 transition={{ delay: index * 0.05 }}
                 className={`rounded-xl border transition-all overflow-hidden ${
                   isPlayerOpen
-                    ? 'bg-rose-950/25 border-purple-600/40 shadow-lg shadow-purple-500/10'
-                    : 'bg-rose-950/20 border-rose-800/25 hover:border-purple-700/40'
+                    ? 'bg-violet-950/25 border-purple-600/40 shadow-lg shadow-purple-500/10'
+                    : 'bg-violet-950/20 border-pink-500/25 hover:border-purple-700/40'
                 }`}
               >
                 {/* Reshake indicator — "reshaké par @friend" */}
                 {shake.reshakeFrom && (
                   <div className="px-4 pt-2 flex items-center gap-2 text-xs text-green-400/80">
                     <Repeat2 className="w-3 h-3" />
-                    <span className="text-rose-300/70">Reshaké par</span>
+                    <span className="text-purple-300/70">Reshaké par</span>
                     <button
                       onClick={() => setProfilePreview({
                         userId: shake.reshakeFrom!.id || shake.reshakeFrom!.username,
@@ -533,7 +530,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                       onClick={() => setMenuOpenId(menuOpenId === shake.id ? null : shake.id)}
                       className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
                     >
-                      <MoreHorizontal className="w-4 h-4 text-rose-300/70" />
+                      <MoreHorizontal className="w-4 h-4 text-purple-300/70" />
                     </button>
 
                     <AnimatePresence>
@@ -555,7 +552,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                             onClick={() => { openInMusicApp(shake); setMenuOpenId(null); }}
                             className="w-full px-4 py-2.5 text-left text-sm hover:bg-purple-900/50 transition-colors flex items-center gap-2"
                           >
-                            <Headphones className="w-4 h-4" />
+                            <ExternalLink className="w-4 h-4" />
                             Écouter
                           </button>
                         </motion.div>
@@ -605,7 +602,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                       <h3 className="font-bold text-sm truncate">{shake.track.title}</h3>
-                      <p className="text-xs text-rose-200/70 truncate">{shake.track.artist}</p>
+                      <p className="text-xs text-purple-200/70 truncate">{shake.track.artist}</p>
                     </div>
                     {!isPlayerOpen && (
                       <div className="flex items-center">
@@ -645,7 +642,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                           onClick={(e) => { e.stopPropagation(); openInMusicApp(shake); }}
                           className="w-full py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
                         >
-                          <Headphones className="w-3.5 h-3.5" />
+                          <ExternalLink className="w-3.5 h-3.5" />
                           Ouvrir dans {
                             currentUser?.musicService === 'apple_music' ? 'Apple Music' :
                             currentUser?.musicService === 'youtube_music' ? 'YouTube Music' :
@@ -662,30 +659,30 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 {/* Actions */}
                 <div className="px-4 pb-2.5 flex items-center gap-6">
                   <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group">
-                    <Heart className={`w-5 h-5 transition-all ${shake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-rose-300/70 group-hover:text-pink-500'}`} />
-                    <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-rose-300/70'}`}>{shake.likes}</span>
+                    <Heart className={`w-5 h-5 transition-all ${shake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-300/70 group-hover:text-pink-500'}`} />
+                    <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{shake.likes}</span>
                   </button>
 
                   <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
-                    <MessageCircle className="w-5 h-5 text-rose-300/70 group-hover:text-blue-400 transition-colors" />
-                    <span className="text-xs font-medium text-rose-300/70">{shake.comments}</span>
+                    <MessageCircle className="w-5 h-5 text-purple-300/70 group-hover:text-blue-400 transition-colors" />
+                    <span className="text-xs font-medium text-purple-300/70">{shake.comments}</span>
                   </button>
 
                   <button onClick={() => setReshakeDialogShake(shake)} className="flex items-center gap-1.5 group">
-                    <Repeat2 className={`w-5 h-5 transition-all ${shake.isReshaked ? 'text-green-500' : 'text-rose-300/70 group-hover:text-green-500'}`} />
-                    <span className={`text-xs font-medium ${shake.isReshaked ? 'text-green-500' : 'text-rose-300/70'}`}>{shake.reshakes}</span>
+                    <Repeat2 className={`w-5 h-5 transition-all ${shake.isReshaked ? 'text-green-500' : 'text-purple-300/70 group-hover:text-green-500'}`} />
+                    <span className={`text-xs font-medium ${shake.isReshaked ? 'text-green-500' : 'text-purple-300/70'}`}>{shake.reshakes}</span>
                   </button>
 
                   <button onClick={() => setMusicReactionsPostId(shake.id)} className="flex items-center gap-1.5 group" title="Réagir avec un son">
-                    <Music className="w-5 h-5 text-rose-300/70 group-hover:text-orange-400 transition-colors" />
+                    <Music className="w-5 h-5 text-purple-300/70 group-hover:text-orange-400 transition-colors" />
                   </button>
 
                   <button
                     onClick={() => openInMusicApp(shake)}
-                    className="flex items-center gap-1.5 group ml-auto px-3 py-1 rounded-full bg-purple-600/10 hover:bg-purple-600/20 transition-colors"
+                    className="flex items-center gap-1.5 group ml-auto px-3 py-1 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors"
                   >
-                    <Headphones className="w-4 h-4 text-purple-400 group-hover:text-purple-300 transition-colors" />
-                    <span className="text-xs font-medium text-purple-400 group-hover:text-purple-300 hidden sm:inline">Écouter</span>
+                    <ExternalLink className="w-4 h-4 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
+                    <span className="text-xs font-medium text-cyan-400 group-hover:text-cyan-300 hidden sm:inline">Écouter</span>
                   </button>
                 </div>
               </motion.article>

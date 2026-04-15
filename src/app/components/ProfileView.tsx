@@ -1,4 +1,4 @@
-import { Users, Music, Heart, Settings, Play, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, Headphones, UserMinus } from 'lucide-react';
+﻿import { Users, Music, Heart, Settings, Play, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, ExternalLink, UserMinus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { SettingsDialog } from './SettingsDialog';
@@ -443,7 +443,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           onClick={() => openInMusicApp(shake)}
                           className="w-full py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity mb-3"
                         >
-                          <Headphones className="w-3.5 h-3.5" />
+                          <ExternalLink className="w-3.5 h-3.5" />
                           Ouvrir dans l'app
                         </button>
 
@@ -470,9 +470,9 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                             onClick={() => {
                               if (confirm('Supprimer ce shake ?')) handleDeleteShake(shake.id);
                             }}
-                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-colors"
+                            className="p-1.5 bg-orange-500/10 hover:bg-pink-500/20 border border-orange-500/20 rounded-lg transition-colors"
                           >
-                            <Trash2 className="w-4 h-4 text-red-400" />
+                            <Trash2 className="w-4 h-4 text-pink-400" />
                           </button>
                         </div>
                       </div>
@@ -558,10 +558,10 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           onClick={() => {
                             if (confirm(`Ne plus suivre @${person.username} ?`)) handleUnfollow(person.id);
                           }}
-                          className="p-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-colors"
+                          className="p-2 bg-orange-500/10 hover:bg-pink-500/20 border border-orange-500/20 rounded-lg transition-colors"
                           title="Ne plus suivre"
                         >
-                          <UserMinus className="w-4 h-4 text-red-400" />
+                          <UserMinus className="w-4 h-4 text-pink-400" />
                         </button>
                       )}
                     </div>

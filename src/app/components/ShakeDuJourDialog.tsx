@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Search, Play, Sparkles, Loader2, X, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
@@ -217,7 +217,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
                   />
                   <span className="text-sm text-purple-200/80">Afficher sur mon profil</span>
                 </div>
-                <p className="text-[11px] text-rose-300/60">Par défaut, le Shake reste privé (feed + mini-jeu cercle). Coche pour le publier sur ton profil.</p>
+                <p className="text-[11px] text-purple-300/60">Par défaut, le Shake reste privé (feed + mini-jeu cercle). Coche pour le publier sur ton profil.</p>
               </label>
 
               <button

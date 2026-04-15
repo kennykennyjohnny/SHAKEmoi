@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Users, Plus, Loader2, X, UserPlus, Play, Headphones } from 'lucide-react';
+﻿import { useState, useEffect } from 'react';
+import { Users, Plus, Loader2, X, UserPlus, Play, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getUserCircles, createCircle, getCircleMembers, addCircleMember, removeCircleMember, searchUsers, getFriendsTrending } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -88,7 +88,7 @@ export function CirclesView({ currentUser }: Props) {
               <img src={m.profile_album_cover_url || `https://ui-avatars.com/api/?name=${m.username}&background=random`} className="w-5 h-5 rounded-full" alt="" />
               <span className="text-xs">@{m.username}</span>
               {m.id !== currentUser?.id && (
-                <button onClick={() => handleRemoveMember(m.id)} className="text-purple-400/40 hover:text-red-400"><X className="w-3 h-3" /></button>
+                <button onClick={() => handleRemoveMember(m.id)} className="text-purple-400/40 hover:text-pink-400"><X className="w-3 h-3" /></button>
               )}
             </div>
           ))}

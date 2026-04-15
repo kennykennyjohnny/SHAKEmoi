@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Play, Headphones, Loader2, UserPlus } from 'lucide-react';
+﻿import { useState, useEffect } from 'react';
+import { Play, ExternalLink, Loader2, UserPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../../lib/supabase';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -60,9 +60,9 @@ export function SharedPostView({ postId, onJoin }: Props) {
 
   const platforms = [
     { key: 'spotify', label: 'Spotify', color: 'from-green-500 to-green-600' },
-    { key: 'apple_music', label: 'Apple Music', color: 'from-pink-500 to-red-500' },
+    { key: 'apple_music', label: 'Apple Music', color: 'from-pink-500 to-pink-600' },
     { key: 'deezer', label: 'Deezer', color: 'from-purple-500 to-purple-600' },
-    { key: 'youtube_music', label: 'YouTube Music', color: 'from-red-500 to-red-600' },
+    { key: 'youtube_music', label: 'YouTube Music', color: 'from-pink-600 to-orange-500' },
   ];
 
   return (
@@ -115,7 +115,7 @@ export function SharedPostView({ postId, onJoin }: Props) {
             <button key={p.key} onClick={() => openPlatform(p.key)}
               className={`w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r ${p.color} hover:opacity-90 transition-opacity flex items-center justify-center gap-2`}
             >
-              <Headphones className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4" />
               Écouter sur {p.label}
             </button>
           ))}

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Music2, Mail, Lock, User as UserIcon, Loader2, AlertCircle, Headphones } from 'lucide-react';
+import { Music2, Mail, Lock, User as UserIcon, Loader2, AlertCircle, Music } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface AuthDialogProps {
@@ -111,7 +111,7 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
               className="mb-3 flex justify-center"
             >
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-                <Headphones className="w-7 h-7 text-white" />
+                <Music className="w-7 h-7 text-white" />
               </div>
             </motion.div>
             <h1 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
@@ -130,10 +130,10 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center gap-2"
+                  className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 flex items-center gap-2"
                 >
-                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                  <p className="text-red-400 text-sm">{error}</p>
+                  <AlertCircle className="w-4 h-4 text-pink-400 flex-shrink-0" />
+                  <p className="text-pink-400 text-sm">{error}</p>
                 </motion.div>
               )}
             </AnimatePresence>

@@ -1,4 +1,4 @@
-import { X, Heart, Play, UserPlus, UserCheck, RefreshCw } from 'lucide-react';
+﻿import { X, Heart, Play, UserPlus, UserCheck, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing, getUserReshakes, getCachedTasteMatch, calculateTasteMatch } from '../../lib/database';

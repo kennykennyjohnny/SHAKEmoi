@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, BarChart3 } from 'lucide-react';
+﻿import { useState, useEffect } from 'react';
+import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, BarChart3, ArrowLeft, Settings, Link2 } from 'lucide-react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
 import { ProfileView } from './components/ProfileView';
@@ -194,43 +194,75 @@ export default function App() {
   return (
     <div className="h-screen w-screen bg-[#0a0012] text-white overflow-hidden flex">
       {/* Sidebar gauche - Trending */}
-      <aside className="hidden lg:block w-80 border-r border-rose-900/30 overflow-y-auto">
+      <aside className="hidden lg:block w-80 border-r border-violet-900/30 overflow-y-auto">
         <TrendingBar />
       </aside>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="border-b border-rose-900/30 backdrop-blur-lg bg-[#0a0012]/80 sticky top-0 z-40">
-          <div className="px-4 py-2 flex items-center justify-between">
-            <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
-              SHAKEmoi
-            </span>
-
-            <div className="flex items-center gap-1.5">
-              <button onClick={() => setShowShareDialog(true)} className="p-2 hover:bg-rose-900/25 rounded-full transition-colors">
-                <Share2 className="w-5 h-5 text-rose-300/60" />
+        <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#0a0012]/80 sticky top-0 z-40">
+          {currentView === 'feed' && activeFeedCircleId && circles.find(c => c.id === activeFeedCircleId) ? (
+            /* Circle-specific header */
+            <div className="px-4 py-2 flex items-center gap-3">
+              <button onClick={() => { setActiveFeedCircleId(null); }} className="p-1.5 hover:bg-violet-900/25 rounded-full transition-colors">
+                <ArrowLeft className="w-5 h-5 text-purple-300/70" />
               </button>
-
-              {/* Notifications bell — always visible */}
-              {currentUser && (
-                <NotificationsDropdown
-                  userId={currentUser.id}
-                  unreadCount={unreadNotifs}
-                  onRead={() => setUnreadNotifs(0)}
-                />
-              )}
-
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-bold text-white truncate">{circles.find(c => c.id === activeFeedCircleId)?.name}</h2>
+                <p className="text-xs text-purple-300/40">{circles.find(c => c.id === activeFeedCircleId)?.member_count || ''} cercle privé</p>
+              </div>
               <button
-                onClick={() => setShowCreateShake(true)}
-                className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                onClick={() => {
+                  const circle = circles.find(c => c.id === activeFeedCircleId);
+                  if (circle?.invite_code) {
+                    navigator.clipboard.writeText(circle.invite_code);
+                  }
+                }}
+                className="p-2 hover:bg-violet-900/25 rounded-full transition-colors" title="Copier le code d'invitation"
               >
-                <PlusCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">Shake</span>
+                <Link2 className="w-5 h-5 text-purple-300/60" />
+              </button>
+              <button
+                onClick={() => { setCurrentView('messages'); setViewOptions({ initialTab: 'circles', openCircleId: activeFeedCircleId }); }}
+                className="p-2 hover:bg-violet-900/25 rounded-full transition-colors" title="Paramètres du cercle"
+              >
+                <Settings className="w-5 h-5 text-purple-300/60" />
               </button>
             </div>
-          </div>
+          ) : (
+            /* Standard header */
+            <div className="px-4 py-2 flex items-center justify-between">
+              <button onClick={() => { setActiveFeedCircleId(null); setCurrentView('feed'); }} className="focus:outline-none">
+                <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
+                  SHAKEmoi
+                </span>
+              </button>
 
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => setShowShareDialog(true)} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors">
+                  <Share2 className="w-5 h-5 text-purple-300/60" />
+                </button>
+
+                {/* Notifications bell — always visible */}
+                {currentUser && (
+                  <NotificationsDropdown
+                    userId={currentUser.id}
+                    unreadCount={unreadNotifs}
+                    onRead={() => setUnreadNotifs(0)}
+                  />
+                )}
+
+                <button
+                  onClick={() => setShowCreateShake(true)}
+                  className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span className="hidden sm:inline">Shake</span>
+                </button>
+              </div>
+            </div>
+          )}
         </header>
 
         {/* Content */}
@@ -239,7 +271,7 @@ export default function App() {
         </main>
 
         {/* Bottom Navigation Mobile — Feed, Top, Search, DMs, Profile */}
-        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-rose-900/30 backdrop-blur-lg bg-[#0a0012]/95 z-50">
+        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-violet-900/30 backdrop-blur-lg bg-[#0a0012]/95 z-50">
           <div className="px-2 py-2 flex items-center justify-around max-w-md mx-auto">
             {([
               { view: 'feed' as View, icon: Home, label: 'Feed' },
@@ -264,7 +296,7 @@ export default function App() {
       </div>
 
       {/* Sidebar droite - Desktop */}
-      <aside className="hidden xl:block w-64 border-l border-rose-900/30 p-4 overflow-y-auto">
+      <aside className="hidden xl:block w-64 border-l border-violet-900/30 p-4 overflow-y-auto">
         <nav className="space-y-2">
           {([
             { view: 'feed' as View, icon: Home, label: 'Feed' },
@@ -277,7 +309,7 @@ export default function App() {
               key={view}
               onClick={() => setCurrentView(view)}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-                currentView === view ? 'bg-rose-500/10 text-rose-400' : 'text-rose-300/60 hover:bg-rose-900/25'
+                currentView === view ? 'bg-purple-500/10 text-purple-400' : 'text-purple-300/60 hover:bg-violet-900/25'
               }`}
             >
               <Icon className="w-5 h-5" />
@@ -297,15 +329,15 @@ export default function App() {
         </nav>
 
         {currentUser && (
-          <div className="mt-auto pt-4 border-t border-rose-800/25">
+          <div className="mt-auto pt-4 border-t border-pink-500/25">
             <button
               onClick={() => setCurrentView('profile')}
-              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-rose-900/25 transition-colors"
+              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-violet-900/25 transition-colors"
             >
               <img src={currentUser.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
               <div className="flex-1 min-w-0 text-left">
                 <p className="font-semibold text-sm truncate">{currentUser.displayName}</p>
-                <p className="text-xs text-rose-300/60 truncate">@{currentUser.username}</p>
+                <p className="text-xs text-purple-300/60 truncate">@{currentUser.username}</p>
               </div>
             </button>
           </div>

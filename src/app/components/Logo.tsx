@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+﻿import { motion } from 'motion/react';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';

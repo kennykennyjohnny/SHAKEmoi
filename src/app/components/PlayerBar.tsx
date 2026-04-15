@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Volume2, VolumeX, X, Heart, Headphones } from 'lucide-react';
+﻿import { useState, useEffect, useRef } from 'react';
+import { Play, Pause, Volume2, VolumeX, X, Heart, ExternalLink } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getPlatformUrl } from '../../lib/odesli';
 
@@ -168,7 +168,7 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
             </div>
             <button
               onClick={() => setIsLiked(!isLiked)}
-              className={`transition-colors ${isLiked ? 'text-red-500' : 'text-purple-300/60 hover:text-red-500'}`}
+              className={`transition-colors ${isLiked ? 'text-pink-500' : 'text-purple-300/60 hover:text-pink-500'}`}
             >
               <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
             </button>
@@ -226,7 +226,7 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
             className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-xs font-semibold hover:opacity-90 transition-opacity"
             title="Ouvrir dans l'application"
           >
-            <Headphones className="w-3 h-3" />
+            <ExternalLink className="w-3 h-3" />
             <span className="hidden sm:inline">Écouter</span>
           </button>
 
@@ -245,7 +245,7 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
             onClick={handleOpenInApp}
             className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
           >
-            <Headphones className="w-4 h-4" />
+            <ExternalLink className="w-4 h-4" />
             Écouter sur {musicService === 'apple_music' ? 'Apple Music' : musicService === 'youtube_music' ? 'YouTube Music' : musicService?.charAt(0).toUpperCase() + musicService?.slice(1) || 'Spotify'}
           </button>
         )}

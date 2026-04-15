@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Bell, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getUserNotifications } from '../../lib/database';
@@ -47,10 +47,10 @@ export function NotificationsDropdown({ userId, unreadCount, onRead }: Props) {
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={toggle} className="p-2 hover:bg-rose-900/25 rounded-full transition-colors relative">
-        <Bell className={`w-5 h-5 ${open ? 'text-purple-400' : 'text-rose-300/60'}`} />
+      <button onClick={toggle} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors relative">
+        <Bell className={`w-5 h-5 ${open ? 'text-purple-400' : 'text-purple-300/60'}`} />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white min-w-[18px] px-1">
+          <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-pink-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white min-w-[18px] px-1">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -62,17 +62,17 @@ export function NotificationsDropdown({ userId, unreadCount, onRead }: Props) {
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="absolute right-0 top-full mt-2 w-80 max-h-96 bg-[#0f0020] border border-rose-800/30 rounded-2xl shadow-2xl shadow-purple-900/30 overflow-hidden z-50"
+            className="absolute right-0 top-full mt-2 w-80 max-h-96 bg-[#0f0020] border border-pink-500/30 rounded-2xl shadow-2xl shadow-purple-900/30 overflow-hidden z-50"
           >
-            <div className="px-4 py-3 border-b border-rose-800/25 flex items-center justify-between">
+            <div className="px-4 py-3 border-b border-pink-500/25 flex items-center justify-between">
               <span className="font-bold text-sm">Notifications</span>
               <button onClick={() => setOpen(false)} className="p-1 hover:bg-purple-900/40 rounded-full">
-                <X className="w-4 h-4 text-rose-300/70" />
+                <X className="w-4 h-4 text-purple-300/70" />
               </button>
             </div>
             <div className="overflow-y-auto max-h-80">
               {loading ? (
-                <div className="p-4 text-center text-rose-300/70 text-sm">Chargement...</div>
+                <div className="p-4 text-center text-purple-300/70 text-sm">Chargement...</div>
               ) : notifs.length > 0 ? (
                 notifs.slice(0, 20).map(n => (
                   <div key={n.id} className={`px-4 py-2.5 flex items-center gap-3 border-b border-purple-800/10 ${!n.is_read ? 'bg-purple-500/5' : ''}`}>
@@ -86,7 +86,7 @@ export function NotificationsDropdown({ userId, unreadCount, onRead }: Props) {
                         <span className="font-semibold">@{n.actor_username}</span>{' '}
                         <span className="text-purple-300/70">{n.content}</span>
                       </p>
-                      <span className="text-[10px] text-rose-300/50">{formatTime(n.created_at)}</span>
+                      <span className="text-[10px] text-purple-300/50">{formatTime(n.created_at)}</span>
                     </div>
                     {n.post_cover_url && (
                       <img src={n.post_cover_url} className="w-8 h-8 rounded-md flex-shrink-0 object-cover" alt="" />
@@ -94,7 +94,7 @@ export function NotificationsDropdown({ userId, unreadCount, onRead }: Props) {
                   </div>
                 ))
               ) : (
-                <div className="p-6 text-center text-rose-300/50 text-sm">Aucune notification</div>
+                <div className="p-6 text-center text-purple-300/50 text-sm">Aucune notification</div>
               )}
             </div>
           </motion.div>

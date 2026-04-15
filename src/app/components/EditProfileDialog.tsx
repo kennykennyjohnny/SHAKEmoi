@@ -1,4 +1,4 @@
-import { X, User, Mail, AtSign, MessageSquare, Upload, Loader2, Camera } from 'lucide-react';
+﻿import { X, User, Mail, AtSign, MessageSquare, Upload, Loader2, Camera } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useRef } from 'react';
 import { updateUserProfile } from '../../lib/database';

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Flame, Play, Loader2, Heart, MoreHorizontal, Send, ExternalLink, MessageCircle, Crown, Medal, Award, Music, Sparkles, Zap, Moon, Sun, Coffee, PartyPopper, Headphones } from 'lucide-react';
+﻿import { useState, useEffect } from 'react';
+import { Flame, Play, Loader2, Heart, MoreHorizontal, Send, ExternalLink, MessageCircle, Crown, Medal, Award, Music, Sparkles, Zap, Moon, Sun, Coffee, PartyPopper } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getTopPosts } from '../../lib/database';
 import { SendSongDialog } from './SendSongDialog';
@@ -10,7 +10,7 @@ const MOOD_PLAYLISTS = [
     id: 'energy',
     name: 'Énergie',
     icon: <Zap className="w-4 h-4" />,
-    color: 'from-orange-500 to-red-500',
+    color: 'from-orange-500 to-pink-500',
     // Spotify "Beast Mode" or equivalent popular workout playlist
     embedId: '37i9dQZF1DX76Wlfdnj7AP',
   },
@@ -157,7 +157,7 @@ export function TrendingBar() {
             }`}
           >
             <div className="flex items-center justify-center gap-2">
-              <Headphones className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4" />
               <span>Moods</span>
             </div>
           </button>
@@ -219,7 +219,7 @@ export function TrendingBar() {
                   animate={{ opacity: 1 }}
                   className="bg-purple-950/30 rounded-2xl p-6 text-center border border-purple-800/20"
                 >
-                  <Headphones className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                  <ExternalLink className="w-8 h-8 text-purple-500 mx-auto mb-2" />
                   <p className="text-purple-300 text-sm font-medium">Choisis ton mood</p>
                   <p className="text-purple-500/50 text-xs mt-1">et découvre la playlist parfaite</p>
                 </motion.div>

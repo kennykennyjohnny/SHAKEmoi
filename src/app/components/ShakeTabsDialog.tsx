@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Search as SearchIcon, Music, UserPlus, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { SearchView } from './SearchView';

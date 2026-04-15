@@ -1,4 +1,4 @@
-import { X, Music2, Check, LogOut, User, Bell, Info, BellRing } from 'lucide-react';
+﻿import { X, Music2, Check, LogOut, User, Bell, Info, BellRing } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 
@@ -102,9 +102,9 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
 
   const platforms = [
     { id: 'spotify', name: 'Spotify', icon: '🟢', color: 'from-green-600 to-green-500' },
-    { id: 'apple_music', name: 'Apple Music', icon: '🍎', color: 'from-pink-600 to-red-500' },
+    { id: 'apple_music', name: 'Apple Music', icon: '🍎', color: 'from-pink-600 to-pink-500' },
     { id: 'deezer', name: 'Deezer', icon: '🎵', color: 'from-purple-500 to-purple-400' },
-    { id: 'youtube_music', name: 'YouTube Music', icon: '▶️', color: 'from-red-600 to-red-500' },
+    { id: 'youtube_music', name: 'YouTube Music', icon: '▶️', color: 'from-pink-600 to-orange-500' },
     { id: 'tidal', name: 'Tidal', icon: '🌊', color: 'from-cyan-600 to-cyan-500' },
   ];
 
@@ -217,7 +217,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
                   onClick={togglePushNotifications}
                   className={`w-10 h-6 rounded-full transition-colors ${
                     notifPermission === 'denied'
-                      ? 'bg-red-900/50 cursor-not-allowed'
+                      ? 'bg-pink-900/50 cursor-not-allowed'
                       : pushEnabled && notifPermission === 'granted'
                         ? 'bg-purple-500'
                         : 'bg-purple-900/50'
@@ -230,7 +230,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
                 </button>
               </div>
               {notifPermission === 'denied' && (
-                <p className="text-xs text-red-400 mt-2">
+                <p className="text-xs text-pink-400 mt-2">
                   Les notifications sont bloquées. Va dans les paramètres de ton navigateur pour les réactiver.
                 </p>
               )}
@@ -293,7 +293,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
           {/* Logout */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600/10 hover:bg-red-600/20 text-red-500 rounded-xl font-medium transition-colors border border-red-600/20"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-pink-600/10 hover:bg-pink-600/20 text-pink-500 rounded-xl font-medium transition-colors border border-pink-600/20"
           >
             <LogOut className="w-4 h-4" />
             Se déconnecter

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { X, Search, Play, Loader2, Music, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getMusicReactions, addMusicReaction } from '../../lib/database';
