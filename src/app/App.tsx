@@ -157,7 +157,7 @@ export default function App() {
             circles={circles}
             currentFeedId={activeFeedCircleId}
             onSelectFeed={openCircleFeed}
-            onCreateCircle={() => { setCurrentView('messages'); setViewOptions({ initialTab: 'circles', initialShowCreate: true }); }}
+            onCreateCircle={() => { setCurrentView('messages'); setViewOptions({ initialTab: 'circles' }); }}
           />
         );
       case 'search':

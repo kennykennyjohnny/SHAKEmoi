@@ -92,7 +92,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       setError(null);
       const posts = currentFeedId ? await db.getCircleFeed(currentFeedId) : await db.getFeed();
 
-      const shakes = await Promise.all(posts.map(async (post: any) => {
+      const shakesRaw = await Promise.all(posts.map(async (post: any) => {
         const isLiked = await db.hasLikedPost(post.id);
         const reshakerUser = post.user ? (Array.isArray(post.user) ? post.user[0] : post.user) : null;
         if (!reshakerUser) return null; // Skip invalid posts
@@ -147,7 +147,9 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             displayName: reshakerUser.display_name || reshakerUser.username || ''
           } : undefined
         };
-      })).then(shakes => shakes.filter(s => s !== null));
+      }));
+
+      const shakes = shakesRaw.filter(s => s !== null);
 
       setShakes(shakes);
     } catch (err: any) {

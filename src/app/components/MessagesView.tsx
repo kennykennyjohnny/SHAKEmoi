@@ -18,7 +18,7 @@ interface MessagesViewProps {
 }
 
 export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewOptions }: MessagesViewProps) {
-  const { initialTab = 'dms', initialShowCreate = false } = viewOptions || {};
+  const { initialTab = 'dms' } = viewOptions || {};
   const [tab, setTab] = useState<'dms' | 'circles'>(initialTab);
 
   return (
@@ -39,7 +39,7 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
 
       {tab === 'dms'
         ? <DmsPanel currentUser={currentUser} />
-        : <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} initialShowCreate={initialShowCreate} />
+        : <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} />
       }
     </div>
   );
@@ -259,10 +259,10 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
 
 // ==================== Cercles ====================
 
-function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated, initialShowCreate }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; initialShowCreate?: boolean }) {
+function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void }) {
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(initialShowCreate || false);
+  const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => { load(); }, []);
 
