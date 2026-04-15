@@ -18,7 +18,7 @@ import { SharedPostView } from './components/SharedPostView';
 import { WeeklyWrapView } from './components/WeeklyWrapView';
 import { NotificationsDropdown } from './components/NotificationsDropdown';
 import { supabase } from '../lib/supabase';
-import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, getUserCircles } from '../lib/database';
+import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, getUserCircles, getCircleMembers, searchUsers, addCircleMember, removeCircleMember } from '../lib/database';
 
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'wrap';
 
@@ -361,34 +361,29 @@ function CircleSettingsPanel({ circle, onClose, onUpdate }: { circle: any; onClo
   useEffect(() => { loadMembers(); }, []);
 
   const loadMembers = async () => {
-    const { getCircleMembers } = await import('../../lib/database');
     setMembers(await getCircleMembers(circle.id));
   };
 
   useEffect(() => {
     if (searchQ.length < 2) { setSearchRes([]); return; }
     const t = setTimeout(async () => {
-      const { searchUsers } = await import('../../lib/database');
       setSearchRes(await searchUsers(searchQ));
     }, 400);
     return () => clearTimeout(t);
   }, [searchQ]);
 
   const addMember = async (userId: string) => {
-    const { addCircleMember } = await import('../../lib/database');
     await addCircleMember(circle.id, userId);
     await loadMembers();
     setSearchQ('');
   };
 
   const removeMember = async (userId: string) => {
-    const { removeCircleMember } = await import('../../lib/database');
     await removeCircleMember(circle.id, userId);
     await loadMembers();
   };
 
   const leaveCircle = async () => {
-    const { getCurrentUser, removeCircleMember } = await import('../../lib/database');
     const user = await getCurrentUser();
     if (user) {
       await removeCircleMember(circle.id, user.id);
