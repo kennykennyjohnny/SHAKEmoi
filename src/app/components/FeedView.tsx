@@ -93,11 +93,12 @@ export function FeedView({ currentUser, refreshFeed, circleId }: FeedViewProps) 
         const trackId = post.track_id || (post.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
         // Build embed URL for ALL posts that have a track_id
         const spotifyEmbedUrl = post.spotify_embed_url || (trackId ? `https://open.spotify.com/embed/track/${trackId}` : null);
-        // Normalize original_post: Supabase self-join may return array
+        // Normalize original_post: Supabase self-join may return array (both levels)
         const originalPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
+        const originalUser = Array.isArray(originalPost?.user) ? originalPost?.user[0] : originalPost?.user;
         // For reshakes: show original post with original user, reshaker as badge
-        const isReshake = post.is_reshake && originalPost?.user;
-        const displayUser = isReshake ? originalPost.user : post.user;
+        const isReshake = post.is_reshake && originalUser;
+        const displayUser = isReshake ? originalUser : post.user;
         const displayTrack = isReshake ? originalPost : post;
 
         return {
@@ -109,14 +110,14 @@ export function FeedView({ currentUser, refreshFeed, circleId }: FeedViewProps) 
             avatar: displayUser?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${displayUser?.username}&background=random`
           },
           track: {
-            id: displayTrack.track_id || trackId || post.id,
-            title: displayTrack.track_name || post.track_name,
-            artist: displayTrack.artist || post.artist,
-            coverUrl: displayTrack.cover_url || post.cover_url,
+            id: displayTrack?.track_id || trackId || post.id,
+            title: displayTrack?.track_name || post.track_name,
+            artist: displayTrack?.artist || post.artist,
+            coverUrl: displayTrack?.cover_url || post.cover_url,
             duration: '3:00',
-            previewUrl: displayTrack.preview_url || post.preview_url || '',
-            spotifyUri: displayTrack.spotify_url || post.spotify_url || '',
-            spotifyEmbedUrl: displayTrack.spotify_embed_url || (displayTrack.track_id ? `https://open.spotify.com/embed/track/${displayTrack.track_id}` : spotifyEmbedUrl),
+            previewUrl: displayTrack?.preview_url || post.preview_url || '',
+            spotifyUri: displayTrack?.spotify_url || post.spotify_url || '',
+            spotifyEmbedUrl: displayTrack?.spotify_embed_url || (displayTrack?.track_id ? `https://open.spotify.com/embed/track/${displayTrack.track_id}` : spotifyEmbedUrl),
           },
           links: {
             spotify_url: post.spotify_url || null,
@@ -136,7 +137,7 @@ export function FeedView({ currentUser, refreshFeed, circleId }: FeedViewProps) 
           isReshaked: false,
           // reshakeFrom = the person who reshaked (your friend), shown as badge
           reshakeFrom: isReshake ? {
-            id: post.user?.id || '',
+            id: post.user?.id || post.user?.username || '',
             username: post.user?.username || '',
             displayName: post.user?.display_name || post.user?.username || ''
           } : undefined

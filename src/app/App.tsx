@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Users, Sun, BarChart3, Settings } from 'lucide-react';
+import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, BarChart3 } from 'lucide-react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
 import { ProfileView } from './components/ProfileView';
@@ -18,7 +18,7 @@ import { SharedPostView } from './components/SharedPostView';
 import { WeeklyWrapView } from './components/WeeklyWrapView';
 import { NotificationsDropdown } from './components/NotificationsDropdown';
 import { supabase } from '../lib/supabase';
-import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, getUserCircles, getCircleMembers, searchUsers, addCircleMember, removeCircleMember } from '../lib/database';
+import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday } from '../lib/database';
 
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'wrap';
 
@@ -41,10 +41,6 @@ export default function App() {
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const [showShakeDuJour, setShowShakeDuJour] = useState(false);
   const [hasPostedToday, setHasPostedToday] = useState(true);
-  // Circle tabs on feed
-  const [circles, setCircles] = useState<any[]>([]);
-  const [activeFeedTab, setActiveFeedTab] = useState<string>('feed'); // 'feed' or circle ID
-  const [showCircleSettings, setShowCircleSettings] = useState(false);
 
   const buildUserObject = (profile: any) => ({
     ...profile,
@@ -53,13 +49,6 @@ export default function App() {
     bio: profile.bio || '',
     musicService: profile.preferred_platform || profile.musicService || 'spotify',
   });
-
-  const loadCircles = async () => {
-    try {
-      const c = await getUserCircles();
-      setCircles(c);
-    } catch {}
-  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -74,8 +63,6 @@ export default function App() {
           const postedToday = await hasShakeToday();
           setHasPostedToday(postedToday);
           if (!postedToday) setShowShakeDuJour(true);
-          // Load circles for tabs
-          await loadCircles();
         } else { setShowAuth(true); }
       } else { setShowAuth(true); }
     };
@@ -133,12 +120,10 @@ export default function App() {
   if (showOnboarding) return <OnboardingDialog onComplete={handleOnboardingComplete} />;
   if (showAuth) return <AuthDialog onComplete={handleAuthComplete} />;
 
-  const activeCircle = activeFeedTab !== 'feed' ? circles.find(c => c.id === activeFeedTab) : null;
-
   const renderView = () => {
     switch (currentView) {
       case 'feed':
-        return <FeedView currentUser={currentUser} refreshFeed={refreshFeed} circleId={activeCircle?.id} />;
+        return <FeedView currentUser={currentUser} refreshFeed={refreshFeed} />;
       case 'search':
         return <SearchView currentUser={currentUser} onRefreshFeed={() => setRefreshFeed(p => p + 1)} />;
       case 'top':
@@ -171,17 +156,6 @@ export default function App() {
             </span>
 
             <div className="flex items-center gap-1.5">
-              {/* Circle settings gear — only when viewing a circle */}
-              {currentView === 'feed' && activeCircle && (
-                <button
-                  onClick={() => setShowCircleSettings(!showCircleSettings)}
-                  className="p-2 hover:bg-rose-900/25 rounded-full transition-colors"
-                  title={`Paramètres ${activeCircle.name}`}
-                >
-                  <Settings className="w-5 h-5 text-rose-300/60 hover:text-rose-400" />
-                </button>
-              )}
-
               <button onClick={() => setShowShareDialog(true)} className="p-2 hover:bg-rose-900/25 rounded-full transition-colors">
                 <Share2 className="w-5 h-5 text-rose-300/60" />
               </button>
@@ -205,52 +179,12 @@ export default function App() {
             </div>
           </div>
 
-          {/* Swipeable underline tab bar — only on feed view */}
-          {currentView === 'feed' && circles.length > 0 && (
-            <div className="relative flex overflow-x-auto no-scrollbar border-b border-rose-800/25">
-              <button
-                onClick={() => setActiveFeedTab('feed')}
-                className={`flex-shrink-0 px-5 py-2 text-sm font-semibold transition-colors relative ${
-                  activeFeedTab === 'feed' ? 'text-white' : 'text-rose-300/50 hover:text-white'
-                }`}
-              >
-                Feed
-                {activeFeedTab === 'feed' && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
-                )}
-              </button>
-              {circles.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => setActiveFeedTab(c.id)}
-                  className={`flex-shrink-0 px-5 py-2 text-sm font-semibold transition-colors relative flex items-center gap-1.5 ${
-                    activeFeedTab === c.id ? 'text-white' : 'text-rose-300/50 hover:text-white'
-                  }`}
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  {c.name}
-                  {activeFeedTab === c.id && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
         </header>
 
         {/* Content */}
         <main className="flex-1 overflow-auto pb-20">
           {renderView()}
         </main>
-
-        {/* Circle settings inline panel */}
-        {showCircleSettings && activeCircle && (
-          <CircleSettingsPanel
-            circle={activeCircle}
-            onClose={() => setShowCircleSettings(false)}
-            onUpdate={loadCircles}
-          />
-        )}
 
         {/* Bottom Navigation Mobile — Feed, Top, Search, DMs, Profile */}
         <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-rose-900/30 backdrop-blur-lg bg-[#0a0012]/95 z-50">
@@ -352,84 +286,3 @@ export default function App() {
   );
 }
 
-// ==================== Circle Settings Panel ====================
-function CircleSettingsPanel({ circle, onClose, onUpdate }: { circle: any; onClose: () => void; onUpdate: () => void }) {
-  const [members, setMembers] = useState<any[]>([]);
-  const [searchQ, setSearchQ] = useState('');
-  const [searchRes, setSearchRes] = useState<any[]>([]);
-
-  useEffect(() => { loadMembers(); }, []);
-
-  const loadMembers = async () => {
-    setMembers(await getCircleMembers(circle.id));
-  };
-
-  useEffect(() => {
-    if (searchQ.length < 2) { setSearchRes([]); return; }
-    const t = setTimeout(async () => {
-      setSearchRes(await searchUsers(searchQ));
-    }, 400);
-    return () => clearTimeout(t);
-  }, [searchQ]);
-
-  const addMember = async (userId: string) => {
-    await addCircleMember(circle.id, userId);
-    await loadMembers();
-    setSearchQ('');
-  };
-
-  const removeMember = async (userId: string) => {
-    await removeCircleMember(circle.id, userId);
-    await loadMembers();
-  };
-
-  const leaveCircle = async () => {
-    const user = await getCurrentUser();
-    if (user) {
-      await removeCircleMember(circle.id, user.id);
-      onUpdate();
-      onClose();
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[#0f0020] rounded-2xl w-full max-w-sm border border-rose-800/25 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="px-4 py-3 border-b border-rose-800/25">
-          <h3 className="font-bold text-lg">{circle.name}</h3>
-          <p className="text-xs text-rose-300/70 mt-0.5">ID: {circle.id.slice(0, 8)}...</p>
-        </div>
-
-        <div className="p-4 space-y-3">
-          <p className="text-sm font-medium text-purple-200/80">Membres ({members.length})</p>
-          <div className="flex flex-wrap gap-1.5">
-            {members.map(m => (
-              <span key={m.id} className="flex items-center gap-1 bg-rose-950/25 rounded-full px-2 py-1 text-xs border border-rose-800/25">
-                <img src={m.profile_album_cover_url || `https://ui-avatars.com/api/?name=${m.username}&background=random`} className="w-4 h-4 rounded-full" alt="" />
-                @{m.username}
-                <button onClick={() => removeMember(m.id)} className="text-rose-300/50 hover:text-red-400 ml-0.5">&times;</button>
-              </span>
-            ))}
-          </div>
-
-          <input
-            type="text" value={searchQ} onChange={e => setSearchQ(e.target.value)}
-            placeholder="Ajouter un ami..."
-            className="w-full px-3 py-2 bg-rose-950/20 border border-rose-800/30 rounded-lg text-sm text-white placeholder-rose-300/50 focus:outline-none focus:border-purple-500"
-          />
-          {searchRes.filter(u => !members.find(m => m.id === u.id)).slice(0, 5).map(u => (
-            <button key={u.id} onClick={() => addMember(u.id)} className="w-full flex items-center gap-2 p-2 hover:bg-rose-900/25 rounded-lg text-sm">
-              <img src={u.profile_album_cover_url || `https://ui-avatars.com/api/?name=${u.username}&background=random`} className="w-6 h-6 rounded-full" alt="" />
-              @{u.username}
-              <span className="ml-auto text-purple-400 text-xs">+ Ajouter</span>
-            </button>
-          ))}
-
-          <button onClick={leaveCircle} className="w-full py-2.5 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm font-medium hover:bg-red-500/20 transition-colors">
-            Quitter ce cercle
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}

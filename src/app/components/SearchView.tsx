@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles, Heart, Headphones } from 'lucide-react';
+import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
-import { searchUsers, getTopPosts, createPost, searchCircles, joinCircle } from '../../lib/database';
+import { searchUsers, createPost, searchCircles, joinCircle } from '../../lib/database';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
 interface SearchViewProps {
@@ -18,30 +18,12 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
   const [trackResults, setTrackResults] = useState<any[]>([]);
   const [userResults, setUserResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [topPosts, setTopPosts] = useState<any[]>([]);
-  const [loadingTop, setLoadingTop] = useState(true);
   const [shakingTrackId, setShakingTrackId] = useState<string | null>(null);
   const [shakeCaption, setShakeCaption] = useState('');
   const [showCaptionFor, setShowCaptionFor] = useState<string | null>(null);
   const [shakedIds, setShakedIds] = useState<Set<string>>(new Set());
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadTopPosts();
-  }, []);
-
-  const loadTopPosts = async () => {
-    setLoadingTop(true);
-    try {
-      const posts = await getTopPosts(20);
-      setTopPosts(posts);
-    } catch (error) {
-      console.error('Error loading top posts:', error);
-    } finally {
-      setLoadingTop(false);
-    }
-  };
 
   useEffect(() => {
     if (searchQuery.length < 2) {
@@ -396,113 +378,27 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
         </div>
       )}
 
-      {/* Default view: Top posts with embeds */}
+      {/* Default empty state — discover */}
       {!hasQuery && (
-        <div>
-          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
-            <span className="text-orange-500">🔥</span> Top Shakemoi
-          </h2>
-          {loadingTop ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
-            </div>
-          ) : topPosts.length > 0 ? (
-            <div className="space-y-2">
-              {topPosts.map((post, index) => {
-                // Extract track_id from spotify_url for old posts that don't have track_id stored
-                const trackId = post.track_id || (post.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
-                const embedUrl = trackId ? `https://open.spotify.com/embed/track/${trackId}` : null;
-                const isEmbedOpen = activeEmbedId === `top-${post.id}`;
-
-                return (
-                  <motion.div
-                    key={post.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                    className={`rounded-xl border transition-all overflow-hidden ${
-                      isEmbedOpen
-                        ? 'bg-rose-950/25 border-purple-600/40 shadow-lg shadow-purple-500/10'
-                        : 'bg-rose-950/20 hover:bg-rose-950/25 border-rose-800/25'
-                    }`}
-                  >
-                    <div className="p-3 flex items-center gap-3 group">
-                      <span className="text-lg font-bold text-purple-500 w-7 text-center flex-shrink-0">{index + 1}</span>
-                      <div
-                        className="relative flex-shrink-0 cursor-pointer"
-                        onClick={() => toggleEmbed(`top-${post.id}`)}
-                      >
-                        <img src={post.cover_url} alt={post.track_name} className={`w-14 h-14 rounded-lg object-cover transition-all ${isEmbedOpen ? 'ring-2 ring-purple-500/50' : ''}`} />
-                        <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
-                          isEmbedOpen ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
-                        }`}>
-                          {isEmbedOpen ? (
-                            <div className="w-7 h-7 bg-purple-500 rounded-full flex items-center justify-center">
-                              <div className="flex items-center gap-0.5">
-                                <span className="w-0.5 h-3 bg-white rounded-full animate-pulse" />
-                                <span className="w-0.5 h-4 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
-                                <span className="w-0.5 h-2 bg-white rounded-full animate-pulse [animation-delay:0.3s]" />
-                              </div>
-                            </div>
-                          ) : (
-                            <Play className="w-5 h-5 text-white fill-white" />
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex-1 text-left min-w-0">
-                        <h3 className="font-semibold text-sm text-white truncate">{post.track_name}</h3>
-                        <p className="text-xs text-rose-200/70 truncate">{post.artist}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-pink-400/80 flex items-center gap-0.5">
-                            <Heart className="w-2.5 h-2.5" /> {post.likes_count || 0}
-                          </span>
-                          {post.user && (
-                            <button
-                              onClick={() => setProfilePreview({ userId: post.user.id, username: post.user.username })}
-                              className="text-xs text-rose-300/70 hover:underline"
-                            >
-                              @{post.user.username}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Spotify Embed */}
-                    <AnimatePresence>
-                      {isEmbedOpen && embedUrl && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="px-3 pb-3">
-                            <iframe
-                              src={`${embedUrl}?theme=0&utm_source=generator`}
-                              width="100%"
-                              height="152"
-                              frameBorder="0"
-                              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                              loading="lazy"
-                              className="rounded-xl"
-                              title={`${post.track_name} - ${post.artist}`}
-                            />
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-purple-300/50">
-              <Music className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>Aucun post pour le moment</p>
-            </div>
-          )}
+        <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+          <div className="w-20 h-20 mb-5 rounded-full bg-gradient-to-br from-purple-900/40 to-pink-900/40 flex items-center justify-center border border-purple-700/20">
+            <SearchIcon className="w-8 h-8 text-purple-400/60" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">Découvre de la musique</h3>
+          <p className="text-sm text-rose-300/50 max-w-xs leading-relaxed">
+            Recherche un son, un artiste, un ami ou un cercle musical
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {['Hip-hop', 'R&B', 'Drill', 'Afro', 'Pop', 'Jazz', 'Trap'].map(genre => (
+              <button
+                key={genre}
+                onClick={() => setSearchQuery(genre)}
+                className="px-3 py-1.5 bg-rose-950/25 border border-rose-800/25 rounded-full text-sm text-rose-200/60 hover:text-white hover:border-purple-600/40 transition-colors"
+              >
+                {genre}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
