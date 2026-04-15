@@ -104,16 +104,20 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         const originalPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
         const originalUser = originalPost?.user ? (Array.isArray(originalPost.user) ? originalPost.user[0] : originalPost.user) : null;
         const isReshake = !!post.is_reshake;
-        const displayUser = isReshake && originalUser ? originalUser : reshakerUser;
-        const displayTrack = isReshake && originalPost ? originalPost : post;
-
+        // For reshakes, user = original user, reshakeFrom = reshaker
+        // For normal posts, user = post user, reshakeFrom = undefined
         return {
           id: post.id,
-          user: {
-            id: displayUser?.id || '',
-            username: displayUser?.username || '',
-            displayName: displayUser?.display_name || displayUser?.username || '',
-            avatar: displayUser?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${displayUser?.username}&background=random`
+          user: isReshake && originalUser ? {
+            id: originalUser.id || '',
+            username: originalUser.username || '',
+            displayName: originalUser.display_name || originalUser.username || '',
+            avatar: originalUser.profile_album_cover_url || `https://ui-avatars.com/api/?name=${originalUser.username}&background=random`
+          } : {
+            id: reshakerUser.id || '',
+            username: reshakerUser.username || '',
+            displayName: reshakerUser.display_name || reshakerUser.username || '',
+            avatar: reshakerUser.profile_album_cover_url || `https://ui-avatars.com/api/?name=${reshakerUser.username}&background=random`
           },
           track: {
             id: displayTrack?.track_id || trackId || post.id,
@@ -141,7 +145,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           timestamp: post.created_at,
           isLiked,
           isReshaked: false,
-          reshakeFrom: isReshake && reshakerUser ? {
+          reshakeFrom: isReshake ? {
             id: reshakerUser.id || reshakerUser.username || '',
             username: reshakerUser.username || '',
             displayName: reshakerUser.display_name || reshakerUser.username || ''
@@ -225,8 +229,9 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   };
 
   const formatTimestamp = (timestamp: string) => {
-    if (timestamp === 'now') return "À l'instant";
+    if (!timestamp || timestamp === 'now') return "À l'instant";
     const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return "Date inconnue";
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
@@ -648,7 +653,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       </AnimatePresence>
 
       {/* Circle chat input bar — sticky at bottom when viewing a circle */}
-      {circleId && (
+      {currentFeedId && (
         <div className="sticky bottom-16 lg:bottom-0 z-30 bg-[#0a0012]/95 backdrop-blur-lg border-t border-rose-800/25">
           {/* Track search overlay */}
           <AnimatePresence>
