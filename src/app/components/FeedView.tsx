@@ -94,14 +94,15 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
       const shakes = await Promise.all(posts.map(async (post: any) => {
         const isLiked = await db.hasLikedPost(post.id);
-        const reshakerUser = Array.isArray(post.user) ? post.user[0] : post.user;
+        const reshakerUser = post.user ? (Array.isArray(post.user) ? post.user[0] : post.user) : null;
+        if (!reshakerUser) return null; // Skip invalid posts
         // Extract track_id from spotify_url for old posts missing track_id
         const trackId = post.track_id || (post.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
         // Build embed URL for ALL posts that have a track_id
         const spotifyEmbedUrl = post.spotify_embed_url || (trackId ? `https://open.spotify.com/embed/track/${trackId}` : null);
         // Normalize original_post: Supabase self-join may return array (both levels)
         const originalPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
-        const originalUser = Array.isArray(originalPost?.user) ? originalPost?.user[0] : originalPost?.user;
+        const originalUser = originalPost?.user ? (Array.isArray(originalPost.user) ? originalPost.user[0] : originalPost.user) : null;
         const isReshake = !!post.is_reshake;
         const displayUser = isReshake && originalUser ? originalUser : reshakerUser;
         const displayTrack = isReshake && originalPost ? originalPost : post;
@@ -140,13 +141,13 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           timestamp: post.created_at,
           isLiked,
           isReshaked: false,
-          reshakeFrom: isReshake ? {
+          reshakeFrom: isReshake && reshakerUser ? {
             id: reshakerUser.id || reshakerUser.username || '',
             username: reshakerUser.username || '',
             displayName: reshakerUser.display_name || reshakerUser.username || ''
           } : undefined
         };
-      }));
+      })).then(shakes => shakes.filter(s => s !== null));
 
       setShakes(shakes);
     } catch (err: any) {
