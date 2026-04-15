@@ -4,12 +4,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Logo } from './Logo';
 
 interface ShareDialogProps {
+  currentUser: any;
   onClose: () => void;
 }
 
-export function ShareDialog({ onClose }: ShareDialogProps) {
+export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
-  const shareUrl = 'https://shakemoi.fr';
+  const shareUrl = currentUser ? `https://shakemoi.fr?ref=${currentUser.username}` : 'https://shakemoi.fr';
 
   const handleCopy = async () => {
     try {
@@ -92,7 +93,7 @@ export function ShareDialog({ onClose }: ShareDialogProps) {
               </h3>
               
               <p className="text-purple-300/60 text-sm mb-6">
-                Partage tes sons préférés avec tes amis et découvrez ensemble les meilleures vibes musicales ! 🎵
+                Partage ton lien personnel avec tes amis et découvre ensemble les meilleures vibes musicales ! 🎵
               </p>
 
               {/* URL Box */}

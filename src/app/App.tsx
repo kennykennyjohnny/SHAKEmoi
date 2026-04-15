@@ -77,6 +77,15 @@ export default function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Handle referral parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get('ref');
+      if (ref) {
+        localStorage.setItem('shakemoi_referrer', ref);
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const profile = await getUserProfile(session.user.id);
@@ -300,7 +309,7 @@ export default function App() {
       {showCreateShake && (
         <CreateShakeDialog currentUser={currentUser} onClose={() => { setShowCreateShake(false); setRefreshFeed(p => p + 1); }} />
       )}
-      {showShareDialog && <ShareDialog onClose={() => setShowShareDialog(false)} />}
+      {showShareDialog && <ShareDialog currentUser={currentUser} onClose={() => setShowShareDialog(false)} />}
       {showCompleteProfile && (
         <CompleteProfileDialog user={currentUser} onComplete={(u) => { setCurrentUser(buildUserObject(u)); setShowCompleteProfile(false); }} />
       )}

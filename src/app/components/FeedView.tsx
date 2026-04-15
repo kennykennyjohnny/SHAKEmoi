@@ -365,225 +365,281 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             <span className="font-semibold text-white">Cercle privé :</span> {activeCircle.name} · contenu visible uniquement aux membres
           </div>
         )}
-        {shakes.map((shake, index) => {
-          const isPlayerOpen = activePlayerId === shake.id;
-
-          return (
-            <motion.article
-              key={shake.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className={`rounded-xl border transition-all overflow-hidden ${
-                isPlayerOpen
-                  ? 'bg-rose-950/25 border-purple-600/40 shadow-lg shadow-purple-500/10'
-                  : 'bg-rose-950/20 border-rose-800/25 hover:border-purple-700/40'
-              }`}
-            >
-              {/* Reshake indicator — "reshaké par @friend" */}
-              {shake.reshakeFrom && (
-                <div className="px-4 pt-2 flex items-center gap-2 text-xs text-green-400/80">
-                  <Repeat2 className="w-3 h-3" />
-                  <span className="text-rose-300/70">Reshaké par</span>
-                  <button
-                    onClick={() => setProfilePreview({
-                      userId: shake.reshakeFrom!.id || shake.reshakeFrom!.username,
-                      username: shake.reshakeFrom!.username
-                    })}
-                    className="hover:underline font-medium text-green-400"
-                  >
-                    @{shake.reshakeFrom.username}
-                  </button>
-                </div>
-              )}
-
-              {/* User Header */}
-              <div className="px-4 py-2 flex items-center gap-2">
-                <button onClick={() => setProfilePreview({ userId: shake.user.id || shake.user.username, username: shake.user.username })}>
-                  <img
-                    src={shake.user.avatar}
-                    alt={shake.user.displayName}
-                    className="w-9 h-9 rounded-full object-cover hover:ring-2 hover:ring-purple-500 transition-all"
-                  />
-                </button>
+        {currentFeedId ? (
+          // Group conversation layout for circles
+          <div className="space-y-4">
+            {shakes.map((shake, index) => (
+              <motion.div
+                key={shake.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="flex gap-3"
+              >
+                <img
+                  src={shake.user.avatar}
+                  alt={shake.user.displayName}
+                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => setProfilePreview({ userId: shake.user.id || shake.user.username, username: shake.user.username })}
-                      className="font-semibold text-sm truncate hover:underline"
-                    >
-                      {shake.user.displayName}
-                    </button>
-                    <span className="text-purple-300/60 text-xs">@{shake.user.username}</span>
-                    <span className="text-purple-400/40 text-xs">·</span>
-                    <span className="text-purple-300/60 text-xs">{formatTimestamp(shake.timestamp)}</span>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm text-white">{shake.user.displayName}</span>
+                    <span className="text-xs text-purple-300/60">@{shake.user.username}</span>
+                    <span className="text-xs text-purple-400/40">·</span>
+                    <span className="text-xs text-purple-300/60">{formatTimestamp(shake.timestamp)}</span>
                   </div>
-                </div>
-
-                {/* More Menu */}
-                <div className="relative">
-                  <button
-                    onClick={() => setMenuOpenId(menuOpenId === shake.id ? null : shake.id)}
-                    className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
-                  >
-                    <MoreHorizontal className="w-4 h-4 text-rose-300/70" />
-                  </button>
-
-                  <AnimatePresence>
-                    {menuOpenId === shake.id && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        className="absolute right-0 mt-1 w-48 bg-purple-950 border border-purple-800/40 rounded-xl shadow-xl z-20 overflow-hidden"
-                      >
-                        <button
-                          onClick={() => { setSendSongTrack(shake.track); setMenuOpenId(null); }}
-                          className="w-full px-4 py-2.5 text-left text-sm hover:bg-purple-900/50 transition-colors flex items-center gap-2"
-                        >
-                          <Send className="w-4 h-4" />
-                          Envoyer à un ami
-                        </button>
-                        <button
-                          onClick={() => { openInMusicApp(shake); setMenuOpenId(null); }}
-                          className="w-full px-4 py-2.5 text-left text-sm hover:bg-purple-900/50 transition-colors flex items-center gap-2"
-                        >
-                          <Headphones className="w-4 h-4" />
-                          Écouter
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              {/* Caption */}
-              {shake.caption && (
-                <div className="px-4 pb-2">
-                  <p className="text-sm leading-relaxed">{shake.caption}</p>
-                </div>
-              )}
-
-              {/* Track Card - clickable cover to launch embed */}
-              <div className="px-4 pb-2">
-                <div
-                  className={`rounded-xl p-3 flex gap-3 group cursor-pointer transition-all border ${
-                    isPlayerOpen
-                      ? 'bg-purple-800/20 border-purple-600/30'
-                      : 'bg-purple-900/20 border-purple-800/10 hover:bg-purple-900/30'
-                  }`}
-                  onClick={() => handlePlayTrack(shake)}
-                >
-                  <div className="relative flex-shrink-0">
+                  {shake.caption && (
+                    <p className="text-sm text-purple-200/80 mb-2">{shake.caption}</p>
+                  )}
+                  <div className="flex items-center gap-2 p-2 bg-purple-950/30 rounded-lg border border-purple-800/20">
                     <img
                       src={shake.track.coverUrl}
                       alt={shake.track.title}
-                      className={`w-14 h-14 rounded-lg object-cover transition-all ${isPlayerOpen ? 'ring-2 ring-purple-500/50' : ''}`}
+                      className="w-10 h-10 rounded-md object-cover"
                     />
-                    <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
-                      isPlayerOpen ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
-                    }`}>
-                      {isPlayerOpen ? (
-                        <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                          <div className="flex items-center gap-0.5">
-                            <span className="w-0.5 h-3 bg-white rounded-full animate-pulse" />
-                            <span className="w-0.5 h-4 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
-                            <span className="w-0.5 h-2 bg-white rounded-full animate-pulse [animation-delay:0.3s]" />
-                          </div>
-                        </div>
-                      ) : (
-                        <Play className="w-6 h-6 text-white fill-white" />
-                      )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{shake.track.title}</p>
+                      <p className="text-xs text-purple-300/60 truncate">{shake.track.artist}</p>
                     </div>
+                    <button
+                      onClick={() => handlePlayTrack(shake)}
+                      className="p-1 hover:bg-purple-800/40 rounded-full transition-colors"
+                    >
+                      <Play className="w-4 h-4 text-purple-400" />
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <h3 className="font-bold text-sm truncate">{shake.track.title}</h3>
-                    <p className="text-xs text-rose-200/70 truncate">{shake.track.artist}</p>
-                  </div>
-                  {!isPlayerOpen && (
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                        <Play className="w-4 h-4 text-white fill-white ml-0.5" />
-                      </div>
+                  {shake.reshakeFrom && (
+                    <div className="mt-1 text-xs text-green-400/80">
+                      <Repeat2 className="w-3 h-3 inline mr-1" />
+                      Reshaké par @{shake.reshakeFrom.username}
                     </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          // Standard feed layout for "All"
+          shakes.map((shake, index) => {
+            const isPlayerOpen = activePlayerId === shake.id;
 
-              {/* Spotify Embed Player - slides open on click, with autoplay */}
-              <AnimatePresence>
-                {isPlayerOpen && shake.track.spotifyEmbedUrl && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-4 pb-2">
-                      <iframe
-                        src={`${shake.track.spotifyEmbedUrl}?theme=0&utm_source=generator`}
-                        width="100%"
-                        height="152"
-                        frameBorder="0"
-                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                        loading="lazy"
-                        className="rounded-xl"
-                        title={`${shake.track.title} - ${shake.track.artist}`}
-                      />
-                    </div>
-                    {/* Open in app button */}
-                    <div className="px-4 pb-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openInMusicApp(shake); }}
-                        className="w-full py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
-                      >
-                        <Headphones className="w-3.5 h-3.5" />
-                        Ouvrir dans {
-                          currentUser?.musicService === 'apple_music' ? 'Apple Music' :
-                          currentUser?.musicService === 'youtube_music' ? 'YouTube Music' :
-                          currentUser?.musicService === 'deezer' ? 'Deezer' :
-                          currentUser?.musicService === 'tidal' ? 'Tidal' :
-                          'Spotify'
-                        }
-                      </button>
-                    </div>
-                  </motion.div>
+            return (
+              <motion.article
+                key={shake.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className={`rounded-xl border transition-all overflow-hidden ${
+                  isPlayerOpen
+                    ? 'bg-rose-950/25 border-purple-600/40 shadow-lg shadow-purple-500/10'
+                    : 'bg-rose-950/20 border-rose-800/25 hover:border-purple-700/40'
+                }`}
+              >
+                {/* Reshake indicator — "reshaké par @friend" */}
+                {shake.reshakeFrom && (
+                  <div className="px-4 pt-2 flex items-center gap-2 text-xs text-green-400/80">
+                    <Repeat2 className="w-3 h-3" />
+                    <span className="text-rose-300/70">Reshaké par</span>
+                    <button
+                      onClick={() => setProfilePreview({
+                        userId: shake.reshakeFrom!.id || shake.reshakeFrom!.username,
+                        username: shake.reshakeFrom!.username
+                      })}
+                      className="hover:underline font-medium text-green-400"
+                    >
+                      @{shake.reshakeFrom.username}
+                    </button>
+                  </div>
                 )}
-              </AnimatePresence>
 
-              {/* Actions */}
-              <div className="px-4 pb-2.5 flex items-center gap-6">
-                <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group">
-                  <Heart className={`w-5 h-5 transition-all ${shake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-rose-300/70 group-hover:text-pink-500'}`} />
-                  <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-rose-300/70'}`}>{shake.likes}</span>
-                </button>
+                {/* User Header */}
+                <div className="px-4 py-2 flex items-center gap-2">
+                  <button onClick={() => setProfilePreview({ userId: shake.user.id || shake.user.username, username: shake.user.username })}>
+                    <img
+                      src={shake.user.avatar}
+                      alt={shake.user.displayName}
+                      className="w-9 h-9 rounded-full object-cover hover:ring-2 hover:ring-purple-500 transition-all"
+                    />
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setProfilePreview({ userId: shake.user.id || shake.user.username, username: shake.user.username })}
+                        className="font-semibold text-sm truncate hover:underline"
+                      >
+                        {shake.user.displayName}
+                      </button>
+                      <span className="text-purple-300/60 text-xs">@{shake.user.username}</span>
+                      <span className="text-purple-400/40 text-xs">·</span>
+                      <span className="text-purple-300/60 text-xs">{formatTimestamp(shake.timestamp)}</span>
+                    </div>
+                  </div>
 
-                <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
-                  <MessageCircle className="w-5 h-5 text-rose-300/70 group-hover:text-blue-400 transition-colors" />
-                  <span className="text-xs font-medium text-rose-300/70">{shake.comments}</span>
-                </button>
+                  {/* More Menu */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setMenuOpenId(menuOpenId === shake.id ? null : shake.id)}
+                      className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
+                    >
+                      <MoreHorizontal className="w-4 h-4 text-rose-300/70" />
+                    </button>
 
-                <button onClick={() => setReshakeDialogShake(shake)} className="flex items-center gap-1.5 group">
-                  <Repeat2 className={`w-5 h-5 transition-all ${shake.isReshaked ? 'text-green-500' : 'text-rose-300/70 group-hover:text-green-500'}`} />
-                  <span className={`text-xs font-medium ${shake.isReshaked ? 'text-green-500' : 'text-rose-300/70'}`}>{shake.reshakes}</span>
-                </button>
+                    <AnimatePresence>
+                      {menuOpenId === shake.id && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                          className="absolute right-0 mt-1 w-48 bg-purple-950 border border-purple-800/40 rounded-xl shadow-xl z-20 overflow-hidden"
+                        >
+                          <button
+                            onClick={() => { setSendSongTrack(shake.track); setMenuOpenId(null); }}
+                            className="w-full px-4 py-2.5 text-left text-sm hover:bg-purple-900/50 transition-colors flex items-center gap-2"
+                          >
+                            <Send className="w-4 h-4" />
+                            Envoyer à un ami
+                          </button>
+                          <button
+                            onClick={() => { openInMusicApp(shake); setMenuOpenId(null); }}
+                            className="w-full px-4 py-2.5 text-left text-sm hover:bg-purple-900/50 transition-colors flex items-center gap-2"
+                          >
+                            <Headphones className="w-4 h-4" />
+                            Écouter
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
 
-                <button onClick={() => setMusicReactionsPostId(shake.id)} className="flex items-center gap-1.5 group" title="Réagir avec un son">
-                  <Music className="w-5 h-5 text-rose-300/70 group-hover:text-orange-400 transition-colors" />
-                </button>
+                {/* Caption */}
+                {shake.caption && (
+                  <div className="px-4 pb-2">
+                    <p className="text-sm leading-relaxed">{shake.caption}</p>
+                  </div>
+                )}
 
-                <button
-                  onClick={() => openInMusicApp(shake)}
-                  className="flex items-center gap-1.5 group ml-auto px-3 py-1 rounded-full bg-purple-600/10 hover:bg-purple-600/20 transition-colors"
-                >
-                  <Headphones className="w-4 h-4 text-purple-400 group-hover:text-purple-300 transition-colors" />
-                  <span className="text-xs font-medium text-purple-400 group-hover:text-purple-300 hidden sm:inline">Écouter</span>
-                </button>
-              </div>
-            </motion.article>
-          );
-        })}
+                {/* Track Card - clickable cover to launch embed */}
+                <div className="px-4 pb-2">
+                  <div
+                    className={`rounded-xl p-3 flex gap-3 group cursor-pointer transition-all border ${
+                      isPlayerOpen
+                        ? 'bg-purple-800/20 border-purple-600/30'
+                        : 'bg-purple-900/20 border-purple-800/10 hover:bg-purple-900/30'
+                    }`}
+                    onClick={() => handlePlayTrack(shake)}
+                  >
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={shake.track.coverUrl}
+                        alt={shake.track.title}
+                        className={`w-14 h-14 rounded-lg object-cover transition-all ${isPlayerOpen ? 'ring-2 ring-purple-500/50' : ''}`}
+                      />
+                      <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
+                        isPlayerOpen ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
+                      }`}>
+                        {isPlayerOpen ? (
+                          <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                            <div className="flex items-center gap-0.5">
+                              <span className="w-0.5 h-3 bg-white rounded-full animate-pulse" />
+                              <span className="w-0.5 h-4 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
+                              <span className="w-0.5 h-2 bg-white rounded-full animate-pulse [animation-delay:0.3s]" />
+                            </div>
+                          </div>
+                        ) : (
+                          <Play className="w-6 h-6 text-white fill-white" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <h3 className="font-bold text-sm truncate">{shake.track.title}</h3>
+                      <p className="text-xs text-rose-200/70 truncate">{shake.track.artist}</p>
+                    </div>
+                    {!isPlayerOpen && (
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                          <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Spotify Embed Player - slides open on click, with autoplay */}
+                <AnimatePresence>
+                  {isPlayerOpen && shake.track.spotifyEmbedUrl && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 pb-2">
+                        <iframe
+                          src={`${shake.track.spotifyEmbedUrl}?theme=0&utm_source=generator`}
+                          width="100%"
+                          height="152"
+                          frameBorder="0"
+                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                          loading="lazy"
+                          className="rounded-xl"
+                          title={`${shake.track.title} - ${shake.track.artist}`}
+                        />
+                      </div>
+                      {/* Open in app button */}
+                      <div className="px-4 pb-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openInMusicApp(shake); }}
+                          className="w-full py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+                        >
+                          <Headphones className="w-3.5 h-3.5" />
+                          Ouvrir dans {
+                            currentUser?.musicService === 'apple_music' ? 'Apple Music' :
+                            currentUser?.musicService === 'youtube_music' ? 'YouTube Music' :
+                            currentUser?.musicService === 'deezer' ? 'Deezer' :
+                            currentUser?.musicService === 'tidal' ? 'Tidal' :
+                            'Spotify'
+                          }
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Actions */}
+                <div className="px-4 pb-2.5 flex items-center gap-6">
+                  <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group">
+                    <Heart className={`w-5 h-5 transition-all ${shake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-rose-300/70 group-hover:text-pink-500'}`} />
+                    <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-rose-300/70'}`}>{shake.likes}</span>
+                  </button>
+
+                  <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
+                    <MessageCircle className="w-5 h-5 text-rose-300/70 group-hover:text-blue-400 transition-colors" />
+                    <span className="text-xs font-medium text-rose-300/70">{shake.comments}</span>
+                  </button>
+
+                  <button onClick={() => setReshakeDialogShake(shake)} className="flex items-center gap-1.5 group">
+                    <Repeat2 className={`w-5 h-5 transition-all ${shake.isReshaked ? 'text-green-500' : 'text-rose-300/70 group-hover:text-green-500'}`} />
+                    <span className={`text-xs font-medium ${shake.isReshaked ? 'text-green-500' : 'text-rose-300/70'}`}>{shake.reshakes}</span>
+                  </button>
+
+                  <button onClick={() => setMusicReactionsPostId(shake.id)} className="flex items-center gap-1.5 group" title="Réagir avec un son">
+                    <Music className="w-5 h-5 text-rose-300/70 group-hover:text-orange-400 transition-colors" />
+                  </button>
+
+                  <button
+                    onClick={() => openInMusicApp(shake)}
+                    className="flex items-center gap-1.5 group ml-auto px-3 py-1 rounded-full bg-purple-600/10 hover:bg-purple-600/20 transition-colors"
+                  >
+                    <Headphones className="w-4 h-4 text-purple-400 group-hover:text-purple-300 transition-colors" />
+                    <span className="text-xs font-medium text-purple-400 group-hover:text-purple-300 hidden sm:inline">Écouter</span>
+                  </button>
+                </div>
+              </motion.article>
+            );
+          })
+        )}
       </div>
 
       {/* Circle input bar - temporarily disabled

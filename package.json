@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp CNAME dist/CNAME && cp public/404.html dist/404.html",
+    "build": "vite build && node scripts/copy-files.js",
     "preview": "vite preview"
   },
   "dependencies": {
