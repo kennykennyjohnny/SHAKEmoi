@@ -147,44 +147,6 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
             displayName: reshakerUser.display_name || reshakerUser.username || ''
           } : undefined
         };
-            id: displayUser?.id || '',
-            username: displayUser?.username || '',
-            displayName: displayUser?.display_name || displayUser?.username || '',
-            avatar: displayUser?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${displayUser?.username}&background=random`
-          },
-          track: {
-            id: displayTrack?.track_id || trackId || post.id,
-            title: displayTrack?.track_name || post.track_name,
-            artist: displayTrack?.artist || post.artist,
-            coverUrl: displayTrack?.cover_url || post.cover_url,
-            duration: '3:00',
-            previewUrl: displayTrack?.preview_url || post.preview_url || '',
-            spotifyUri: displayTrack?.spotify_url || post.spotify_url || '',
-            spotifyEmbedUrl: displayTrack?.spotify_embed_url || (displayTrack?.track_id ? `https://open.spotify.com/embed/track/${displayTrack.track_id}` : spotifyEmbedUrl),
-          },
-          links: {
-            spotify_url: post.spotify_url || null,
-            apple_music_url: post.apple_music_url || null,
-            deezer_url: post.deezer_url || null,
-            youtube_url: post.youtube_url || null,
-            youtube_music_url: post.youtube_music_url || null,
-            tidal_url: post.tidal_url || null,
-            odesli_page_url: post.odesli_page_url || null,
-          },
-          caption: post.text,
-          likes: post.likes_count || 0,
-          comments: post.comments_count || 0,
-          reshakes: post.reshakes_count || 0,
-          timestamp: post.created_at,
-          isLiked,
-          isReshaked: false,
-          // reshakeFrom = the person who reshaked (your friend), shown as badge
-          reshakeFrom: isReshake ? {
-            id: post.user?.id || post.user?.username || '',
-            username: post.user?.username || '',
-            displayName: post.user?.display_name || post.user?.username || ''
-          } : undefined
-        };
       }));
 
       setShakes(shakes);
