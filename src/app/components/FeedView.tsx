@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, Headphones, X } from 'lucide-react';
+import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, Headphones, X, Music, Search, Camera, Smile } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
+import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 import { ReshakeDialog } from './ReshakeDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
 import { CommentsDialog } from './CommentsDialog';
+import { MusicReactionsDialog } from './MusicReactionsDialog';
 
 interface Shake {
   id: string;
@@ -52,9 +54,10 @@ interface Shake {
 interface FeedViewProps {
   currentUser: any;
   refreshFeed?: number;
+  circleId?: string;
 }
 
-export function FeedView({ currentUser, refreshFeed }: FeedViewProps) {
+export function FeedView({ currentUser, refreshFeed, circleId }: FeedViewProps) {
   const [shakes, setShakes] = useState<Shake[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,26 +67,38 @@ export function FeedView({ currentUser, refreshFeed }: FeedViewProps) {
   const [sendSongTrack, setSendSongTrack] = useState<any>(null);
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
   const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
+  const [musicReactionsPostId, setMusicReactionsPostId] = useState<string | null>(null);
+
+  // Circle chat input state
+  const [chatText, setChatText] = useState('');
+  const [chatSending, setChatSending] = useState(false);
+  const [showChatTrackSearch, setShowChatTrackSearch] = useState(false);
+  const [chatTrackQuery, setChatTrackQuery] = useState('');
+  const [chatTrackResults, setChatTrackResults] = useState<any[]>([]);
+  const [chatSearching, setChatSearching] = useState(false);
 
   useEffect(() => {
     loadFeed();
-  }, [refreshFeed]);
+  }, [refreshFeed, circleId]);
 
   const loadFeed = async () => {
     try {
       setLoading(true);
       setError(null);
-      const posts = await db.getFeed();
+      const posts = circleId ? await db.getCircleFeed(circleId) : await db.getFeed();
 
       const shakes = await Promise.all(posts.map(async (post: any) => {
         const isLiked = await db.hasLikedPost(post.id);
-        const trackId = post.track_id;
+        // Extract track_id from spotify_url for old posts missing track_id
+        const trackId = post.track_id || (post.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
         // Build embed URL for ALL posts that have a track_id
         const spotifyEmbedUrl = post.spotify_embed_url || (trackId ? `https://open.spotify.com/embed/track/${trackId}` : null);
+        // Normalize original_post: Supabase self-join may return array
+        const originalPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
         // For reshakes: show original post with original user, reshaker as badge
-        const isReshake = post.is_reshake && post.original_post?.user;
-        const displayUser = isReshake ? post.original_post.user : post.user;
-        const displayTrack = isReshake ? post.original_post : post;
+        const isReshake = post.is_reshake && originalPost?.user;
+        const displayUser = isReshake ? originalPost.user : post.user;
+        const displayTrack = isReshake ? originalPost : post;
 
         return {
           id: post.id,
@@ -220,11 +235,54 @@ export function FeedView({ currentUser, refreshFeed }: FeedViewProps) {
     setActivePlayerId(activePlayerId === shake.id ? null : shake.id);
   };
 
+  // Circle chat: track search debounce
+  useEffect(() => {
+    if (chatTrackQuery.length < 2) { setChatTrackResults([]); return; }
+    const timer = setTimeout(async () => {
+      setChatSearching(true);
+      try {
+        const tracks = await spotify.searchTracks(chatTrackQuery);
+        setChatTrackResults(tracks);
+      } catch {}
+      setChatSearching(false);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [chatTrackQuery]);
+
+  const handleChatSendText = async () => {
+    if (!chatText.trim() || chatSending) return;
+    setChatSending(true);
+    try {
+      await db.createPost('', '', '', chatText.trim(), null, null, null);
+      setChatText('');
+      await loadFeed();
+    } catch (err) {
+      console.error('Error posting in circle:', err);
+    }
+    setChatSending(false);
+  };
+
+  const handleChatSendTrack = async (track: any) => {
+    setChatSending(true);
+    try {
+      await db.createPost(
+        track.name, track.artist, track.cover, '', track.preview_url, track.spotify_url, track.id
+      );
+      setShowChatTrackSearch(false);
+      setChatTrackQuery('');
+      setChatTrackResults([]);
+      await loadFeed();
+    } catch (err) {
+      console.error('Error shaking track in circle:', err);
+    }
+    setChatSending(false);
+  };
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto p-8 flex flex-col items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-4" />
-        <p className="text-purple-400/50">Chargement du feed...</p>
+        <p className="text-rose-300/70">Chargement du feed...</p>
       </div>
     );
   }
@@ -245,20 +303,20 @@ export function FeedView({ currentUser, refreshFeed }: FeedViewProps) {
   if (shakes.length === 0) {
     return (
       <div className="max-w-2xl mx-auto p-8">
-        <div className="bg-purple-950/30 border border-purple-800/20 rounded-xl p-12 text-center">
+        <div className="bg-rose-950/20 border border-rose-800/25 rounded-xl p-12 text-center">
           <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
             <Play className="w-10 h-10 text-white" />
           </div>
           <h3 className="text-xl font-bold mb-2">Aucun shake pour le moment</h3>
-          <p className="text-purple-400/50 mb-6">Sois le premier à partager un son !</p>
+          <p className="text-rose-300/70 mb-6">Sois le premier à partager un son !</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="p-4 space-y-3">
+    <div className="max-w-2xl mx-auto flex flex-col" style={circleId ? { minHeight: '100%' } : undefined}>
+      <div className={`p-4 space-y-3 ${circleId ? 'flex-1' : ''}`}>
         {shakes.map((shake, index) => {
           const isPlayerOpen = activePlayerId === shake.id;
 
@@ -270,15 +328,15 @@ export function FeedView({ currentUser, refreshFeed }: FeedViewProps) {
               transition={{ delay: index * 0.05 }}
               className={`rounded-xl border transition-all overflow-hidden ${
                 isPlayerOpen
-                  ? 'bg-purple-950/40 border-purple-600/40 shadow-lg shadow-purple-500/10'
-                  : 'bg-purple-950/25 border-purple-800/20 hover:border-purple-700/40'
+                  ? 'bg-rose-950/25 border-purple-600/40 shadow-lg shadow-purple-500/10'
+                  : 'bg-rose-950/20 border-rose-800/25 hover:border-purple-700/40'
               }`}
             >
               {/* Reshake indicator — "reshaké par @friend" */}
               {shake.reshakeFrom && (
                 <div className="px-4 pt-2 flex items-center gap-2 text-xs text-green-400/80">
                   <Repeat2 className="w-3 h-3" />
-                  <span className="text-purple-400/50">Reshaké par</span>
+                  <span className="text-rose-300/70">Reshaké par</span>
                   <button
                     onClick={() => setProfilePreview({
                       userId: shake.reshakeFrom!.id || shake.reshakeFrom!.username,
@@ -320,7 +378,7 @@ export function FeedView({ currentUser, refreshFeed }: FeedViewProps) {
                     onClick={() => setMenuOpenId(menuOpenId === shake.id ? null : shake.id)}
                     className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
                   >
-                    <MoreHorizontal className="w-4 h-4 text-purple-400/50" />
+                    <MoreHorizontal className="w-4 h-4 text-rose-300/70" />
                   </button>
 
                   <AnimatePresence>
@@ -392,7 +450,7 @@ export function FeedView({ currentUser, refreshFeed }: FeedViewProps) {
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <h3 className="font-bold text-sm truncate">{shake.track.title}</h3>
-                    <p className="text-xs text-purple-300/60 truncate">{shake.track.artist}</p>
+                    <p className="text-xs text-rose-200/70 truncate">{shake.track.artist}</p>
                   </div>
                   {!isPlayerOpen && (
                     <div className="flex items-center">
@@ -449,18 +507,22 @@ export function FeedView({ currentUser, refreshFeed }: FeedViewProps) {
               {/* Actions */}
               <div className="px-4 pb-2.5 flex items-center gap-6">
                 <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group">
-                  <Heart className={`w-5 h-5 transition-all ${shake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-400/50 group-hover:text-pink-500'}`} />
-                  <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-400/50'}`}>{shake.likes}</span>
+                  <Heart className={`w-5 h-5 transition-all ${shake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-rose-300/70 group-hover:text-pink-500'}`} />
+                  <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-rose-300/70'}`}>{shake.likes}</span>
                 </button>
 
                 <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
-                  <MessageCircle className="w-5 h-5 text-purple-400/50 group-hover:text-blue-400 transition-colors" />
-                  <span className="text-xs font-medium text-purple-400/50">{shake.comments}</span>
+                  <MessageCircle className="w-5 h-5 text-rose-300/70 group-hover:text-blue-400 transition-colors" />
+                  <span className="text-xs font-medium text-rose-300/70">{shake.comments}</span>
                 </button>
 
                 <button onClick={() => setReshakeDialogShake(shake)} className="flex items-center gap-1.5 group">
-                  <Repeat2 className={`w-5 h-5 transition-all ${shake.isReshaked ? 'text-green-500' : 'text-purple-400/50 group-hover:text-green-500'}`} />
-                  <span className={`text-xs font-medium ${shake.isReshaked ? 'text-green-500' : 'text-purple-400/50'}`}>{shake.reshakes}</span>
+                  <Repeat2 className={`w-5 h-5 transition-all ${shake.isReshaked ? 'text-green-500' : 'text-rose-300/70 group-hover:text-green-500'}`} />
+                  <span className={`text-xs font-medium ${shake.isReshaked ? 'text-green-500' : 'text-rose-300/70'}`}>{shake.reshakes}</span>
+                </button>
+
+                <button onClick={() => setMusicReactionsPostId(shake.id)} className="flex items-center gap-1.5 group" title="Réagir avec un son">
+                  <Music className="w-5 h-5 text-rose-300/70 group-hover:text-orange-400 transition-colors" />
                 </button>
 
                 <button
@@ -495,6 +557,16 @@ export function FeedView({ currentUser, refreshFeed }: FeedViewProps) {
       </AnimatePresence>
 
       <AnimatePresence>
+        {musicReactionsPostId && (
+          <MusicReactionsDialog
+            postId={musicReactionsPostId}
+            currentUser={currentUser}
+            onClose={() => setMusicReactionsPostId(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {commentsPostId && (
           <CommentsDialog
             postId={commentsPostId}
@@ -507,6 +579,82 @@ export function FeedView({ currentUser, refreshFeed }: FeedViewProps) {
           />
         )}
       </AnimatePresence>
+
+      {/* Circle chat input bar — sticky at bottom when viewing a circle */}
+      {circleId && (
+        <div className="sticky bottom-16 lg:bottom-0 z-30 bg-[#0a0012]/95 backdrop-blur-lg border-t border-rose-800/25">
+          {/* Track search overlay */}
+          <AnimatePresence>
+            {showChatTrackSearch && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="max-h-60 overflow-y-auto border-b border-rose-800/25 bg-[#0a0012]"
+              >
+                <div className="p-3">
+                  <div className="relative mb-2">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-300/50" />
+                    <input
+                      type="text"
+                      value={chatTrackQuery}
+                      onChange={(e) => setChatTrackQuery(e.target.value)}
+                      placeholder="Rechercher un son..."
+                      className="w-full pl-9 pr-3 py-2 bg-rose-950/20 border border-rose-800/30 rounded-lg text-sm text-white placeholder-rose-300/50 focus:outline-none focus:border-purple-500"
+                      autoFocus
+                    />
+                  </div>
+                  {chatSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
+                  {chatTrackResults.map((track: any) => (
+                    <button
+                      key={track.id}
+                      onClick={() => handleChatSendTrack(track)}
+                      className="w-full flex items-center gap-2 p-2 hover:bg-rose-900/25 rounded-lg transition-colors"
+                    >
+                      <img src={track.cover} alt="" className="w-10 h-10 rounded-md object-cover" />
+                      <div className="flex-1 text-left min-w-0">
+                        <p className="text-sm font-medium truncate">{track.name}</p>
+                        <p className="text-xs text-rose-200/70 truncate">{track.artist}</p>
+                      </div>
+                      <Send className="w-4 h-4 text-purple-400" />
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="px-3 py-2 flex items-center gap-2">
+            <button
+              onClick={() => setShowChatTrackSearch(!showChatTrackSearch)}
+              className={`p-2 rounded-full transition-colors ${showChatTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-rose-900/25 text-rose-300/60'}`}
+            >
+              <Music className="w-5 h-5" />
+            </button>
+            <button className="p-2 rounded-full hover:bg-rose-900/25 text-rose-300/60 transition-colors" title="GIF (bientot)">
+              <Smile className="w-5 h-5" />
+            </button>
+            <button className="p-2 rounded-full hover:bg-rose-900/25 text-rose-300/60 transition-colors" title="Photo (bientot)">
+              <Camera className="w-5 h-5" />
+            </button>
+            <input
+              type="text"
+              value={chatText}
+              onChange={(e) => setChatText(e.target.value)}
+              placeholder="Message au cercle..."
+              className="flex-1 px-3 py-2 bg-rose-950/20 border border-rose-800/30 rounded-full text-sm text-white placeholder-rose-300/50 focus:outline-none focus:border-purple-500"
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSendText(); } }}
+            />
+            <button
+              onClick={handleChatSendText}
+              disabled={chatSending || !chatText.trim()}
+              className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors"
+            >
+              {chatSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

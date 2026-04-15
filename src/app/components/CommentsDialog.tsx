@@ -74,7 +74,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded }: CommentsDial
         animate={{ y: 0 }}
         exit={{ y: 100 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-[#0f0020] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80vh] flex flex-col border border-purple-800/30"
+        className="bg-[#0f0020] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80vh] flex flex-col border border-rose-800/30 mb-[env(safe-area-inset-bottom)] sm:mb-0"
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
@@ -114,8 +114,8 @@ export function CommentsDialog({ postId, onClose, onCommentAdded }: CommentsDial
           )}
         </div>
 
-        {/* Input */}
-        <div className="px-4 py-3 border-t border-purple-800/20 flex items-center gap-2">
+        {/* Input - safe area for mobile nav */}
+        <div className="px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-3 border-t border-rose-800/25 flex items-center gap-2">
           <input
             type="text"
             value={newComment}

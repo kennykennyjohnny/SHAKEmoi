@@ -123,6 +123,7 @@ export async function getFeed(limit = 20): Promise<Post[]> {
         )
       `)
       .in('user_id', feedUserIds)
+      .neq('is_private', true)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -178,6 +179,7 @@ export async function getUserPosts(userId: string, limit = 50): Promise<Post[]> 
         )
       `)
       .eq('user_id', userId)
+      .neq('is_private', true)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -196,7 +198,8 @@ export async function createPost(
   text = '',
   previewUrl: string | null = null,
   spotifyUrl: string | null = null,
-  trackId: string | null = null
+  trackId: string | null = null,
+  isPrivate: boolean = false
 ) {
   try {
     const user = await getCurrentUser();
@@ -231,7 +234,8 @@ export async function createPost(
         odesli_page_url: odesliLinks?.odesli_page_url ?? null,
         likes_count: 0,
         comments_count: 0,
-        is_reshake: false
+        is_reshake: false,
+        is_private: isPrivate
       }])
       .select()
       .single();
@@ -263,7 +267,7 @@ export async function reshakePost(originalPostId: string, comment?: string) {
       ? originalPost.original_post_id
       : originalPostId;
 
-    // Create re-shake with optional comment
+    // Create re-shake with optional comment — copy ALL fields including embed + Odesli links
     const { data, error } = await supabase
       .from('posts')
       .insert([{
@@ -271,10 +275,18 @@ export async function reshakePost(originalPostId: string, comment?: string) {
         track_name: originalPost.track_name,
         artist: originalPost.artist,
         cover_url: originalPost.cover_url,
-        text: comment || originalPost.text, // Use comment if provided, otherwise original text
+        text: comment || originalPost.text,
         preview_url: originalPost.preview_url,
         spotify_url: originalPost.spotify_url,
+        spotify_embed_url: originalPost.spotify_embed_url,
         track_id: originalPost.track_id,
+        // Odesli links
+        apple_music_url: originalPost.apple_music_url,
+        deezer_url: originalPost.deezer_url,
+        youtube_url: originalPost.youtube_url,
+        youtube_music_url: originalPost.youtube_music_url,
+        tidal_url: originalPost.tidal_url,
+        odesli_page_url: originalPost.odesli_page_url,
         likes_count: 0,
         comments_count: 0,
         reshakes_count: 0,
@@ -773,10 +785,10 @@ export async function getUserReshakes(userId: string) {
       .from('posts')
       .select(`
         *,
-        user:users_profile!posts_user_id_fkey(id, username, display_name, color),
-        original_post:posts!posts_original_post_id_fkey(
+        user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color),
+        original_post:posts!original_post_id(
           *,
-          user:users_profile!posts_user_id_fkey(id, username, display_name, color)
+          user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
         )
       `)
       .eq('user_id', userId)
@@ -832,6 +844,607 @@ function getNotificationMessage(type: string): string {
     case 'reshake': return 'a reshaké ton post';
     case 'feel': return 't\'a ajouté en ami';
     default: return 'a interagi avec toi';
+  }
+}
+
+// ==================== SHAKE DU JOUR ====================
+
+// Shake de la semaine — 1 morceau obligatoire par semaine (reset mardi 9h)
+function getCurrentShakeWeekStart(): string {
+  const now = new Date();
+  // Find the most recent Tuesday 9:00 UTC
+  const day = now.getUTCDay(); // 0=Sun, 2=Tue
+  const hour = now.getUTCHours();
+  let daysBack = (day - 2 + 7) % 7;
+  // If it's Tuesday but before 9h, go back to previous Tuesday
+  if (daysBack === 0 && hour < 9) daysBack = 7;
+  const tuesday = new Date(now);
+  tuesday.setUTCDate(now.getUTCDate() - daysBack);
+  tuesday.setUTCHours(9, 0, 0, 0);
+  return tuesday.toISOString().split('T')[0];
+}
+
+export async function hasShakeToday(): Promise<boolean> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return false;
+
+    const weekStart = getCurrentShakeWeekStart();
+    const { data, error } = await supabase
+      .from('shake_du_jour')
+      .select('id')
+      .eq('user_id', user.id)
+      .gte('created_date', weekStart)
+      .maybeSingle();
+
+    if (error) throw error;
+    return !!data;
+  } catch (error) {
+    console.error('Error checking shake de la semaine:', error);
+    return false;
+  }
+}
+
+export async function createShakeDuJour(postId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await supabase
+      .from('shake_du_jour')
+      .insert([{
+        user_id: user.id,
+        post_id: postId,
+        created_date: today
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error creating shake de la semaine:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getFriendsShakesDuJour(): Promise<any[]> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return [];
+
+    const { data: follows } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', user.id);
+
+    const friendIds = follows ? [...follows.map(f => f.following_id), user.id] : [user.id];
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+      .from('shake_du_jour')
+      .select(`
+        *,
+        user:users_profile!shake_du_jour_user_id_fkey(id, username, display_name, profile_album_cover_url),
+        post:posts!shake_du_jour_post_id_fkey(*)
+      `)
+      .in('user_id', friendIds)
+      .eq('created_date', today)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting friends shakes du jour:', error);
+    return [];
+  }
+}
+
+// ==================== MESSAGES (Messagerie musicale) ====================
+
+export async function getConversations(): Promise<any[]> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return [];
+
+    // Get all unique conversation partners
+    const { data, error } = await supabase
+      .from('messages')
+      .select(`
+        *,
+        sender:users_profile!messages_sender_id_fkey(id, username, display_name, profile_album_cover_url),
+        receiver:users_profile!messages_receiver_id_fkey(id, username, display_name, profile_album_cover_url)
+      `)
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Group by conversation partner, keep last message
+    const conversations = new Map();
+    (data || []).forEach((msg: any) => {
+      const partnerId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+      if (!conversations.has(partnerId)) {
+        const partner = msg.sender_id === user.id ? msg.receiver : msg.sender;
+        conversations.set(partnerId, {
+          partnerId,
+          partner,
+          lastMessage: msg,
+          unreadCount: (!msg.is_read && msg.receiver_id === user.id) ? 1 : 0
+        });
+      } else if (!msg.is_read && msg.receiver_id === user.id) {
+        conversations.get(partnerId).unreadCount++;
+      }
+    });
+
+    return Array.from(conversations.values());
+  } catch (error) {
+    console.error('Error getting conversations:', error);
+    return [];
+  }
+}
+
+export async function getMessages(partnerId: string, limit = 50): Promise<any[]> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('messages')
+      .select(`
+        *,
+        sender:users_profile!messages_sender_id_fkey(id, username, display_name, profile_album_cover_url)
+      `)
+      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${user.id})`)
+      .order('created_at', { ascending: true })
+      .limit(limit);
+
+    if (error) throw error;
+
+    // Mark unread messages as read
+    await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('sender_id', partnerId)
+      .eq('receiver_id', user.id)
+      .eq('is_read', false);
+
+    return data || [];
+  } catch (error) {
+    console.error('Error getting messages:', error);
+    return [];
+  }
+}
+
+export async function sendMessage(receiverId: string, text?: string, track?: any) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const messageData: any = {
+      sender_id: user.id,
+      receiver_id: receiverId,
+      text: text || null,
+    };
+
+    // If sending a track
+    if (track) {
+      messageData.track_name = track.name || track.track_name;
+      messageData.artist = track.artist;
+      messageData.cover_url = track.cover || track.cover_url || track.coverUrl;
+      messageData.track_id = track.id || track.track_id;
+      messageData.spotify_url = track.spotify_url || track.spotifyUrl;
+      messageData.spotify_embed_url = track.id ? `https://open.spotify.com/embed/track/${track.id}` : null;
+
+      // Fetch Odesli links if we have a spotify URL
+      if (messageData.spotify_url) {
+        const odesliLinks = await getOdesliLinks(messageData.spotify_url);
+        Object.assign(messageData, odesliLinks);
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('messages')
+      .insert([messageData])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create notification
+    await supabase
+      .from('notifications')
+      .insert([{
+        user_id: receiverId,
+        from_user_id: user.id,
+        type: track ? 'song_share' : 'message',
+      }]);
+
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error sending message:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ==================== MUSIC REACTIONS ====================
+
+export async function addMusicReaction(postId: string, track: any, text?: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const reactionData: any = {
+      user_id: user.id,
+      post_id: postId,
+      track_name: track.name || track.track_name,
+      artist: track.artist,
+      cover_url: track.cover || track.cover_url || track.coverUrl,
+      track_id: track.id || track.track_id,
+      spotify_url: track.spotify_url || track.spotifyUrl,
+      spotify_embed_url: track.id ? `https://open.spotify.com/embed/track/${track.id}` : null,
+      text: text || null,
+    };
+
+    // Fetch Odesli links
+    if (reactionData.spotify_url) {
+      const odesliLinks = await getOdesliLinks(reactionData.spotify_url);
+      Object.assign(reactionData, odesliLinks);
+    }
+
+    const { data, error } = await supabase
+      .from('music_reactions')
+      .insert([reactionData])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error adding music reaction:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getMusicReactions(postId: string): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from('music_reactions')
+      .select(`
+        *,
+        user:users_profile(id, username, display_name, profile_album_cover_url)
+      `)
+      .eq('post_id', postId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting music reactions:', error);
+    return [];
+  }
+}
+
+// ==================== TOP PERSONNALISÉ (Friends Trending) ====================
+
+export async function getFriendsTrending(days = 7, limit = 20): Promise<any[]> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return [];
+
+    // Get friend IDs
+    const { data: follows } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', user.id);
+
+    const friendIds = follows ? [...follows.map(f => f.following_id), user.id] : [user.id];
+
+    // Get posts from friends in the last N days
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    const { data: posts, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        user:users_profile!posts_user_id_fkey(id, username, display_name, profile_album_cover_url)
+      `)
+      .in('user_id', friendIds)
+      .gte('created_at', since.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Group by track (track_name + artist), count shares
+    const trackMap = new Map();
+    (posts || []).forEach((post: any) => {
+      const key = `${post.track_name}-${post.artist}`.toLowerCase();
+      if (!trackMap.has(key)) {
+        trackMap.set(key, {
+          track_name: post.track_name,
+          artist: post.artist,
+          cover_url: post.cover_url,
+          track_id: post.track_id,
+          spotify_url: post.spotify_url,
+          share_count: 0,
+          sharers: [],
+          latest_post: post,
+        });
+      }
+      const entry = trackMap.get(key);
+      entry.share_count++;
+      if (!entry.sharers.find((s: any) => s.id === post.user?.id)) {
+        entry.sharers.push(post.user);
+      }
+    });
+
+    return Array.from(trackMap.values())
+      .sort((a, b) => b.share_count - a.share_count)
+      .slice(0, limit);
+  } catch (error) {
+    console.error('Error getting friends trending:', error);
+    return [];
+  }
+}
+
+// ==================== TASTE MATCH ====================
+
+export async function calculateTasteMatch(otherUserId: string): Promise<{ percent: number; commonArtists: string[] }> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { percent: 0, commonArtists: [] };
+
+    // Get recent posts from both users
+    const [myPosts, theirPosts] = await Promise.all([
+      getUserPosts(user.id, 100),
+      getUserPosts(otherUserId, 100)
+    ]);
+
+    // Extract artists
+    const myArtists = new Set(myPosts.map((p: any) => p.artist?.toLowerCase()).filter(Boolean));
+    const theirArtists = new Set(theirPosts.map((p: any) => p.artist?.toLowerCase()).filter(Boolean));
+
+    // Intersection
+    const common = [...myArtists].filter(a => theirArtists.has(a));
+    const union = new Set([...myArtists, ...theirArtists]);
+
+    const percent = union.size > 0 ? Math.round((common.length / union.size) * 100) : 0;
+
+    // Cache the result
+    const [idA, idB] = [user.id, otherUserId].sort();
+    await supabase
+      .from('taste_match_cache')
+      .upsert({
+        user_a_id: idA,
+        user_b_id: idB,
+        match_percent: percent,
+        common_artists: common,
+        calculated_at: new Date().toISOString()
+      }, { onConflict: 'user_a_id,user_b_id' });
+
+    return { percent, commonArtists: common };
+  } catch (error) {
+    console.error('Error calculating taste match:', error);
+    return { percent: 0, commonArtists: [] };
+  }
+}
+
+export async function getCachedTasteMatch(otherUserId: string): Promise<{ percent: number; commonArtists: string[] } | null> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return null;
+
+    const [idA, idB] = [user.id, otherUserId].sort();
+    const { data } = await supabase
+      .from('taste_match_cache')
+      .select('*')
+      .eq('user_a_id', idA)
+      .eq('user_b_id', idB)
+      .maybeSingle();
+
+    if (!data) return null;
+
+    // Check if cache is older than 7 days
+    const cacheAge = Date.now() - new Date(data.calculated_at).getTime();
+    if (cacheAge > 7 * 24 * 60 * 60 * 1000) return null;
+
+    return { percent: data.match_percent, commonArtists: data.common_artists || [] };
+  } catch (error) {
+    return null;
+  }
+}
+
+// ==================== CIRCLES ====================
+
+export async function createCircle(name: string): Promise<any> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase
+      .from('circles')
+      .insert([{ name, created_by: user.id }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Add creator as member
+    await supabase
+      .from('circle_members')
+      .insert([{ circle_id: data.id, user_id: user.id }]);
+
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error creating circle:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getUserCircles(): Promise<any[]> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('circle_members')
+      .select(`
+        circle:circles(
+          id, name, created_by, created_at
+        )
+      `)
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+    return (data || []).map((item: any) => item.circle).filter(Boolean);
+  } catch (error) {
+    console.error('Error getting user circles:', error);
+    return [];
+  }
+}
+
+export async function getCircleMembers(circleId: string): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from('circle_members')
+      .select(`
+        user:users_profile(id, username, display_name, profile_album_cover_url)
+      `)
+      .eq('circle_id', circleId);
+
+    if (error) throw error;
+    return (data || []).map((item: any) => item.user).filter(Boolean);
+  } catch (error) {
+    console.error('Error getting circle members:', error);
+    return [];
+  }
+}
+
+export async function addCircleMember(circleId: string, userId: string) {
+  try {
+    const { error } = await supabase
+      .from('circle_members')
+      .insert([{ circle_id: circleId, user_id: userId }]);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function removeCircleMember(circleId: string, userId: string) {
+  try {
+    const { error } = await supabase
+      .from('circle_members')
+      .delete()
+      .eq('circle_id', circleId)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// ==================== CIRCLE FEED ====================
+
+export async function getCircleFeed(circleId: string, limit = 30): Promise<Post[]> {
+  try {
+    // Get member IDs
+    const { data: members } = await supabase
+      .from('circle_members')
+      .select('user_id')
+      .eq('circle_id', circleId);
+
+    if (!members || members.length === 0) return [];
+    const memberIds = members.map(m => m.user_id);
+
+    const { data: posts, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color),
+        original_post:posts!original_post_id(
+          *,
+          user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
+        )
+      `)
+      .in('user_id', memberIds)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return posts || [];
+  } catch (error) {
+    console.error('Error getting circle feed:', error);
+    return [];
+  }
+}
+
+export async function searchCircles(query: string): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from('circles')
+      .select('*')
+      .ilike('name', `%${query}%`)
+      .limit(20);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error searching circles:', error);
+    return [];
+  }
+}
+
+export async function joinCircle(circleId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+    const { error } = await supabase.from('circle_members').insert([{ circle_id: circleId, user_id: user.id }]);
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// ==================== CIRCLE WEEKLY SHAKES (mini-game data) ====================
+
+export async function getCircleWeeklyShakes(circleId: string): Promise<any[]> {
+  // Get all shake_du_jour from circle members this week
+  try {
+    const weekStart = getCurrentShakeWeekStart();
+
+    // Get circle member IDs
+    const { data: members } = await supabase
+      .from('circle_members')
+      .select('user_id')
+      .eq('circle_id', circleId);
+
+    if (!members || members.length === 0) return [];
+    const memberIds = members.map(m => m.user_id);
+
+    const { data, error } = await supabase
+      .from('shake_du_jour')
+      .select(`
+        *,
+        user:users_profile!shake_du_jour_user_id_fkey(id, username, display_name, profile_album_cover_url),
+        post:posts!shake_du_jour_post_id_fkey(*)
+      `)
+      .in('user_id', memberIds)
+      .gte('created_date', weekStart)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting circle weekly shakes:', error);
+    return [];
   }
 }
 

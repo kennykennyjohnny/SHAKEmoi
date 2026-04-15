@@ -1,7 +1,7 @@
 import { X, Heart, Play, UserPlus, UserCheck, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing, getUserReshakes } from '../../lib/database';
+import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing, getUserReshakes, getCachedTasteMatch, calculateTasteMatch } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 
 interface ProfilePreviewDialogProps {
@@ -19,6 +19,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'shakes' | 'reshakes'>('shakes');
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
+  const [tasteMatch, setTasteMatch] = useState<{ percent: number; commonArtists: string[] } | null>(null);
 
   useEffect(() => {
     loadProfile();
@@ -66,6 +67,14 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
         posts: postsData.length
       });
       setIsFollowingUser(followingStatus);
+
+      // Load taste match
+      const cached = await getCachedTasteMatch(actualId);
+      if (cached) {
+        setTasteMatch(cached);
+      } else {
+        calculateTasteMatch(actualId).then(setTasteMatch);
+      }
     } catch (error) {
       console.error('Error loading profile preview:', error);
     } finally {
@@ -116,8 +125,12 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
   const avatar = profile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${profile.username}&background=random`;
 
   const currentPosts = activeTab === 'shakes' ? shakes : reshakes;
-  const expandedPost = expandedPostId ? currentPosts.find(p => p.id === expandedPostId) : null;
-  const expandedEmbedUrl = expandedPost?.track_id ? `https://open.spotify.com/embed/track/${expandedPost.track_id}?theme=0&utm_source=generator` : null;
+  const expandedPostRaw = expandedPostId ? currentPosts.find(p => p.id === expandedPostId) : null;
+  // For reshakes, show original post data
+  const expandedOriginal = expandedPostRaw?.is_reshake ? (Array.isArray(expandedPostRaw.original_post) ? expandedPostRaw.original_post[0] : expandedPostRaw.original_post) : null;
+  const expandedPost = expandedOriginal || expandedPostRaw;
+  const expandedTrackId = expandedPost?.track_id || (expandedPost?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
+  const expandedEmbedUrl = expandedTrackId ? `https://open.spotify.com/embed/track/${expandedTrackId}?theme=0&utm_source=generator` : null;
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -170,6 +183,21 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
             </div>
           </div>
 
+          {/* Taste Match Badge */}
+          {tasteMatch && tasteMatch.percent > 0 && (
+            <div className="mb-3 p-2 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-lg border border-pink-500/20">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-purple-300/70">Compatibilité musicale</span>
+                <span className="text-sm font-bold text-pink-400">{tasteMatch.percent}% match</span>
+              </div>
+              {tasteMatch.commonArtists.length > 0 && (
+                <p className="text-[10px] text-purple-400/50 mt-1 truncate">
+                  En commun : {tasteMatch.commonArtists.slice(0, 5).join(', ')}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Follow Button */}
           <button
             onClick={handleFollowToggle}
@@ -210,24 +238,36 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
           {currentPosts.length > 0 ? (
             <div className="mt-3">
               <div className="grid grid-cols-3 gap-1.5">
-                {currentPosts.slice(0, 9).map((post) => (
-                  <button
-                    key={post.id}
-                    onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)}
-                    className={`aspect-square rounded-lg overflow-hidden group cursor-pointer relative transition-all ${
-                      expandedPostId === post.id ? 'ring-2 ring-purple-500 scale-[0.95]' : ''
-                    }`}
-                  >
-                    <img src={post.cover_url} alt={post.track_name} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                      <Play className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                    </div>
-                    <div className="absolute bottom-0.5 right-0.5 bg-black/60 rounded-full px-1 py-0.5 flex items-center gap-0.5">
-                      <Heart className="w-2 h-2 text-pink-400" />
-                      <span className="text-[8px] text-white font-medium">{post.likes_count || 0}</span>
-                    </div>
-                  </button>
-                ))}
+                {currentPosts.slice(0, 9).map((post) => {
+                  // For reshakes, normalize original_post (may be array)
+                  const origPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
+                  const displayCover = (activeTab === 'reshakes' && origPost?.cover_url) ? origPost.cover_url : post.cover_url;
+                  const displayTrackName = (activeTab === 'reshakes' && origPost?.track_name) ? origPost.track_name : post.track_name;
+
+                  return (
+                    <button
+                      key={post.id}
+                      onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)}
+                      className={`aspect-square rounded-lg overflow-hidden group cursor-pointer relative transition-all ${
+                        expandedPostId === post.id ? 'ring-2 ring-purple-500 scale-[0.95]' : ''
+                      }`}
+                    >
+                      <img src={displayCover} alt={displayTrackName} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                        <Play className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                      </div>
+                      {activeTab === 'reshakes' && origPost?.user && (
+                        <div className="absolute top-0.5 left-0.5 bg-black/60 rounded-full px-1.5 py-0.5">
+                          <span className="text-[8px] text-green-400 font-medium">@{origPost.user.username}</span>
+                        </div>
+                      )}
+                      <div className="absolute bottom-0.5 right-0.5 bg-black/60 rounded-full px-1 py-0.5 flex items-center gap-0.5">
+                        <Heart className="w-2 h-2 text-pink-400" />
+                        <span className="text-[8px] text-white font-medium">{post.likes_count || 0}</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Expanded post detail with embed */}
@@ -242,6 +282,11 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
                     className="overflow-hidden mt-2"
                   >
                     <div className="bg-purple-950/40 rounded-xl border border-purple-800/30 p-3">
+                      {expandedOriginal?.user && (
+                        <p className="text-xs text-purple-400/60 mb-2">
+                          Shake original de <span className="text-green-400 font-medium">@{expandedOriginal.user.username}</span>
+                        </p>
+                      )}
                       <div className="flex items-center gap-2 mb-2">
                         <img src={expandedPost.cover_url} alt="" className="w-10 h-10 rounded-md object-cover" />
                         <div className="flex-1 min-w-0">

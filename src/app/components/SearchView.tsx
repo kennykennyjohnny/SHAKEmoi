@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles, Heart, Headphones } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
-import { searchUsers, getTopPosts, createPost } from '../../lib/database';
+import { searchUsers, getTopPosts, createPost, searchCircles, joinCircle } from '../../lib/database';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
 interface SearchViewProps {
@@ -12,7 +12,9 @@ interface SearchViewProps {
 
 export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'tracks' | 'users'>('tracks');
+  const [activeTab, setActiveTab] = useState<'tracks' | 'users' | 'circles'>('tracks');
+  const [circleResults, setCircleResults] = useState<any[]>([]);
+  const [joinedCircleIds, setJoinedCircleIds] = useState<Set<string>>(new Set());
   const [trackResults, setTrackResults] = useState<any[]>([]);
   const [userResults, setUserResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,9 +72,12 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
           previewUrl: t.preview_url,
           spotifyUrl: t.spotify_url,
         })));
-      } else {
+      } else if (activeTab === 'users') {
         const users = await searchUsers(searchQuery);
         setUserResults(users);
+      } else {
+        const circles = await searchCircles(searchQuery);
+        setCircleResults(circles);
       }
     } catch (error) {
       console.error('Search error:', error);
@@ -118,13 +123,13 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
       {/* Search Bar */}
       <div className="sticky top-0 z-30 bg-[#0a0012] pb-4">
         <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400/50" />
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-rose-300/70" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Rechercher un son, artiste ou @ami..."
-            className="w-full pl-11 pr-4 py-3 bg-purple-950/30 border border-purple-800/30 rounded-full text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors"
+            className="w-full pl-11 pr-4 py-3 bg-rose-950/20 border border-rose-800/30 rounded-full text-white placeholder-rose-300/50 focus:outline-none focus:border-purple-500 transition-colors"
             autoFocus
           />
         </div>
@@ -136,7 +141,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
               className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                 activeTab === 'tracks'
                   ? 'bg-purple-500 text-white'
-                  : 'bg-purple-950/40 text-purple-300/60 hover:text-white'
+                  : 'bg-rose-950/25 text-rose-200/70 hover:text-white'
               }`}
             >
               <Music className="w-4 h-4" />
@@ -147,11 +152,22 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
               className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                 activeTab === 'users'
                   ? 'bg-purple-500 text-white'
-                  : 'bg-purple-950/40 text-purple-300/60 hover:text-white'
+                  : 'bg-rose-950/25 text-rose-200/70 hover:text-white'
               }`}
             >
               <User className="w-4 h-4" />
               Amis
+            </button>
+            <button
+              onClick={() => setActiveTab('circles')}
+              className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                activeTab === 'circles'
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-rose-950/25 text-rose-200/70 hover:text-white'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              Cercles
             </button>
           </div>
         )}
@@ -179,8 +195,8 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                   transition={{ delay: index * 0.03 }}
                   className={`rounded-xl border transition-all overflow-hidden ${
                     isEmbedOpen
-                      ? 'bg-purple-950/40 border-purple-600/40 shadow-lg shadow-purple-500/10'
-                      : 'bg-purple-950/20 hover:bg-purple-950/40 border-purple-800/20'
+                      ? 'bg-rose-950/25 border-purple-600/40 shadow-lg shadow-purple-500/10'
+                      : 'bg-rose-950/20 hover:bg-rose-950/25 border-rose-800/25'
                   }`}
                 >
                   <div className="p-3 flex items-center gap-3">
@@ -209,8 +225,8 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
 
                     <div className="flex-1 text-left min-w-0">
                       <h3 className="font-semibold text-sm text-white truncate">{track.title}</h3>
-                      <p className="text-xs text-purple-300/60 truncate">{track.artists || track.artist}</p>
-                      <p className="text-xs text-purple-400/40 truncate">{track.album}</p>
+                      <p className="text-xs text-rose-200/70 truncate">{track.artists || track.artist}</p>
+                      <p className="text-xs text-rose-300/50 truncate">{track.album}</p>
                     </div>
 
                     {/* Shake button */}
@@ -268,7 +284,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                             value={shakeCaption}
                             onChange={(e) => setShakeCaption(e.target.value)}
                             placeholder="Un commentaire ? (optionnel)"
-                            className="flex-1 px-3 py-2 bg-purple-950/40 border border-purple-700/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500"
+                            className="flex-1 px-3 py-2 bg-rose-950/25 border border-purple-700/30 rounded-lg text-sm text-white placeholder-rose-300/50 focus:outline-none focus:border-purple-500"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleShake(track);
                               if (e.key === 'Escape') { setShowCaptionFor(null); setShakeCaption(''); }
@@ -284,7 +300,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                           </button>
                           <button
                             onClick={() => { setShowCaptionFor(null); setShakeCaption(''); }}
-                            className="px-2 py-2 text-purple-400/50 hover:text-white"
+                            className="px-2 py-2 text-rose-300/70 hover:text-white"
                           >
                             ✕
                           </button>
@@ -298,7 +314,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
           ) : (
             <div className="text-center py-8">
               <Music className="w-10 h-10 text-purple-600 mx-auto mb-2" />
-              <p className="text-purple-300/60 text-sm">Aucun résultat pour "{searchQuery}"</p>
+              <p className="text-rose-200/70 text-sm">Aucun résultat pour "{searchQuery}"</p>
             </div>
           )}
         </div>
@@ -315,7 +331,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03 }}
                 onClick={() => setProfilePreview({ userId: user.id, username: user.username })}
-                className="w-full bg-purple-950/20 hover:bg-purple-950/40 rounded-xl p-3 flex items-center gap-3 transition-colors border border-purple-800/20"
+                className="w-full bg-rose-950/20 hover:bg-rose-950/25 rounded-xl p-3 flex items-center gap-3 transition-colors border border-rose-800/25"
               >
                 <img
                   src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
@@ -331,7 +347,50 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
           ) : (
             <div className="text-center py-8">
               <User className="w-10 h-10 text-purple-600 mx-auto mb-2" />
-              <p className="text-purple-300/60 text-sm">Aucun utilisateur trouvé pour "{searchQuery}"</p>
+              <p className="text-rose-200/70 text-sm">Aucun utilisateur trouvé pour "{searchQuery}"</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Circle results */}
+      {hasQuery && activeTab === 'circles' && !loading && (
+        <div className="space-y-2">
+          {circleResults.length > 0 ? (
+            circleResults.map((circle: any, index) => (
+              <motion.div
+                key={circle.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
+                className="bg-rose-950/20 hover:bg-rose-950/25 rounded-xl p-3 flex items-center gap-3 border border-rose-800/25"
+              >
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm text-white truncate">{circle.name}</h3>
+                  <p className="text-xs text-rose-300/70">Cercle</p>
+                </div>
+                {joinedCircleIds.has(circle.id) ? (
+                  <span className="text-xs text-green-400 font-semibold px-3">Rejoint !</span>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      const r = await joinCircle(circle.id);
+                      if (r.success) setJoinedCircleIds(new Set([...joinedCircleIds, circle.id]));
+                    }}
+                    className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-xs font-bold hover:opacity-90"
+                  >
+                    Rejoindre
+                  </button>
+                )}
+              </motion.div>
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <Sparkles className="w-10 h-10 text-purple-600 mx-auto mb-2" />
+              <p className="text-rose-200/70 text-sm">Aucun cercle trouvé pour "{searchQuery}"</p>
             </div>
           )}
         </div>
@@ -350,7 +409,9 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
           ) : topPosts.length > 0 ? (
             <div className="space-y-2">
               {topPosts.map((post, index) => {
-                const embedUrl = post.track_id ? `https://open.spotify.com/embed/track/${post.track_id}` : null;
+                // Extract track_id from spotify_url for old posts that don't have track_id stored
+                const trackId = post.track_id || (post.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
+                const embedUrl = trackId ? `https://open.spotify.com/embed/track/${trackId}` : null;
                 const isEmbedOpen = activeEmbedId === `top-${post.id}`;
 
                 return (
@@ -361,8 +422,8 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                     transition={{ delay: index * 0.03 }}
                     className={`rounded-xl border transition-all overflow-hidden ${
                       isEmbedOpen
-                        ? 'bg-purple-950/40 border-purple-600/40 shadow-lg shadow-purple-500/10'
-                        : 'bg-purple-950/20 hover:bg-purple-950/40 border-purple-800/20'
+                        ? 'bg-rose-950/25 border-purple-600/40 shadow-lg shadow-purple-500/10'
+                        : 'bg-rose-950/20 hover:bg-rose-950/25 border-rose-800/25'
                     }`}
                   >
                     <div className="p-3 flex items-center gap-3 group">
@@ -390,7 +451,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                       </div>
                       <div className="flex-1 text-left min-w-0">
                         <h3 className="font-semibold text-sm text-white truncate">{post.track_name}</h3>
-                        <p className="text-xs text-purple-300/60 truncate">{post.artist}</p>
+                        <p className="text-xs text-rose-200/70 truncate">{post.artist}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs text-pink-400/80 flex items-center gap-0.5">
                             <Heart className="w-2.5 h-2.5" /> {post.likes_count || 0}
@@ -398,7 +459,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                           {post.user && (
                             <button
                               onClick={() => setProfilePreview({ userId: post.user.id, username: post.user.username })}
-                              className="text-xs text-purple-400/50 hover:underline"
+                              className="text-xs text-rose-300/70 hover:underline"
                             >
                               @{post.user.username}
                             </button>
