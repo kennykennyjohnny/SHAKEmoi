@@ -12,6 +12,7 @@ import { MusicReactionsDialog } from './MusicReactionsDialog';
 
 // Extracted tab bar so it renders even in loading/empty states
 function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { circles: any[]; currentFeedId: string | null; onSelectFeed?: (id: string | null) => void; onCreateCircle?: () => void }) {
+  const truncName = (name: string) => name.length > 7 ? name.slice(0, 7) + '…' : name;
   return (
     <div className="mb-3 overflow-x-auto no-scrollbar">
       <div className="inline-flex items-center gap-2 min-w-max px-1">
@@ -20,7 +21,7 @@ function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { ci
         </button>
         {circles.map(circle => (
           <button key={circle.id} onClick={() => onSelectFeed?.(circle.id)} className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${currentFeedId === circle.id ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}>
-            {circle.name}
+            {truncName(circle.name)}
           </button>
         ))}
         {onCreateCircle && (

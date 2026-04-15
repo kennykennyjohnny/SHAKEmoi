@@ -296,7 +296,7 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentU
               </div>
               <div className="flex-1 text-left min-w-0">
                 <p className="font-semibold text-sm">{c.name}</p>
-                <p className="text-xs text-rose-300/60">Cercle privé</p>
+                <p className="text-xs text-rose-300/60">{c.invite_code ? `Code: ${c.invite_code}` : 'Cercle privé'}</p>
               </div>
               <ArrowLeft className="w-4 h-4 text-rose-300/40 rotate-180" />
             </button>
@@ -493,6 +493,15 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
             </p>
           </div>
 
+          {/* Invite Code — big and prominent */}
+          {createdCircle?.invite_code && (
+            <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-xl p-4 text-center">
+              <p className="text-xs text-rose-300/50 mb-1 font-medium uppercase tracking-wider">Code du cercle</p>
+              <p className="text-3xl font-black tracking-[0.3em] text-white font-mono select-all">{createdCircle.invite_code}</p>
+              <p className="text-xs text-rose-300/40 mt-2">Tes amis peuvent chercher ce code dans l'onglet Recherche pour rejoindre</p>
+            </div>
+          )}
+
           <div className="bg-rose-950/20 border border-rose-800/25 rounded-xl p-4 text-left">
             <p className="text-xs text-rose-300/50 mb-2 font-medium uppercase tracking-wider">Lien d'invitation</p>
             <p className="text-xs font-mono text-white/70 break-all leading-relaxed mb-3 select-all">{shareLink}</p>
@@ -500,8 +509,6 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
               {copied ? <><Check className="w-4 h-4" /> Copié !</> : <><Copy className="w-4 h-4" /> Copier le lien</>}
             </button>
           </div>
-
-          <p className="text-xs text-rose-300/40">Partage ce lien à tes amis pour qu'ils rejoignent le cercle</p>
 
           <button onClick={() => { onCreated(createdCircle); onDone(); }} className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90">
             Accéder au cercle
@@ -633,6 +640,13 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
         {showSettings && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-rose-800/25 bg-[#0a0012] flex-shrink-0">
             <div className="p-4 space-y-3">
+              {/* Invite Code */}
+              {circle.invite_code && (
+                <div className="bg-purple-900/20 border border-purple-500/20 rounded-lg p-3 text-center">
+                  <p className="text-[10px] text-rose-300/40 uppercase tracking-wider mb-1">Code d'invitation</p>
+                  <p className="text-xl font-black tracking-[0.25em] text-white font-mono select-all">{circle.invite_code}</p>
+                </div>
+              )}
               <p className="text-xs font-semibold text-rose-300/50 uppercase tracking-wider">Membres ({members.length})</p>
               <div className="flex flex-wrap gap-2">
                 {members.map(m => (

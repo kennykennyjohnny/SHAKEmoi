@@ -273,6 +273,23 @@ export async function createPost(
       .single();
 
     if (error) throw error;
+    
+    // Notify circle members if posted in a circle
+    if (circleId && data) {
+      try {
+        const { data: members } = await supabase
+          .from('circle_members')
+          .select('user_id')
+          .eq('circle_id', circleId)
+          .neq('user_id', user.id);
+        if (members) {
+          await supabase.from('notifications').insert(
+            members.map((m: any) => ({ user_id: m.user_id, from_user_id: user.id, type: 'circle_post', post_id: data.id }))
+          );
+        }
+      } catch {}
+    }
+    
     return { success: true, data };
   } catch (error: any) {
     console.error('Error creating post:', error);
@@ -875,6 +892,11 @@ function getNotificationMessage(type: string): string {
     case 'comment': return 'a commenté ton shake';
     case 'reshake': return 'a reshaké ton post';
     case 'feel': return 't\'a ajouté en ami';
+    case 'circle_join': return 'a rejoint ton cercle';
+    case 'circle_post': return 'a posté dans ton cercle';
+    case 'circle_create': return 'Cercle créé !';
+    case 'song_share': return 't\'a envoyé un son';
+    case 'message': return 't\'a envoyé un message';
     default: return 'a interagi avec toi';
   }
 }
@@ -1297,31 +1319,35 @@ export async function createCircle(name: string): Promise<any> {
 
     const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    // Try with invite_code first, fallback without it if column doesn't exist
-    let data: any, error: any;
-    ({ data, error } = await supabase
+    const { data, error } = await supabase
       .from('circles')
       .insert([{ name, created_by: user.id, invite_code: inviteCode }])
-      .select()
-      .single());
+      .select('*')
+      .single();
 
-    // Retry without invite_code if column doesn't exist
-    if (error && (error.message?.includes('invite_code') || error.code === '42703')) {
-      ({ data, error } = await supabase
-        .from('circles')
-        .insert([{ name, created_by: user.id }])
-        .select()
-        .single());
+    if (error) {
+      console.error('Circle insert error:', error);
+      throw error;
     }
 
-    if (error) throw error;
-
     // Add creator as member
-    await supabase
+    const { error: memberError } = await supabase
       .from('circle_members')
       .insert([{ circle_id: data.id, user_id: user.id }]);
 
-    return { success: true, data };
+    if (memberError) {
+      console.error('Circle member insert error:', memberError);
+      // Don't throw — the circle was created, member insert can fail due to RLS
+    }
+
+    // Send notification (circle created)
+    try {
+      await supabase.from('notifications').insert([{
+        user_id: user.id, from_user_id: user.id, type: 'circle_create'
+      }]);
+    } catch {}
+
+    return { success: true, data: { ...data, invite_code: data.invite_code || inviteCode } };
   } catch (error: any) {
     console.error('Error creating circle:', error);
     return { success: false, error: error.message };
@@ -1337,12 +1363,15 @@ export async function getUserCircles(): Promise<any[]> {
       .from('circle_members')
       .select(`
         circle:circles(
-          id, name, created_by, created_at
+          id, name, created_by, invite_code, created_at
         )
       `)
       .eq('user_id', user.id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('getUserCircles error:', error);
+      throw error;
+    }
     return (data || []).map((item: any) => item.circle).filter(Boolean);
   } catch (error) {
     console.error('Error getting user circles:', error);
@@ -1471,6 +1500,13 @@ export async function joinCircleByCode(inviteCode: string): Promise<any> {
 
     if (memberError) throw memberError;
 
+    // Notify circle creator
+    try {
+      await supabase.from('notifications').insert([{
+        user_id: circle.created_by, from_user_id: user.id, type: 'circle_join'
+      }]);
+    } catch {}
+
     return { success: true, data: circle };
   } catch (error: any) {
     console.error('Error joining circle by code:', error);
@@ -1498,8 +1534,27 @@ export async function joinCircle(circleId: string) {
   try {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
+    
+    // Check not already member
+    const { data: existing } = await supabase
+      .from('circle_members')
+      .select('id')
+      .eq('circle_id', circleId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (existing) return { success: true };
+    
     const { error } = await supabase.from('circle_members').insert([{ circle_id: circleId, user_id: user.id }]);
     if (error) throw error;
+    
+    // Notify circle creator
+    try {
+      const { data: circle } = await supabase.from('circles').select('created_by').eq('id', circleId).single();
+      if (circle && circle.created_by !== user.id) {
+        await supabase.from('notifications').insert([{ user_id: circle.created_by, from_user_id: user.id, type: 'circle_join' }]);
+      }
+    } catch {}
+    
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

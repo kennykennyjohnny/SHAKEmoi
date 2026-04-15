@@ -104,6 +104,13 @@ export default function App() {
     checkAuth();
   }, []);
 
+  // Reload circles when switching back to feed
+  useEffect(() => {
+    if (currentView === 'feed' && currentUser) {
+      loadUserCircles();
+    }
+  }, [currentView]);
+
   // Poll notifications
   useEffect(() => {
     if (!currentUser) return;

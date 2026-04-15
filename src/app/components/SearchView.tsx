@@ -352,7 +352,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm text-white truncate">{circle.name}</h3>
-                  <p className="text-xs text-rose-300/70">Cercle</p>
+                  <p className="text-xs text-rose-300/70">{circle.invite_code ? `Code: ${circle.invite_code}` : 'Cercle'}</p>
                 </div>
                 {joinedCircleIds.has(circle.id) ? (
                   <span className="text-xs text-green-400 font-semibold px-3">Rejoint !</span>
