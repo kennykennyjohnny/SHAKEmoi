@@ -55,9 +55,13 @@ interface FeedViewProps {
   currentUser: any;
   refreshFeed?: number;
   circleId?: string;
+  circles?: any[];
+  activeCircleId?: string | null;
+  onSelectCircle?: (circleId: string | null) => void;
+  onCreateCircle?: () => void;
 }
 
-export function FeedView({ currentUser, refreshFeed, circleId }: FeedViewProps) {
+export function FeedView({ currentUser, refreshFeed, circleId, circles = [], activeCircleId = null, onSelectCircle, onCreateCircle }: FeedViewProps) {
   const [shakes, setShakes] = useState<Shake[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +85,8 @@ export function FeedView({ currentUser, refreshFeed, circleId }: FeedViewProps) 
     loadFeed();
   }, [refreshFeed, circleId]);
 
+  const activeCircle = circles.find(c => c.id === activeCircleId);
+
   const loadFeed = async () => {
     try {
       setLoading(true);
@@ -89,6 +95,7 @@ export function FeedView({ currentUser, refreshFeed, circleId }: FeedViewProps) 
 
       const shakes = await Promise.all(posts.map(async (post: any) => {
         const isLiked = await db.hasLikedPost(post.id);
+        const reshakerUser = Array.isArray(post.user) ? post.user[0] : post.user;
         // Extract track_id from spotify_url for old posts missing track_id
         const trackId = post.track_id || (post.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
         // Build embed URL for ALL posts that have a track_id
@@ -96,14 +103,50 @@ export function FeedView({ currentUser, refreshFeed, circleId }: FeedViewProps) 
         // Normalize original_post: Supabase self-join may return array (both levels)
         const originalPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
         const originalUser = Array.isArray(originalPost?.user) ? originalPost?.user[0] : originalPost?.user;
-        // For reshakes: show original post with original user, reshaker as badge
-        const isReshake = post.is_reshake && originalUser;
-        const displayUser = isReshake ? originalUser : post.user;
-        const displayTrack = isReshake ? originalPost : post;
+        const isReshake = !!post.is_reshake;
+        const displayUser = originalUser || reshakerUser;
+        const displayTrack = originalPost || post;
 
         return {
           id: post.id,
           user: {
+            id: displayUser?.id || '',
+            username: displayUser?.username || '',
+            displayName: displayUser?.display_name || displayUser?.username || '',
+            avatar: displayUser?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${displayUser?.username}&background=random`
+          },
+          track: {
+            id: displayTrack?.track_id || trackId || post.id,
+            title: displayTrack?.track_name || post.track_name,
+            artist: displayTrack?.artist || post.artist,
+            coverUrl: displayTrack?.cover_url || post.cover_url,
+            duration: '3:00',
+            previewUrl: displayTrack?.preview_url || post.preview_url || '',
+            spotifyUri: displayTrack?.spotify_url || post.spotify_url || '',
+            spotifyEmbedUrl: displayTrack?.spotify_embed_url || (displayTrack?.track_id ? `https://open.spotify.com/embed/track/${displayTrack.track_id}` : spotifyEmbedUrl),
+          },
+          links: {
+            spotify_url: post.spotify_url || null,
+            apple_music_url: post.apple_music_url || null,
+            deezer_url: post.deezer_url || null,
+            youtube_url: post.youtube_url || null,
+            youtube_music_url: post.youtube_music_url || null,
+            tidal_url: post.tidal_url || null,
+            odesli_page_url: post.odesli_page_url || null,
+          },
+          caption: post.text,
+          likes: post.likes_count || 0,
+          comments: post.comments_count || 0,
+          reshakes: post.reshakes_count || 0,
+          timestamp: post.created_at,
+          isLiked,
+          isReshaked: false,
+          reshakeFrom: post.is_reshake && reshakerUser ? {
+            id: reshakerUser.id || reshakerUser.username || '',
+            username: reshakerUser.username || '',
+            displayName: reshakerUser.display_name || reshakerUser.username || ''
+          } : undefined
+        };
             id: displayUser?.id || '',
             username: displayUser?.username || '',
             displayName: displayUser?.display_name || displayUser?.username || '',
@@ -318,6 +361,40 @@ export function FeedView({ currentUser, refreshFeed, circleId }: FeedViewProps) 
   return (
     <div className="max-w-2xl mx-auto flex flex-col" style={circleId ? { minHeight: '100%' } : undefined}>
       <div className={`p-4 space-y-3 ${circleId ? 'flex-1' : ''}`}>
+        {(circles.length > 0 || onSelectCircle || onCreateCircle) && (
+          <div className="mb-3 overflow-x-auto no-scrollbar">
+            <div className="inline-flex items-center gap-2 min-w-max px-1">
+              <button
+                onClick={() => onSelectCircle?.(null)}
+                className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${!activeCircleId ? 'bg-pink-500 text-black' : 'bg-rose-950/30 text-rose-200 hover:bg-rose-900/60'}`}
+              >
+                All
+              </button>
+              {circles.map(circle => (
+                <button
+                  key={circle.id}
+                  onClick={() => onSelectCircle?.(circle.id)}
+                  className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${activeCircleId === circle.id ? 'bg-purple-500 text-black' : 'bg-rose-950/30 text-rose-200 hover:bg-rose-900/60'}`}
+                >
+                  {circle.name}
+                </button>
+              ))}
+              {onCreateCircle && (
+                <button
+                  onClick={onCreateCircle}
+                  className="px-3 py-2 rounded-full text-sm font-semibold bg-rose-950/30 text-rose-200 hover:bg-rose-900/60"
+                >
+                  +
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        {activeCircle && (
+          <div className="mb-3 px-4 py-3 rounded-2xl border border-rose-800/30 bg-rose-950/20 text-sm text-rose-200">
+            <span className="font-semibold text-white">Cercle privé :</span> {activeCircle.name} · contenu visible uniquement aux membres
+          </div>
+        )}
         {shakes.map((shake, index) => {
           const isPlayerOpen = activePlayerId === shake.id;
 

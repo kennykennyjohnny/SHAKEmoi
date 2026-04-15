@@ -12,9 +12,11 @@ import { getPlatformUrl } from '../../lib/odesli';
 
 interface MessagesViewProps {
   currentUser: any;
+  onOpenCircle?: (circleId: string | null) => void;
+  onCircleCreated?: (circleId: string) => void;
 }
 
-export function MessagesView({ currentUser }: MessagesViewProps) {
+export function MessagesView({ currentUser, onOpenCircle, onCircleCreated }: MessagesViewProps) {
   const [tab, setTab] = useState<'dms' | 'circles'>('dms');
 
   return (
@@ -35,7 +37,7 @@ export function MessagesView({ currentUser }: MessagesViewProps) {
 
       {tab === 'dms'
         ? <DmsPanel currentUser={currentUser} />
-        : <CirclesPanel currentUser={currentUser} />
+        : <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} />
       }
     </div>
   );
@@ -255,10 +257,9 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
 
 // ==================== Cercles ====================
 
-function CirclesPanel({ currentUser }: { currentUser: any }) {
+function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void }) {
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCircle, setActiveCircle] = useState<any>(null);
   const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => { load(); }, []);
@@ -269,19 +270,15 @@ function CirclesPanel({ currentUser }: { currentUser: any }) {
     setLoading(false);
   };
 
-  if (activeCircle === 'create') {
-    return <CreateCircleFlow currentUser={currentUser} onDone={() => { setActiveCircle(null); load(); }} onBack={() => setActiveCircle(null)} />;
-  }
-
-  if (activeCircle) {
-    return <CircleView circle={activeCircle} currentUser={currentUser} onBack={() => { setActiveCircle(null); load(); }} />;
+  if (showCreate) {
+    return <CreateCircleFlow currentUser={currentUser} onDone={() => { setShowCreate(false); load(); }} onCreated={(circle) => { setShowCreate(false); onCircleCreated?.(circle.id); }} onBack={() => setShowCreate(false)} />;
   }
 
   return (
     <div className="flex-1 overflow-y-auto p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold">Mes Cercles</h2>
-        <button onClick={() => setActiveCircle('create')} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 flex items-center gap-1.5">
+        <button onClick={() => setShowCreate(true)} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 flex items-center gap-1.5">
           <Plus className="w-4 h-4" /> Nouveau cercle
         </button>
       </div>
@@ -291,7 +288,7 @@ function CirclesPanel({ currentUser }: { currentUser: any }) {
       ) : circles.length > 0 ? (
         <div className="space-y-2">
           {circles.map((c) => (
-            <button key={c.id} onClick={() => setActiveCircle(c)} className="w-full flex items-center gap-3 p-3 bg-rose-950/20 hover:bg-rose-950/30 rounded-xl border border-rose-800/25 transition-all">
+            <button key={c.id} onClick={() => onOpenCircle?.(c.id)} className="w-full flex items-center gap-3 p-3 bg-rose-950/20 hover:bg-rose-950/30 rounded-xl border border-rose-800/25 transition-all">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <Users className="w-5 h-5 text-white" />
               </div>
@@ -310,7 +307,7 @@ function CirclesPanel({ currentUser }: { currentUser: any }) {
           </div>
           <p className="text-rose-200/70 text-sm font-medium">Aucun cercle</p>
           <p className="text-purple-400/40 text-xs mt-1">Crée un espace privé avec tes amis</p>
-          <button onClick={() => setActiveCircle('create')} className="mt-4 px-5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90">
+          <button onClick={() => setShowCreate(true)} className="mt-4 px-5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90">
             Créer un cercle
           </button>
         </div>
@@ -321,7 +318,7 @@ function CirclesPanel({ currentUser }: { currentUser: any }) {
 
 // ==================== Create Circle Flow (3 steps) ====================
 
-function CreateCircleFlow({ currentUser, onDone, onBack }: { currentUser: any; onDone: () => void; onBack: () => void }) {
+function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentUser: any; onDone: () => void; onCreated: (circle: any) => void; onBack: () => void }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [name, setName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -504,7 +501,7 @@ function CreateCircleFlow({ currentUser, onDone, onBack }: { currentUser: any; o
 
           <p className="text-xs text-rose-300/40">Partage ce lien à tes amis pour qu'ils rejoignent le cercle</p>
 
-          <button onClick={onDone} className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90">
+          <button onClick={() => { onCreated(createdCircle); onDone(); }} className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90">
             Accéder au cercle
           </button>
         </motion.div>

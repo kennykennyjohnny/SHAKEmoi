@@ -13,12 +13,11 @@ import { CompleteProfileDialog } from './components/CompleteProfileDialog';
 import { ShakeDuJourDialog } from './components/ShakeDuJourDialog';
 import { MessagesView } from './components/MessagesView';
 import { TopFriendsView } from './components/TopFriendsView';
-import { CirclesView } from './components/CirclesView';
 import { SharedPostView } from './components/SharedPostView';
 import { WeeklyWrapView } from './components/WeeklyWrapView';
 import { NotificationsDropdown } from './components/NotificationsDropdown';
 import { supabase } from '../lib/supabase';
-import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday } from '../lib/database';
+import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, getUserCircles } from '../lib/database';
 
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'wrap';
 
@@ -41,6 +40,31 @@ export default function App() {
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const [showShakeDuJour, setShowShakeDuJour] = useState(false);
   const [hasPostedToday, setHasPostedToday] = useState(true);
+  const [circles, setCircles] = useState<any[]>([]);
+  const [activeFeedCircleId, setActiveFeedCircleId] = useState<string | null>(null);
+
+  const loadUserCircles = async () => {
+    try {
+      const circles = await getUserCircles();
+      setCircles(circles || []);
+      if (activeFeedCircleId && !circles.some((c: any) => c.id === activeFeedCircleId)) {
+        setActiveFeedCircleId(null);
+      }
+    } catch (error) {
+      console.error('Error loading circles:', error);
+    }
+  };
+
+  const openCircleFeed = (circleId: string | null) => {
+    setActiveFeedCircleId(circleId);
+    setCurrentView('feed');
+  };
+
+  const handleCircleCreated = (circleId: string) => {
+    setActiveFeedCircleId(circleId);
+    setCurrentView('feed');
+    loadUserCircles();
+  };
 
   const buildUserObject = (profile: any) => ({
     ...profile,
@@ -57,6 +81,7 @@ export default function App() {
         const profile = await getUserProfile(session.user.id);
         if (profile) {
           setCurrentUser(buildUserObject(profile));
+          await loadUserCircles();
           if (!localStorage.getItem('shakemoi_onboarding')) setShowOnboarding(true);
           const profileCompleted = localStorage.getItem('shakemoi_profile_completed');
           if (!profileCompleted && (!profile.display_name || !profile.profile_album_cover_url)) setShowCompleteProfile(true);
@@ -94,6 +119,7 @@ export default function App() {
   const handleAuthComplete = (user: any) => {
     setCurrentUser(buildUserObject(user));
     setShowAuth(false);
+    loadUserCircles();
     if (!localStorage.getItem('shakemoi_onboarding')) setShowOnboarding(true);
   };
 
@@ -123,13 +149,22 @@ export default function App() {
   const renderView = () => {
     switch (currentView) {
       case 'feed':
-        return <FeedView currentUser={currentUser} refreshFeed={refreshFeed} />;
+        return (
+          <FeedView
+            currentUser={currentUser}
+            refreshFeed={refreshFeed}
+            circles={circles}
+            activeCircleId={activeFeedCircleId}
+            onSelectCircle={openCircleFeed}
+            onCreateCircle={() => setCurrentView('messages')}
+          />
+        );
       case 'search':
         return <SearchView currentUser={currentUser} onRefreshFeed={() => setRefreshFeed(p => p + 1)} />;
       case 'top':
         return <TopFriendsView currentUser={currentUser} />;
       case 'messages':
-        return <MessagesView currentUser={currentUser} />;
+        return <MessagesView currentUser={currentUser} onOpenCircle={openCircleFeed} onCircleCreated={handleCircleCreated} />;
       case 'wrap':
         return <WeeklyWrapView currentUser={currentUser} />;
       case 'profile':
