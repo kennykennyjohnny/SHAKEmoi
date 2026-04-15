@@ -236,7 +236,7 @@ export default function App() {
                 key={view}
                 onClick={() => setCurrentView(view)}
                 className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
-                  currentView === view ? 'text-rose-400 bg-rose-500/10' : 'text-rose-300/60'
+                  currentView === view ? 'text-purple-400 bg-purple-500/10' : 'text-purple-300/60'
                 }`}
               >
                 <Icon className="w-5 h-5" />

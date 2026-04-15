@@ -104,8 +104,8 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
         const originalPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
         const originalUser = Array.isArray(originalPost?.user) ? originalPost?.user[0] : originalPost?.user;
         const isReshake = !!post.is_reshake;
-        const displayUser = originalUser || reshakerUser;
-        const displayTrack = originalPost || post;
+        const displayUser = isReshake ? originalUser : reshakerUser;
+        const displayTrack = isReshake ? originalPost : post;
 
         return {
           id: post.id,
@@ -309,12 +309,12 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
   if (shakes.length === 0) {
     return (
       <div className="max-w-2xl mx-auto p-8">
-        <div className="bg-rose-950/20 border border-rose-800/25 rounded-xl p-12 text-center">
+        <div className="bg-purple-950/20 border border-purple-800/25 rounded-xl p-12 text-center">
           <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
             <Play className="w-10 h-10 text-white" />
           </div>
           <h3 className="text-xl font-bold mb-2">Aucun shake pour le moment</h3>
-          <p className="text-rose-300/70 mb-6">Sois le premier à partager un son !</p>
+          <p className="text-purple-300/70 mb-6">Sois le premier à partager un son !</p>
         </div>
       </div>
     );
@@ -328,7 +328,7 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
             <div className="inline-flex items-center gap-2 min-w-max px-1">
               <button
                 onClick={() => onSelectCircle?.(null)}
-                className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${!activeCircleId ? 'bg-pink-500 text-black' : 'bg-rose-950/30 text-rose-200 hover:bg-rose-900/60'}`}
+                className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${!activeCircleId ? 'bg-purple-500 text-black' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}
               >
                 All
               </button>
@@ -336,7 +336,7 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
                 <button
                   key={circle.id}
                   onClick={() => onSelectCircle?.(circle.id)}
-                  className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${activeCircleId === circle.id ? 'bg-purple-500 text-black' : 'bg-rose-950/30 text-rose-200 hover:bg-rose-900/60'}`}
+                  className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${activeCircleId === circle.id ? 'bg-purple-500 text-black' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}
                 >
                   {circle.name}
                 </button>
@@ -344,7 +344,7 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
               {onCreateCircle && (
                 <button
                   onClick={onCreateCircle}
-                  className="px-3 py-2 rounded-full text-sm font-semibold bg-rose-950/30 text-rose-200 hover:bg-rose-900/60"
+                  className="px-3 py-2 rounded-full text-sm font-semibold bg-purple-950/30 text-purple-200 hover:bg-purple-900/60"
                 >
                   +
                 </button>
@@ -353,7 +353,7 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
           </div>
         )}
         {activeCircle && (
-          <div className="mb-3 px-4 py-3 rounded-2xl border border-rose-800/30 bg-rose-950/20 text-sm text-rose-200">
+          <div className="mb-3 px-4 py-3 rounded-2xl border border-purple-800/30 bg-purple-950/20 text-sm text-purple-200">
             <span className="font-semibold text-white">Cercle privé :</span> {activeCircle.name} · contenu visible uniquement aux membres
           </div>
         )}
@@ -406,9 +406,9 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
                     >
                       {shake.user.displayName}
                     </button>
-                    <span className="text-purple-500/50 text-xs">@{shake.user.username}</span>
-                    <span className="text-purple-600/40 text-xs">·</span>
-                    <span className="text-purple-500/50 text-xs">{formatTimestamp(shake.timestamp)}</span>
+                    <span className="text-rose-500/50 text-xs">@{shake.user.username}</span>
+                    <span className="text-rose-600/40 text-xs">·</span>
+                    <span className="text-rose-500/50 text-xs">{formatTimestamp(shake.timestamp)}</span>
                   </div>
                 </div>
 
