@@ -155,8 +155,8 @@ export default function App() {
             currentUser={currentUser}
             refreshFeed={refreshFeed}
             circles={circles}
-            activeCircleId={activeFeedCircleId}
-            onSelectCircle={openCircleFeed}
+            currentFeedId={activeFeedCircleId}
+            onSelectFeed={openCircleFeed}
             onCreateCircle={() => { setCurrentView('messages'); setViewOptions({ initialTab: 'circles', initialShowCreate: true }); }}
           />
         );

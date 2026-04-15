@@ -1263,9 +1263,11 @@ export async function createCircle(name: string): Promise<any> {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
+    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
     const { data, error } = await supabase
       .from('circles')
-      .insert([{ name, created_by: user.id }])
+      .insert([{ name, created_by: user.id, invite_code: inviteCode }])
       .select()
       .single();
 

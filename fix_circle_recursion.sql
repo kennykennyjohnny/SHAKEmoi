@@ -1,5 +1,8 @@
 -- Fix infinite recursion in circle policies
 
+-- Add invite_code to circles
+ALTER TABLE circles ADD COLUMN IF NOT EXISTS invite_code TEXT UNIQUE;
+
 -- Create helper function
 CREATE OR REPLACE FUNCTION is_circle_member(circle_id UUID, user_id UUID) RETURNS BOOLEAN AS $$
 BEGIN

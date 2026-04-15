@@ -54,14 +54,13 @@ interface Shake {
 interface FeedViewProps {
   currentUser: any;
   refreshFeed?: number;
-  circleId?: string;
   circles?: any[];
-  activeCircleId?: string | null;
-  onSelectCircle?: (circleId: string | null) => void;
+  currentFeedId?: string | null;
+  onSelectFeed?: (feedId: string | null) => void;
   onCreateCircle?: () => void;
 }
 
-export function FeedView({ currentUser, refreshFeed, circleId, circles = [], activeCircleId = null, onSelectCircle, onCreateCircle }: FeedViewProps) {
+export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId = null, onSelectFeed, onCreateCircle }: FeedViewProps) {
   const [shakes, setShakes] = useState<Shake[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,15 +82,15 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
 
   useEffect(() => {
     loadFeed();
-  }, [refreshFeed, circleId]);
+  }, [refreshFeed, currentFeedId]);
 
-  const activeCircle = circles.find(c => c.id === activeCircleId);
+  const activeCircle = circles.find(c => c.id === currentFeedId);
 
   const loadFeed = async () => {
     try {
       setLoading(true);
       setError(null);
-      const posts = circleId ? await db.getCircleFeed(circleId) : await db.getFeed();
+      const posts = currentFeedId ? await db.getCircleFeed(currentFeedId) : await db.getFeed();
 
       const shakes = await Promise.all(posts.map(async (post: any) => {
         const isLiked = await db.hasLikedPost(post.id);
@@ -141,7 +140,7 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
           timestamp: post.created_at,
           isLiked,
           isReshaked: false,
-          reshakeFrom: isReshake && originalUser ? {
+          reshakeFrom: isReshake ? {
             id: reshakerUser.id || reshakerUser.username || '',
             username: reshakerUser.username || '',
             displayName: reshakerUser.display_name || reshakerUser.username || ''
@@ -321,37 +320,36 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
   }
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col" style={circleId ? { minHeight: '100%' } : undefined}>
-      <div className={`p-4 space-y-3 ${circleId ? 'flex-1' : ''}`}>
-        {(circles.length > 0 || onSelectCircle || onCreateCircle) && (
-          <div className="mb-3 overflow-x-auto no-scrollbar">
-            <div className="inline-flex items-center gap-2 min-w-max px-1">
+    <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined}>
+      <div className={`p-4 space-y-3 ${currentFeedId ? 'flex-1' : ''}`}>
+        {/* Horizontal feed selector */}
+        <div className="mb-3 overflow-x-auto no-scrollbar">
+          <div className="inline-flex items-center gap-2 min-w-max px-1">
+            <button
+              onClick={() => onSelectFeed?.(null)}
+              className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${!currentFeedId ? 'bg-purple-500 text-black' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}
+            >
+              All
+            </button>
+            {circles.map(circle => (
               <button
-                onClick={() => onSelectCircle?.(null)}
-                className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${!activeCircleId ? 'bg-purple-500 text-black' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}
+                key={circle.id}
+                onClick={() => onSelectFeed?.(circle.id)}
+                className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${currentFeedId === circle.id ? 'bg-purple-500 text-black' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}
               >
-                All
+                {circle.name}
               </button>
-              {circles.map(circle => (
-                <button
-                  key={circle.id}
-                  onClick={() => onSelectCircle?.(circle.id)}
-                  className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${activeCircleId === circle.id ? 'bg-purple-500 text-black' : 'bg-purple-950/30 text-purple-200 hover:bg-purple-900/60'}`}
-                >
-                  {circle.name}
-                </button>
-              ))}
-              {onCreateCircle && (
-                <button
-                  onClick={onCreateCircle}
-                  className="px-3 py-2 rounded-full text-sm font-semibold bg-purple-950/30 text-purple-200 hover:bg-purple-900/60"
-                >
-                  +
-                </button>
-              )}
-            </div>
+            ))}
+            {onCreateCircle && (
+              <button
+                onClick={onCreateCircle}
+                className="px-3 py-2 rounded-full text-sm font-semibold bg-purple-950/30 text-purple-200 hover:bg-purple-900/60"
+              >
+                +
+              </button>
+            )}
           </div>
-        )}
+        </div>
         {activeCircle && (
           <div className="mb-3 px-4 py-3 rounded-2xl border border-purple-800/30 bg-purple-950/20 text-sm text-purple-200">
             <span className="font-semibold text-white">Cercle privé :</span> {activeCircle.name} · contenu visible uniquement aux membres
@@ -406,9 +404,9 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
                     >
                       {shake.user.displayName}
                     </button>
-                    <span className="text-pink-400/50 text-xs">@{shake.user.username}</span>
-                    <span className="text-pink-500/40 text-xs">·</span>
-                    <span className="text-pink-400/50 text-xs">{formatTimestamp(shake.timestamp)}</span>
+                    <span className="text-purple-300/60 text-xs">@{shake.user.username}</span>
+                    <span className="text-purple-400/40 text-xs">·</span>
+                    <span className="text-purple-300/60 text-xs">{formatTimestamp(shake.timestamp)}</span>
                   </div>
                 </div>
 
@@ -577,6 +575,31 @@ export function FeedView({ currentUser, refreshFeed, circleId, circles = [], act
           );
         })}
       </div>
+
+      {/* Circle input bar */}
+      {currentFeedId && (
+        <div className="fixed bottom-16 left-0 right-0 bg-rose-950/95 backdrop-blur-lg border-t border-rose-800/50 p-4">
+          <div className="max-w-2xl mx-auto flex items-center gap-3">
+            <input
+              type="text"
+              placeholder="Écris quelque chose..."
+              className="flex-1 px-4 py-2 bg-rose-900/50 border border-rose-700/50 rounded-full text-white placeholder-rose-300/70 focus:outline-none focus:border-purple-500"
+            />
+            <button className="p-2 bg-purple-600/20 hover:bg-purple-600/30 rounded-full transition-colors">
+              <Music className="w-5 h-5 text-purple-400" />
+            </button>
+            <button className="p-2 bg-purple-600/20 hover:bg-purple-600/30 rounded-full transition-colors">
+              <span className="text-purple-400 font-bold">GIF</span>
+            </button>
+            <button className="p-2 bg-purple-600/20 hover:bg-purple-600/30 rounded-full transition-colors">
+              <span className="text-purple-400">📷</span>
+            </button>
+            <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity">
+              Envoyer
+            </button>
+          </div>
+        </div>
+      )}
 
       <AnimatePresence>
         {reshakeDialogShake && (
