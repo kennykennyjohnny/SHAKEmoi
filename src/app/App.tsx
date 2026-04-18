@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, BarChart3, Bell } from 'lucide-react';
+import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, Bell } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
@@ -15,7 +15,7 @@ import { ShakeDuJourDialog } from './components/ShakeDuJourDialog';
 import { MessagesView } from './components/MessagesView';
 import { TopFriendsView } from './components/TopFriendsView';
 import { SharedPostView } from './components/SharedPostView';
-import { WeeklyWrapView } from './components/WeeklyWrapView';
+
 import { CircleInviteView } from './components/CircleInviteView';
 import { NotificationsDropdown } from './components/NotificationsDropdown';
 import { NotificationsView } from './components/NotificationsView';
@@ -23,7 +23,7 @@ import { ProfilePreviewDialog } from './components/ProfilePreviewDialog';
 import { supabase } from '../lib/supabase';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, getUserCircles, followUser } from '../lib/database';
 
-type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'wrap' | 'notifications';
+type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'notifications';
 
 function getSharedPostId(): string | null {
   const hash = window.location.hash;
@@ -235,8 +235,6 @@ export default function App() {
         return <TopFriendsView currentUser={currentUser} />;
       case 'messages':
         return <MessagesView currentUser={currentUser} onOpenCircle={openCircleFeed} onCircleCreated={handleCircleCreated} viewOptions={viewOptions} />;
-      case 'wrap':
-        return <WeeklyWrapView currentUser={currentUser} />;
       case 'notifications':
         return <NotificationsView currentUser={currentUser} onNavigateToPost={(postId) => { setViewOptions({ scrollToPostId: postId }); setCurrentView('feed'); }} onNavigateToProfile={(userId) => setProfilePreview({ userId, username: '' })} />;
       case 'profile':
@@ -265,9 +263,6 @@ export default function App() {
             </button>
 
             <div className="flex items-center gap-1.5">
-              <button onClick={() => setCurrentView('wrap')} className={`p-2 rounded-full transition-colors ${currentView === 'wrap' ? 'bg-fuchsia-500/15 text-fuchsia-400' : 'hover:bg-violet-900/25 text-purple-300/60'}`} title="Mon résumé">
-                <BarChart3 className="w-5 h-5" />
-              </button>
               <button onClick={() => setShowShareDialog(true)} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors">
                 <Share2 className="w-5 h-5 text-purple-300/60" />
               </button>
@@ -333,7 +328,6 @@ export default function App() {
             { view: 'feed' as View, icon: Home, label: 'Feed' },
             { view: 'top' as View, icon: TrendingUp, label: 'TOP' },
             { view: 'messages' as View, icon: MessageCircle, label: 'Messages' },
-            { view: 'wrap' as View, icon: BarChart3, label: 'Mon résumé' },
             { view: 'profile' as View, icon: User, label: 'Profil' },
           ]).map(({ view, icon: Icon, label }) => (
             <button

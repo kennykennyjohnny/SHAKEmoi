@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, Play, Users, Loader2, ExternalLink, Music, Crown, Heart, Sparkles } from 'lucide-react';
+import { TrendingUp, Play, Users, Loader2, ExternalLink, Music, Crown, Repeat2, BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { getFriendsTrending, getAppStats } from '../../lib/database';
+import { getFriendsTrending, getCurrentUser, getUserFollowing } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
+import { supabase } from '../../lib/supabase';
 
 interface TopFriendsViewProps {
   currentUser: any;
@@ -13,10 +14,69 @@ export function TopFriendsView({ currentUser }: TopFriendsViewProps) {
   const [loading, setLoading] = useState(true);
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
   const [period, setPeriod] = useState<7 | 30>(7);
-  const [stats, setStats] = useState({ users: 0, shakes: 0, likes: 0 });
+  const [wrap, setWrap] = useState<any>(null);
+  const [wrapOpen, setWrapOpen] = useState(true);
 
   useEffect(() => { loadTrending(); }, [period]);
-  useEffect(() => { getAppStats().then(setStats); }, []);
+  useEffect(() => { generateWrap(); }, []);
+
+  const generateWrap = async () => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) return;
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+
+      const { data: myPosts } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('created_at', weekAgo.toISOString())
+        .eq('is_reshake', false);
+
+      const { data: myReshakes } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('created_at', weekAgo.toISOString())
+        .eq('is_reshake', true);
+
+      const following = await getUserFollowing(user.id);
+      const friendIds = following.map((f: any) => f.id);
+
+      let mostActiveF = null;
+      if (friendIds.length > 0) {
+        const { data: friendPosts } = await supabase
+          .from('posts')
+          .select('user_id, user:users_profile!posts_user_id_fkey(username)')
+          .in('user_id', friendIds)
+          .gte('created_at', weekAgo.toISOString());
+        const counts: Record<string, { count: number; username: string }> = {};
+        (friendPosts || []).forEach((p: any) => {
+          if (!counts[p.user_id]) counts[p.user_id] = { count: 0, username: p.user?.username || '?' };
+          counts[p.user_id].count++;
+        });
+        const sorted = Object.values(counts).sort((a, b) => b.count - a.count);
+        if (sorted.length > 0) mostActiveF = sorted[0].username;
+      }
+
+      const artistCounts: Record<string, number> = {};
+      (myPosts || []).forEach((p: any) => {
+        const a = p.artist || 'Inconnu';
+        artistCounts[a] = (artistCounts[a] || 0) + 1;
+      });
+      const topArtist = Object.entries(artistCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+      setWrap({
+        shakesCount: (myPosts || []).length,
+        reshakesCount: (myReshakes || []).length,
+        topArtist,
+        mostActiveFriend: mostActiveF,
+      });
+    } catch (err) {
+      console.error('Error generating wrap:', err);
+    }
+  };
 
   const loadTrending = async () => {
     setLoading(true);
@@ -71,30 +131,70 @@ export function TopFriendsView({ currentUser }: TopFriendsViewProps) {
         </div>
       </div>
 
-      {/* Community Stats */}
-      <div className="grid grid-cols-3 gap-2 mb-5">
-        <div className="bg-violet-950/25 border border-purple-500/15 rounded-xl p-2.5 text-center">
-          <p className="text-lg font-bold text-purple-400 flex items-center justify-center gap-1">
-            <Users className="w-3.5 h-3.5" />
-            {stats.users}
-          </p>
-          <p className="text-[10px] text-purple-400/50">Shakers</p>
+      {/* Mon résumé de la semaine */}
+      {wrap && (
+        <div className="mb-5">
+          <button
+            onClick={() => setWrapOpen(!wrapOpen)}
+            className="w-full flex items-center justify-between bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl px-3.5 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-fuchsia-400" />
+              <span className="text-sm font-bold text-white">Mon résumé de la semaine</span>
+            </div>
+            {wrapOpen ? <ChevronUp className="w-4 h-4 text-purple-400/60" /> : <ChevronDown className="w-4 h-4 text-purple-400/60" />}
+          </button>
+          <AnimatePresence>
+            {wrapOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div className="bg-violet-950/25 border border-purple-500/15 rounded-xl p-2.5 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-purple-900/40 flex items-center justify-center text-purple-400">
+                      <Music className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-white leading-none">{wrap.shakesCount}</p>
+                      <p className="text-[10px] text-purple-400/50">Shakes</p>
+                    </div>
+                  </div>
+                  <div className="bg-violet-950/25 border border-purple-500/15 rounded-xl p-2.5 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-fuchsia-900/40 flex items-center justify-center text-fuchsia-400">
+                      <Repeat2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-white leading-none">{wrap.reshakesCount}</p>
+                      <p className="text-[10px] text-purple-400/50">Reshakes</p>
+                    </div>
+                  </div>
+                  <div className="bg-violet-950/25 border border-purple-500/15 rounded-xl p-2.5 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-pink-900/40 flex items-center justify-center text-pink-400">
+                      <TrendingUp className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-white truncate leading-none">{wrap.topArtist || '-'}</p>
+                      <p className="text-[10px] text-purple-400/50">Artiste top</p>
+                    </div>
+                  </div>
+                  <div className="bg-violet-950/25 border border-purple-500/15 rounded-xl p-2.5 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-fuchsia-900/40 flex items-center justify-center text-fuchsia-400">
+                      <Users className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-white truncate leading-none">{wrap.mostActiveFriend ? `@${wrap.mostActiveFriend}` : '-'}</p>
+                      <p className="text-[10px] text-purple-400/50">Ami actif</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-        <div className="bg-violet-950/25 border border-purple-500/15 rounded-xl p-2.5 text-center">
-          <p className="text-lg font-bold text-pink-400 flex items-center justify-center gap-1">
-            <Sparkles className="w-3.5 h-3.5" />
-            {stats.shakes}
-          </p>
-          <p className="text-[10px] text-purple-400/50">Shakes</p>
-        </div>
-        <div className="bg-violet-950/25 border border-purple-500/15 rounded-xl p-2.5 text-center">
-          <p className="text-lg font-bold text-fuchsia-400 flex items-center justify-center gap-1">
-            <Heart className="w-3.5 h-3.5" />
-            {stats.likes}
-          </p>
-          <p className="text-[10px] text-purple-400/50">Likes</p>
-        </div>
-      </div>
+      )}
 
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-[400px]">
