@@ -18,27 +18,27 @@ export function TopFriendsView({ currentUser }: TopFriendsViewProps) {
   const [wrapOpen, setWrapOpen] = useState(true);
 
   useEffect(() => { loadTrending(); }, [period]);
-  useEffect(() => { generateWrap(); }, []);
+  useEffect(() => { generateWrap(); }, [period]);
 
   const generateWrap = async () => {
     try {
       const user = await getCurrentUser();
       if (!user) return;
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
+      const since = new Date();
+      since.setDate(since.getDate() - period);
 
       const { data: myPosts } = await supabase
         .from('posts')
         .select('*')
         .eq('user_id', user.id)
-        .gte('created_at', weekAgo.toISOString())
+        .gte('created_at', since.toISOString())
         .eq('is_reshake', false);
 
       const { data: myReshakes } = await supabase
         .from('posts')
         .select('*')
         .eq('user_id', user.id)
-        .gte('created_at', weekAgo.toISOString())
+        .gte('created_at', since.toISOString())
         .eq('is_reshake', true);
 
       const following = await getUserFollowing(user.id);
@@ -50,7 +50,7 @@ export function TopFriendsView({ currentUser }: TopFriendsViewProps) {
           .from('posts')
           .select('user_id, user:users_profile!posts_user_id_fkey(username)')
           .in('user_id', friendIds)
-          .gte('created_at', weekAgo.toISOString());
+          .gte('created_at', since.toISOString());
         const counts: Record<string, { count: number; username: string }> = {};
         (friendPosts || []).forEach((p: any) => {
           if (!counts[p.user_id]) counts[p.user_id] = { count: 0, username: p.user?.username || '?' };
@@ -140,7 +140,7 @@ export function TopFriendsView({ currentUser }: TopFriendsViewProps) {
           >
             <div className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-fuchsia-400" />
-              <span className="text-sm font-bold text-white">Mon résumé de la semaine</span>
+              <span className="text-sm font-bold text-white">{period === 7 ? 'Mon résumé de la semaine' : 'Mon résumé du mois'}</span>
             </div>
             {wrapOpen ? <ChevronUp className="w-4 h-4 text-purple-400/60" /> : <ChevronDown className="w-4 h-4 text-purple-400/60" />}
           </button>

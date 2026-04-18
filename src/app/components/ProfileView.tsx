@@ -1,6 +1,6 @@
 import { Users, Music, Heart, Settings, Play, Pause, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, ExternalLink, UserMinus, Share2, Copy, Check, Instagram, Send, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
 import { CommentsDialog } from './CommentsDialog';
@@ -366,61 +366,64 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           </div>
         ) : currentShakes.length > 0 ? (
           <>
-            {/* Grid of covers */}
+            {/* Grid of covers with inline detail after clicked row */}
             <div className="grid grid-cols-3 gap-1.5">
               {currentShakes.map((shake, index) => {
-                return (
-                  <div key={shake.id}>
-                    <motion.button
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.03 }}
-                      onClick={() => {
-                        if (detailPostId === shake.id) { setDetailPostId(null); setShowDetailEmbed(false); }
-                        else { setDetailPostId(shake.id); setShowDetailEmbed(false); setTimeout(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100); }
-                      }}
-                      className={`relative aspect-square rounded-lg overflow-hidden group transition-all w-full hover:opacity-90 ${detailPostId === shake.id ? 'ring-2 ring-fuchsia-500 opacity-100' : ''}`}
-                    >
-                      <img
-                        src={shake.track.coverUrl}
-                        alt={shake.track.title}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                        <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                      </div>
-                      {activeTab === 'reshakes' && shake.originalUser && (
-                        <div className="absolute top-1 left-1 bg-fuchsia-500/80 rounded-full p-0.5">
-                          <Repeat2 className="w-2.5 h-2.5 text-white" />
-                        </div>
-                      )}
-                      <div className="absolute bottom-1 right-1 bg-black/60 rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
-                        <Heart className="w-2.5 h-2.5 text-pink-400" />
-                        <span className="text-[9px] text-white font-medium">{shake.likes}</span>
-                      </div>
-                    </motion.button>
-                  </div>
-                );
-              })}
-            </div>
+                // Check if detail should appear after this row (every 3 items)
+                const detailShakeIdx = detailPostId ? currentShakes.findIndex(s => s.id === detailPostId) : -1;
+                const detailRow = detailShakeIdx >= 0 ? Math.floor(detailShakeIdx / 3) : -1;
+                const currentRow = Math.floor(index / 3);
+                const isLastInRow = (index % 3 === 2) || (index === currentShakes.length - 1);
+                const showDetailAfter = isLastInRow && currentRow === detailRow;
 
-            {/* Inline Post Detail (replaces modal) */}
-            <AnimatePresence>
-              {detailPostId && (() => {
-                const shake = currentShakes.find(s => s.id === detailPostId);
-                if (!shake) return null;
-                const trackId = shake.track.id || (shake.track.spotifyUrl?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
-                const embedUrl = shake.track.spotifyEmbedUrl || (trackId ? `https://open.spotify.com/embed/track/${trackId}?theme=0` : null);
                 return (
-                  <motion.div
-                    ref={detailRef}
-                    key={detailPostId}
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden"
-                  >
+                  <React.Fragment key={shake.id}>
+                    <div>
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.03 }}
+                        onClick={() => {
+                          if (detailPostId === shake.id) { setDetailPostId(null); setShowDetailEmbed(false); }
+                          else { setDetailPostId(shake.id); setShowDetailEmbed(false); setTimeout(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100); }
+                        }}
+                        className={`relative aspect-square rounded-lg overflow-hidden group transition-all w-full hover:opacity-90 ${detailPostId === shake.id ? 'ring-2 ring-fuchsia-500 opacity-100' : ''}`}
+                      >
+                        <img
+                          src={shake.track.coverUrl}
+                          alt={shake.track.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                          <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                        </div>
+                        {activeTab === 'reshakes' && shake.originalUser && (
+                          <div className="absolute top-1 left-1 bg-fuchsia-500/80 rounded-full p-0.5">
+                            <Repeat2 className="w-2.5 h-2.5 text-white" />
+                          </div>
+                        )}
+                        <div className="absolute bottom-1 right-1 bg-black/60 rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
+                          <Heart className="w-2.5 h-2.5 text-pink-400" />
+                          <span className="text-[9px] text-white font-medium">{shake.likes}</span>
+                        </div>
+                      </motion.button>
+                    </div>
+                    {showDetailAfter && detailPostId && (() => {
+                      const detailShake = currentShakes.find(s => s.id === detailPostId);
+                      if (!detailShake) return null;
+                      const trackId = detailShake.track.id || (detailShake.track.spotifyUrl?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
+                      const embedUrl = detailShake.track.spotifyEmbedUrl || (trackId ? `https://open.spotify.com/embed/track/${trackId}?theme=0` : null);
+                      return (
+                        <div className="col-span-3" ref={detailRef}>
+                          <AnimatePresence>
+                            <motion.div
+                              key={detailPostId}
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden"
+                            >
                     <div className="mt-3 bg-purple-950/40 rounded-2xl border border-purple-800/20 overflow-hidden">
                       {/* Header */}
                       <div className="px-4 py-2.5 flex items-center gap-3 border-b border-purple-800/20">
@@ -428,8 +431,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           <ArrowLeft className="w-5 h-5 text-purple-300/60" />
                         </button>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm text-white truncate">{shake.track.title}</p>
-                          <p className="text-xs text-purple-300/60 truncate">{shake.track.artist}</p>
+                          <p className="font-bold text-sm text-white truncate">{detailShake.track.title}</p>
+                          <p className="text-xs text-purple-300/60 truncate">{detailShake.track.artist}</p>
                         </div>
                         <button onClick={() => { setDetailPostId(null); setShowDetailEmbed(false); }} className="p-1 hover:bg-purple-900/40 rounded-full">
                           <X className="w-5 h-5 text-purple-300/60" />
@@ -438,7 +441,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
                       {/* Cover */}
                       <div className="relative cursor-pointer" onClick={() => setShowDetailEmbed(!showDetailEmbed)}>
-                        <img src={shake.track.coverUrl} alt="" className="w-full aspect-square object-cover" />
+                        <img src={detailShake.track.coverUrl} alt="" className="w-full aspect-square object-cover" />
                         <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
                           {showDetailEmbed ? (
                             <Pause className="w-12 h-12 text-white fill-white drop-shadow-lg" />
@@ -449,9 +452,9 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                       </div>
 
                       {/* Caption */}
-                      {shake.caption && (
+                      {detailShake.caption && (
                         <div className="px-4 pt-3">
-                          <p className="text-sm text-purple-200/80">{shake.caption}</p>
+                          <p className="text-sm text-purple-200/80">{detailShake.caption}</p>
                         </div>
                       )}
 
@@ -466,23 +469,23 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
                       {/* Action bar */}
                       <div className="px-4 py-3 flex items-center gap-5">
-                        <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group">
-                          <Heart className={`w-6 h-6 transition-all ${shake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-300/70 group-hover:text-pink-500'}`} />
-                          <span className={`text-sm font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{shake.likes}</span>
+                        <button onClick={() => toggleLike(detailShake.id)} className="flex items-center gap-1.5 group">
+                          <Heart className={`w-6 h-6 transition-all ${detailShake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-300/70 group-hover:text-pink-500'}`} />
+                          <span className={`text-sm font-medium ${detailShake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{detailShake.likes}</span>
                         </button>
 
-                        <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
+                        <button onClick={() => setCommentsPostId(detailShake.id)} className="flex items-center gap-1.5 group">
                           <MessageCircle className="w-6 h-6 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
-                          <span className="text-sm font-medium text-purple-300/70">{shake.comments}</span>
+                          <span className="text-sm font-medium text-purple-300/70">{detailShake.comments}</span>
                         </button>
 
-                        <button onClick={() => openInMusicApp(shake)} className="flex items-center gap-1.5 group ml-auto px-3 py-1.5 rounded-full bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors">
+                        <button onClick={() => openInMusicApp(detailShake)} className="flex items-center gap-1.5 group ml-auto px-3 py-1.5 rounded-full bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors">
                           <ExternalLink className="w-4 h-4 text-fuchsia-400" />
                           <span className="text-xs font-medium text-fuchsia-400">Écouter</span>
                         </button>
 
                         <button
-                          onClick={() => { if (confirm('Supprimer ce shake ?')) { handleDeleteShake(shake.id); } }}
+                          onClick={() => { if (confirm('Supprimer ce shake ?')) { handleDeleteShake(detailShake.id); } }}
                           className="p-1.5 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg transition-colors"
                         >
                           <Trash2 className="w-4 h-4 text-pink-400" />
@@ -491,13 +494,18 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
                       {/* Timestamp */}
                       <div className="px-4 pb-3">
-                        <p className="text-[10px] text-purple-500/40">{shake.timestamp}</p>
+                        <p className="text-[10px] text-purple-500/40">{detailShake.timestamp}</p>
                       </div>
                     </div>
                   </motion.div>
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })()}
+                  </React.Fragment>
                 );
-              })()}
-            </AnimatePresence>
+              })}
+            </div>
           </>
         ) : (
           <div className="text-center py-12">

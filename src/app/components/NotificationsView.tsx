@@ -196,14 +196,14 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
               {isFollowNotif && !alreadyFollowing && (
                 <button
                   onClick={(e) => { e.stopPropagation(); handleFollowBack(notif.actor_id); }}
-                  className="flex-shrink-0 px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-lg shadow-purple-500/20"
+                  className="flex-shrink-0 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-lg shadow-purple-500/20 active:scale-95"
                 >
                   <UserPlus className="w-3 h-3" /> Suivre
                 </button>
               )}
               {isFollowNotif && alreadyFollowing && (
-                <span className="flex-shrink-0 inline-flex items-center gap-1 text-xs text-fuchsia-400/60 bg-fuchsia-500/10 px-2.5 py-1 rounded-full">
-                  <UserCheck className="w-3 h-3" /> Suivi
+                <span className="flex-shrink-0 inline-flex items-center gap-1.5 text-sm text-fuchsia-400 bg-fuchsia-500/15 px-3.5 py-1.5 rounded-full border border-fuchsia-500/25 font-medium">
+                  <UserCheck className="w-3.5 h-3.5" /> Abonné
                 </span>
               )}
 
