@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
 import { CommentsDialog } from './CommentsDialog';
+import { PostDetailModal } from './PostDetailModal';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPost } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -23,7 +24,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
   const [userReshakes, setUserReshakes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
-  const [expandedShakeId, setExpandedShakeId] = useState<string | null>(null);
+  const [detailPostId, setDetailPostId] = useState<string | null>(null);
   const [showFollowersList, setShowFollowersList] = useState<'followers' | 'following' | null>(null);
   const [followersList, setFollowersList] = useState<any[]>([]);
   const [followingList, setFollowingList] = useState<any[]>([]);
@@ -330,17 +331,17 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       <div className="border-y border-purple-800/20 px-4 sticky top-0 bg-[#0a0012] z-30">
         <div className="flex gap-6">
           <button
-            onClick={() => { setActiveTab('shakes'); setExpandedShakeId(null); }}
+            onClick={() => { setActiveTab('shakes'); }}
             className={`py-3 border-b-2 font-semibold text-sm transition-colors ${
               activeTab === 'shakes'
-                ? 'border-purple-500 text-purple-400'
+                ? 'border-purple-500 text-purple-300'
                 : 'border-transparent text-purple-500/40 hover:text-purple-300'
             }`}
           >
             Mes shakes
           </button>
           <button
-            onClick={() => { setActiveTab('reshakes'); setExpandedShakeId(null); }}
+            onClick={() => { setActiveTab('reshakes'); }}
             className={`py-3 border-b-2 font-semibold text-sm transition-colors ${
               activeTab === 'reshakes'
                 ? 'border-fuchsia-500 text-fuchsia-400'
@@ -364,133 +365,33 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
             {/* Grid of covers with inline expanded embeds */}
             <div className="grid grid-cols-3 gap-1.5">
               {currentShakes.map((shake, index) => {
-                const isExpanded = expandedShakeId === shake.id;
-                
                 return (
-                  <div key={shake.id} className={isExpanded ? 'col-span-3' : ''}>
-                    {!isExpanded ? (
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.03 }}
-                        onClick={() => setExpandedShakeId(shake.id)}
-                        className="relative aspect-square rounded-lg overflow-hidden group transition-all w-full hover:opacity-90"
-                      >
-                        <img
-                          src={shake.track.coverUrl}
-                          alt={shake.track.title}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                          <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                  <div key={shake.id}>
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.03 }}
+                      onClick={() => setDetailPostId(shake.id)}
+                      className="relative aspect-square rounded-lg overflow-hidden group transition-all w-full hover:opacity-90"
+                    >
+                      <img
+                        src={shake.track.coverUrl}
+                        alt={shake.track.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                        <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                      </div>
+                      {activeTab === 'reshakes' && shake.originalUser && (
+                        <div className="absolute top-1 left-1 bg-fuchsia-500/80 rounded-full p-0.5">
+                          <Repeat2 className="w-2.5 h-2.5 text-white" />
                         </div>
-                        {activeTab === 'reshakes' && shake.originalUser && (
-                          <div className="absolute top-1 left-1 bg-fuchsia-500/80 rounded-full p-0.5">
-                            <Repeat2 className="w-2.5 h-2.5 text-white" />
-                          </div>
-                        )}
-                        <div className="absolute bottom-1 right-1 bg-black/60 rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
-                          <Heart className="w-2.5 h-2.5 text-pink-400" />
-                          <span className="text-[9px] text-white font-medium">{shake.likes}</span>
-                        </div>
-                      </motion.button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-purple-950/40 rounded-xl border border-purple-800/30 overflow-hidden"
-                      >
-                        {activeTab === 'reshakes' && shake.originalUser && (
-                          <div className="flex items-center gap-2 px-4 pt-3">
-                            <img
-                              src={shake.originalUser.avatar || `https://ui-avatars.com/api/?name=${shake.originalUser.username}&background=random`}
-                              alt={shake.originalUser.username}
-                              className="w-6 h-6 rounded-full object-cover"
-                            />
-                            <span className="text-xs text-white font-medium">@{shake.originalUser.username}</span>
-                            <Repeat2 className="w-3 h-3 text-fuchsia-400" />
-                            <span className="text-xs text-fuchsia-400/60">Reshaké par toi</span>
-                          </div>
-                        )}
-
-                        <div className="p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-bold text-sm text-white truncate">{shake.track.title}</h4>
-                              <p className="text-xs text-purple-300/60 truncate">{shake.track.artist}</p>
-                            </div>
-                            <button
-                              onClick={() => setExpandedShakeId(null)}
-                              className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors ml-2"
-                            >
-                              <X className="w-4 h-4 text-purple-300/50" />
-                            </button>
-                          </div>
-
-                          {shake.caption && (
-                            <p className="text-sm text-purple-200/80 mb-3">{shake.caption}</p>
-                          )}
-
-                          {shake.track.spotifyEmbedUrl ? (
-                            <div className="rounded-lg overflow-hidden mb-3">
-                              <iframe
-                                src={`${shake.track.spotifyEmbedUrl}&utm_source=generator`}
-                                width="100%"
-                                height="152"
-                                frameBorder="0"
-                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                                loading="lazy"
-                                className="rounded-lg"
-                              />
-                            </div>
-                          ) : (
-                            <div className="flex gap-3 mb-3">
-                              <img src={shake.track.coverUrl} alt={shake.track.title} className="w-14 h-14 rounded-lg object-cover" />
-                              <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <h4 className="font-bold text-sm text-white truncate">{shake.track.title}</h4>
-                                <p className="text-xs text-purple-300/60 truncate">{shake.track.artist}</p>
-                              </div>
-                            </div>
-                          )}
-
-                          <button
-                            onClick={() => openInMusicApp(shake)}
-                            className="w-full py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity mb-3"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            Ouvrir dans l'app
-                          </button>
-
-                          <div className="flex items-center gap-4 pt-2 border-t border-purple-800/20">
-                            <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group">
-                              <Heart className={`w-5 h-5 transition-all ${shake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-400/50 group-hover:text-pink-500'}`} />
-                              <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-400/50'}`}>{shake.likes}</span>
-                            </button>
-
-                            <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
-                              <MessageCircle className="w-5 h-5 text-purple-400/50 group-hover:text-fuchsia-400 transition-colors" />
-                              <span className="text-xs font-medium text-purple-400/50">{shake.comments}</span>
-                            </button>
-
-                            <button className="flex items-center gap-1.5 group">
-                              <Repeat2 className="w-5 h-5 text-purple-400/50 group-hover:text-fuchsia-400 transition-colors" />
-                              <span className="text-xs font-medium text-purple-400/50">{shake.reshakes}</span>
-                            </button>
-
-                            <span className="text-xs text-purple-500/40 ml-auto">{shake.timestamp}</span>
-
-                            <button
-                              onClick={() => {
-                                if (confirm('Supprimer ce shake ?')) handleDeleteShake(shake.id);
-                              }}
-                              className="p-1.5 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4 text-pink-400" />
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
+                      )}
+                      <div className="absolute bottom-1 right-1 bg-black/60 rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
+                        <Heart className="w-2.5 h-2.5 text-pink-400" />
+                        <span className="text-[9px] text-white font-medium">{shake.likes}</span>
+                      </div>
+                    </motion.button>
                   </div>
                 );
               })}
@@ -604,7 +505,20 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           <CommentsDialog
             postId={commentsPostId}
             onClose={() => setCommentsPostId(null)}
+            currentUser={user}
             onCommentAdded={() => loadUserData()}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Post Detail Modal (Instagram-style) */}
+      <AnimatePresence>
+        {detailPostId && (
+          <PostDetailModal
+            postId={detailPostId}
+            currentUser={user}
+            onClose={() => setDetailPostId(null)}
+            onDeletePost={(id) => { handleDeleteShake(id); setDetailPostId(null); }}
           />
         )}
       </AnimatePresence>

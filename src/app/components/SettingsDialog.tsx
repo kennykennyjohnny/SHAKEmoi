@@ -15,10 +15,22 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
   const [musicService, setMusicService] = useState<MusicPlatform>(
     currentUser?.musicService || currentUser?.preferred_platform || 'spotify'
   );
+  const [initialMusicService] = useState<MusicPlatform>(
+    currentUser?.musicService || currentUser?.preferred_platform || 'spotify'
+  );
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
   const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('shakemoi_notif_prefs');
+    return saved ? JSON.parse(saved) : {
+      likes: true,
+      comments: true,
+      reshakes: true,
+      follows: true,
+    };
+  });
+  const [initialNotifications] = useState(() => {
     const saved = localStorage.getItem('shakemoi_notif_prefs');
     return saved ? JSON.parse(saved) : {
       likes: true,
@@ -80,6 +92,21 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
     onClose();
   };
 
+  const hasChanges = musicService !== initialMusicService ||
+    JSON.stringify(notifications) !== JSON.stringify(initialNotifications);
+
+  const handleClose = () => {
+    if (hasChanges) {
+      if (confirm('Tu as des modifications non enregistrées. Enregistrer avant de quitter ?')) {
+        handleSave();
+      } else {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  };
+
   const handleLogout = async () => {
     if (confirm('Te déconnecter de Shakemoi ?')) {
       try {
@@ -112,7 +139,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
   const displayName = currentUser?.displayName || currentUser?.display_name || currentUser?.username;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={handleClose}>
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -123,8 +150,8 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
         {/* Header */}
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between sticky top-0 bg-[#0f0020] z-10">
           <h2 className="text-lg font-bold text-white">Paramètres</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors">
-            <X className="w-5 h-5 text-purple-300/60" />
+          <button onClick={handleClose} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
+            <X className="w-6 h-6 text-purple-300/60" />
           </button>
         </div>
 

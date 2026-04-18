@@ -20,6 +20,7 @@ import { CircleInviteView } from './components/CircleInviteView';
 import { NotificationsDropdown } from './components/NotificationsDropdown';
 import { NotificationsView } from './components/NotificationsView';
 import { ProfilePreviewDialog } from './components/ProfilePreviewDialog';
+import { PostDetailModal } from './components/PostDetailModal';
 import { supabase } from '../lib/supabase';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, getUserCircles, followUser } from '../lib/database';
 
@@ -54,6 +55,7 @@ export default function App() {
   const [activeFeedCircleId, setActiveFeedCircleId] = useState<string | null>(null);
   const [viewOptions, setViewOptions] = useState<any>({});
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
+  const [notifPostId, setNotifPostId] = useState<string | null>(null);
   const [referrer, setReferrer] = useState<string | null>(null);
 
   const loadUserCircles = async () => {
@@ -236,7 +238,7 @@ export default function App() {
       case 'messages':
         return <MessagesView currentUser={currentUser} onOpenCircle={openCircleFeed} onCircleCreated={handleCircleCreated} viewOptions={viewOptions} />;
       case 'notifications':
-        return <NotificationsView currentUser={currentUser} onNavigateToPost={(postId) => { setViewOptions({ scrollToPostId: postId }); setCurrentView('feed'); }} onNavigateToProfile={(userId) => setProfilePreview({ userId, username: '' })} />;
+        return <NotificationsView currentUser={currentUser} onNavigateToPost={(postId) => setNotifPostId(postId)} onNavigateToProfile={(userId) => setProfilePreview({ userId, username: '' })} />;
       case 'profile':
         return <ProfileView user={currentUser} onUpdateUser={setCurrentUser} />;
       default:
@@ -398,6 +400,16 @@ export default function App() {
             userId={profilePreview.userId}
             username={profilePreview.username}
             onClose={() => setProfilePreview(null)}
+          />
+        )}
+      </AnimatePresence>
+      {/* Post Detail Modal from Notifications */}
+      <AnimatePresence>
+        {notifPostId && (
+          <PostDetailModal
+            postId={notifPostId}
+            currentUser={currentUser}
+            onClose={() => setNotifPostId(null)}
           />
         )}
       </AnimatePresence>

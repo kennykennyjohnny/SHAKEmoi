@@ -865,6 +865,22 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     </div>
                   </div>
 
+                  {/* Share button */}
+                  <button
+                    onClick={async () => {
+                      const url = `https://shakemoi.fr/#/s/${shake.id}`;
+                      if (navigator.share) {
+                        try { await navigator.share({ title: `${shake.track.title} - ${shake.track.artist}`, text: `Écoute "${shake.track.title}" de ${shake.track.artist} sur SHAKEmoi ! 🎵`, url }); } catch {}
+                      } else {
+                        await navigator.clipboard.writeText(url);
+                      }
+                    }}
+                    className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
+                    title="Partager ce shake"
+                  >
+                    <Share2 className="w-4 h-4 text-purple-300/70" />
+                  </button>
+
                   {/* More Menu */}
                   <div className="relative">
                     <button
@@ -1014,25 +1030,6 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     <span className={`text-xs font-medium ${shake.isReshaked ? 'text-fuchsia-500' : 'text-purple-300/70'}`}>{shake.reshakes}</span>
                   </button>
 
-                  <button onClick={() => setMusicReactionsPostId(shake.id)} className="flex items-center gap-1.5 group" title="Réagir avec un son">
-                    <Music className="w-5 h-5 text-purple-300/70 group-hover:text-pink-400 transition-colors" />
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      const url = `https://shakemoi.fr/#/s/${shake.id}`;
-                      if (navigator.share) {
-                        try { await navigator.share({ title: `${shake.track} - ${shake.artist}`, text: `Écoute "${shake.track}" de ${shake.artist} sur SHAKEmoi ! 🎵`, url }); } catch {}
-                      } else {
-                        await navigator.clipboard.writeText(url);
-                      }
-                    }}
-                    className="flex items-center gap-1.5 group"
-                    title="Partager ce shake"
-                  >
-                    <Share2 className="w-5 h-5 text-purple-300/70 group-hover:text-purple-400 transition-colors" />
-                  </button>
-
                   <button
                     onClick={() => openInMusicApp(shake)}
                     className="flex items-center gap-1.5 group ml-auto px-3 py-1 rounded-full bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors"
@@ -1080,6 +1077,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           <CommentsDialog
             postId={commentsPostId}
             onClose={() => setCommentsPostId(null)}
+            currentUser={currentUser}
             onCommentAdded={() => {
               setShakes(shakes.map(s =>
                 s.id === commentsPostId ? { ...s, comments: s.comments + 1 } : s
