@@ -65,13 +65,13 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
   };
 
   if (loading) return (
-    <div className="h-screen bg-[#0a0012] flex items-center justify-center">
+    <div className="h-screen bg-[#14092A] flex items-center justify-center">
       <Loader2 className="w-8 h-8 text-fuchsia-500 animate-spin" />
     </div>
   );
 
   if (!circle) return (
-    <div className="h-screen bg-[#0a0012] flex flex-col items-center justify-center gap-4 p-4">
+    <div className="h-screen bg-[#14092A] flex flex-col items-center justify-center gap-4 p-4">
       <p className="text-purple-300/50 text-center">Ce cercle n'existe pas ou a été supprimé</p>
       <button onClick={() => { window.location.hash = ''; onJoin(); }} className="px-5 py-2.5 bg-purple-600/30 rounded-full text-sm text-purple-300 hover:bg-purple-600/40 transition-colors">
         Retour à l'accueil
@@ -83,7 +83,7 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
   const creator = members.find((m: any) => m.id === circle.created_by);
 
   return (
-    <div className="min-h-screen bg-[#0a0012] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#14092A] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[120px]" />
@@ -155,12 +155,12 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
                     animate={{ scale: 1, x: 0 }}
                     transition={{ delay: 0.3 + i * 0.1 }}
                     src={m.profile_album_cover_url || `https://ui-avatars.com/api/?name=${m.username}&background=random`}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-[#0a0012]"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-[#14092A]"
                     alt={m.username}
                   />
                 ))}
                 {members.length > 5 && (
-                  <div className="w-10 h-10 rounded-full bg-violet-900/50 border-2 border-[#0a0012] flex items-center justify-center text-xs font-bold text-purple-300">
+                  <div className="w-10 h-10 rounded-full bg-violet-900/50 border-2 border-[#14092A] flex items-center justify-center text-xs font-bold text-purple-300">
                     +{members.length - 5}
                   </div>
                 )}

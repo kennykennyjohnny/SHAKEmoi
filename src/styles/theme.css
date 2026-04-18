@@ -119,6 +119,42 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ── DS v1.1 — SHAKEmoi Color System ──────────────────────── */
+@theme inline {
+  /* Purple palette: deeper, richer — calibrated for opacity overlays on #14092A void */
+  --color-purple-950: #4B2F8E;
+  --color-purple-900: #3A1F6E;
+  --color-purple-800: #4A2E7A;
+  --color-purple-700: #5C3D9E;
+  --color-purple-600: #7B2CBF;
+  --color-purple-500: #9B5DE5;
+  --color-purple-400: #B280F5;
+  --color-purple-300: #C8A8F0;
+  --color-purple-200: #E8DCFF;
+
+  /* Violet palette: aligned with purple */
+  --color-violet-950: #4B2F8E;
+  --color-violet-900: #3A1F6E;
+  --color-violet-800: #4A2E7A;
+
+  /* Pink: DS gradient endpoint */
+  --color-pink-600: #E91E80;
+
+  /* Named tokens */
+  --color-shake-void: #14092A;
+  --color-shake-panel: #1D0F3D;
+  --color-shake-card: #2A1852;
+  --color-shake-border: #4A2E7A;
+  --color-shake-muted: #B8A7D9;
+  --color-shake-secondary: #E8DCFF;
+  --color-shake-cream: #FFEFD5;
+
+  /* Font families */
+  --font-display: 'Bricolage Grotesque', 'Manrope', sans-serif;
+  --font-body: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -126,7 +162,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Maven Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
   /**

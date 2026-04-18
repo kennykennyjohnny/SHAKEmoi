@@ -49,7 +49,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
   const isServiceStep = step >= steps.length;
 
   return (
-    <div className="fixed inset-0 bg-[#0a0012] z-50 flex flex-col items-center justify-center p-6">
+    <div className="fixed inset-0 bg-[#14092A] z-50 flex flex-col items-center justify-center p-6">
       {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px]" />

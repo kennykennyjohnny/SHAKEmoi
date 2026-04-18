@@ -1,7 +1,15 @@
-/* Google Fonts - Maven Pro */
-@import url('https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400;500;600;700;800;900&display=swap');
+/* DS v1.1 — Typography */
+/* Bricolage Grotesque (display), Manrope (body), JetBrains Mono (mono) */
+/* Loaded via index.html <link> */
 
-/* Maven Pro pour TOUT */
 * {
-  font-family: 'Maven Pro', sans-serif !important;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Bricolage Grotesque', 'Manrope', sans-serif !important;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace !important;
 }

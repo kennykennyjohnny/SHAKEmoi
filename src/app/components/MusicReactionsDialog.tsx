@@ -57,7 +57,7 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
       <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-[#0f0020] rounded-2xl w-full max-w-md border border-purple-800/20 max-h-[85vh] overflow-hidden flex flex-col"
+        className="bg-[#1D0F3D] rounded-2xl w-full max-w-md border border-purple-800/20 max-h-[85vh] overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}>
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
           <div className="flex items-center gap-2">

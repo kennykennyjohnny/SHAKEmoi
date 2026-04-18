@@ -47,7 +47,7 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-gradient-to-br from-[#0f0020] via-[#0f0020] to-purple-900/20 rounded-2xl w-full max-w-md border border-purple-800/20 overflow-hidden relative"
+          className="bg-gradient-to-br from-[#1D0F3D] via-[#1D0F3D] to-purple-900/20 rounded-2xl w-full max-w-md border border-purple-800/20 overflow-hidden relative"
         >
           {/* Animated background */}
           <div className="absolute inset-0 overflow-hidden">

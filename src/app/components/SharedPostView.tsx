@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Play, ExternalLink, Loader2, UserPlus, Pause, Headphones } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../../lib/supabase';
@@ -30,13 +30,13 @@ export function SharedPostView({ postId, onJoin }: Props) {
   };
 
   if (loading) return (
-    <div className="h-screen bg-[#0a0012] flex items-center justify-center">
+    <div className="h-screen bg-[#14092A] flex items-center justify-center">
       <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
     </div>
   );
 
   if (!post) return (
-    <div className="h-screen bg-[#0a0012] flex items-center justify-center text-purple-300/50">
+    <div className="h-screen bg-[#14092A] flex items-center justify-center text-purple-300/50">
       Post introuvable
     </div>
   );
@@ -75,12 +75,12 @@ export function SharedPostView({ postId, onJoin }: Props) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0012] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#14092A] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Background: blurred cover */}
       {post.cover_url && (
         <div className="absolute inset-0 pointer-events-none">
           <img src={post.cover_url} className="w-full h-full object-cover opacity-15 blur-3xl scale-110" alt="" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0012]/80 via-[#0a0012]/60 to-[#0a0012]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#14092A]/80 via-[#14092A]/60 to-[#14092A]" />
         </div>
       )}
 

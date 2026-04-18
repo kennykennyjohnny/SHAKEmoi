@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Play, Sparkles, Loader2, X, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
@@ -75,7 +75,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-[#0f0020] rounded-2xl w-full max-w-md border border-purple-800/20 max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-[#1D0F3D] rounded-2xl w-full max-w-md border border-purple-800/20 max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

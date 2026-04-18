@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Search as SearchIcon, Music, UserPlus, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { SearchView } from './SearchView';
@@ -15,7 +15,7 @@ export function ShakeTabsDialog({ onClose }: ShakeTabsDialogProps) {
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-[#0f0020] rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+        className="bg-[#1D0F3D] rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
       >
         {/* Header avec tabs */}
         <div className="border-b border-purple-800/20 p-4">

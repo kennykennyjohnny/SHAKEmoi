@@ -1,4 +1,4 @@
-﻿import { X, User, Mail, AtSign, MessageSquare, Upload, Loader2, Camera } from 'lucide-react';
+import { X, User, Mail, AtSign, MessageSquare, Upload, Loader2, Camera } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useRef } from 'react';
 import { updateUserProfile } from '../../lib/database';
@@ -103,7 +103,7 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-[#0f0020] rounded-2xl w-full max-w-md border border-purple-800/20"
+        className="bg-[#1D0F3D] rounded-2xl w-full max-w-md border border-purple-800/20"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

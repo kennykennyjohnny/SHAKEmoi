@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Volume2, VolumeX, X, Heart, ExternalLink } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -127,7 +127,7 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       exit={{ y: 100 }}
-      className="border-t border-purple-900/30 bg-[#0a0012]/95 backdrop-blur-lg"
+      className="border-t border-purple-900/30 bg-[#14092A]/95 backdrop-blur-lg"
     >
       {hasPreview && <audio ref={audioRef} />}
 

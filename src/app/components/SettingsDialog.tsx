@@ -1,4 +1,4 @@
-﻿import { X, Music2, Check, LogOut, User, Bell, Info, BellRing } from 'lucide-react';
+import { X, Music2, Check, LogOut, User, Bell, Info, BellRing } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 
@@ -144,11 +144,11 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-[#0f0020] rounded-2xl w-full max-w-md border border-purple-800/30 max-h-[85vh] overflow-y-auto"
+        className="bg-[#1D0F3D] rounded-2xl w-full max-w-md border border-purple-800/30 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between sticky top-0 bg-[#0f0020] z-10">
+        <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between sticky top-0 bg-[#1D0F3D] z-10">
           <h2 className="text-lg font-bold text-white">Paramètres</h2>
           <button onClick={handleClose} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
             <X className="w-6 h-6 text-purple-300/60" />

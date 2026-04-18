@@ -247,7 +247,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-screen bg-[#0a0012] text-white overflow-hidden flex">
+    <div className="h-screen w-screen bg-[#14092A] text-white overflow-hidden flex">
       {/* Sidebar gauche - Trending */}
       <aside className="hidden lg:block w-80 border-r border-violet-900/30 overflow-y-auto">
         <TrendingBar />
@@ -256,10 +256,10 @@ export default function App() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#0a0012]/80 sticky top-0 z-40">
+        <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#14092A]/80 sticky top-0 z-40">
           <div className="px-4 py-2 flex items-center justify-between">
             <button onClick={() => { setActiveFeedCircleId(null); setCurrentView('feed'); }} className="focus:outline-none">
-              <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
+              <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Bricolage Grotesque', 'Manrope', sans-serif" }}>
                 SHAKEmoi
               </span>
             </button>
@@ -271,7 +271,7 @@ export default function App() {
 
               {currentUser && (
                 <button
-                  onClick={() => { setCurrentView('notifications'); setUnreadNotifs(0); supabase.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false); }}
+                  onClick={() => { if (currentView === 'notifications') { setCurrentView('feed'); return; } setCurrentView('notifications'); setUnreadNotifs(0); supabase.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false); }}
                   className="p-2 hover:bg-violet-900/25 rounded-full transition-colors relative"
                 >
                   <Bell className={`w-5 h-5 ${currentView === 'notifications' ? 'text-purple-400' : 'text-purple-300/60'}`} />
@@ -300,7 +300,7 @@ export default function App() {
         </main>
 
         {/* Bottom Navigation Mobile — Feed, Top, Search, DMs, Profile */}
-        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-violet-900/30 backdrop-blur-lg bg-[#0a0012]/95 z-50">
+        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-violet-900/30 backdrop-blur-lg bg-[#14092A]/95 z-50">
           <div className="px-4 py-2.5 flex items-center justify-around max-w-lg mx-auto">
             {([
               { view: 'feed' as View, icon: Home, label: 'Feed' },

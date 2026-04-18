@@ -182,7 +182,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-[#0f0020] rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-purple-800/30 overflow-hidden"
+        className="bg-[#1D0F3D] rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-purple-800/30 overflow-hidden"
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center gap-3 flex-shrink-0">

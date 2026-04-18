@@ -1,4 +1,4 @@
-﻿import { X, Send, Loader2, Search } from 'lucide-react';
+import { X, Send, Loader2, Search } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { searchUsers, sendSongNotification } from '../../lib/database';
@@ -60,7 +60,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-[#0f0020] rounded-2xl w-full max-w-md border border-purple-800/20"
+        className="bg-[#1D0F3D] rounded-2xl w-full max-w-md border border-purple-800/20"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

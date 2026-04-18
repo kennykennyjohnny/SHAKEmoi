@@ -1,4 +1,4 @@
-﻿import { motion } from 'motion/react';
+import { motion } from 'motion/react';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -38,7 +38,7 @@ export function Logo({ size = 'md', animated = true, showText = true }: LogoProp
             fill="white"
             fontWeight="900"
             fontSize={fontSize}
-            fontFamily="'Maven Pro', sans-serif"
+            fontFamily="'Bricolage Grotesque', 'Manrope', sans-serif"
             letterSpacing="-2"
             animate={animated ? { rotate: [-8, -8] } : { rotate: -8 }}
             style={{ transformOrigin: '50px 54px' }}
@@ -53,7 +53,7 @@ export function Logo({ size = 'md', animated = true, showText = true }: LogoProp
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           className={`${text} font-black tracking-tight bg-gradient-to-r from-fuchsia-500 to-pink-500 bg-clip-text text-transparent whitespace-nowrap`}
-          style={{ fontFamily: "'Maven Pro', sans-serif" }}
+          style={{ fontFamily: "'Bricolage Grotesque', 'Manrope', sans-serif" }}
         >
           SHAKEmoi
         </motion.span>

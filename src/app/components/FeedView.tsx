@@ -35,7 +35,7 @@ function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { ci
       </div>
       {/* Pink fade hint on right edge to indicate scrollability */}
       {circles.length > 2 && (
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0a0012] to-transparent pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#14092A] to-transparent pointer-events-none" />
       )}
     </div>
   );
@@ -106,7 +106,7 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
       {/* Share Popup */}
       <AnimatePresence>
         {showShare && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-purple-500/15 bg-[#0d0018]">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-purple-500/15 bg-[#1D0F3D]">
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-sm font-bold text-white">Partager ce cercle</h3>
@@ -142,7 +142,7 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
       {/* Settings Panel */}
       <AnimatePresence>
         {showSettings && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-purple-500/15 bg-[#0d0018]">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-purple-500/15 bg-[#1D0F3D]">
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-sm font-bold text-white">Paramètres du cercle</h3>
@@ -277,10 +277,10 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
 
   return (
     <div className="fixed bottom-[4.5rem] lg:bottom-0 left-0 right-0 z-40 pointer-events-none">
-      <div className="max-w-2xl mx-auto pointer-events-auto bg-[#0a0012] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+      <div className="max-w-2xl mx-auto pointer-events-auto bg-[#14092A] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
       <AnimatePresence>
         {showChatTrackSearch && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-purple-500/25 bg-[#0a0012]">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-purple-500/25 bg-[#14092A]">
             <div className="p-3">
               <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
@@ -298,7 +298,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
           </motion.div>
         )}
         {showGifSearch && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-72 overflow-hidden border-b border-purple-500/25 bg-[#0a0012] flex flex-col">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-72 overflow-hidden border-b border-purple-500/25 bg-[#14092A] flex flex-col">
             <div className="p-3 pb-0">
               <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
@@ -318,7 +318,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
           </motion.div>
         )}
         {photoPreview && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="p-3 border-b border-purple-500/25 bg-[#0a0012]">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="p-3 border-b border-purple-500/25 bg-[#14092A]">
             <div className="flex items-end gap-3">
               <div className="relative inline-block">
                 <img src={photoPreview} alt="Aperçu" className="max-h-40 rounded-lg object-cover" />

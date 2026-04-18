@@ -102,7 +102,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-        <div className="bg-[#0f0020] rounded-2xl p-8 text-center">
+        <div className="bg-[#1D0F3D] rounded-2xl p-8 text-center">
           <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-purple-300/60">Chargement du profil...</p>
         </div>
@@ -113,7 +113,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
   if (!profile) {
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-        <div className="bg-[#0f0020] rounded-2xl p-8 text-center">
+        <div className="bg-[#1D0F3D] rounded-2xl p-8 text-center">
           <p className="text-purple-300/60">Profil introuvable</p>
           <button onClick={onClose} className="mt-4 px-4 py-2 bg-purple-600 rounded-lg text-sm">Fermer</button>
         </div>
@@ -138,7 +138,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-[#0f0020] rounded-2xl w-full max-w-md border border-purple-800/30 overflow-hidden max-h-[85vh] overflow-y-auto relative"
+        className="bg-[#1D0F3D] rounded-2xl w-full max-w-md border border-purple-800/30 overflow-hidden max-h-[85vh] overflow-y-auto relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}

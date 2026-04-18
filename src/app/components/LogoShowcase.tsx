@@ -38,7 +38,7 @@ export function LogoShowcase() {
     <div className="min-h-screen bg-black text-white p-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-black mb-3 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
+          <h1 className="text-5xl font-black mb-3 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent" style={{ fontFamily: "'Bricolage Grotesque', 'Manrope', sans-serif" }}>
             Sound Circle
           </h1>
           <p className="text-gray-400 text-lg mb-2">
@@ -98,7 +98,7 @@ export function LogoShowcase() {
               <li>• Ondes : Blanc pur (#ffffff)</li>
               <li>• Forme : Cercle parfait 96px</li>
               <li>• Animation : Douce et subtile</li>
-              <li>• Police : Maven Pro Black</li>
+              <li>• Police : Bricolage Grotesque Black</li>
             </ul>
           </div>
         </div>

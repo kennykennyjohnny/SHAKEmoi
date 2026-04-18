@@ -62,7 +62,7 @@ export function NotificationsDropdown({ userId, unreadCount, onRead }: Props) {
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="absolute right-0 top-full mt-2 w-80 max-h-96 bg-[#0f0020] border border-purple-500/30 rounded-2xl shadow-2xl shadow-purple-900/30 overflow-hidden z-50"
+            className="absolute right-0 top-full mt-2 w-80 max-h-96 bg-[#1D0F3D] border border-purple-500/30 rounded-2xl shadow-2xl shadow-purple-900/30 overflow-hidden z-50"
           >
             <div className="px-4 py-3 border-b border-purple-500/25 flex items-center justify-between">
               <span className="font-bold text-sm">Notifications</span>

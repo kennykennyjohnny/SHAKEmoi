@@ -249,7 +249,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
 
         <AnimatePresence>
           {showTrackSearch && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-purple-500/25 bg-[#0a0012] max-h-60 overflow-y-auto flex-shrink-0">
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-purple-500/25 bg-[#14092A] max-h-60 overflow-y-auto flex-shrink-0">
               <div className="p-3">
                 <div className="relative mb-2">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/70" />
@@ -266,7 +266,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
             </motion.div>
           )}
           {showGifSearch && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-72 overflow-hidden border-t border-purple-500/25 bg-[#0a0012] flex flex-col flex-shrink-0">
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-72 overflow-hidden border-t border-purple-500/25 bg-[#14092A] flex flex-col flex-shrink-0">
               <div className="p-3 pb-0">
                 <div className="relative mb-2">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
@@ -286,7 +286,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
             </motion.div>
           )}
           {photoPreview && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="p-3 border-t border-purple-500/25 bg-[#0a0012] flex-shrink-0">
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="p-3 border-t border-purple-500/25 bg-[#14092A] flex-shrink-0">
               <div className="flex items-end gap-3">
                 <div className="relative inline-block">
                   <img src={photoPreview} alt="Aperçu" className="max-h-40 rounded-lg object-cover" />
@@ -763,7 +763,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       {/* Settings drawer */}
       <AnimatePresence>
         {showSettings && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-purple-500/25 bg-[#0a0012] flex-shrink-0">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-purple-500/25 bg-[#14092A] flex-shrink-0">
             <div className="p-4 space-y-3">
               {/* Invite Code */}
               {circle.invite_code && (
@@ -858,7 +858,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       {/* Track search overlay */}
       <AnimatePresence>
         {showTrackSearch && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-purple-500/25 bg-[#0a0012] max-h-52 overflow-y-auto flex-shrink-0">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-purple-500/25 bg-[#14092A] max-h-52 overflow-y-auto flex-shrink-0">
             <div className="p-3">
               <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
@@ -877,7 +877,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       </AnimatePresence>
 
       {/* Chat bar */}
-      <div className="px-3 py-2.5 pb-[calc(0.625rem+4.5rem)] lg:pb-2.5 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0 bg-[#0a0012]/95 backdrop-blur-lg">
+      <div className="px-3 py-2.5 pb-[calc(0.625rem+4.5rem)] lg:pb-2.5 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0 bg-[#14092A]/95 backdrop-blur-lg">
         <button onClick={() => setShowTrackSearch(!showTrackSearch)} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
           <Music className="w-5 h-5" />
         </button>

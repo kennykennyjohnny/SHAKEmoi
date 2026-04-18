@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { X, Search, Music2, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -52,7 +52,7 @@ export function CreatePostDialog({ currentUser, onClose }: CreatePostDialogProps
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-[#0f0020] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-purple-800/20"
+          className="bg-[#1D0F3D] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-purple-800/20"
         >
           {/* Header */}
           <div className="px-6 py-4 border-b border-purple-800/20 flex items-center justify-between">

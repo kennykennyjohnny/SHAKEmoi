@@ -130,7 +130,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
   return (
     <div className="max-w-2xl mx-auto p-4">
       {/* Search Bar */}
-      <div className="sticky top-0 z-30 bg-[#0a0012] pb-4">
+      <div className="sticky top-0 z-30 bg-[#14092A] pb-4">
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/70" />
           <input

@@ -119,7 +119,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, currentUser }:
         animate={{ y: 0 }}
         exit={{ y: 100 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-[#0f0020] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80vh] flex flex-col border border-purple-500/30 mb-[4.5rem] sm:mb-0"
+        className="bg-[#1D0F3D] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80vh] flex flex-col border border-purple-500/30 mb-[4.5rem] sm:mb-0"
       >
         {/* Header with tabs */}
         <div className="border-b border-purple-800/20">

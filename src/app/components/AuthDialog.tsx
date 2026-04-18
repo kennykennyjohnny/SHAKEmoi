@@ -113,12 +113,12 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0a0012] z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-[#14092A] z-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#0f0020] rounded-2xl border border-purple-800/30 overflow-hidden shadow-2xl shadow-purple-900/20"
+          className="bg-[#1D0F3D] rounded-2xl border border-purple-800/30 overflow-hidden shadow-2xl shadow-purple-900/20"
         >
           {/* Header */}
           <div className="p-6 text-center">
@@ -158,7 +158,7 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
                 >
                   <Logo size="md" animated={true} showText={false} />
                 </motion.div>
-                <h1 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
+                <h1 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Bricolage Grotesque', 'Manrope', sans-serif" }}>
                   SHAKEmoi
                 </h1>
                 <p className="text-purple-300/50 text-sm mt-1">

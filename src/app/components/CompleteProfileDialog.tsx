@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Camera, Loader2, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -75,7 +75,7 @@ export function CompleteProfileDialog({ user, onComplete }: CompleteProfileDialo
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-[#0f0020] rounded-2xl w-full max-w-sm border border-purple-800/30 overflow-hidden"
+        className="bg-[#1D0F3D] rounded-2xl w-full max-w-sm border border-purple-800/30 overflow-hidden"
       >
         <div className="p-6 text-center">
           <h2 className="text-xl font-bold text-white mb-1">Complète ton profil</h2>
