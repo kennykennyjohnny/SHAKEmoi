@@ -302,7 +302,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
           )}
         </AnimatePresence>
 
-        <div className="px-4 py-3 pb-[calc(0.75rem+4rem)] lg:pb-3 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0">
+        <div className="px-4 py-3 pb-[calc(0.75rem+4.5rem)] lg:pb-3 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0">
           <button onClick={() => { setShowTrackSearch(!showTrackSearch); setShowGifSearch(false); }} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
             <Music className="w-5 h-5" />
           </button>
@@ -877,7 +877,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       </AnimatePresence>
 
       {/* Chat bar */}
-      <div className="px-3 py-2.5 pb-[calc(0.625rem+4rem)] lg:pb-2.5 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0 bg-[#0a0012]/95 backdrop-blur-lg">
+      <div className="px-3 py-2.5 pb-[calc(0.625rem+4.5rem)] lg:pb-2.5 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0 bg-[#0a0012]/95 backdrop-blur-lg">
         <button onClick={() => setShowTrackSearch(!showTrackSearch)} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
           <Music className="w-5 h-5" />
         </button>

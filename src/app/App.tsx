@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, BarChart3 } from 'lucide-react';
+import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, BarChart3, Bell } from 'lucide-react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
 import { ProfileView } from './components/ProfileView';
@@ -17,10 +17,11 @@ import { SharedPostView } from './components/SharedPostView';
 import { WeeklyWrapView } from './components/WeeklyWrapView';
 import { CircleInviteView } from './components/CircleInviteView';
 import { NotificationsDropdown } from './components/NotificationsDropdown';
+import { NotificationsView } from './components/NotificationsView';
 import { supabase } from '../lib/supabase';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, getUserCircles } from '../lib/database';
 
-type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'wrap';
+type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'wrap' | 'notifications';
 
 function getSharedPostId(): string | null {
   const hash = window.location.hash;
@@ -209,6 +210,8 @@ export default function App() {
         return <MessagesView currentUser={currentUser} onOpenCircle={openCircleFeed} onCircleCreated={handleCircleCreated} viewOptions={viewOptions} />;
       case 'wrap':
         return <WeeklyWrapView currentUser={currentUser} />;
+      case 'notifications':
+        return <NotificationsView currentUser={currentUser} />;
       case 'profile':
         return <ProfileView user={currentUser} onUpdateUser={setCurrentUser} />;
       default:
@@ -243,11 +246,17 @@ export default function App() {
               </button>
 
               {currentUser && (
-                <NotificationsDropdown
-                  userId={currentUser.id}
-                  unreadCount={unreadNotifs}
-                  onRead={() => setUnreadNotifs(0)}
-                />
+                <button
+                  onClick={() => { setCurrentView('notifications'); setUnreadNotifs(0); supabase.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false); }}
+                  className="p-2 hover:bg-violet-900/25 rounded-full transition-colors relative"
+                >
+                  <Bell className={`w-5 h-5 ${currentView === 'notifications' ? 'text-purple-400' : 'text-purple-300/60'}`} />
+                  {unreadNotifs > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-pink-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white min-w-[18px] px-1">
+                      {unreadNotifs > 9 ? '9+' : unreadNotifs}
+                    </span>
+                  )}
+                </button>
               )}
 
               <button
