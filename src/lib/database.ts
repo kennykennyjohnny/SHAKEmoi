@@ -915,7 +915,9 @@ export async function getUserNotifications(userId: string) {
       actor_id: notif.from_user?.id || null,
       actor_username: notif.from_user?.username || 'unknown',
       actor_avatar: notif.from_user?.profile_album_cover_url,
+      post_id: notif.post?.id || null,
       post_cover_url: notif.post?.cover_url,
+      post_track_name: notif.post?.track_name || null,
       content: getNotificationMessage(notif.type),
       created_at: notif.created_at,
       is_read: notif.is_read
@@ -931,6 +933,7 @@ function getNotificationMessage(type: string): string {
     case 'like': return 'a aimé ton shake';
     case 'comment': return 'a commenté ton shake';
     case 'reshake': return 'a reshaké ton post';
+    case 'follow': return 's\'est abonné(e) à toi';
     case 'feel': return 't\'a ajouté en ami';
     case 'circle_join': return 'a rejoint ton cercle';
     case 'circle_post': return 'a posté dans ton cercle';

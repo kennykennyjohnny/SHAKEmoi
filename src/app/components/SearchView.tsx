@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles } from 'lucide-react';
+import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles, UserPlus, UserCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
-import { searchUsers, createPost, searchCircles, joinCircle, joinCircleByCode } from '../../lib/database';
+import { searchUsers, createPost, searchCircles, joinCircle, joinCircleByCode, followUser, unfollowUser, isFollowing } from '../../lib/database';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
 interface SearchViewProps {
@@ -24,6 +24,8 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
   const [shakedIds, setShakedIds] = useState<Set<string>>(new Set());
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
+  const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
+  const [followLoading, setFollowLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (searchQuery.length < 2) {
@@ -57,6 +59,14 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
       } else if (activeTab === 'users') {
         const users = await searchUsers(searchQuery);
         setUserResults(users);
+        // Check follow state for each user
+        const states: Record<string, boolean> = {};
+        await Promise.all(users.map(async (u: any) => {
+          if (u.id !== currentUser?.id) {
+            try { states[u.id] = await isFollowing(u.id); } catch { states[u.id] = false; }
+          }
+        }));
+        setFollowingMap(prev => ({ ...prev, ...states }));
       } else {
         const circles = await searchCircles(searchQuery);
         setCircleResults(circles);
@@ -91,6 +101,23 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
       console.error('Error shaking:', error);
     } finally {
       setShakingTrackId(null);
+    }
+  };
+
+  const handleToggleFollow = async (userId: string) => {
+    setFollowLoading(userId);
+    try {
+      if (followingMap[userId]) {
+        await unfollowUser(userId);
+        setFollowingMap(prev => ({ ...prev, [userId]: false }));
+      } else {
+        await followUser(userId);
+        setFollowingMap(prev => ({ ...prev, [userId]: true }));
+      }
+    } catch (err) {
+      console.error('Follow toggle error:', err);
+    } finally {
+      setFollowLoading(null);
     }
   };
 
@@ -307,24 +334,46 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
         <div className="space-y-2">
           {userResults.length > 0 ? (
             userResults.map((user: any, index) => (
-              <motion.button
+              <motion.div
                 key={user.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03 }}
-                onClick={() => setProfilePreview({ userId: user.id, username: user.username })}
                 className="w-full bg-violet-950/20 hover:bg-violet-950/25 rounded-xl p-3 flex items-center gap-3 transition-colors border border-purple-500/25"
               >
-                <img
-                  src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
-                  alt={user.username}
-                  className="w-12 h-12 rounded-full object-cover ring-1 ring-purple-700/30"
-                />
-                <div className="flex-1 min-w-0 text-left">
+                <button onClick={() => setProfilePreview({ userId: user.id, username: user.username })} className="flex-shrink-0">
+                  <img
+                    src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
+                    alt={user.username}
+                    className="w-12 h-12 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-fuchsia-500 transition-all"
+                  />
+                </button>
+                <button onClick={() => setProfilePreview({ userId: user.id, username: user.username })} className="flex-1 min-w-0 text-left">
                   <h3 className="font-semibold text-sm text-white truncate">{user.display_name || user.username}</h3>
                   <p className="text-xs text-purple-400">@{user.username}</p>
-                </div>
-              </motion.button>
+                </button>
+                {user.id !== currentUser?.id && (
+                  followingMap[user.id] ? (
+                    <button
+                      onClick={() => handleToggleFollow(user.id)}
+                      disabled={followLoading === user.id}
+                      className="flex-shrink-0 px-3 py-1.5 bg-fuchsia-500/10 border border-fuchsia-500/20 rounded-full text-xs font-semibold text-fuchsia-400 hover:bg-fuchsia-500/20 transition-all flex items-center gap-1.5"
+                    >
+                      {followLoading === user.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserCheck className="w-3 h-3" />}
+                      Suivi
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleToggleFollow(user.id)}
+                      disabled={followLoading === user.id}
+                      className="flex-shrink-0 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-lg shadow-purple-500/15"
+                    >
+                      {followLoading === user.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserPlus className="w-3 h-3" />}
+                      Suivre
+                    </button>
+                  )
+                )}
+              </motion.div>
             ))
           ) : (
             <div className="text-center py-8">

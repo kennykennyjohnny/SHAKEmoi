@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, Play, Users, Loader2, ExternalLink, Music, Crown } from 'lucide-react';
+import { TrendingUp, Play, Users, Loader2, ExternalLink, Music, Crown, Heart, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { getFriendsTrending } from '../../lib/database';
+import { getFriendsTrending, getAppStats } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 
 interface TopFriendsViewProps {
@@ -13,8 +13,10 @@ export function TopFriendsView({ currentUser }: TopFriendsViewProps) {
   const [loading, setLoading] = useState(true);
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
   const [period, setPeriod] = useState<7 | 30>(7);
+  const [stats, setStats] = useState({ users: 0, shakes: 0, likes: 0 });
 
   useEffect(() => { loadTrending(); }, [period]);
+  useEffect(() => { getAppStats().then(setStats); }, []);
 
   const loadTrending = async () => {
     setLoading(true);
@@ -66,6 +68,31 @@ export function TopFriendsView({ currentUser }: TopFriendsViewProps) {
               {p === 7 ? '7 jours' : '30 jours'}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Community Stats */}
+      <div className="grid grid-cols-3 gap-2 mb-5">
+        <div className="bg-violet-950/25 border border-purple-500/15 rounded-xl p-2.5 text-center">
+          <p className="text-lg font-bold text-purple-400 flex items-center justify-center gap-1">
+            <Users className="w-3.5 h-3.5" />
+            {stats.users}
+          </p>
+          <p className="text-[10px] text-purple-400/50">Shakers</p>
+        </div>
+        <div className="bg-violet-950/25 border border-purple-500/15 rounded-xl p-2.5 text-center">
+          <p className="text-lg font-bold text-pink-400 flex items-center justify-center gap-1">
+            <Sparkles className="w-3.5 h-3.5" />
+            {stats.shakes}
+          </p>
+          <p className="text-[10px] text-purple-400/50">Shakes</p>
+        </div>
+        <div className="bg-violet-950/25 border border-purple-500/15 rounded-xl p-2.5 text-center">
+          <p className="text-lg font-bold text-fuchsia-400 flex items-center justify-center gap-1">
+            <Heart className="w-3.5 h-3.5" />
+            {stats.likes}
+          </p>
+          <p className="text-[10px] text-purple-400/50">Likes</p>
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, BarChart3, Bell } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
 import { ProfileView } from './components/ProfileView';
@@ -18,8 +19,9 @@ import { WeeklyWrapView } from './components/WeeklyWrapView';
 import { CircleInviteView } from './components/CircleInviteView';
 import { NotificationsDropdown } from './components/NotificationsDropdown';
 import { NotificationsView } from './components/NotificationsView';
+import { ProfilePreviewDialog } from './components/ProfilePreviewDialog';
 import { supabase } from '../lib/supabase';
-import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, getUserCircles } from '../lib/database';
+import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, getUserCircles, followUser } from '../lib/database';
 
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'wrap' | 'notifications';
 
@@ -51,6 +53,8 @@ export default function App() {
   const [circles, setCircles] = useState<any[]>([]);
   const [activeFeedCircleId, setActiveFeedCircleId] = useState<string | null>(null);
   const [viewOptions, setViewOptions] = useState<any>({});
+  const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
+  const [referrer, setReferrer] = useState<string | null>(null);
 
   const loadUserCircles = async () => {
     try {
@@ -90,8 +94,12 @@ export default function App() {
       const ref = urlParams.get('ref');
       if (ref) {
         localStorage.setItem('shakemoi_referrer', ref);
+        setReferrer(ref);
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
+      } else {
+        const storedRef = localStorage.getItem('shakemoi_referrer');
+        if (storedRef) setReferrer(storedRef);
       }
 
       const { data: { session } } = await supabase.auth.getSession();
@@ -141,11 +149,30 @@ export default function App() {
     return () => clearInterval(iv);
   }, [currentUser]);
 
-  const handleAuthComplete = (user: any) => {
+  const handleAuthComplete = async (user: any) => {
     setCurrentUser(buildUserObject(user));
     setShowAuth(false);
     loadUserCircles();
     if (!localStorage.getItem('shakemoi_onboarding')) setShowOnboarding(true);
+
+    // Auto-follow referrer if one exists
+    const ref = localStorage.getItem('shakemoi_referrer');
+    if (ref) {
+      try {
+        const { data: refProfile } = await supabase
+          .from('users_profile')
+          .select('id')
+          .eq('username', ref)
+          .single();
+        if (refProfile && refProfile.id !== user.id) {
+          await followUser(refProfile.id);
+        }
+      } catch (err) {
+        console.error('Auto-follow referrer error:', err);
+      }
+      localStorage.removeItem('shakemoi_referrer');
+      setReferrer(null);
+    }
   };
 
   const handleOnboardingComplete = async (preferences: { musicService: 'spotify' | 'apple' }) => {
@@ -187,7 +214,7 @@ export default function App() {
     return <SharedPostView postId={sharedPostId} onJoin={() => { window.location.hash = ''; setShowAuth(true); }} />;
   }
   if (showOnboarding) return <OnboardingDialog onComplete={handleOnboardingComplete} />;
-  if (showAuth) return <AuthDialog onComplete={handleAuthComplete} />;
+  if (showAuth) return <AuthDialog onComplete={handleAuthComplete} referrer={referrer} />;
 
   const renderView = () => {
     switch (currentView) {
@@ -211,7 +238,7 @@ export default function App() {
       case 'wrap':
         return <WeeklyWrapView currentUser={currentUser} />;
       case 'notifications':
-        return <NotificationsView currentUser={currentUser} />;
+        return <NotificationsView currentUser={currentUser} onNavigateToPost={(postId) => { setViewOptions({ scrollToPostId: postId }); setCurrentView('feed'); }} onNavigateToProfile={(userId) => setProfilePreview({ userId, username: '' })} />;
       case 'profile':
         return <ProfileView user={currentUser} onUpdateUser={setCurrentUser} />;
       default:
@@ -370,6 +397,16 @@ export default function App() {
           onLogout={() => { setCurrentUser(null); setShowAuth(true); setShowSettings(false); }}
         />
       )}
+      {/* Profile Preview from Notifications */}
+      <AnimatePresence>
+        {profilePreview && (
+          <ProfilePreviewDialog
+            userId={profilePreview.userId}
+            username={profilePreview.username}
+            onClose={() => setProfilePreview(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

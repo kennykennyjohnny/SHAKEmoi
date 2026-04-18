@@ -1019,6 +1019,21 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   </button>
 
                   <button
+                    onClick={async () => {
+                      const url = `https://shakemoi.fr/#/s/${shake.id}`;
+                      if (navigator.share) {
+                        try { await navigator.share({ title: `${shake.track} - ${shake.artist}`, text: `Écoute "${shake.track}" de ${shake.artist} sur SHAKEmoi ! 🎵`, url }); } catch {}
+                      } else {
+                        await navigator.clipboard.writeText(url);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 group"
+                    title="Partager ce shake"
+                  >
+                    <Share2 className="w-5 h-5 text-purple-300/70 group-hover:text-purple-400 transition-colors" />
+                  </button>
+
+                  <button
                     onClick={() => openInMusicApp(shake)}
                     className="flex items-center gap-1.5 group ml-auto px-3 py-1 rounded-full bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors"
                   >

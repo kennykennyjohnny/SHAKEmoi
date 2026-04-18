@@ -712,8 +712,9 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                   {/* Instagram Story */}
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`Rejoins-moi sur SHAKEmoi ! 🎵\nhttps://shakemoi.fr?ref=${user.username}`);
-                      window.open('https://instagram.com', '_blank');
+                      navigator.clipboard.writeText(`Hey ! 👋 Rejoins-moi sur SHAKEmoi 🎵🔥 https://shakemoi.fr?ref=${user.username}`);
+                      window.open('instagram://camera', '_blank');
+                      setTimeout(() => { window.open('https://instagram.com', '_blank'); }, 500);
                     }}
                     className="flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white font-semibold text-sm hover:opacity-90 transition-opacity"
                   >
@@ -724,7 +725,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                   {/* WhatsApp */}
                   <button
                     onClick={() => {
-                      const text = encodeURIComponent(`Rejoins-moi sur SHAKEmoi ! 🎵 https://shakemoi.fr?ref=${user.username}`);
+                      const text = encodeURIComponent(`Hey ! 👋 Rejoins-moi sur SHAKEmoi, l'appli où on partage nos sons préférés avec nos amis 🎵🔥\n\nInscris-toi ici : https://shakemoi.fr?ref=${user.username}`);
                       window.open(`https://wa.me/?text=${text}`, '_blank');
                     }}
                     className="flex items-center justify-center gap-2 py-3 rounded-xl bg-green-600 text-white font-semibold text-sm hover:opacity-90 transition-opacity"
@@ -736,7 +737,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                   {/* Twitter/X */}
                   <button
                     onClick={() => {
-                      const text = encodeURIComponent(`Rejoins-moi sur @SHAKEmoi 🎵 Partage tes sons préférés avec tes amis !\nhttps://shakemoi.fr?ref=${user.username}`);
+                      const text = encodeURIComponent(`Découvrez ce que vos amis écoutent vraiment 🎵 Rejoignez-moi sur @SHAKEmoi !\nhttps://shakemoi.fr?ref=${user.username}`);
                       window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
                     }}
                     className="flex items-center justify-center gap-2 py-3 rounded-xl bg-neutral-800 text-white font-semibold text-sm hover:opacity-90 transition-opacity"
@@ -748,8 +749,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                   {/* Snapchat */}
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`https://shakemoi.fr?ref=${user.username}`);
-                      window.open('https://snapchat.com', '_blank');
+                      navigator.clipboard.writeText(`Rejoins-moi sur SHAKEmoi 🎵🔥 https://shakemoi.fr?ref=${user.username}`);
+                      window.open(`https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(`https://shakemoi.fr?ref=${user.username}`)}`, '_blank');
                     }}
                     className="flex items-center justify-center gap-2 py-3 rounded-xl bg-yellow-400 text-black font-semibold text-sm hover:opacity-90 transition-opacity"
                   >

@@ -1,16 +1,17 @@
 import { Heart, MessageCircle, UserPlus, UserCheck, Music, Repeat2, Loader2, Bell, Users, ExternalLink, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { getUserNotifications, followUser, isFollowing } from '../../lib/database';
+import { getUserNotifications, followUser, unfollowUser, isFollowing } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
 interface NotificationsViewProps {
   currentUser: any;
   onNavigateToPost?: (postId: string) => void;
+  onNavigateToProfile?: (userId: string) => void;
 }
 
-export function NotificationsView({ currentUser, onNavigateToPost }: NotificationsViewProps) {
+export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToProfile }: NotificationsViewProps) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
@@ -82,15 +83,15 @@ export function NotificationsView({ currentUser, onNavigateToPost }: Notificatio
   const getIcon = (type: string) => {
     switch (type) {
       case 'like':
-        return <Heart className="w-5 h-5 fill-current text-pink-500" />;
+        return <Heart className="w-3.5 h-3.5 fill-current text-pink-500" />;
       case 'comment':
-        return <MessageCircle className="w-5 h-5 text-fuchsia-400" />;
+        return <MessageCircle className="w-3.5 h-3.5 text-fuchsia-400" />;
       case 'follow':
-        return <UserPlus className="w-5 h-5 text-purple-400" />;
+        return <UserPlus className="w-3.5 h-3.5 text-purple-400" />;
       case 'reshake':
-        return <Repeat2 className="w-5 h-5 text-fuchsia-400" />;
+        return <Repeat2 className="w-3.5 h-3.5 text-fuchsia-400" />;
       default:
-        return <Music className="w-5 h-5 text-purple-400" />;
+        return <Music className="w-3.5 h-3.5 text-purple-400" />;
     }
   };
 
@@ -134,67 +135,77 @@ export function NotificationsView({ currentUser, onNavigateToPost }: Notificatio
         </button>
       </div>
 
-      <div className="space-y-2.5">
+      <div className="space-y-1.5">
         {notifications.map((notif, index) => {
           const isFollowNotif = notif.type === 'follow';
           const alreadyFollowing = followingState[notif.actor_id] || followedBack.has(notif.actor_id);
           const hasPost = !!notif.post_cover_url;
+          const canNavigate = (notif.type === 'like' || notif.type === 'comment' || notif.type === 'reshake') && notif.post_id;
+
+          const handleNotifClick = () => {
+            if (notif.type === 'follow' && onNavigateToProfile) {
+              onNavigateToProfile(notif.actor_id);
+            } else if (canNavigate && onNavigateToPost) {
+              onNavigateToPost(notif.post_id);
+            }
+          };
 
           return (
             <motion.div
               key={notif.id}
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -15 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.03 }}
-              className={`w-full bg-purple-950/25 hover:bg-purple-900/30 rounded-2xl p-4 flex items-start gap-3.5 transition-colors border border-purple-800/20 ${!notif.is_read ? 'border-l-2 border-l-fuchsia-500' : ''}`}
+              transition={{ delay: index * 0.02 }}
+              onClick={handleNotifClick}
+              className={`w-full bg-purple-950/25 hover:bg-purple-900/30 rounded-xl p-2.5 flex items-center gap-2.5 transition-colors border border-purple-800/15 ${!notif.is_read ? 'border-l-2 border-l-fuchsia-500' : ''} ${canNavigate || notif.type === 'follow' ? 'cursor-pointer' : ''}`}
             >
               {/* Icon */}
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border ${getIconBg(notif.type)}`}>
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 border ${getIconBg(notif.type)}`}>
                 {getIcon(notif.type)}
               </div>
 
-              {/* Avatar - clickable for profile preview */}
+              {/* Avatar */}
               <button
-                onClick={() => setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username })}
+                onClick={(e) => { e.stopPropagation(); setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username }); }}
                 className="flex-shrink-0"
               >
                 <img
                   src={notif.actor_avatar || `https://ui-avatars.com/api/?name=${notif.actor_username}&background=random`}
                   alt={notif.actor_username}
-                  className="w-13 h-13 rounded-full object-cover ring-2 ring-purple-700/30 hover:ring-2 hover:ring-fuchsia-500 transition-all"
-                  style={{ width: '3.25rem', height: '3.25rem' }}
+                  className="w-9 h-9 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-fuchsia-500 transition-all"
                 />
               </button>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-white leading-relaxed">
+                <p className="text-sm text-white leading-snug">
                   <button
-                    onClick={() => setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username })}
-                    className="font-bold hover:underline text-fuchsia-400 text-base"
+                    onClick={(e) => { e.stopPropagation(); setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username }); }}
+                    className="font-bold hover:underline text-fuchsia-400"
                   >
                     @{notif.actor_username}
                   </button>
                   {' '}
-                  <span className="text-purple-200/70">{notif.content}</span>
+                  <span className="text-purple-200/70 text-xs">{notif.content}</span>
+                  {notif.post_track_name && <span className="text-purple-300/50 text-xs"> · {notif.post_track_name}</span>}
                 </p>
-                <p className="text-xs text-purple-500/40 mt-1.5">{formatTimestamp(notif.created_at)}</p>
-
-                {/* Follow-back button for follow notifications */}
-                {isFollowNotif && !alreadyFollowing && (
-                  <button
-                    onClick={() => handleFollowBack(notif.actor_id)}
-                    className="mt-2.5 px-5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
-                  >
-                    <UserPlus className="w-3.5 h-3.5" /> Suivre en retour
-                  </button>
-                )}
-                {isFollowNotif && alreadyFollowing && (
-                  <span className="mt-2.5 inline-flex items-center gap-1.5 text-sm text-fuchsia-400/60 bg-fuchsia-500/10 px-3 py-1.5 rounded-full">
-                    <UserCheck className="w-3.5 h-3.5" /> Suivi(e)
-                  </span>
-                )}
+                <p className="text-[10px] text-purple-500/40 mt-0.5">{formatTimestamp(notif.created_at)}</p>
               </div>
+
+              {/* Follow-back button (prominent) */}
+              {isFollowNotif && !alreadyFollowing && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleFollowBack(notif.actor_id); }}
+                  className="flex-shrink-0 px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-lg shadow-purple-500/20"
+                >
+                  <UserPlus className="w-3 h-3" /> Suivre
+                </button>
+              )}
+              {isFollowNotif && alreadyFollowing && (
+                <span className="flex-shrink-0 inline-flex items-center gap-1 text-xs text-fuchsia-400/60 bg-fuchsia-500/10 px-2.5 py-1 rounded-full">
+                  <UserCheck className="w-3 h-3" /> Suivi
+                </span>
+              )}
 
               {/* Track Cover if available */}
               {hasPost && (
@@ -202,7 +213,7 @@ export function NotificationsView({ currentUser, onNavigateToPost }: Notificatio
                   <img
                     src={notif.post_cover_url}
                     alt="Track"
-                    className="w-14 h-14 rounded-xl object-cover ring-1 ring-purple-700/20"
+                    className="w-10 h-10 rounded-lg object-cover ring-1 ring-purple-700/20"
                   />
                 </div>
               )}

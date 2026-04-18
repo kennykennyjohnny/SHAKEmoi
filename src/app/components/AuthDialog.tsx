@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mail, Lock, User as UserIcon, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, Loader2, AlertCircle, UserPlus, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
 
 interface AuthDialogProps {
   onComplete: (user: any) => void;
+  referrer?: string | null;
 }
 
-export function AuthDialog({ onComplete }: AuthDialogProps) {
+export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [referrerProfile, setReferrerProfile] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -19,6 +21,21 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
     username: '',
     displayName: ''
   });
+
+  // Fetch referrer profile if available
+  useEffect(() => {
+    if (referrer) {
+      setMode('signup');
+      supabase
+        .from('users_profile')
+        .select('id, username, display_name, profile_album_cover_url, bio')
+        .eq('username', referrer)
+        .single()
+        .then(({ data }) => {
+          if (data) setReferrerProfile(data);
+        });
+    }
+  }, [referrer]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,20 +122,50 @@ export function AuthDialog({ onComplete }: AuthDialogProps) {
         >
           {/* Header */}
           <div className="p-6 text-center">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1, type: 'spring' }}
-              className="mb-3 flex justify-center"
-            >
-              <Logo size="md" animated={true} showText={false} />
-            </motion.div>
-            <h1 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
-              SHAKEmoi
-            </h1>
-            <p className="text-purple-300/50 text-sm mt-1">
-              {mode === 'login' ? 'Content de te revoir' : 'Partage tes sons préférés'}
-            </p>
+            {referrerProfile ? (
+              <>
+                {/* Referrer invitation */}
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1, type: 'spring' }}
+                  className="mb-3 flex flex-col items-center"
+                >
+                  <img
+                    src={referrerProfile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${referrerProfile.username}&background=random`}
+                    alt={referrerProfile.username}
+                    className="w-16 h-16 rounded-full object-cover ring-2 ring-fuchsia-500 mb-2"
+                  />
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <UserPlus className="w-4 h-4 text-fuchsia-400" />
+                    <span className="text-sm font-semibold text-fuchsia-400">Invitation</span>
+                  </div>
+                </motion.div>
+                <h1 className="text-lg font-black text-white mb-1">
+                  {referrerProfile.display_name || referrerProfile.username} veut te retrouver sur SHAKEmoi !
+                </h1>
+                <p className="text-purple-300/50 text-sm">
+                  Inscris-toi pour partager tes sons et découvrir ce que tes amis écoutent 🎵
+                </p>
+              </>
+            ) : (
+              <>
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1, type: 'spring' }}
+                  className="mb-3 flex justify-center"
+                >
+                  <Logo size="md" animated={true} showText={false} />
+                </motion.div>
+                <h1 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Maven Pro', sans-serif" }}>
+                  SHAKEmoi
+                </h1>
+                <p className="text-purple-300/50 text-sm mt-1">
+                  {mode === 'login' ? 'Content de te revoir' : 'Partage tes sons préférés'}
+                </p>
+              </>
+            )}
           </div>
 
           {/* Form */}
