@@ -144,34 +144,12 @@ export async function getFeed(limit = 20): Promise<Post[]> {
       throw error;
     }
 
-    // Pour chaque post, compter les commentaires et les reshakes
-    if (posts && posts.length > 0) {
-      const postsWithCounts = await Promise.all(posts.map(async (post: any) => {
-        // Compter les commentaires
-        const { count: commentsCount } = await supabase
-          .from('comments')
-          .select('*', { count: 'exact', head: true })
-          .eq('post_id', post.id);
-
-        // Compter les reshakes
-        const originalPostId = post.is_reshake ? post.original_post_id : post.id;
-        const { count: reshakesCount } = await supabase
-          .from('posts')
-          .select('*', { count: 'exact', head: true })
-          .eq('original_post_id', originalPostId)
-          .eq('is_reshake', true);
-
-        return {
-          ...post,
-          comments_count: commentsCount || 0,
-          reshakes_count: reshakesCount || 0,
-        };
-      }));
-
-      return postsWithCounts;
-    }
-
-    return posts || [];
+    // Use stored counts from DB (no extra queries)
+    return (posts || []).map((post: any) => ({
+      ...post,
+      comments_count: post.comments_count || 0,
+      reshakes_count: post.reshakes_count || 0,
+    }));
   } catch (error) {
     console.error('Error getting feed:', error);
     return [];
@@ -463,6 +441,34 @@ export async function hasLikedPost(postId: string): Promise<boolean> {
   } catch (error) {
     console.error('Error in hasLikedPost:', error);
     return false;
+  }
+}
+
+// Batch check likes for multiple posts in one query
+export async function hasLikedPosts(postIds: string[]): Promise<Record<string, boolean>> {
+  try {
+    if (postIds.length === 0) return {};
+    const user = await getCurrentUser();
+    if (!user) return {};
+
+    const { data, error } = await supabase
+      .from('likes')
+      .select('post_id')
+      .eq('user_id', user.id)
+      .in('post_id', postIds);
+
+    if (error) {
+      console.error('Error batch checking likes:', error);
+      return {};
+    }
+
+    const likedSet = new Set((data || []).map((d: any) => d.post_id));
+    const result: Record<string, boolean> = {};
+    for (const id of postIds) result[id] = likedSet.has(id);
+    return result;
+  } catch (error) {
+    console.error('Error in hasLikedPosts:', error);
+    return {};
   }
 }
 

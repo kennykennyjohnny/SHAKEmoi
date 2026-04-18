@@ -5,7 +5,7 @@ import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
-import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPost } from '../../lib/database';
+import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPosts } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 
 interface ProfileViewProps {
@@ -56,8 +56,11 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         getUserFollowingCount(user.id)
       ]);
 
-      const shakesData = await Promise.all(posts.map(async (post: any) => {
-        const isLiked = await hasLikedPost(post.id);
+      const allPostIds = [...posts.map((p: any) => p.id), ...reshakes.map((p: any) => p.id)];
+      const likedMap = await hasLikedPosts(allPostIds);
+
+      const shakesData = posts.map((post: any) => {
+        const isLiked = likedMap[post.id] || false;
         return {
           id: post.id,
           track: {
@@ -84,10 +87,10 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           isLiked,
           timestamp: new Date(post.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
         };
-      }));
+      });
 
-      const reshakesData = await Promise.all(reshakes.map(async (post: any) => {
-        const isLiked = await hasLikedPost(post.id);
+      const reshakesData = reshakes.map((post: any) => {
+        const isLiked = likedMap[post.id] || false;
         // Use original post data for display
         const orig = post.original_post || post;
         return {
@@ -122,7 +125,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           } : null,
           timestamp: new Date(post.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
         };
-      }));
+      });
 
       setUserShakes(shakesData);
       setUserReshakes(reshakesData);

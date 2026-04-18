@@ -5,8 +5,9 @@ import {
   getConversations, getMessages, sendMessage, getUserFollowing,
   createCircle, getUserCircles, getCircleFeed, getCircleMembers,
   searchUsers, addCircleMember, removeCircleMember, getCurrentUser,
-  createPost
+  createPost, hasLikedPosts
 } from '../../lib/database';
+import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 
@@ -72,6 +73,27 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
   useEffect(() => { loadConversations(); }, []);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
+  // Realtime subscription for DMs
+  useEffect(() => {
+    if (!activeConversation || !currentUser) return;
+    const channel = supabase
+      .channel(`dm-${currentUser.id}-${activeConversation.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
+        const msg = payload.new;
+        if (
+          (msg.sender_id === activeConversation.id && msg.receiver_id === currentUser.id) ||
+          (msg.sender_id === currentUser.id && msg.receiver_id === activeConversation.id)
+        ) {
+          setMessages(prev => {
+            if (prev.some((m: any) => m.id === msg.id)) return prev;
+            return [...prev, msg];
+          });
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [activeConversation?.id, currentUser?.id]);
+
   useEffect(() => {
     if (trackQuery.length < 2) { setTrackResults([]); return; }
     const t = setTimeout(async () => {
@@ -94,16 +116,24 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
 
   const handleSend = async (track?: any) => {
     if (!activeConversation || (!track && !newMessage.trim())) return;
+    const msgText = track ? null : newMessage.trim();
+    // Optimistic: add message to list immediately
+    const optimisticMsg: any = {
+      id: `temp-${Date.now()}`,
+      sender_id: currentUser?.id,
+      receiver_id: activeConversation.id,
+      text: msgText,
+      created_at: new Date().toISOString(),
+      ...(track ? { track_name: track.name || track.track_name, artist: track.artist, cover_url: track.cover || track.cover_url, track_id: track.id } : {}),
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
+    setNewMessage('');
+    setShowTrackSearch(false);
+    setTrackQuery('');
+    setTrackResults([]);
     setSending(true);
     try {
-      const r = await sendMessage(activeConversation.id, track ? null : newMessage.trim(), track || undefined);
-      if (r.success) {
-        setNewMessage('');
-        setShowTrackSearch(false);
-        setTrackQuery('');
-        setTrackResults([]);
-        setMessages(await getMessages(activeConversation.id));
-      }
+      await sendMessage(activeConversation.id, msgText || undefined, track || undefined);
     } catch {}
     setSending(false);
   };
@@ -302,7 +332,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
           )}
         </AnimatePresence>
 
-        <div className="px-4 py-3 pb-[calc(0.75rem+4.5rem)] lg:pb-3 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0">
+        <div className="px-4 py-2.5 pb-[calc(0.5rem+4.5rem+env(safe-area-inset-bottom,0px))] lg:pb-2.5 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0">
           <button onClick={() => { setShowTrackSearch(!showTrackSearch); setShowGifSearch(false); }} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
             <Music className="w-5 h-5" />
           </button>

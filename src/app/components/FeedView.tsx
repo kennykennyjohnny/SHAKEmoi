@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Image, Copy, Users, LogOut, Check, Share2, Edit3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
+import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 import { ReshakeDialog } from './ReshakeDialog';
@@ -429,6 +430,45 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     loadFeed();
   }, [refreshFeed, currentFeedId]);
 
+  // Realtime subscription for circle feed
+  useEffect(() => {
+    if (!currentFeedId || !currentUser) return;
+    const channel = supabase
+      .channel(`circle-feed-${currentFeedId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts', filter: `circle_id=eq.${currentFeedId}` }, (payload: any) => {
+        const post = payload.new;
+        // Ignore own posts (already handled by optimistic update)
+        if (post.user_id === currentUser.id) return;
+        // Reload feed to get full post data with user info
+        loadFeed();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [currentFeedId, currentUser?.id]);
+
+  // Swipe gesture to switch between feed tabs
+  const touchStartX = useState<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX[1](e.touches[0].clientX); };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const startX = touchStartX[0];
+    if (startX === null) return;
+    const endX = e.changedTouches[0].clientX;
+    const diff = endX - startX;
+    const threshold = 80;
+    if (Math.abs(diff) < threshold) return;
+    // Build ordered tab list: [null (feed), ...circle ids]
+    const tabIds = [null, ...circles.map(c => c.id)];
+    const currentIdx = tabIds.indexOf(currentFeedId);
+    if (diff < 0 && currentIdx < tabIds.length - 1) {
+      // Swipe left → next tab
+      onSelectFeed?.(tabIds[currentIdx + 1]);
+    } else if (diff > 0 && currentIdx > 0) {
+      // Swipe right → previous tab
+      onSelectFeed?.(tabIds[currentIdx - 1]);
+    }
+    touchStartX[1](null);
+  };
+
   const activeCircle = circles.find(c => c.id === currentFeedId);
 
   const loadFeed = async () => {
@@ -437,8 +477,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       setError(null);
       const posts = currentFeedId ? await db.getCircleFeed(currentFeedId) : await db.getFeed();
 
-      const shakesRaw = await Promise.all(posts.map(async (post: any) => {
-        const isLiked = await db.hasLikedPost(post.id);
+      // Batch check all likes in one query
+      const postIds = posts.map((p: any) => p.id);
+      const likedMap = await db.hasLikedPosts(postIds);
+
+      const shakesRaw = posts.map((post: any) => {
+        const isLiked = likedMap[post.id] || false;
         const reshakerUser = post.user ? (Array.isArray(post.user) ? post.user[0] : post.user) : null;
         if (!reshakerUser) return null; // Skip invalid posts
         // Extract track_id from spotify_url for old posts missing track_id
@@ -448,13 +492,11 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         // Normalize original_post: Supabase self-join may return array (both levels)
         let originalPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
         
-        // RESHAKE FIX: If is_reshake but no original_post from join, fetch it manually
+        // RESHAKE FIX: If is_reshake but no original_post from join, use post's own data
         const isReshake = !!post.is_reshake;
         if (isReshake && !originalPost && post.original_post_id) {
-          try {
-            const fetched = await db.getPostById(post.original_post_id);
-            if (fetched) originalPost = fetched;
-          } catch {}
+          // Use the post's own track data as fallback (already copied during reshake creation)
+          originalPost = post;
         }
         
         const originalUser = originalPost?.user ? (Array.isArray(originalPost.user) ? originalPost.user[0] : originalPost.user) : null;
@@ -508,7 +550,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             displayName: reshakerUser.display_name || reshakerUser.username || ''
           } : undefined
         };
-      }));
+      });
 
       const shakes = shakesRaw.filter(s => s !== null);
 
@@ -621,10 +663,23 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   const handleChatSendText = async () => {
     if (!chatText.trim() || chatSending) return;
+    const text = chatText.trim();
+    // Optimistic update
+    const optimisticShake: Shake = {
+      id: `temp-${Date.now()}`,
+      user: { id: currentUser?.id || '', username: currentUser?.username || '', displayName: currentUser?.displayName || currentUser?.display_name || '', avatar: currentUser?.avatar || '' },
+      track: { id: '', title: '', artist: '', coverUrl: '', duration: '', previewUrl: '', spotifyUri: '', spotifyEmbedUrl: null },
+      links: { spotify_url: null, apple_music_url: null, deezer_url: null, youtube_url: null, youtube_music_url: null, tidal_url: null, odesli_page_url: null },
+      caption: text,
+      likes: 0, comments: 0, reshakes: 0,
+      timestamp: new Date().toISOString(),
+      isLiked: false, isReshaked: false,
+    };
+    setShakes(prev => [optimisticShake, ...prev]);
+    setChatText('');
     setChatSending(true);
     try {
-      await db.createPost('', '', '', chatText.trim(), null, null, null, false, currentFeedId);
-      setChatText('');
+      await db.createPost('', '', '', text, null, null, null, false, currentFeedId);
       await loadFeed();
     } catch (err) {
       console.error('Error posting in circle:', err);
@@ -735,7 +790,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   // Empty state is now rendered inline, not as early return
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined}>
+    <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className={`p-4 space-y-3 ${currentFeedId ? 'flex-1 pb-40 lg:pb-24' : ''}`}>
         {/* Horizontal feed selector */}
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
@@ -925,10 +980,10 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   </div>
                 )}
 
-                {/* Track Card - clickable cover to launch embed */}
+                {/* Track Card - compact, clickable cover to launch embed */}
                 <div className="px-4 pb-2">
                   <div
-                    className={`rounded-xl p-3 flex gap-3 group cursor-pointer transition-all border ${
+                    className={`rounded-xl px-3 py-2 flex gap-2.5 items-center group cursor-pointer transition-all border ${
                       isPlayerOpen
                         ? 'bg-purple-800/20 border-purple-600/30'
                         : 'bg-purple-900/20 border-purple-800/10 hover:bg-purple-900/30'
@@ -939,21 +994,21 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                       <img
                         src={shake.track.coverUrl}
                         alt={shake.track.title}
-                        className={`w-14 h-14 rounded-lg object-cover transition-all ${isPlayerOpen ? 'ring-2 ring-purple-500/50' : ''}`}
+                        className={`w-11 h-11 rounded-lg object-cover transition-all ${isPlayerOpen ? 'ring-2 ring-purple-500/50' : ''}`}
                       />
                       <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
                         isPlayerOpen ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
                       }`}>
                         {isPlayerOpen ? (
-                          <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                          <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
                             <div className="flex items-center gap-0.5">
-                              <span className="w-0.5 h-3 bg-white rounded-full animate-pulse" />
-                              <span className="w-0.5 h-4 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
+                              <span className="w-0.5 h-2.5 bg-white rounded-full animate-pulse" />
+                              <span className="w-0.5 h-3 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
                               <span className="w-0.5 h-2 bg-white rounded-full animate-pulse [animation-delay:0.3s]" />
                             </div>
                           </div>
                         ) : (
-                          <Play className="w-6 h-6 text-white fill-white" />
+                          <Play className="w-5 h-5 text-white fill-white" />
                         )}
                       </div>
                     </div>
@@ -963,8 +1018,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     </div>
                     {!isPlayerOpen && (
                       <div className="flex items-center">
-                        <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                          <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                        <div className="w-7 h-7 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                          <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
                         </div>
                       </div>
                     )}
