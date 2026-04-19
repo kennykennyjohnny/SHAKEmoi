@@ -36,7 +36,7 @@ export function SharedPostView({ postId, onJoin }: Props) {
   );
 
   if (!post) return (
-    <div className="h-screen bg-[#14092A] flex items-center justify-center text-purple-300/50">
+    <div className="h-screen bg-[#14092A] flex items-center justify-center text-purple-300/60">
       Post introuvable
     </div>
   );
@@ -44,7 +44,7 @@ export function SharedPostView({ postId, onJoin }: Props) {
   const trackId = post.track_id || (post.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
   const embedUrl = trackId ? `https://open.spotify.com/embed/track/${trackId}?theme=0` : null;
   const userName = post.user?.display_name || post.user?.username || 'Quelqu\'un';
-  const avatar = post.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${post.user?.username}&background=random`;
+  const avatar = post.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${post.user?.username}&background=2A1852&color=FFEFD5`;
 
   const openPlatform = (platform: string) => {
     const url = getPlatformUrl({

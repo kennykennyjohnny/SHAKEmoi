@@ -122,7 +122,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
   }
 
   const displayName = profile.display_name || profile.username;
-  const avatar = profile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${profile.username}&background=random`;
+  const avatar = profile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${profile.username}&background=2A1852&color=FFEFD5`;
 
   const currentPosts = activeTab === 'shakes' ? shakes : reshakes;
   const expandedPostRaw = expandedPostId ? currentPosts.find(p => p.id === expandedPostId) : null;
@@ -219,7 +219,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
             <button
               onClick={() => { setActiveTab('shakes'); setExpandedPostId(null); }}
               className={`flex-1 py-2 text-sm font-semibold text-center transition-colors ${
-                activeTab === 'shakes' ? 'text-purple-400 border-b-2 border-purple-500' : 'text-purple-300/40'
+                activeTab === 'shakes' ? 'text-purple-400 border-b-2 border-purple-500' : 'text-purple-300/60'
               }`}
             >
               Shakes
@@ -227,7 +227,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
             <button
               onClick={() => { setActiveTab('reshakes'); setExpandedPostId(null); }}
               className={`flex-1 py-2 text-sm font-semibold text-center transition-colors flex items-center justify-center gap-1 ${
-                activeTab === 'reshakes' ? 'text-purple-400 border-b-2 border-purple-500' : 'text-purple-300/40'
+                activeTab === 'reshakes' ? 'text-purple-400 border-b-2 border-purple-500' : 'text-purple-300/60'
               }`}
             >
               <RefreshCw className="w-3 h-3" /> Reshakes
@@ -320,7 +320,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
             </div>
           ) : (
             <div className="mt-4 text-center py-6">
-              <p className="text-purple-300/40 text-sm">
+              <p className="text-purple-300/60 text-sm">
                 {activeTab === 'shakes' ? 'Aucun shake pour le moment' : 'Aucun reshake pour le moment'}
               </p>
             </div>

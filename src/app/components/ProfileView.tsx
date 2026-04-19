@@ -277,11 +277,11 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           <motion.img
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            src={user.avatar || user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=random`}
+            src={user.avatar || user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=2A1852&color=FFEFD5`}
             alt={user.displayName || user.username}
             className="w-20 h-20 rounded-full object-cover ring-2 ring-purple-500 shadow-lg shadow-purple-500/20 flex-shrink-0"
             onError={(e) => {
-              e.currentTarget.src = `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=random`;
+              e.currentTarget.src = `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=2A1852&color=FFEFD5`;
             }}
           />
 
@@ -482,8 +482,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           </div>
                           {!showDetailEmbed && (
                             <div className="flex items-center">
-                              <div className="w-7 h-7 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                                <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
+                              <div className="w-7 h-7 bg-[#FFEFD5] rounded-full flex items-center justify-center shadow-sm shadow-[#FFEFD5]/20 group-hover:scale-105 transition-transform">
+                                <Play className="w-3.5 h-3.5 text-[#14092A] fill-[#14092A] ml-0.5" />
                               </div>
                             </div>
                           )}
@@ -571,14 +571,14 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           </>
         ) : (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 bg-purple-950/40 rounded-full flex items-center justify-center border border-purple-800/20">
+            <div className="w-16 h-16 mx-auto mb-4 bg-[#1D0F3D] rounded-full flex items-center justify-center border border-purple-800/20">
               {activeTab === 'shakes' ? (
-                <Music className="w-8 h-8 text-purple-600" />
+                <Music className="w-8 h-8 text-[#FFEFD5]" />
               ) : (
-                <Repeat2 className="w-8 h-8 text-purple-600" />
+                <Repeat2 className="w-8 h-8 text-[#FFEFD5]" />
               )}
             </div>
-            <p className="text-purple-300/50">
+            <p className="text-purple-300/60">
               {activeTab === 'shakes' ? 'Aucun shake pour le moment' : 'Aucun reshake pour le moment'}
             </p>
           </div>
@@ -630,7 +630,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                         className="flex items-center gap-3 flex-1 min-w-0 text-left"
                       >
                         <img
-                          src={person.profile_album_cover_url || `https://ui-avatars.com/api/?name=${person.username}&background=random`}
+                          src={person.profile_album_cover_url || `https://ui-avatars.com/api/?name=${person.username}&background=2A1852&color=FFEFD5`}
                           alt={person.username}
                           className="w-10 h-10 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-purple-500 transition-all"
                         />
@@ -744,7 +744,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
               <div className="p-5">
                 <div className="bg-gradient-to-br from-fuchsia-600/20 via-purple-900/30 to-pink-600/20 rounded-2xl p-5 text-center border border-fuchsia-500/20 mb-5">
                   <img
-                    src={user.avatar || user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
+                    src={user.avatar || user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=2A1852&color=FFEFD5`}
                     className="w-20 h-20 rounded-full object-cover mx-auto ring-3 ring-fuchsia-500/40 mb-3"
                     alt=""
                   />
@@ -760,7 +760,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                       <p className="text-[10px] text-purple-400/50">Abonnés</p>
                     </div>
                   </div>
-                  <p className="text-xs text-purple-300/40 mt-3">shakemoi.fr</p>
+                  <p className="text-xs text-purple-300/60 mt-3">shakemoi.fr</p>
                 </div>
 
                 {/* Share link */}

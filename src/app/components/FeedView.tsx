@@ -19,12 +19,12 @@ function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { ci
       <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         <style>{`.feed-tabs::-webkit-scrollbar { display: none; }`}</style>
         <div className="feed-tabs inline-flex items-center gap-0 min-w-max border-b border-[#FFEFD5]/10">
-          <button onClick={() => onSelectFeed?.(null)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${!currentFeedId ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}>
+          <button onClick={() => onSelectFeed?.(null)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${!currentFeedId ? 'text-white' : 'text-purple-300/60 hover:text-purple-200'}`}>
             Feed
             {!currentFeedId && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#FFEFD5] rounded-full" />}
           </button>
           {circles.map(circle => (
-            <button key={circle.id} onClick={() => onSelectFeed?.(circle.id)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${currentFeedId === circle.id ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}>
+            <button key={circle.id} onClick={() => onSelectFeed?.(circle.id)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${currentFeedId === circle.id ? 'text-white' : 'text-purple-300/60 hover:text-purple-200'}`}>
               {truncName(circle.name)}
               {currentFeedId === circle.id && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#FFEFD5] rounded-full" />}
             </button>
@@ -94,12 +94,12 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
         </button>
         <div className="flex-1 min-w-0">
           <h2 className="text-base font-bold text-white truncate">{circle.name}</h2>
-          <p className="text-[11px] text-purple-300/40">cercle privé</p>
+          <p className="text-[11px] text-purple-300/60">cercle privé</p>
         </div>
-        <button onClick={() => { setShowShare(!showShare); setShowSettings(false); }} className={`p-1.5 rounded-full transition-colors ${showShare ? 'bg-fuchsia-500/20 text-fuchsia-400' : 'text-purple-300/50 hover:text-purple-200 hover:bg-violet-900/25'}`} title="Partager">
+        <button onClick={() => { setShowShare(!showShare); setShowSettings(false); }} className={`p-1.5 rounded-full transition-colors ${showShare ? 'bg-fuchsia-500/20 text-fuchsia-400' : 'text-purple-300/60 hover:text-purple-200 hover:bg-violet-900/25'}`} title="Partager">
           <Share2 className="w-4 h-4" />
         </button>
-        <button onClick={openSettings} className={`p-1.5 rounded-full transition-colors ${showSettings ? 'bg-fuchsia-500/20 text-fuchsia-400' : 'text-purple-300/50 hover:text-purple-200 hover:bg-violet-900/25'}`} title="Paramètres">
+        <button onClick={openSettings} className={`p-1.5 rounded-full transition-colors ${showSettings ? 'bg-fuchsia-500/20 text-fuchsia-400' : 'text-purple-300/60 hover:text-purple-200 hover:bg-violet-900/25'}`} title="Paramètres">
           <Settings className="w-4 h-4" />
         </button>
       </div>
@@ -111,12 +111,12 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-sm font-bold text-white">Partager ce cercle</h3>
-                <button onClick={() => setShowShare(false)} className="p-1 hover:bg-violet-900/25 rounded-full"><X className="w-3.5 h-3.5 text-purple-300/50" /></button>
+                <button onClick={() => setShowShare(false)} className="p-1 hover:bg-violet-900/25 rounded-full"><X className="w-3.5 h-3.5 text-purple-300/60" /></button>
               </div>
 
               {/* Invite Code */}
               <div className="bg-violet-950/30 rounded-xl p-3 border border-purple-500/15">
-                <p className="text-[11px] text-purple-300/50 mb-1.5 uppercase tracking-wider font-medium">Code d'invitation</p>
+                <p className="text-[11px] text-purple-300/60 mb-1.5 uppercase tracking-wider font-medium">Code d'invitation</p>
                 <div className="flex items-center gap-2">
                   <span className="flex-1 font-mono text-lg font-bold text-fuchsia-400 tracking-[0.2em]">{circle.invite_code || '—'}</span>
                   <button onClick={copyCode} className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${copiedCode ? 'bg-fuchsia-500/20 text-fuchsia-400' : 'bg-purple-600/20 text-purple-300 hover:bg-purple-600/30'}`}>
@@ -127,7 +127,7 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
 
               {/* Share Link */}
               <div className="bg-violet-950/30 rounded-xl p-3 border border-purple-500/15">
-                <p className="text-[11px] text-purple-300/50 mb-1.5 uppercase tracking-wider font-medium">Lien de partage</p>
+                <p className="text-[11px] text-purple-300/60 mb-1.5 uppercase tracking-wider font-medium">Lien de partage</p>
                 <div className="flex items-center gap-2">
                   <span className="flex-1 text-xs text-purple-200/70 truncate">{shareLink}</span>
                   <button onClick={copyLink} className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${copiedLink ? 'bg-fuchsia-500/20 text-fuchsia-400' : 'bg-purple-600/20 text-purple-300 hover:bg-purple-600/30'}`}>
@@ -147,17 +147,17 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-sm font-bold text-white">Paramètres du cercle</h3>
-                <button onClick={() => setShowSettings(false)} className="p-1 hover:bg-violet-900/25 rounded-full"><X className="w-3.5 h-3.5 text-purple-300/50" /></button>
+                <button onClick={() => setShowSettings(false)} className="p-1 hover:bg-violet-900/25 rounded-full"><X className="w-3.5 h-3.5 text-purple-300/60" /></button>
               </div>
 
               {/* Rename */}
               <div className="bg-violet-950/30 rounded-xl p-3 border border-purple-500/15">
-                <p className="text-[11px] text-purple-300/50 mb-1.5 uppercase tracking-wider font-medium">Nom du cercle</p>
+                <p className="text-[11px] text-purple-300/60 mb-1.5 uppercase tracking-wider font-medium">Nom du cercle</p>
                 {editing ? (
                   <div className="flex items-center gap-2">
                     <input type="text" value={editName} onChange={(e: any) => setEditName(e.target.value)} className="flex-1 px-3 py-1.5 bg-violet-950/40 border border-purple-500/25 rounded-lg text-sm text-white focus:outline-none focus:border-fuchsia-500" maxLength={30} autoFocus onKeyDown={(e: any) => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') setEditing(false); }} />
                     <button onClick={saveRename} className="px-3 py-1.5 bg-fuchsia-600 rounded-lg text-xs font-semibold hover:bg-fuchsia-700 transition-colors">OK</button>
-                    <button onClick={() => setEditing(false)} className="px-2 py-1.5 text-xs text-purple-300/50 hover:text-white">Annuler</button>
+                    <button onClick={() => setEditing(false)} className="px-2 py-1.5 text-xs text-purple-300/60 hover:text-white">Annuler</button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
@@ -171,7 +171,7 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
 
               {/* Members */}
               <div className="bg-violet-950/30 rounded-xl p-3 border border-purple-500/15">
-                <p className="text-[11px] text-purple-300/50 mb-2 uppercase tracking-wider font-medium">
+                <p className="text-[11px] text-purple-300/60 mb-2 uppercase tracking-wider font-medium">
                   Membres {members.length > 0 && <span className="text-purple-300/30">({members.length})</span>}
                 </p>
                 {loadingMembers ? (
@@ -183,9 +183,9 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
                       if (!user) return null;
                       return (
                         <div key={m.user_id} className="flex items-center gap-2">
-                          <img src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`} alt="" className="w-7 h-7 rounded-full object-cover" />
+                          <img src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=2A1852&color=FFEFD5`} alt="" className="w-7 h-7 rounded-full object-cover" />
                           <span className="text-sm text-white flex-1 truncate">{user.display_name || user.username}</span>
-                          <span className="text-[10px] text-purple-300/40">@{user.username}</span>
+                          <span className="text-[10px] text-purple-300/60">@{user.username}</span>
                         </div>
                       );
                     })}
@@ -199,7 +199,7 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-pink-400 flex-1">Quitter ce cercle ?</span>
                     <button onClick={() => { onLeaveCircle(); setConfirmLeave(false); }} className="px-3 py-1.5 bg-red-600 rounded-lg text-xs font-semibold hover:bg-red-700 transition-colors">Oui, quitter</button>
-                    <button onClick={() => setConfirmLeave(false)} className="px-3 py-1.5 text-xs text-purple-300/50 hover:text-white">Annuler</button>
+                    <button onClick={() => setConfirmLeave(false)} className="px-3 py-1.5 text-xs text-purple-300/60 hover:text-white">Annuler</button>
                   </div>
                 ) : (
                   <button onClick={() => setConfirmLeave(true)} className="w-full py-2.5 rounded-xl text-sm font-medium text-red-400/80 hover:text-red-400 hover:bg-red-500/10 border border-red-500/15 transition-all flex items-center justify-center gap-2">
@@ -284,7 +284,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-purple-500/25 bg-[#14092A]">
             <div className="p-3">
               <div className="relative mb-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
                 <input autoFocus type="text" value={chatTrackQuery} onChange={(e: any) => setChatTrackQuery(e.target.value)} placeholder="Rechercher un son..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
               </div>
               {chatSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
@@ -302,7 +302,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-72 overflow-hidden border-b border-purple-500/25 bg-[#14092A] flex flex-col">
             <div className="p-3 pb-0">
               <div className="relative mb-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
                 <input autoFocus type="text" value={gifQuery} onChange={(e: any) => setGifQuery(e.target.value)} placeholder="Rechercher un GIF..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
               </div>
             </div>
@@ -538,12 +538,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             id: originalUser.id || '',
             username: originalUser.username || '',
             displayName: originalUser.display_name || originalUser.username || '',
-            avatar: originalUser.profile_album_cover_url || `https://ui-avatars.com/api/?name=${originalUser.username}&background=random`
+            avatar: originalUser.profile_album_cover_url || `https://ui-avatars.com/api/?name=${originalUser.username}&background=2A1852&color=FFEFD5`
           } : {
             id: reshakerUser.id || '',
             username: reshakerUser.username || '',
             displayName: reshakerUser.display_name || reshakerUser.username || '',
-            avatar: reshakerUser.profile_album_cover_url || `https://ui-avatars.com/api/?name=${reshakerUser.username}&background=random`
+            avatar: reshakerUser.profile_album_cover_url || `https://ui-avatars.com/api/?name=${reshakerUser.username}&background=2A1852&color=FFEFD5`
           },
           track: {
             id: displayTrack?.track_id || trackId || post.id,
@@ -834,8 +834,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         <motion.div key={currentFeedId || 'main-feed'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.12, ease: 'easeOut' }} className="space-y-5">
         {shakes.length === 0 ? (
           <div className="py-12 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
-              {currentFeedId ? <Music className="w-7 h-7 text-white" /> : <Play className="w-8 h-8 text-white" />}
+            <div className="w-16 h-16 mx-auto mb-4 bg-[#1D0F3D] border border-purple-800/20 rounded-full flex items-center justify-center">
+              {currentFeedId ? <Music className="w-7 h-7 text-[#FFEFD5]" /> : <Play className="w-8 h-8 text-[#FFEFD5]" />}
             </div>
             <h3 className="text-lg font-bold mb-1">{currentFeedId ? 'Aucun message' : 'Aucun shake'}</h3>
             <p className="text-purple-300/60 text-sm">{currentFeedId ? 'Envoie un son ou un message ci-dessous !' : 'Sois le premier à partager un son !'}</p>
@@ -861,7 +861,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 <div className={`flex-1 min-w-0 max-w-[85%] ${isMe ? 'items-end' : ''}`}>
                   <div className={`flex items-center gap-1.5 mb-0.5 ${isMe ? 'justify-end' : ''}`}>
                     <span className="font-semibold text-xs text-white/90">{shake.user.displayName}</span>
-                    <span className="text-[10px] text-purple-400/40">{formatTimestamp(shake.timestamp)}</span>
+                    <span className="text-[10px] text-purple-400/50">{formatTimestamp(shake.timestamp)}</span>
                   </div>
                   <div className={`rounded-2xl px-3 py-2 ${
                     isMe
@@ -960,7 +960,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                         {shake.user.displayName}
                       </button>
                       <span className="text-purple-300/60 text-xs">@{shake.user.username}</span>
-                      <span className="text-purple-400/40 text-xs">·</span>
+                      <span className="text-purple-400/50 text-xs">·</span>
                       <span className="text-purple-300/60 text-xs">{formatTimestamp(shake.timestamp)}</span>
                     </div>
                   </div>
@@ -1063,8 +1063,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     </div>
                     {!isPlayerOpen && (
                       <div className="flex items-center">
-                        <div className="w-7 h-7 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                          <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
+                        <div className="w-7 h-7 bg-[#FFEFD5] rounded-full flex items-center justify-center shadow-sm shadow-[#FFEFD5]/20 group-hover:scale-105 transition-transform">
+                          <Play className="w-3.5 h-3.5 text-[#14092A] fill-[#14092A] ml-0.5" />
                         </div>
                       </div>
                     )}

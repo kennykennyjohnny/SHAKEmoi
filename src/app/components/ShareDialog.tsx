@@ -95,7 +95,7 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
                   className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full blur-xl"
                 />
                 <img
-                  src={currentUser?.avatar || currentUser?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${currentUser?.username || 'S'}&background=random`}
+                  src={currentUser?.avatar || currentUser?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${currentUser?.username || 'S'}&background=2A1852&color=FFEFD5`}
                   alt=""
                   className="w-20 h-20 rounded-full object-cover ring-3 ring-fuchsia-500/50 relative z-10"
                 />

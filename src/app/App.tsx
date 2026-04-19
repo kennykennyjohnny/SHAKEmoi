@@ -83,7 +83,7 @@ export default function App() {
 
   const buildUserObject = (profile: any) => ({
     ...profile,
-    avatar: profile.profile_album_cover_url || profile.avatar || `https://ui-avatars.com/api/?name=${profile.username}&background=random`,
+    avatar: profile.profile_album_cover_url || profile.avatar || `https://ui-avatars.com/api/?name=${profile.username}&background=2A1852&color=FFEFD5`,
     displayName: profile.display_name || profile.displayName || profile.username,
     bio: profile.bio || '',
     musicService: profile.preferred_platform || profile.musicService || 'spotify',

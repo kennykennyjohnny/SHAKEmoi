@@ -121,7 +121,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                 <ChevronRight className="w-5 h-5" />
               </motion.button>
 
-              <button onClick={() => { setStep(steps.length); }} className="mt-4 text-xs text-purple-400/40 hover:text-purple-300/60 transition-colors">
+              <button onClick={() => { setStep(steps.length); }} className="mt-4 text-xs text-purple-400/50 hover:text-purple-300/60 transition-colors">
                 Passer
               </button>
             </motion.div>
@@ -141,7 +141,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
               </div>
 
               <h2 className="text-2xl font-bold mb-1 text-white">Ton app musicale</h2>
-              <p className="text-purple-300/50 mb-6 text-sm">
+              <p className="text-purple-300/60 mb-6 text-sm">
                 Pour ouvrir les sons directement dans ton player
               </p>
 
@@ -188,7 +188,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                       </div>
                       <div className="text-center">
                         <h3 className="font-bold text-white text-sm">{svc.name}</h3>
-                        <p className="text-[10px] text-purple-300/50">{svc.sub}</p>
+                        <p className="text-[10px] text-purple-300/60">{svc.sub}</p>
                       </div>
                       {selectedService === svc.id && (
                         <div className="w-5 h-5 bg-fuchsia-500 rounded-full flex items-center justify-center">
@@ -210,7 +210,7 @@ export function OnboardingDialog({ onComplete }: OnboardingDialogProps) {
                 Commencer à shaker
               </button>
 
-              <p className="text-[11px] text-purple-400/30 mt-3">
+              <p className="text-[11px] text-purple-400/50 mt-3">
                 Modifiable à tout moment dans les paramètres
               </p>
             </motion.div>

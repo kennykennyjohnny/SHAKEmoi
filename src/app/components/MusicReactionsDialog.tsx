@@ -76,7 +76,7 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
               return (
                 <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <img src={r.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${r.user?.username}&background=random`} className="w-6 h-6 rounded-full" alt="" />
+                    <img src={r.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${r.user?.username}&background=2A1852&color=FFEFD5`} className="w-6 h-6 rounded-full" alt="" />
                     <span className="text-xs font-medium">@{r.user?.username}</span>
                     {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}
                   </div>

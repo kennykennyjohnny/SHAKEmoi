@@ -77,7 +77,7 @@ export function NotificationsDropdown({ userId, unreadCount, onRead }: Props) {
                 notifs.slice(0, 20).map(n => (
                   <div key={n.id} className={`px-4 py-2.5 flex items-center gap-3 border-b border-purple-800/10 ${!n.is_read ? 'bg-purple-500/5' : ''}`}>
                     <img
-                      src={n.actor_avatar || `https://ui-avatars.com/api/?name=${n.actor_username}&background=random`}
+                      src={n.actor_avatar || `https://ui-avatars.com/api/?name=${n.actor_username}&background=2A1852&color=FFEFD5`}
                       className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
                       alt=""
                     />
@@ -86,7 +86,7 @@ export function NotificationsDropdown({ userId, unreadCount, onRead }: Props) {
                         <span className="font-semibold">@{n.actor_username}</span>{' '}
                         <span className="text-purple-300/70">{n.content}</span>
                       </p>
-                      <span className="text-[10px] text-purple-300/50">{formatTime(n.created_at)}</span>
+                      <span className="text-[10px] text-purple-300/60">{formatTime(n.created_at)}</span>
                     </div>
                     {n.post_cover_url && (
                       <img src={n.post_cover_url} className="w-8 h-8 rounded-md flex-shrink-0 object-cover" alt="" />
@@ -94,7 +94,7 @@ export function NotificationsDropdown({ userId, unreadCount, onRead }: Props) {
                   </div>
                 ))
               ) : (
-                <div className="p-6 text-center text-purple-300/50 text-sm">Aucune notification</div>
+                <div className="p-6 text-center text-purple-300/60 text-sm">Aucune notification</div>
               )}
             </div>
           </motion.div>

@@ -1,11 +1,11 @@
 {
   "name": "SHAKEmoi",
   "short_name": "SHAKEmoi",
-  "description": "Le réseau social musical - Partage ta musique, connecte avec le monde",
+  "description": "La couche sociale au-dessus de la musique. Partage le son qui te fait bouger.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0012",
-  "theme_color": "#9333ea",
+  "background_color": "#14092A",
+  "theme_color": "#14092A",
   "orientation": "portrait",
   "icons": [
     {
@@ -16,7 +16,8 @@
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

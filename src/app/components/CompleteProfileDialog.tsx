@@ -79,7 +79,7 @@ export function CompleteProfileDialog({ user, onComplete }: CompleteProfileDialo
       >
         <div className="p-6 text-center">
           <h2 className="text-xl font-bold text-white mb-1">Complète ton profil</h2>
-          <p className="text-sm text-purple-300/50 mb-5">Ajoute une photo et un nom pour que tes amis te reconnaissent</p>
+          <p className="text-sm text-purple-300/60 mb-5">Ajoute une photo et un nom pour que tes amis te reconnaissent</p>
 
           {/* Avatar */}
           <label className="mx-auto w-20 h-20 rounded-full bg-purple-950/60 border-2 border-dashed border-purple-500/40 flex items-center justify-center cursor-pointer overflow-hidden mb-4 block hover:border-purple-500 transition-colors">
@@ -111,7 +111,7 @@ export function CompleteProfileDialog({ user, onComplete }: CompleteProfileDialo
             {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Enregistrement...</> : 'Continuer'}
           </button>
 
-          <button onClick={skip} className="mt-3 text-sm text-purple-400/40 hover:text-purple-400/60 transition-colors">
+          <button onClick={skip} className="mt-3 text-sm text-purple-400/50 hover:text-purple-400/60 transition-colors">
             Passer pour l'instant
           </button>
         </div>

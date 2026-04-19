@@ -152,7 +152,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
   const embedUrl = trackId ? `https://open.spotify.com/embed/track/${trackId}?theme=0` : null;
   const coverUrl = post?.cover_url || post?.track_cover_url;
   const userName = post?.user?.display_name || post?.user?.username || '';
-  const avatar = post?.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${post?.user?.username || 'U'}&background=random`;
+  const avatar = post?.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${post?.user?.username || 'U'}&background=2A1852&color=FFEFD5`;
   const isOwner = currentUser?.id === post?.user_id || currentUser?.id === post?.user?.id;
 
   if (loading) return (
@@ -165,7 +165,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
   if (!post) return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center" onClick={onClose}>
-      <p className="text-purple-300/50">Post introuvable</p>
+      <p className="text-purple-300/60">Post introuvable</p>
     </motion.div>
   );
 
@@ -303,7 +303,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
               ) : (
                 comments.map((c: any) => (
                   <div key={c.id} className="flex gap-2.5">
-                    <img src={c.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${c.user?.username || 'U'}&background=random`} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                    <img src={c.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${c.user?.username || 'U'}&background=2A1852&color=FFEFD5`} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="font-semibold text-xs text-white">@{c.user?.username || 'inconnu'}</span>
@@ -323,7 +323,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
                 return (
                   <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <img src={r.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${r.user?.username}&background=random`} className="w-6 h-6 rounded-full" alt="" />
+                      <img src={r.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${r.user?.username}&background=2A1852&color=FFEFD5`} className="w-6 h-6 rounded-full" alt="" />
                       <span className="text-xs font-medium">@{r.user?.username}</span>
                       {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}
                     </div>

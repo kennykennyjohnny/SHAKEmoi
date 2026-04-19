@@ -135,7 +135,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
     { id: 'tidal', name: 'Tidal', icon: '🌊', color: 'from-cyan-600 to-cyan-500' },
   ];
 
-  const avatar = currentUser?.avatar || currentUser?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${currentUser?.username}&background=random`;
+  const avatar = currentUser?.avatar || currentUser?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${currentUser?.username}&background=2A1852&color=FFEFD5`;
   const displayName = currentUser?.displayName || currentUser?.display_name || currentUser?.username;
 
   return (

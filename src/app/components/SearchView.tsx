@@ -237,7 +237,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                     <div className="flex-1 text-left min-w-0">
                       <h3 className="font-semibold text-sm text-white truncate">{track.title}</h3>
                       <p className="text-xs text-purple-200/70 truncate">{track.artists || track.artist}</p>
-                      <p className="text-xs text-purple-300/50 truncate">{track.album}</p>
+                      <p className="text-xs text-purple-300/60 truncate">{track.album}</p>
                     </div>
 
                     {/* Share + Send + Shake buttons */}
@@ -347,7 +347,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
             })
           ) : (
             <div className="text-center py-8">
-              <Music className="w-10 h-10 text-purple-600 mx-auto mb-2" />
+              <Music className="w-10 h-10 text-[#FFEFD5] mx-auto mb-2" />
               <p className="text-purple-200/70 text-sm">Aucun résultat pour "{searchQuery}"</p>
             </div>
           )}
@@ -368,7 +368,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
               >
                 <button onClick={() => setProfilePreview({ userId: user.id, username: user.username })} className="flex-shrink-0">
                   <img
-                    src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
+                    src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=2A1852&color=FFEFD5`}
                     alt={user.username}
                     className="w-12 h-12 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-fuchsia-500 transition-all"
                   />
@@ -459,7 +459,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
             <SearchIcon className="w-8 h-8 text-purple-400/60" />
           </div>
           <h3 className="text-lg font-bold text-white mb-2">Découvre de la musique</h3>
-          <p className="text-sm text-purple-300/50 max-w-xs leading-relaxed">
+          <p className="text-sm text-purple-300/60 max-w-xs leading-relaxed">
             Recherche un son, un artiste, un ami ou un cercle musical
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">

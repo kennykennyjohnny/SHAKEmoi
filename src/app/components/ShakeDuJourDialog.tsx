@@ -92,7 +92,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
         {/* Prompt */}
         <div className="px-4 py-3 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-b border-purple-800/20">
           <p className="text-sm text-yellow-200/90 font-medium">Quel son définit ta semaine ?</p>
-          <p className="text-xs text-purple-300/50 mt-1">Poste ton Shake pour débloquer le feed et participer au mini-jeu cercle. Mardi 9h pour tout le monde !</p>
+          <p className="text-xs text-purple-300/60 mt-1">Poste ton Shake pour débloquer le feed et participer au mini-jeu cercle. Mardi 9h pour tout le monde !</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">

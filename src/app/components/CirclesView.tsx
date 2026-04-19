@@ -1,4 +1,4 @@
-ï»¿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, Plus, Loader2, X, UserPlus, Play, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getUserCircles, createCircle, getCircleMembers, addCircleMember, removeCircleMember, searchUsers, getFriendsTrending } from '../../lib/database';
@@ -85,10 +85,10 @@ export function CirclesView({ currentUser }: Props) {
         <div className="flex flex-wrap gap-2 mb-4">
           {members.map(m => (
             <div key={m.id} className="flex items-center gap-1.5 bg-purple-950/30 rounded-full px-2 py-1 border border-purple-800/20">
-              <img src={m.profile_album_cover_url || `https://ui-avatars.com/api/?name=${m.username}&background=random`} className="w-5 h-5 rounded-full" alt="" />
+              <img src={m.profile_album_cover_url || `https://ui-avatars.com/api/?name=${m.username}&background=2A1852&color=FFEFD5`} className="w-5 h-5 rounded-full" alt="" />
               <span className="text-xs">@{m.username}</span>
               {m.id !== currentUser?.id && (
-                <button onClick={() => handleRemoveMember(m.id)} className="text-purple-400/40 hover:text-pink-400"><X className="w-3 h-3" /></button>
+                <button onClick={() => handleRemoveMember(m.id)} className="text-purple-400/50 hover:text-pink-400"><X className="w-3 h-3" /></button>
               )}
             </div>
           ))}
@@ -102,7 +102,7 @@ export function CirclesView({ currentUser }: Props) {
             <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Chercher un ami..." className="w-full px-3 py-2 bg-purple-950/40 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 mb-2" />
             {searchResults.filter(u => !members.find(m => m.id === u.id)).slice(0, 5).map(u => (
               <button key={u.id} onClick={() => handleAddMember(u.id)} className="w-full flex items-center gap-2 p-2 hover:bg-purple-900/30 rounded-lg">
-                <img src={u.profile_album_cover_url || `https://ui-avatars.com/api/?name=${u.username}&background=random`} className="w-7 h-7 rounded-full" alt="" />
+                <img src={u.profile_album_cover_url || `https://ui-avatars.com/api/?name=${u.username}&background=2A1852&color=FFEFD5`} className="w-7 h-7 rounded-full" alt="" />
                 <span className="text-sm">@{u.username}</span>
                 <Plus className="w-4 h-4 text-purple-400 ml-auto" />
               </button>
@@ -110,7 +110,7 @@ export function CirclesView({ currentUser }: Props) {
           </div>
         )}
 
-        <p className="text-sm text-purple-300/50 text-center py-8">Le feed du cercle et le top de la semaine arrivent bientÃ´t</p>
+        <p className="text-sm text-purple-300/60 text-center py-8">Le feed du cercle et le top de la semaine arrivent bientôt</p>
       </div>
     );
   }
@@ -121,7 +121,7 @@ export function CirclesView({ currentUser }: Props) {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold flex items-center gap-2"><Users className="w-5 h-5 text-purple-400" /> Mes cercles</h2>
         <button onClick={() => setShowCreate(!showCreate)} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90">
-          <Plus className="w-4 h-4 inline mr-1" />CrÃ©er
+          <Plus className="w-4 h-4 inline mr-1" />Créer
         </button>
       </div>
 
@@ -150,9 +150,9 @@ export function CirclesView({ currentUser }: Props) {
           </div>
         ) : (
           <div className="text-center py-12">
-            <Users className="w-10 h-10 text-purple-600 mx-auto mb-2 opacity-50" />
-            <p className="text-purple-300/50 text-sm">Aucun cercle pour le moment</p>
-            <p className="text-xs text-purple-400/30 mt-1">CrÃ©e un cercle et invite tes amis !</p>
+            <Users className="w-10 h-10 text-[#FFEFD5] mx-auto mb-2" />
+            <p className="text-purple-300/60 text-sm">Aucun cercle pour le moment</p>
+            <p className="text-xs text-purple-400/50 mt-1">Crée un cercle et invite tes amis !</p>
           </div>
         )
       }

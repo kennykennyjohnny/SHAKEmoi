@@ -128,7 +128,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
                   }`}
                 >
                   <img
-                    src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
+                    src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=2A1852&color=FFEFD5`}
                     alt={user.username}
                     className="w-10 h-10 rounded-full object-cover"
                   />

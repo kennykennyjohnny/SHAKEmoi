@@ -132,7 +132,7 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
                   className="mb-3 flex flex-col items-center"
                 >
                   <img
-                    src={referrerProfile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${referrerProfile.username}&background=random`}
+                    src={referrerProfile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${referrerProfile.username}&background=2A1852&color=FFEFD5`}
                     alt={referrerProfile.username}
                     className="w-16 h-16 rounded-full object-cover ring-2 ring-fuchsia-500 mb-2"
                   />
@@ -144,7 +144,7 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
                 <h1 className="text-lg font-black text-white mb-1">
                   {referrerProfile.display_name || referrerProfile.username} veut te retrouver sur SHAKEmoi !
                 </h1>
-                <p className="text-purple-300/50 text-sm">
+                <p className="text-purple-300/60 text-sm">
                   Inscris-toi pour partager tes sons et découvrir ce que tes amis écoutent 🎵
                 </p>
               </>
@@ -161,7 +161,7 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
                 <h1 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Bricolage Grotesque', 'Manrope', sans-serif" }}>
                   SHAKEmoi
                 </h1>
-                <p className="text-purple-300/50 text-sm mt-1">
+                <p className="text-purple-300/60 text-sm mt-1">
                   {mode === 'login' ? 'Content de te revoir' : 'Partage tes sons préférés'}
                 </p>
               </>
@@ -248,7 +248,7 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
             </button>
 
             <div className="text-center pt-3 border-t border-purple-800/20">
-              <p className="text-purple-300/50 text-sm">
+              <p className="text-purple-300/60 text-sm">
                 {mode === 'login' ? "Pas encore de compte ?" : "Déjà un compte ?"}
                 {' '}
                 <button
@@ -263,7 +263,7 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
           </form>
         </motion.div>
 
-        <p className="text-center text-purple-400/30 text-xs mt-4">
+        <p className="text-center text-purple-400/50 text-xs mt-4">
           En continuant, tu acceptes nos conditions d'utilisation
         </p>
       </div>

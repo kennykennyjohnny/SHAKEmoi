@@ -180,7 +180,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
                 className="flex-shrink-0"
               >
                 <img
-                  src={notif.actor_avatar || `https://ui-avatars.com/api/?name=${notif.actor_username}&background=random`}
+                  src={notif.actor_avatar || `https://ui-avatars.com/api/?name=${notif.actor_username}&background=2A1852&color=FFEFD5`}
                   alt={notif.actor_username}
                   className="w-9 h-9 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-fuchsia-500 transition-all"
                 />
@@ -197,7 +197,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
                   </button>
                   {' '}
                   <span className="text-purple-200/70 text-xs">{notif.content}</span>
-                  {notif.post_track_name && <span className="text-purple-300/50 text-xs"> · {notif.post_track_name}</span>}
+                  {notif.post_track_name && <span className="text-purple-300/60 text-xs"> · {notif.post_track_name}</span>}
                 </p>
                 <p className="text-[10px] text-purple-500/40 mt-0.5">{formatTimestamp(notif.created_at)}</p>
               </div>
