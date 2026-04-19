@@ -189,20 +189,27 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
     const shake = currentList.find(s => s.id === shakeId);
     if (!shake) return;
 
-    try {
-      if (shake.isLiked) {
-        await unlikePost(shakeId);
-        setCurrentList(currentList.map(s =>
-          s.id === shakeId ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) } : s
-        ));
-      } else {
-        await likePost(shakeId);
-        setCurrentList(currentList.map(s =>
+    // Optimistic update first
+    if (shake.isLiked) {
+      setCurrentList(prev => prev.map(s =>
+        s.id === shakeId ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) } : s
+      ));
+      try { await unlikePost(shakeId); } catch (error) {
+        console.error('Error unliking:', error);
+        setCurrentList(prev => prev.map(s =>
           s.id === shakeId ? { ...s, isLiked: true, likes: s.likes + 1 } : s
         ));
       }
-    } catch (error) {
-      console.error('Error toggling like:', error);
+    } else {
+      setCurrentList(prev => prev.map(s =>
+        s.id === shakeId ? { ...s, isLiked: true, likes: s.likes + 1 } : s
+      ));
+      try { await likePost(shakeId); } catch (error) {
+        console.error('Error liking:', error);
+        setCurrentList(prev => prev.map(s =>
+          s.id === shakeId ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) } : s
+        ));
+      }
     }
   };
 
@@ -502,7 +509,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                       {/* Action bar */}
                       <div className="px-4 py-3 flex items-center gap-3 flex-wrap">
                         <button onClick={() => toggleLike(detailShake.id)} className="flex items-center gap-1.5 group">
-                          <Heart className={`w-5 h-5 transition-all ${detailShake.isLiked ? 'text-pink-500 fill-pink-500 scale-110' : 'text-purple-300/70 group-hover:text-pink-500 group-active:scale-125'}`} />
+                          <Heart className={`w-5 h-5 transition-all duration-200 ${detailShake.isLiked ? 'text-pink-500 fill-pink-500 scale-110' : 'text-purple-300/70 scale-100 group-hover:text-pink-500 group-active:scale-125'}`} />
                           <span className={`text-sm font-medium ${detailShake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{detailShake.likes}</span>
                         </button>
 
@@ -534,9 +541,9 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           <Send className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
                         </button>
 
-                        <button onClick={() => openInMusicApp(detailShake)} className="flex items-center gap-1.5 group ml-auto px-3 py-1.5 rounded-full bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors">
-                          <ExternalLink className="w-4 h-4 text-fuchsia-400" />
-                          <span className="text-xs font-medium text-fuchsia-400">Écouter</span>
+                        <button onClick={() => openInMusicApp(detailShake)} className="flex items-center gap-1.5 group ml-auto px-3 py-1.5 rounded-full bg-[#FFEFD5]/10 hover:bg-[#FFEFD5]/20 transition-colors">
+                          <ExternalLink className="w-4 h-4 text-[#FFEFD5]" />
+                          <span className="text-xs font-medium text-[#FFEFD5]">Écouter</span>
                         </button>
 
                         <button

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles, UserPlus, UserCheck, Send } from 'lucide-react';
+import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles, UserPlus, UserCheck, Send, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
 import { searchUsers, createPost, searchCircles, joinCircle, joinCircleByCode, followUser, unfollowUser, isFollowing } from '../../lib/database';
@@ -240,7 +240,22 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                       <p className="text-xs text-purple-300/50 truncate">{track.album}</p>
                     </div>
 
-                    {/* Send + Shake buttons */}
+                    {/* Share + Send + Shake buttons */}
+                    <button
+                      onClick={async () => {
+                        const url = `https://open.spotify.com/track/${track.id}`;
+                        if (navigator.share) {
+                          try { await navigator.share({ title: `${track.title} - ${track.artist}`, text: `Écoute "${track.title}" de ${track.artist} 🎵`, url }); } catch {}
+                        } else {
+                          await navigator.clipboard.writeText(url);
+                        }
+                      }}
+                      className="flex-shrink-0 p-2 hover:bg-purple-900/40 rounded-full transition-colors group"
+                      title="Partager"
+                    >
+                      <Share2 className="w-4 h-4 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
+                    </button>
+
                     <button
                       onClick={() => setSendSongTrack(track)}
                       className="flex-shrink-0 p-2 hover:bg-purple-900/40 rounded-full transition-colors group"

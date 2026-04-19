@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Image, Copy, Users, LogOut, Check, Share2, Edit3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
@@ -18,15 +18,15 @@ function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { ci
     <div className="relative">
       <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         <style>{`.feed-tabs::-webkit-scrollbar { display: none; }`}</style>
-        <div className="feed-tabs inline-flex items-center gap-0 min-w-max border-b border-pink-400/15">
+        <div className="feed-tabs inline-flex items-center gap-0 min-w-max border-b border-[#FFEFD5]/10">
           <button onClick={() => onSelectFeed?.(null)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${!currentFeedId ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}>
             Feed
-            {!currentFeedId && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full" />}
+            {!currentFeedId && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#FFEFD5] rounded-full" />}
           </button>
           {circles.map(circle => (
             <button key={circle.id} onClick={() => onSelectFeed?.(circle.id)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${currentFeedId === circle.id ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}>
               {truncName(circle.name)}
-              {currentFeedId === circle.id && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full" />}
+              {currentFeedId === circle.id && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#FFEFD5] rounded-full" />}
             </button>
           ))}
           {onCreateCircle && (
@@ -425,10 +425,18 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   const [chatTrackQuery, setChatTrackQuery] = useState('');
   const [chatTrackResults, setChatTrackResults] = useState<any[]>([]);
   const [chatSearching, setChatSearching] = useState(false);
+  const circleChatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadFeed();
   }, [refreshFeed, currentFeedId]);
+
+  // Auto-scroll to bottom in circle chat
+  useEffect(() => {
+    if (currentFeedId && shakes.length > 0 && circleChatEndRef.current) {
+      setTimeout(() => circleChatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    }
+  }, [shakes.length, currentFeedId]);
 
   // Realtime subscription for circle feed
   useEffect(() => {
@@ -554,7 +562,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
       const shakes = shakesRaw.filter(s => s !== null);
 
-      setShakes(shakes);
+      // Circle chat: reverse to show oldest first (like a conversation)
+      setShakes(currentFeedId ? shakes.reverse() : shakes);
     } catch (err: any) {
       console.error('Error loading feed:', err);
       setError(err.message || 'Failed to load feed');
@@ -795,6 +804,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         {/* Horizontal feed selector */}
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
         {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
+        <AnimatePresence mode="wait">
+        <motion.div key={currentFeedId || 'main-feed'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.12, ease: 'easeOut' }}>
         {shakes.length === 0 ? (
           <div className="py-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
@@ -805,63 +816,71 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           </div>
         ) : currentFeedId ? (
           // Group conversation layout for circles
-          <div className="space-y-4">
-            {shakes.map((shake, index) => (
+          <div className="space-y-3">
+            {shakes.map((shake, index) => {
+              const isMe = shake.user.id === currentUser?.id;
+              return (
               <motion.div
                 key={shake.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="flex gap-3"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
+                className={`flex gap-2.5 ${isMe ? 'flex-row-reverse' : ''}`}
               >
                 <img
                   src={shake.user.avatar}
                   alt={shake.user.displayName}
-                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                  className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-purple-700/30 mt-1"
                 />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-sm text-white">{shake.user.displayName}</span>
-                    <span className="text-xs text-purple-300/60">@{shake.user.username}</span>
-                    <span className="text-xs text-purple-400/40">·</span>
-                    <span className="text-xs text-purple-300/60">{formatTimestamp(shake.timestamp)}</span>
+                <div className={`flex-1 min-w-0 max-w-[85%] ${isMe ? 'items-end' : ''}`}>
+                  <div className={`flex items-center gap-1.5 mb-0.5 ${isMe ? 'justify-end' : ''}`}>
+                    <span className="font-semibold text-xs text-white/90">{shake.user.displayName}</span>
+                    <span className="text-[10px] text-purple-400/40">{formatTimestamp(shake.timestamp)}</span>
                   </div>
+                  <div className={`rounded-2xl px-3 py-2 ${
+                    isMe
+                      ? 'bg-gradient-to-br from-purple-600/30 to-fuchsia-600/20 border border-purple-500/25 rounded-tr-sm'
+                      : 'bg-violet-950/40 border border-purple-800/20 rounded-tl-sm'
+                  }`}>
                   {shake.caption && (
-                    <p className="text-sm text-purple-200/80 mb-2">{shake.caption}</p>
+                    <p className="text-sm text-purple-100/90 leading-relaxed">{shake.caption}</p>
                   )}
                   {shake.imageUrl && (
-                    <div className="mb-2 rounded-lg overflow-hidden">
-                      <img src={shake.imageUrl} alt="" className="max-w-full max-h-64 rounded-lg object-cover" loading="lazy" />
+                    <div className={`${shake.caption ? 'mt-2' : ''} rounded-xl overflow-hidden`}>
+                      <img src={shake.imageUrl} alt="" className="max-w-full max-h-64 rounded-xl object-cover" loading="lazy" />
                     </div>
                   )}
                   {shake.track.title && (
-                  <div className="flex items-center gap-2 p-2 bg-purple-950/30 rounded-lg border border-purple-800/20">
+                  <div className={`${shake.caption || shake.imageUrl ? 'mt-2' : ''} flex items-center gap-2.5 p-2 bg-black/20 rounded-xl`}>
                     <img
                       src={shake.track.coverUrl}
                       alt={shake.track.title}
-                      className="w-10 h-10 rounded-md object-cover"
+                      className="w-11 h-11 rounded-lg object-cover"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{shake.track.title}</p>
+                      <p className="text-sm font-semibold text-white truncate">{shake.track.title}</p>
                       <p className="text-xs text-purple-300/60 truncate">{shake.track.artist}</p>
                     </div>
                     <button
                       onClick={() => handlePlayTrack(shake)}
-                      className="p-1 hover:bg-purple-800/40 rounded-full transition-colors"
+                      className="p-1.5 bg-purple-500/20 hover:bg-purple-500/30 rounded-full transition-colors"
                     >
-                      <Play className="w-4 h-4 text-purple-400" />
+                      <Play className="w-4 h-4 text-[#FFEFD5] fill-[#FFEFD5]" />
                     </button>
                   </div>
                   )}
+                  </div>
                   {shake.reshakeFrom && (
-                    <div className="mt-1 text-xs text-fuchsia-400/80">
-                      <Repeat2 className="w-3 h-3 inline mr-1" />
+                    <div className={`mt-0.5 text-[10px] text-fuchsia-400/60 ${isMe ? 'text-right' : ''}`}>
+                      <Repeat2 className="w-2.5 h-2.5 inline mr-0.5" />
                       Reshaké par @{shake.reshakeFrom.username}
                     </div>
                   )}
                 </div>
               </motion.div>
-            ))}
+              );
+            })}
+            <div ref={circleChatEndRef} />
           </div>
         ) : (
           // Standard feed layout for "All"
@@ -1087,16 +1106,18 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
                   <button
                     onClick={() => openInMusicApp(shake)}
-                    className="flex items-center gap-1.5 group ml-auto px-3 py-1 rounded-full bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors"
+                    className="flex items-center gap-1.5 group ml-auto px-3 py-1 rounded-full bg-[#FFEFD5]/10 hover:bg-[#FFEFD5]/20 transition-colors"
                   >
-                    <ExternalLink className="w-4 h-4 text-fuchsia-400 group-hover:text-fuchsia-300 transition-colors" />
-                    <span className="text-xs font-medium text-fuchsia-400 group-hover:text-fuchsia-300 hidden sm:inline">Écouter</span>
+                    <ExternalLink className="w-4 h-4 text-[#FFEFD5] group-hover:text-[#FFEFD5] transition-colors" />
+                    <span className="text-xs font-medium text-[#FFEFD5] group-hover:text-[#FFEFD5] hidden sm:inline">Écouter</span>
                   </button>
                 </div>
               </motion.article>
             );
           })
         )}
+        </motion.div>
+        </AnimatePresence>
       </div>
 
       <AnimatePresence>

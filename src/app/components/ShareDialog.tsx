@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Copy, Check, Share2, Sparkles, Heart, Music2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Logo } from './Logo';
 import { getAppStats } from '../../lib/database';
 
 interface ShareDialogProps {
@@ -95,7 +94,11 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
                   transition={{ duration: 2, repeat: Infinity }}
                   className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full blur-xl"
                 />
-                <Logo size="lg" animated={true} showText={false} />
+                <img
+                  src={currentUser?.avatar || currentUser?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${currentUser?.username || 'S'}&background=random`}
+                  alt=""
+                  className="w-20 h-20 rounded-full object-cover ring-3 ring-fuchsia-500/50 relative z-10"
+                />
               </motion.div>
 
               {/* Message */}

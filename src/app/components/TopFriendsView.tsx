@@ -317,8 +317,8 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
                             </span>
                           </div>
                         </div>
-                        <button onClick={() => openInMusicApp(track)} className="p-1.5 rounded-full bg-violet-900/20 hover:bg-purple-600/20 transition-colors flex-shrink-0">
-                          <ExternalLink className="w-4 h-4 text-purple-300/60 hover:text-purple-400" />
+                        <button onClick={() => openInMusicApp(track)} className="p-1.5 rounded-full bg-[#FFEFD5]/10 hover:bg-[#FFEFD5]/20 transition-colors flex-shrink-0">
+                          <ExternalLink className="w-4 h-4 text-[#FFEFD5]" />
                         </button>
                         {shakedIds.has(track.track_id || track.track_name) ? (
                           <span className="text-[10px] text-fuchsia-400 font-semibold flex-shrink-0">Shaké !</span>
@@ -383,7 +383,7 @@ function PodiumCard({ track, rank, onPlay, onOpen, isOpen, height, crown }: {
       className="flex-1 flex flex-col items-center gap-2 max-w-[110px]"
     >
       {crown && (
-        <Crown className="w-5 h-5 text-yellow-400 animate-bounce" />
+        <Crown className="w-5 h-5 text-[#FFEFD5] animate-bounce" />
       )}
       <div className="relative cursor-pointer group" onClick={onPlay}>
         <img src={track.cover_url} alt={track.track_name} className={`w-16 h-16 rounded-xl object-cover transition-all ${isOpen ? 'ring-2 ring-purple-500/70 scale-105' : 'hover:scale-105'}`} />
