@@ -439,14 +439,44 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                         </button>
                       </div>
 
-                      {/* Cover */}
-                      <div className="relative cursor-pointer" onClick={() => setShowDetailEmbed(!showDetailEmbed)}>
-                        <img src={detailShake.track.coverUrl} alt="" className="w-full aspect-square object-cover" />
-                        <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
-                          {showDetailEmbed ? (
-                            <Pause className="w-12 h-12 text-white fill-white drop-shadow-lg" />
-                          ) : (
-                            <Play className="w-12 h-12 text-white fill-white drop-shadow-lg" />
+                      {/* Track Card - compact like feed */}
+                      <div className="px-4 pt-3">
+                        <div
+                          className={`rounded-xl px-3 py-2 flex gap-2.5 items-center group cursor-pointer transition-all border ${
+                            showDetailEmbed
+                              ? 'bg-purple-800/20 border-purple-600/30'
+                              : 'bg-purple-900/20 border-purple-800/10 hover:bg-purple-900/30'
+                          }`}
+                          onClick={() => setShowDetailEmbed(!showDetailEmbed)}
+                        >
+                          <div className="relative flex-shrink-0">
+                            <img src={detailShake.track.coverUrl} alt="" className={`w-11 h-11 rounded-lg object-cover transition-all ${showDetailEmbed ? 'ring-2 ring-purple-500/50' : ''}`} />
+                            <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
+                              showDetailEmbed ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
+                            }`}>
+                              {showDetailEmbed ? (
+                                <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                                  <div className="flex items-center gap-0.5">
+                                    <span className="w-0.5 h-2.5 bg-white rounded-full animate-pulse" />
+                                    <span className="w-0.5 h-3 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
+                                    <span className="w-0.5 h-2 bg-white rounded-full animate-pulse [animation-delay:0.3s]" />
+                                  </div>
+                                </div>
+                              ) : (
+                                <Play className="w-5 h-5 text-white fill-white" />
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0 flex flex-col justify-center">
+                            <h3 className="font-bold text-sm truncate">{detailShake.track.title}</h3>
+                            <p className="text-xs text-purple-200/70 truncate">{detailShake.track.artist}</p>
+                          </div>
+                          {!showDetailEmbed && (
+                            <div className="flex items-center">
+                              <div className="w-7 h-7 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                                <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
+                              </div>
+                            </div>
                           )}
                         </div>
                       </div>

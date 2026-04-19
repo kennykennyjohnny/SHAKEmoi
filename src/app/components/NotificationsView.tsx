@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, UserPlus, UserCheck, Music, Repeat2, Loader2, Bell, Users, ExternalLink, RefreshCw } from 'lucide-react';
+import { Heart, MessageCircle, UserPlus, UserCheck, UserMinus, Music, Repeat2, Loader2, Bell, Users, ExternalLink, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { getUserNotifications, followUser, unfollowUser, isFollowing } from '../../lib/database';
@@ -49,11 +49,21 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
 
   const handleFollowBack = async (userId: string) => {
     try {
-      await followUser(userId);
-      setFollowedBack(new Set([...followedBack, userId]));
-      setFollowingState({ ...followingState, [userId]: true });
+      if (followingState[userId] || followedBack.has(userId)) {
+        // Unfollow
+        await unfollowUser(userId);
+        const newFollowed = new Set(followedBack);
+        newFollowed.delete(userId);
+        setFollowedBack(newFollowed);
+        setFollowingState({ ...followingState, [userId]: false });
+      } else {
+        // Follow
+        await followUser(userId);
+        setFollowedBack(new Set([...followedBack, userId]));
+        setFollowingState({ ...followingState, [userId]: true });
+      }
     } catch (err) {
-      console.error('Error following back:', err);
+      console.error('Error toggling follow:', err);
     }
   };
 
@@ -137,7 +147,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
 
       <div className="space-y-1.5">
         {notifications.map((notif, index) => {
-          const isFollowNotif = notif.type === 'follow';
+          const isFollowNotif = notif.type === 'follow' || notif.type === 'feel';
           const alreadyFollowing = followingState[notif.actor_id] || followedBack.has(notif.actor_id);
           const hasPost = !!notif.post_cover_url;
           const canNavigate = (notif.type === 'like' || notif.type === 'comment' || notif.type === 'reshake') && notif.post_id;
@@ -202,9 +212,12 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
                 </button>
               )}
               {isFollowNotif && alreadyFollowing && (
-                <span className="flex-shrink-0 inline-flex items-center gap-1.5 text-sm text-fuchsia-400 bg-fuchsia-500/15 px-3.5 py-1.5 rounded-full border border-fuchsia-500/25 font-medium">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleFollowBack(notif.actor_id); }}
+                  className="flex-shrink-0 inline-flex items-center gap-1.5 text-sm text-fuchsia-400 bg-fuchsia-500/15 px-3.5 py-1.5 rounded-full border border-fuchsia-500/25 font-medium hover:bg-red-500/15 hover:text-red-400 hover:border-red-500/25 transition-colors active:scale-95"
+                >
                   <UserCheck className="w-3.5 h-3.5" /> Abonné
-                </span>
+                </button>
               )}
 
               {/* Track Cover if available */}
