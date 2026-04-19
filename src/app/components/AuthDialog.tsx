@@ -156,11 +156,8 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
                   transition={{ delay: 0.1, type: 'spring' }}
                   className="mb-3 flex justify-center"
                 >
-                  <Logo size="md" animated={true} showText={false} />
+                  <Logo size="lg" animated={true} showText={true} />
                 </motion.div>
-                <h1 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Bricolage Grotesque', 'Manrope', sans-serif" }}>
-                  SHAKEmoi
-                </h1>
                 <p className="text-purple-300/60 text-sm mt-1">
                   {mode === 'login' ? 'Content de te revoir' : 'Partage tes sons préférés'}
                 </p>

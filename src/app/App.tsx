@@ -140,7 +140,7 @@ export default function App() {
         const pushEnabled = localStorage.getItem('shakemoi_push_enabled') === 'true';
         if (pushEnabled && notifs.length > 0 && lastNotifId && notifs[0].id !== lastNotifId) {
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            new Notification('SHAKEmoi', { body: `@${notifs[0].actor_username} ${notifs[0].content}`, icon: '/favicon.ico' });
+            new Notification('SHAKEmoi', { body: `@${notifs[0].actor_username} ${notifs[0].content}`, icon: '/shakemoi-favicon.png' });
           }
         }
         if (notifs.length > 0) lastNotifId = notifs[0].id;
@@ -259,9 +259,7 @@ export default function App() {
         <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#14092A]/80 sticky top-0 z-40">
           <div className="px-4 py-2 flex items-center justify-between">
             <button onClick={() => { setActiveFeedCircleId(null); setCurrentView('feed'); }} className="focus:outline-none">
-              <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" style={{ fontFamily: "'Bricolage Grotesque', 'Manrope', sans-serif" }}>
-                SHAKEmoi
-              </span>
+              <img src="/shakemoi-logo.png" alt="SHAKEmoi" className="h-7 object-contain" draggable={false} />
             </button>
 
             <div className="flex items-center gap-1.5">
