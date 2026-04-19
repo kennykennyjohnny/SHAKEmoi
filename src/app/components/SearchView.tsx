@@ -243,11 +243,11 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                     {/* Share + Send + Shake buttons */}
                     <button
                       onClick={async () => {
-                        const url = `https://open.spotify.com/track/${track.id}`;
+                        const url = 'https://shakemoi.fr';
                         if (navigator.share) {
-                          try { await navigator.share({ title: `${track.title} - ${track.artist}`, text: `Écoute "${track.title}" de ${track.artist} 🎵`, url }); } catch {}
+                          try { await navigator.share({ title: `${track.title} - ${track.artist}`, text: `Écoute "${track.title}" de ${track.artist} sur SHAKEmoi ! 🎵`, url }); } catch {}
                         } else {
-                          await navigator.clipboard.writeText(url);
+                          await navigator.clipboard.writeText(`${track.title} - ${track.artist} 🎵 ${url}`);
                         }
                       }}
                       className="flex-shrink-0 p-2 hover:bg-purple-900/40 rounded-full transition-colors group"
