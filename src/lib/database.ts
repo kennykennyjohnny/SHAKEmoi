@@ -223,16 +223,20 @@ export async function createPost(
       ? `https://open.spotify.com/embed/track/${trackId}`
       : null;
 
+    // For text-only messages (circle chat), send null instead of empty strings
+    // to avoid trigger issues with empty track fields
+    const hasTrack = !!(trackName && trackName.trim());
+
     const postData: any = {
         user_id: user.id,
-        track_name: trackName,
-        artist: artist,
-        cover_url: coverUrl,
-        text: text,
-        preview_url: previewUrl,
-        spotify_url: spotifyUrl,
+        track_name: hasTrack ? trackName : null,
+        artist: hasTrack ? artist : null,
+        cover_url: hasTrack ? coverUrl : null,
+        text: text || null,
+        preview_url: previewUrl || null,
+        spotify_url: spotifyUrl || null,
         spotify_embed_url: spotifyEmbedUrl,
-        track_id: trackId,
+        track_id: trackId || null,
         // Odesli universal links
         apple_music_url: odesliLinks?.apple_music_url ?? null,
         deezer_url: odesliLinks?.deezer_url ?? null,
@@ -1504,46 +1508,86 @@ export async function updateCircleName(circleId: string, newName: string) {
   }
 }
 
-// ==================== CIRCLE FEED ====================
+// ==================== CIRCLE MESSAGES ====================
 
-export async function getCircleFeed(circleId: string, limit = 30): Promise<Post[]> {
+export async function getCircleMessages(circleId: string, limit = 50) {
   try {
-    // Simple query first — avoid self-join that can fail
-    const { data: posts, error } = await supabase
-      .from('posts')
+    const { data, error } = await supabase
+      .from('circle_messages')
       .select(`
         *,
-        user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
+        user:users_profile!circle_messages_sender_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
       `)
       .eq('circle_id', circleId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
     if (error) {
-      console.error('getCircleFeed error:', error);
-      // Fallback: filter by member IDs if circle_id column doesn't exist
-      if (error.message?.includes('circle_id') || error.code === '42703') {
+      console.error('getCircleMessages error:', error);
+      return [];
+    }
+    return data || [];
+  } catch (error) {
+    console.error('Error getting circle messages:', error);
+    return [];
+  }
+}
+
+export async function sendCircleMessage(circleId: string, text?: string, track?: any, imageUrl?: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const msgData: any = {
+      circle_id: circleId,
+      sender_id: user.id,
+      text: text || null,
+      image_url: imageUrl || null,
+    };
+
+    if (track) {
+      msgData.track_name = track.name || track.track_name;
+      msgData.artist = track.artist;
+      msgData.cover_url = track.cover || track.cover_url || track.coverUrl;
+      msgData.track_id = track.id || track.track_id;
+      msgData.spotify_url = track.spotify_url || track.spotifyUrl;
+      msgData.spotify_embed_url = track.id ? `https://open.spotify.com/embed/track/${track.id}` : null;
+    }
+
+    const { data, error } = await supabase
+      .from('circle_messages')
+      .insert([msgData])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Notify circle members
+    if (data) {
+      try {
         const { data: members } = await supabase
           .from('circle_members')
           .select('user_id')
-          .eq('circle_id', circleId);
-        if (!members || members.length === 0) return [];
-        const memberIds = members.map(m => m.user_id);
-        const { data: fallbackPosts } = await supabase
-          .from('posts')
-          .select(`*, user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)`)
-          .in('user_id', memberIds)
-          .order('created_at', { ascending: false })
-          .limit(limit);
-        return fallbackPosts || [];
-      }
-      return [];
+          .eq('circle_id', circleId)
+          .neq('user_id', user.id);
+        if (members && members.length > 0) {
+          await supabase.from('notifications').insert(
+            members.map((m: any) => ({ user_id: m.user_id, from_user_id: user.id, type: 'circle_post' }))
+          );
+        }
+      } catch {}
     }
-    return posts || [];
-  } catch (error) {
-    console.error('Error getting circle feed:', error);
-    return [];
+
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error sending circle message:', error);
+    return { success: false, error: error.message };
   }
+}
+
+// Keep getCircleFeed as alias for backward compatibility
+export async function getCircleFeed(circleId: string, limit = 50) {
+  return getCircleMessages(circleId, limit);
 }
 
 export async function joinCircleByCode(inviteCode: string): Promise<any> {

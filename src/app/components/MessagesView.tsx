@@ -3,9 +3,9 @@ import { ArrowLeft, Send, Search, Music, Play, Loader2, ExternalLink, Users, Plu
 import { motion, AnimatePresence } from 'motion/react';
 import {
   getConversations, getMessages, sendMessage, getUserFollowing,
-  createCircle, getUserCircles, getCircleFeed, getCircleMembers,
+  createCircle, getUserCircles, getCircleMessages, getCircleMembers,
   searchUsers, addCircleMember, removeCircleMember, getCurrentUser,
-  createPost, hasLikedPosts
+  sendCircleMessage, hasLikedPosts
 } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
@@ -705,10 +705,10 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
-        table: 'posts',
+        table: 'circle_messages',
         filter: `circle_id=eq.${circle.id}`
       }, (payload: any) => {
-        if (payload.new?.user_id === currentUser?.id) return;
+        if (payload.new?.sender_id === currentUser?.id) return;
         loadData();
       })
       .subscribe();
@@ -723,7 +723,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const loadData = async () => {
     setLoading(true);
     try {
-      const [p, m] = await Promise.all([getCircleFeed(circle.id), getCircleMembers(circle.id)]);
+      const [p, m] = await Promise.all([getCircleMessages(circle.id), getCircleMembers(circle.id)]);
       setPosts(p);
       setMembers(m);
     } catch {}
@@ -749,16 +749,31 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
     setChatSending(true);
     const text = chatText.trim();
     setChatText('');
+
+    // Optimistic UI: add the message immediately
+    const optimisticMsg: any = {
+      id: `temp-${Date.now()}`,
+      sender_id: currentUser?.id,
+      text,
+      circle_id: circle?.id,
+      created_at: new Date().toISOString(),
+      user: currentUser,
+    };
+    setPosts(prev => [optimisticMsg, ...prev]);
+
     try {
-      const result = await createPost('', '', '', text, null, null, null, false, circle?.id);
+      const result = await sendCircleMessage(circle.id, text);
       if (!result.success) {
         console.error('Circle send failed:', result.error);
         setChatText(text);
+        setPosts(prev => prev.filter(p => p.id !== optimisticMsg.id));
+      } else {
+        await loadData();
       }
-      await loadData();
     } catch (e) {
       console.error('Circle send error:', e);
       setChatText(text);
+      setPosts(prev => prev.filter(p => p.id !== optimisticMsg.id));
     }
     setChatSending(false);
   };
@@ -766,7 +781,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const sendChatTrack = async (track: any) => {
     setChatSending(true);
     try {
-      const result = await createPost(track.name, track.artist, track.cover, '', track.preview_url, track.spotify_url, track.id, false, circle?.id);
+      const result = await sendCircleMessage(circle.id, undefined, track);
       if (!result.success) {
         console.error('Circle track send failed:', result.error);
       } else {
@@ -872,37 +887,37 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
         )}
       </AnimatePresence>
 
-      {/* Posts */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {loading ? (
           <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /></div>
-        ) : posts.length > 0 ? [...posts].reverse().map((post: any) => {
-          const trackId = post.track_id || post.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] || null;
-          const embedUrl = post.spotify_embed_url || (trackId ? `https://open.spotify.com/embed/track/${trackId}` : null);
-          const isOpen = activeEmbedId === post.id;
-          const user = post.user;
-          if (!post.track_name && !post.text) return null;
+        ) : posts.length > 0 ? [...posts].reverse().map((msg: any) => {
+          const trackId = msg.track_id || msg.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] || null;
+          const embedUrl = msg.spotify_embed_url || (trackId ? `https://open.spotify.com/embed/track/${trackId}` : null);
+          const isOpen = activeEmbedId === msg.id;
+          const user = msg.user;
+          if (!msg.track_name && !msg.text) return null;
           return (
-            <div key={post.id} className={`rounded-xl border transition-all overflow-hidden ${isOpen ? 'bg-violet-950/30 border-purple-600/30' : 'bg-violet-950/15 border-purple-500/20'}`}>
+            <div key={msg.id} className={`rounded-xl border transition-all overflow-hidden ${isOpen ? 'bg-violet-950/30 border-purple-600/30' : 'bg-violet-950/15 border-purple-500/20'}`}>
               <div className="p-2.5 flex items-center gap-2">
                 <img src={user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user?.username}&background=2A1852&color=FFEFD5`} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
                 <span className="text-xs font-medium text-purple-200/80">@{user?.username}</span>
-                <span className="text-xs text-purple-300/60 ml-auto">{formatTs(post.created_at)}</span>
+                <span className="text-xs text-purple-300/60 ml-auto">{formatTs(msg.created_at)}</span>
               </div>
-              {post.text && !post.track_name && <p className="px-3 pb-2.5 text-sm">{post.text}</p>}
-              {post.track_name && (
+              {msg.text && !msg.track_name && <p className="px-3 pb-2.5 text-sm">{msg.text}</p>}
+              {msg.track_name && (
                 <div className="px-2.5 pb-2">
-                  <div className="flex gap-2 items-center cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : post.id)}>
+                  <div className="flex gap-2 items-center cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : msg.id)}>
                     <div className="relative flex-shrink-0">
-                      <img src={post.cover_url} alt="" className="w-11 h-11 rounded-lg object-cover" />
+                      <img src={msg.cover_url} alt="" className="w-11 h-11 rounded-lg object-cover" />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity">
                         <Play className="w-4 h-4 text-white fill-white" />
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">{post.track_name}</p>
-                      <p className="text-xs text-purple-200/60 truncate">{post.artist}</p>
-                      {post.text && <p className="text-xs text-purple-300/60 truncate mt-0.5 italic">"{post.text}"</p>}
+                      <p className="text-sm font-semibold truncate">{msg.track_name}</p>
+                      <p className="text-xs text-purple-200/60 truncate">{msg.artist}</p>
+                      {msg.text && <p className="text-xs text-purple-300/60 truncate mt-0.5 italic">"{msg.text}"</p>}
                     </div>
                   </div>
                   <AnimatePresence>
@@ -919,8 +934,8 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
         }) : (
           <div className="text-center py-12">
             <Music className="w-10 h-10 text-[#FFEFD5] mx-auto mb-2" />
-            <p className="text-purple-300/60 text-sm">Aucun shake dans ce cercle</p>
-            <p className="text-purple-300/60 text-xs mt-1">Partage un son ci-dessous !</p>
+            <p className="text-purple-300/60 text-sm">Aucun message dans ce cercle</p>
+            <p className="text-purple-300/60 text-xs mt-1">Envoie un message ou partage un son !</p>
           </div>
         )}
         <div ref={bottomRef} />
