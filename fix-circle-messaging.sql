@@ -145,3 +145,26 @@ SELECT c.id, c.name, c.invite_code, c.created_by,
 FROM circles c 
 LEFT JOIN circle_members cm ON cm.circle_id = c.id 
 GROUP BY c.id, c.name, c.invite_code, c.created_by;
+
+-- ============================================
+-- 11. Permettre les messages texte (sans musique) dans les cercles
+-- track_name, artist, cover_url doivent être nullable pour les messages texte
+-- ============================================
+ALTER TABLE posts ALTER COLUMN track_name DROP NOT NULL;
+ALTER TABLE posts ALTER COLUMN artist DROP NOT NULL;
+ALTER TABLE posts ALTER COLUMN cover_url DROP NOT NULL;
+-- anciennes colonnes (au cas où)
+DO $$ BEGIN
+  ALTER TABLE posts ALTER COLUMN artist_name DROP NOT NULL;
+EXCEPTION WHEN undefined_column THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TABLE posts ALTER COLUMN album_cover DROP NOT NULL;
+EXCEPTION WHEN undefined_column THEN NULL;
+END $$;
+
+-- Vérifier les colonnes actuelles de posts
+SELECT column_name, is_nullable, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'posts' 
+ORDER BY ordinal_position;
