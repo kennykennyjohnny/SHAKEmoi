@@ -800,7 +800,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      <div className={`p-4 space-y-4 ${currentFeedId ? 'flex-1 pb-40 lg:pb-24' : ''}`}>
+      <div className={`p-4 space-y-6 ${currentFeedId ? 'flex-1 pb-40 lg:pb-24' : ''}`}>
         {/* Horizontal feed selector */}
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
         {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}

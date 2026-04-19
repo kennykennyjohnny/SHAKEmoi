@@ -245,9 +245,8 @@ export async function createPost(
         is_reshake: false,
         is_private: isPrivate,
         circle_id: circleId || null,
+        image_url: imageUrl || null,
     };
-    // Only include image_url if provided (column may not exist yet)
-    if (imageUrl) postData.image_url = imageUrl;
 
     const { data, error } = await supabase
       .from('posts')
@@ -1132,10 +1131,8 @@ export async function sendMessage(receiverId: string, text?: string, track?: any
       sender_id: user.id,
       receiver_id: receiverId,
       text: text || null,
+      image_url: imageUrl || null,
     };
-
-    // Only include image_url if provided (column may not exist yet)
-    if (imageUrl) messageData.image_url = imageUrl;
 
     // If sending a track
     if (track) {
