@@ -58,6 +58,15 @@ DROP POLICY IF EXISTS "Authenticated can join circles" ON circle_members;
 DROP POLICY IF EXISTS "Circle creator can remove members" ON circle_members;
 DROP POLICY IF EXISTS "Members can leave circles" ON circle_members;
 
+-- Supprimer aussi les nouvelles si elles existent deja (idempotent)
+DROP POLICY IF EXISTS "circles_select" ON circles;
+DROP POLICY IF EXISTS "circles_insert" ON circles;
+DROP POLICY IF EXISTS "circles_update" ON circles;
+DROP POLICY IF EXISTS "circles_delete" ON circles;
+DROP POLICY IF EXISTS "circle_members_select" ON circle_members;
+DROP POLICY IF EXISTS "circle_members_insert" ON circle_members;
+DROP POLICY IF EXISTS "circle_members_delete" ON circle_members;
+
 -- ============================================
 -- 6. Recréer les policies PROPREMENT
 -- ============================================
@@ -79,7 +88,7 @@ CREATE POLICY "circles_delete" ON circles
   FOR DELETE TO authenticated
   USING (auth.uid() = created_by);
 
--- CIRCLE_MEMBERS : lecture ouverte aux authentifiés, insertion libre (join par code), suppression par créateur ou soi-même
+-- CIRCLE_MEMBERS : lecture ouverte, insertion libre (join par code), suppression par créateur ou soi-même
 CREATE POLICY "circle_members_select" ON circle_members
   FOR SELECT TO authenticated
   USING (true);
@@ -96,9 +105,8 @@ CREATE POLICY "circle_members_delete" ON circle_members
   );
 
 -- ============================================
--- 7. Vérifier que les posts peuvent être lus/écrits (déjà fait normalement)
+-- 7. Vérifier que les posts peuvent être lus/écrits
 -- ============================================
--- S'assurer que la policy de lecture des posts existe
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'posts' AND policyname = 'posts_select') THEN
@@ -121,6 +129,7 @@ WHERE invite_code IS NULL;
 -- ============================================
 -- 10. Helper function pour éviter les récursions RLS
 -- ============================================
+DROP FUNCTION IF EXISTS is_circle_member(UUID, UUID);
 CREATE OR REPLACE FUNCTION is_circle_member(p_circle_id UUID, p_user_id UUID) 
 RETURNS BOOLEAN AS $$
 BEGIN

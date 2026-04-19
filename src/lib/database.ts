@@ -1508,21 +1508,19 @@ export async function updateCircleName(circleId: string, newName: string) {
 
 export async function getCircleFeed(circleId: string, limit = 30): Promise<Post[]> {
   try {
+    // Simple query first — avoid self-join that can fail
     const { data: posts, error } = await supabase
       .from('posts')
       .select(`
         *,
-        user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color),
-        original_post:posts!original_post_id(
-          *,
-          user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
-        )
+        user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
       `)
       .eq('circle_id', circleId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
     if (error) {
+      console.error('getCircleFeed error:', error);
       // Fallback: filter by member IDs if circle_id column doesn't exist
       if (error.message?.includes('circle_id') || error.code === '42703') {
         const { data: members } = await supabase
@@ -1539,7 +1537,7 @@ export async function getCircleFeed(circleId: string, limit = 30): Promise<Post[
           .limit(limit);
         return fallbackPosts || [];
       }
-      throw error;
+      return [];
     }
     return posts || [];
   } catch (error) {

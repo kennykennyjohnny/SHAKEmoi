@@ -747,23 +747,37 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const sendChatText = async () => {
     if (!chatText.trim() || chatSending) return;
     setChatSending(true);
+    const text = chatText.trim();
+    setChatText('');
     try {
-      await createPost('', '', '', chatText.trim(), null, null, null, false, circle?.id);
-      setChatText('');
+      const result = await createPost('', '', '', text, null, null, null, false, circle?.id);
+      if (!result.success) {
+        console.error('Circle send failed:', result.error);
+        setChatText(text);
+      }
       await loadData();
-    } catch {}
+    } catch (e) {
+      console.error('Circle send error:', e);
+      setChatText(text);
+    }
     setChatSending(false);
   };
 
   const sendChatTrack = async (track: any) => {
     setChatSending(true);
     try {
-      await createPost(track.name, track.artist, track.cover, '', track.preview_url, track.spotify_url, track.id, false, circle?.id);
-      setShowTrackSearch(false);
-      setTrackQuery('');
-      setTrackResults([]);
+      const result = await createPost(track.name, track.artist, track.cover, '', track.preview_url, track.spotify_url, track.id, false, circle?.id);
+      if (!result.success) {
+        console.error('Circle track send failed:', result.error);
+      } else {
+        setShowTrackSearch(false);
+        setTrackQuery('');
+        setTrackResults([]);
+      }
       await loadData();
-    } catch {}
+    } catch (e) {
+      console.error('Circle track send error:', e);
+    }
     setChatSending(false);
   };
 
