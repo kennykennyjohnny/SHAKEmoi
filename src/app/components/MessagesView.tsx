@@ -697,6 +697,29 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
 
   useEffect(() => { loadData(); }, []);
 
+  // Realtime subscription for circle messages
+  useEffect(() => {
+    if (!circle?.id) return;
+    const channel = supabase
+      .channel(`circle-chat-${circle.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'posts',
+        filter: `circle_id=eq.${circle.id}`
+      }, (payload: any) => {
+        if (payload.new?.user_id === currentUser?.id) return;
+        loadData();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [circle?.id, currentUser?.id]);
+
+  // Auto-scroll to bottom when posts change
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [posts.length]);
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -839,7 +862,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {loading ? (
           <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /></div>
-        ) : posts.length > 0 ? posts.map((post: any) => {
+        ) : posts.length > 0 ? [...posts].reverse().map((post: any) => {
           const trackId = post.track_id || post.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] || null;
           const embedUrl = post.spotify_embed_url || (trackId ? `https://open.spotify.com/embed/track/${trackId}` : null);
           const isOpen = activeEmbedId === post.id;
