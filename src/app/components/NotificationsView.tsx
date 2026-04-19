@@ -33,8 +33,8 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
       // Mark all as read
       await supabase.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false);
       
-      // Check follow state for follow notifications
-      const followNotifs = data.filter((n: any) => n.type === 'follow' && n.actor_id);
+      // Check follow state for follow notifications (trigger creates 'feel' type)
+      const followNotifs = data.filter((n: any) => (n.type === 'follow' || n.type === 'feel') && n.actor_id);
       const states: Record<string, boolean> = {};
       await Promise.all(followNotifs.map(async (n: any) => {
         try { states[n.actor_id] = await isFollowing(n.actor_id); } catch { states[n.actor_id] = false; }
