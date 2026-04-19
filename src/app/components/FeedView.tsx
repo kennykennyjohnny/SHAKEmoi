@@ -489,6 +489,20 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       const postIds = posts.map((p: any) => p.id);
       const likedMap = await db.hasLikedPosts(postIds);
 
+      // Pre-fetch original posts for reshakes where the join failed
+      const reshakesNeedingOriginal = posts.filter((p: any) => {
+        const op = Array.isArray(p.original_post) ? p.original_post[0] : p.original_post;
+        const opUser = op?.user ? (Array.isArray(op.user) ? op.user[0] : op.user) : null;
+        return p.is_reshake && p.original_post_id && !opUser;
+      });
+      const originalPostsMap: Record<string, any> = {};
+      if (reshakesNeedingOriginal.length > 0) {
+        const originals = await Promise.all(
+          reshakesNeedingOriginal.map((p: any) => db.getPostById(p.original_post_id))
+        );
+        originals.forEach((op: any) => { if (op) originalPostsMap[op.id] = op; });
+      }
+
       const shakesRaw = posts.map((post: any) => {
         const isLiked = likedMap[post.id] || false;
         const reshakerUser = post.user ? (Array.isArray(post.user) ? post.user[0] : post.user) : null;
@@ -500,11 +514,17 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         // Normalize original_post: Supabase self-join may return array (both levels)
         let originalPost = Array.isArray(post.original_post) ? post.original_post[0] : post.original_post;
         
-        // RESHAKE FIX: If is_reshake but no original_post from join, use post's own data
+        // RESHAKE FIX: If is_reshake but no original_post from join, use fetched original or fallback
         const isReshake = !!post.is_reshake;
         if (isReshake && !originalPost && post.original_post_id) {
-          // Use the post's own track data as fallback (already copied during reshake creation)
-          originalPost = post;
+          // Try to use pre-fetched original post
+          const fetched = originalPostsMap[post.original_post_id];
+          if (fetched) {
+            originalPost = fetched;
+          } else {
+            // Last resort: use post's own track data but clear user to avoid showing reshaker as original
+            originalPost = { ...post, user: null };
+          }
         }
         
         const originalUser = originalPost?.user ? (Array.isArray(originalPost.user) ? originalPost.user[0] : originalPost.user) : null;
@@ -688,10 +708,16 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     setChatText('');
     setChatSending(true);
     try {
-      await db.createPost('', '', '', text, null, null, null, false, currentFeedId);
-      await loadFeed();
-    } catch (err) {
+      const result = await db.createPost('', '', '', text, null, null, null, false, currentFeedId);
+      if (!result.success) {
+        console.error('Circle post failed:', result.error);
+        setShakes(prev => prev.filter(s => s.id !== optimisticShake.id));
+      } else {
+        await loadFeed();
+      }
+    } catch (err: any) {
       console.error('Error posting in circle:', err);
+      setShakes(prev => prev.filter(s => s.id !== optimisticShake.id));
     }
     setChatSending(false);
   };
@@ -805,7 +831,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
         {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
         <AnimatePresence mode="wait">
-        <motion.div key={currentFeedId || 'main-feed'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.12, ease: 'easeOut' }}>
+        <motion.div key={currentFeedId || 'main-feed'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.12, ease: 'easeOut' }} className="space-y-5">
         {shakes.length === 0 ? (
           <div className="py-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
@@ -893,7 +919,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className={`rounded-xl border transition-all overflow-hidden ${
+                className={`rounded-xl border transition-all overflow-hidden mb-5 ${
                   isPlayerOpen
                     ? 'bg-violet-950/25 border-purple-600/40 shadow-lg shadow-purple-500/10'
                     : 'bg-violet-950/20 border-purple-500/25 hover:border-purple-700/40'
