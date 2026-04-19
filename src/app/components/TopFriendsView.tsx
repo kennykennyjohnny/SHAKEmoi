@@ -1,21 +1,24 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, Play, Users, Loader2, ExternalLink, Music, Crown, Repeat2, BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
+import { TrendingUp, Play, Users, Loader2, ExternalLink, Music, Crown, Repeat2, BarChart3, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { getFriendsTrending, getCurrentUser, getUserFollowing } from '../../lib/database';
+import { getFriendsTrending, getCurrentUser, getUserFollowing, createPost } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 import { supabase } from '../../lib/supabase';
 
 interface TopFriendsViewProps {
   currentUser: any;
+  onRefreshFeed?: () => void;
 }
 
-export function TopFriendsView({ currentUser }: TopFriendsViewProps) {
+export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewProps) {
   const [trending, setTrending] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
   const [period, setPeriod] = useState<7 | 30>(7);
   const [wrap, setWrap] = useState<any>(null);
   const [wrapOpen, setWrapOpen] = useState(true);
+  const [shakingId, setShakingId] = useState<string | null>(null);
+  const [shakedIds, setShakedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => { loadTrending(); }, [period]);
   useEffect(() => { generateWrap(); }, [period]);
@@ -102,6 +105,30 @@ export function TopFriendsView({ currentUser }: TopFriendsViewProps) {
       odesli_page_url: track.latest_post?.odesli_page_url,
     }, platform);
     if (url) window.open(url, '_blank');
+  };
+
+  const handleShakeFromTop = async (track: any) => {
+    const key = track.track_id || track.track_name;
+    setShakingId(key);
+    try {
+      const result = await createPost(
+        track.track_name,
+        track.artist,
+        track.cover_url,
+        '',
+        null,
+        track.spotify_url,
+        track.track_id
+      );
+      if (result.success) {
+        setShakedIds(new Set([...shakedIds, key]));
+        if (onRefreshFeed) onRefreshFeed();
+      }
+    } catch (err) {
+      console.error('Error shaking from top:', err);
+    } finally {
+      setShakingId(null);
+    }
   };
 
   const top3 = trending.slice(0, 3);
@@ -293,6 +320,22 @@ export function TopFriendsView({ currentUser }: TopFriendsViewProps) {
                         <button onClick={() => openInMusicApp(track)} className="p-1.5 rounded-full bg-violet-900/20 hover:bg-purple-600/20 transition-colors flex-shrink-0">
                           <ExternalLink className="w-4 h-4 text-purple-300/60 hover:text-purple-400" />
                         </button>
+                        {shakedIds.has(track.track_id || track.track_name) ? (
+                          <span className="text-[10px] text-fuchsia-400 font-semibold flex-shrink-0">Shaké !</span>
+                        ) : (
+                          <button
+                            onClick={() => handleShakeFromTop(track)}
+                            disabled={shakingId === (track.track_id || track.track_name)}
+                            className="flex-shrink-0 px-2.5 py-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-[10px] font-bold hover:opacity-90 transition-opacity flex items-center gap-1 disabled:opacity-50"
+                          >
+                            {shakingId === (track.track_id || track.track_name) ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-3 h-3" />
+                            )}
+                            Shake
+                          </button>
+                        )}
                       </div>
                       <AnimatePresence>
                         {isOpen && embedUrl && (

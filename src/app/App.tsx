@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, Bell } from 'lucide-react';
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
 import { ProfileView } from './components/ProfileView';
@@ -234,7 +234,7 @@ export default function App() {
       case 'search':
         return <SearchView currentUser={currentUser} onRefreshFeed={() => setRefreshFeed(p => p + 1)} />;
       case 'top':
-        return <TopFriendsView currentUser={currentUser} />;
+        return <TopFriendsView currentUser={currentUser} onRefreshFeed={() => setRefreshFeed(p => p + 1)} />;
       case 'messages':
         return <MessagesView currentUser={currentUser} onOpenCircle={openCircleFeed} onCircleCreated={handleCircleCreated} viewOptions={viewOptions} />;
       case 'notifications':
@@ -296,7 +296,17 @@ export default function App() {
 
         {/* Content */}
         <main className="flex-1 overflow-auto pb-24 lg:pb-4">
-          {renderView()}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentView}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+            >
+              {renderView()}
+            </motion.div>
+          </AnimatePresence>
         </main>
 
         {/* Bottom Navigation Mobile — Feed, Top, Search, DMs, Profile */}
@@ -312,7 +322,7 @@ export default function App() {
               <button
                 key={view}
                 onClick={() => setCurrentView(view)}
-                className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all ${
+                className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all active:scale-90 ${
                   currentView === view ? 'text-fuchsia-400 bg-fuchsia-500/15 shadow-lg shadow-fuchsia-500/10' : 'text-purple-300/60 hover:text-purple-200'
                 }`}
               >

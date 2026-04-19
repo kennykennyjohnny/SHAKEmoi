@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles, UserPlus, UserCheck } from 'lucide-react';
+import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles, UserPlus, UserCheck, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
 import { searchUsers, createPost, searchCircles, joinCircle, joinCircleByCode, followUser, unfollowUser, isFollowing } from '../../lib/database';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
+import { SendSongDialog } from './SendSongDialog';
 
 interface SearchViewProps {
   currentUser?: any;
@@ -24,6 +25,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
   const [shakedIds, setShakedIds] = useState<Set<string>>(new Set());
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
+  const [sendSongTrack, setSendSongTrack] = useState<any>(null);
   const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
   const [followLoading, setFollowLoading] = useState<string | null>(null);
 
@@ -238,7 +240,15 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                       <p className="text-xs text-purple-300/50 truncate">{track.album}</p>
                     </div>
 
-                    {/* Shake button */}
+                    {/* Send + Shake buttons */}
+                    <button
+                      onClick={() => setSendSongTrack(track)}
+                      className="flex-shrink-0 p-2 hover:bg-purple-900/40 rounded-full transition-colors group"
+                      title="Envoyer à un ami"
+                    >
+                      <Send className="w-4 h-4 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
+                    </button>
+
                     {shakedIds.has(track.id) ? (
                       <span className="text-xs text-fuchsia-400 font-semibold px-3 py-1.5">Shaké !</span>
                     ) : showCaptionFor === track.id ? null : (
@@ -458,6 +468,16 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
             userId={profilePreview.userId}
             username={profilePreview.username}
             onClose={() => setProfilePreview(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Send Song Dialog */}
+      <AnimatePresence>
+        {sendSongTrack && (
+          <SendSongDialog
+            track={sendSongTrack}
+            onClose={() => setSendSongTrack(null)}
           />
         )}
       </AnimatePresence>

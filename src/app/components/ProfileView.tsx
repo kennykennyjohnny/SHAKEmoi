@@ -5,6 +5,7 @@ import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
+import { SendSongDialog } from './SendSongDialog';
 import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPosts } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 
@@ -23,6 +24,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
   const [userReshakes, setUserReshakes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
+  const [sendSongTrack, setSendSongTrack] = useState<any>(null);
   const [detailPostId, setDetailPostId] = useState<string | null>(null);
   const [showDetailEmbed, setShowDetailEmbed] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
@@ -498,15 +500,38 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                       </AnimatePresence>
 
                       {/* Action bar */}
-                      <div className="px-4 py-3 flex items-center gap-5">
+                      <div className="px-4 py-3 flex items-center gap-3 flex-wrap">
                         <button onClick={() => toggleLike(detailShake.id)} className="flex items-center gap-1.5 group">
-                          <Heart className={`w-6 h-6 transition-all ${detailShake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-300/70 group-hover:text-pink-500'}`} />
+                          <Heart className={`w-5 h-5 transition-all ${detailShake.isLiked ? 'text-pink-500 fill-pink-500 scale-110' : 'text-purple-300/70 group-hover:text-pink-500 group-active:scale-125'}`} />
                           <span className={`text-sm font-medium ${detailShake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{detailShake.likes}</span>
                         </button>
 
                         <button onClick={() => setCommentsPostId(detailShake.id)} className="flex items-center gap-1.5 group">
-                          <MessageCircle className="w-6 h-6 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
+                          <MessageCircle className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
                           <span className="text-sm font-medium text-purple-300/70">{detailShake.comments}</span>
+                        </button>
+
+                        <button
+                          onClick={async () => {
+                            const url = `https://shakemoi.fr/#/s/${detailShake.id}`;
+                            if (navigator.share) {
+                              try { await navigator.share({ title: `${detailShake.track.title} - ${detailShake.track.artist}`, text: `Écoute "${detailShake.track.title}" de ${detailShake.track.artist} sur SHAKEmoi !`, url }); } catch {}
+                            } else {
+                              await navigator.clipboard.writeText(url);
+                            }
+                          }}
+                          className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors group"
+                          title="Partager"
+                        >
+                          <Share2 className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
+                        </button>
+
+                        <button
+                          onClick={() => setSendSongTrack(detailShake.track)}
+                          className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors group"
+                          title="Envoyer à un ami"
+                        >
+                          <Send className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
                         </button>
 
                         <button onClick={() => openInMusicApp(detailShake)} className="flex items-center gap-1.5 group ml-auto px-3 py-1.5 rounded-full bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors">
@@ -822,6 +847,16 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Send Song Dialog */}
+      <AnimatePresence>
+        {sendSongTrack && (
+          <SendSongDialog
+            track={sendSongTrack}
+            onClose={() => setSendSongTrack(null)}
+          />
         )}
       </AnimatePresence>
     </div>

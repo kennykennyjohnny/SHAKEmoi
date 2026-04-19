@@ -1070,17 +1070,17 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
                 {/* Actions */}
                 <div className="px-4 pb-2.5 flex items-center gap-6">
-                  <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group">
-                    <Heart className={`w-5 h-5 transition-all ${shake.isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-300/70 group-hover:text-pink-500'}`} />
+                  <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group active:scale-90 transition-transform">
+                    <Heart className={`w-5 h-5 transition-all duration-200 ${shake.isLiked ? 'text-pink-500 fill-pink-500 scale-110' : 'text-purple-300/70 group-hover:text-pink-500 group-active:scale-125'}`} />
                     <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{shake.likes}</span>
                   </button>
 
-                  <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group">
+                  <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group active:scale-90 transition-transform">
                     <MessageCircle className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
                     <span className="text-xs font-medium text-purple-300/70">{shake.comments}</span>
                   </button>
 
-                  <button onClick={() => setReshakeDialogShake(shake)} className="flex items-center gap-1.5 group">
+                  <button onClick={() => setReshakeDialogShake(shake)} className="flex items-center gap-1.5 group active:scale-90 transition-transform">
                     <Repeat2 className={`w-5 h-5 transition-all ${shake.isReshaked ? 'text-fuchsia-500' : 'text-purple-300/70 group-hover:text-fuchsia-500'}`} />
                     <span className={`text-xs font-medium ${shake.isReshaked ? 'text-fuchsia-500' : 'text-purple-300/70'}`}>{shake.reshakes}</span>
                   </button>
