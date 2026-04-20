@@ -1162,7 +1162,7 @@ export async function getUnreadMessagesCount(): Promise<number> {
   }
 }
 
-export async function sendMessage(receiverId: string, text?: string, track?: any, imageUrl?: string) {
+export async function sendMessage(receiverId: string, text?: string, track?: any, imageUrl?: string, storyId?: string) {
   try {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
@@ -1173,6 +1173,11 @@ export async function sendMessage(receiverId: string, text?: string, track?: any
       text: text || null,
       image_url: imageUrl || null,
     };
+
+    // If linking to a story (like/comment)
+    if (storyId) {
+      messageData.story_id = storyId;
+    }
 
     // If sending a track
     if (track) {
@@ -2065,6 +2070,82 @@ export async function sendSongNotification(recipientId: string, track: any) {
   }
 }
 
+// ==================== MESSAGE LIKES ====================
+
+export async function likeMessage(messageId: string, emoji = '❤️') {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase
+      .from('message_likes')
+      .insert([{ message_id: messageId, user_id: user.id, emoji }])
+      .select();
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error liking message:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function unlikeMessage(messageId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('message_likes')
+      .delete()
+      .eq('message_id', messageId)
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error unliking message:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function hasLikedMessage(messageId: string): Promise<boolean> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return false;
+
+    const { data, error } = await supabase
+      .from('message_likes')
+      .select('id')
+      .eq('message_id', messageId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return !!data;
+  } catch {
+    return false;
+  }
+}
+
+export async function getMessageLikes(messageId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('message_likes')
+      .select(`
+        *,
+        user:users_profile(id, username, display_name, profile_album_cover_url)
+      `)
+      .eq('message_id', messageId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
 // ==================== STORY LIKES & COMMENTS ====================
 
 export async function likeStory(storyId: string, emoji = '❤️') {
@@ -2092,7 +2173,7 @@ export async function likeStory(storyId: string, emoji = '❤️') {
       console.warn('Warning: RPC increment failed:', rpcError);
     }
 
-    // Notify story author
+    // Notify story author - send message with story_id for UI preview
     try {
       const { data: story } = await supabase
         .from('stories')
@@ -2100,6 +2181,10 @@ export async function likeStory(storyId: string, emoji = '❤️') {
         .eq('id', storyId)
         .single();
       if (story && story.user_id !== user.id) {
+        // Send message linked to story (UI will show as "liked your story" with preview)
+        await sendMessage(story.user_id, null, undefined, undefined, storyId);
+        
+        // Also add notification
         await supabase.from('notifications').insert([{
           user_id: story.user_id,
           from_user_id: user.id,
@@ -2220,8 +2305,8 @@ export async function commentOnStory(storyId: string, commentText: string) {
     
     const fullMessage = `💭 Commentaire sur ${storyContext}:\n${commentText}`;
 
-    // Send as private message to story author
-    const result = await sendMessage(storyAuthorId, fullMessage);
+    // Send as private message to story author with story_id for preview
+    const result = await sendMessage(storyAuthorId, fullMessage, undefined, undefined, storyId);
 
     if (!result.success) {
       throw new Error(result.error);

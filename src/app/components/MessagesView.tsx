@@ -230,12 +230,25 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
           {messages.map((msg) => {
             const isMine = msg.sender_id === currentUser?.id;
             const isTrack = !!msg.track_name;
+            const isStoryInteraction = !!msg.story_id;
             const isOpen = activeEmbedId === msg.id;
             const embedUrl = msg.track_id ? `https://open.spotify.com/embed/track/${msg.track_id}` : null;
             return (
               <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] rounded-2xl overflow-hidden ${isMine ? 'bg-purple-600/30 border border-purple-500/30' : 'bg-violet-950/25 border border-purple-500/25'}`}>
-                  {msg.text && <p className="px-3 py-2 text-sm">{msg.text}</p>}
+                  {/* Story interaction preview */}
+                  {isStoryInteraction && !msg.text && (
+                    <div className="px-3 py-2.5 text-center text-sm font-medium text-purple-100">
+                      ❤️ liked your story
+                    </div>
+                  )}
+                  {isStoryInteraction && msg.text?.startsWith('💭') && (
+                    <div className="px-3 py-2 text-sm">
+                      <p className="font-medium text-purple-200 mb-1">💭 commented on your story</p>
+                      <p className="text-purple-100/80">{msg.text.replace('💭 Commentaire sur ', '').split(':\n')[1] || msg.text}</p>
+                    </div>
+                  )}
+                  {msg.text && !msg.story_id && <p className="px-3 py-2 text-sm">{msg.text}</p>}
                   {msg.image_url && (
                     <div className="p-1">
                       <img src={msg.image_url} alt="" className="max-w-full max-h-64 rounded-xl object-cover" loading="lazy" />

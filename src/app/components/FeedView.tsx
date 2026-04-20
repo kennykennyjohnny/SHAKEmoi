@@ -1120,6 +1120,13 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   </div>
                 )}
 
+                {/* Image */}
+                {shake.imageUrl && (
+                  <div className="px-4 pb-2">
+                    <img src={shake.imageUrl} alt="" className="w-full rounded-xl object-cover max-h-80" loading="lazy" />
+                  </div>
+                )}
+
                 {/* Track Card - compact, clickable cover to launch embed */}
                 <div className="px-4 pb-2">
                   <div
