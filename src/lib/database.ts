@@ -1878,6 +1878,133 @@ export async function getCircleWeeklyShakes(circleId: string): Promise<any[]> {
   }
 }
 
+// ==================== CIRCLE MESSAGE LIKES ====================
+
+export async function likeCircleMessage(messageId: string, emoji = '❤️') {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data: likeData, error: likeError } = await supabase
+      .from('circle_message_likes')
+      .insert([{
+        message_id: messageId,
+        user_id: user.id,
+        emoji: emoji
+      }])
+      .select();
+
+    if (likeError) throw likeError;
+
+    // Increment likes_count via RPC
+    const { error: rpcError } = await supabase.rpc('increment_circle_message_likes', {
+      message_id: messageId
+    });
+
+    if (rpcError) {
+      console.warn('Warning: RPC increment failed:', rpcError);
+    }
+
+    return { success: true, data: likeData };
+  } catch (error: any) {
+    console.error('Error liking circle message:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function unlikeCircleMessage(messageId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error: deleteError } = await supabase
+      .from('circle_message_likes')
+      .delete()
+      .eq('message_id', messageId)
+      .eq('user_id', user.id);
+
+    if (deleteError) throw deleteError;
+
+    // Decrement likes_count via RPC
+    const { error: rpcError } = await supabase.rpc('decrement_circle_message_likes', {
+      message_id: messageId
+    });
+
+    if (rpcError) {
+      console.warn('Warning: RPC decrement failed:', rpcError);
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error unliking circle message:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function hasLikedCircleMessage(messageId: string): Promise<boolean> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return false;
+
+    const { data, error } = await supabase
+      .from('circle_message_likes')
+      .select('id')
+      .eq('message_id', messageId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error checking circle message like status:', error);
+      return false;
+    }
+
+    return !!data;
+  } catch (error) {
+    console.error('Error in hasLikedCircleMessage:', error);
+    return false;
+  }
+}
+
+export async function getCircleMessageLikes(messageId: string) {
+  try {
+    const { data, error } = await supabase
+      .rpc('get_circle_message_likers', { message_id: messageId });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting circle message likes:', error);
+    return [];
+  }
+}
+
+export async function hasLikedCircleMessages(messageIds: string[]): Promise<Record<string, boolean>> {
+  try {
+    if (messageIds.length === 0) return {};
+    const user = await getCurrentUser();
+    if (!user) return {};
+
+    const { data, error } = await supabase
+      .from('circle_message_likes')
+      .select('message_id')
+      .eq('user_id', user.id)
+      .in('message_id', messageIds);
+
+    if (error) {
+      console.error('Error batch checking circle message likes:', error);
+      return {};
+    }
+
+    const likedSet = new Set((data || []).map((d: any) => d.message_id));
+    const result: Record<string, boolean> = {};
+    for (const id of messageIds) result[id] = likedSet.has(id);
+    return result;
+  } catch (error) {
+    console.error('Error in hasLikedCircleMessages:', error);
+    return {};
+  }
+}
+
 // ==================== APP STATS ====================
 export async function getAppStats(): Promise<{ users: number; shakes: number; likes: number }> {
   try {

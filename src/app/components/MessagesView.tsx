@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Send, Search, Music, Play, Loader2, ExternalLink, Users, Plus, Copy, Check, X, Settings, LogOut, Camera, Smile, Image } from 'lucide-react';
+import { ArrowLeft, Send, Search, Music, Play, Loader2, ExternalLink, Users, Plus, Copy, Check, X, Settings, LogOut, Camera, Smile, Image, Heart, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   getConversations, getMessages, sendMessage, getUserFollowing,
   createCircle, getUserCircles, getCircleMessages, getCircleMembers,
   searchUsers, addCircleMember, removeCircleMember, getCurrentUser,
-  sendCircleMessage, hasLikedPosts
+  sendCircleMessage, hasLikedPosts, likeCircleMessage, unlikeCircleMessage,
+  hasLikedCircleMessage, getCircleMessageLikes, hasLikedCircleMessages
 } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
@@ -701,6 +702,18 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const [trackQuery, setTrackQuery] = useState('');
   const [trackResults, setTrackResults] = useState<any[]>([]);
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
+  // NEW: Photo/GIF support in circles
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [showGifSearch, setShowGifSearch] = useState(false);
+  const [gifQuery, setGifQuery] = useState('');
+  const [gifResults, setGifResults] = useState<any[]>([]);
+  const [gifSearching, setGifSearching] = useState(false);
+  // NEW: Likes system
+  const [likedMessages, setLikedMessages] = useState<Record<string, boolean>>({});
+  const [messageLikers, setMessageLikers] = useState<Record<string, any[]>>({});
+  const [showLikers, setShowLikers] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadData(); }, []);
@@ -734,8 +747,110 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       const [p, m] = await Promise.all([getCircleMessages(circle.id), getCircleMembers(circle.id)]);
       setPosts(p);
       setMembers(m);
+      // Load likes status for all messages
+      const messageIds = p.map((msg: any) => msg.id);
+      if (messageIds.length > 0) {
+        const likedStatus = await hasLikedCircleMessages(messageIds);
+        setLikedMessages(likedStatus);
+      }
     } catch {}
     setLoading(false);
+  };
+
+  useEffect(() => {
+    if (searchQ.length < 2) { setSearchRes([]); return; }
+    const t = setTimeout(async () => { setSearchRes(await searchUsers(searchQ)); }, 400);
+    return () => clearTimeout(t);
+  }, [searchQ]);
+
+  useEffect(() => {
+    if (trackQuery.length < 2) { setTrackResults([]); return; }
+    const t = setTimeout(async () => {
+      try { setTrackResults(await spotify.searchTracks(trackQuery)); } catch {}
+    }, 400);
+    return () => clearTimeout(t);
+  }, [trackQuery]);
+
+  useEffect(() => {
+    if (!showGifSearch || gifQuery.length < 1) { setGifResults([]); return; }
+    const t = setTimeout(async () => {
+      setGifSearching(true);
+      try {
+        const res = await fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(gifQuery)}&key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ&client_key=shakemoi&limit=20&media_filter=tinygif,gif`);
+        const data = await res.json();
+        setGifResults(data.results || []);
+      } catch { setGifResults([]); }
+      setGifSearching(false);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [gifQuery, showGifSearch]);
+
+  const handlePhotoSelect = (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { alert('Photo trop lourde (max 10 Mo)'); return; }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const sendChatPhoto = async () => {
+    if (!photoFile) return;
+    setChatSending(true);
+    try {
+      const fileName = `circle-${circle.id}/${Date.now()}-${photoFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('circle-media')
+        .upload(fileName, photoFile, { cacheControl: '3600', upsert: false });
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: urlData } = supabase.storage.from('circle-media').getPublicUrl(fileName);
+      const publicUrl = urlData.publicUrl;
+      
+      const result = await sendCircleMessage(circle.id, chatText || undefined, undefined, publicUrl);
+      if (result.success) {
+        setChatText('');
+        setPhotoPreview(null);
+        setPhotoFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        await loadData();
+      }
+    } catch (err) {
+      console.error('Error uploading photo:', err);
+      alert('Erreur lors de l\'upload de la photo');
+    }
+    setChatSending(false);
+  };
+
+  const sendChatGif = async (gifUrl: string) => {
+    setChatSending(true);
+    try {
+      const result = await sendCircleMessage(circle.id, undefined, undefined, gifUrl);
+      if (result.success) {
+        setShowGifSearch(false);
+        setGifQuery('');
+        setGifResults([]);
+        await loadData();
+      }
+    } catch (err) {
+      console.error('Error sending GIF:', err);
+    }
+    setChatSending(false);
+  };
+
+  const toggleLikeMessage = async (messageId: string) => {
+    const isLiked = likedMessages[messageId];
+    if (isLiked) {
+      await unlikeCircleMessage(messageId);
+    } else {
+      await likeCircleMessage(messageId);
+    }
+    setLikedMessages(prev => ({ ...prev, [messageId]: !isLiked }));
+    // Optionally reload likes count
+    const likers = await getCircleMessageLikes(messageId);
+    if (likers.length > 0) {
+      setMessageLikers(prev => ({ ...prev, [messageId]: likers }));
+    }
   };
 
   useEffect(() => {
@@ -904,21 +1019,35 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
           const embedUrl = msg.spotify_embed_url || (trackId ? `https://open.spotify.com/embed/track/${trackId}` : null);
           const isOpen = activeEmbedId === msg.id;
           const user = msg.user;
-          if (!msg.track_name && !msg.text) return null;
+          const isLiked = likedMessages[msg.id];
+          const likersData = messageLikers[msg.id] || [];
+          if (!msg.track_name && !msg.text && !msg.image_url) return null;
           return (
-            <div key={msg.id} className={`rounded-xl border transition-all overflow-hidden ${isOpen ? 'bg-violet-950/30 border-purple-600/30' : 'bg-violet-950/15 border-purple-500/20'}`}>
+            <div key={msg.id} className={`rounded-xl border transition-all overflow-hidden group ${isOpen ? 'bg-violet-950/30 border-purple-600/30' : 'bg-violet-950/15 border-purple-500/20'}`}>
               <div className="p-2.5 flex items-center gap-2">
                 <img src={user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user?.username}&background=2A1852&color=FFEFD5`} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
                 <span className="text-xs font-medium text-purple-200/80">@{user?.username}</span>
                 <span className="text-xs text-purple-300/60 ml-auto">{formatTs(msg.created_at)}</span>
               </div>
-              {msg.text && !msg.track_name && <p className="px-3 pb-2.5 text-sm">{msg.text}</p>}
+              
+              {/* Text-only message */}
+              {msg.text && !msg.track_name && !msg.image_url && <p className="px-3 pb-2.5 text-sm">{msg.text}</p>}
+              
+              {/* Photo/GIF message */}
+              {msg.image_url && (
+                <div className="px-2.5 pb-2">
+                  <img src={msg.image_url} alt="" className="max-w-full max-h-64 rounded-xl object-cover" loading="lazy" />
+                  {msg.text && <p className="text-xs text-purple-300/60 mt-1.5">{msg.text}</p>}
+                </div>
+              )}
+              
+              {/* Track message */}
               {msg.track_name && (
                 <div className="px-2.5 pb-2">
-                  <div className="flex gap-2 items-center cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : msg.id)}>
+                  <div className="flex gap-2 items-center cursor-pointer group/track" onClick={() => setActiveEmbedId(isOpen ? null : msg.id)}>
                     <div className="relative flex-shrink-0">
                       <img src={msg.cover_url} alt="" className="w-11 h-11 rounded-lg object-cover" />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity">
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/track:opacity-100 flex items-center justify-center rounded-lg transition-opacity">
                         <Play className="w-4 h-4 text-white fill-white" />
                       </div>
                     </div>
@@ -937,6 +1066,44 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
                   </AnimatePresence>
                 </div>
               )}
+              
+              {/* Likes bar */}
+              <div className="px-2.5 pb-2.5 pt-1 flex items-center gap-1.5 border-t border-purple-500/10">
+                <button
+                  onClick={() => toggleLikeMessage(msg.id)}
+                  className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-all text-xs ${isLiked ? 'bg-red-500/20 text-red-400' : 'text-purple-400/70 hover:text-purple-300 hover:bg-purple-500/10'}`}
+                >
+                  <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-current' : ''}`} />
+                  {msg.likes_count || 0}
+                </button>
+                
+                {msg.likes_count > 0 && (
+                  <button
+                    onClick={() => setShowLikers(showLikers === msg.id ? null : msg.id)}
+                    className="text-xs text-purple-400/70 hover:text-purple-300 px-1"
+                  >
+                    +{msg.likes_count} {msg.likes_count === 1 ? 'like' : 'likes'}
+                  </button>
+                )}
+              </div>
+              
+              {/* Likers list */}
+              {showLikers === msg.id && likersData.length > 0 && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="px-2.5 pb-2.5 border-t border-purple-500/10 space-y-1"
+                >
+                  {likersData.map((liker: any) => (
+                    <div key={liker.id} className="flex items-center gap-1.5 text-xs">
+                      <img src={liker.profile_album_cover_url || `https://ui-avatars.com/api/?name=${liker.username}&background=2A1852&color=FFEFD5`} className="w-4 h-4 rounded-full object-cover" alt="" />
+                      <span className="text-purple-300">{liker.username}</span>
+                      <span className="text-purple-400 ml-auto">{liker.emoji}</span>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
             </div>
           );
         }) : (
@@ -948,6 +1115,25 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
         )}
         <div ref={bottomRef} />
       </div>
+
+      {/* Photo preview */}
+      {photoPreview && (
+        <div className="px-3 py-2 border-t border-purple-500/25 bg-violet-950/15 flex items-end gap-2 flex-shrink-0">
+          <div className="relative">
+            <img src={photoPreview} alt="" className="h-20 w-20 rounded-lg object-cover" />
+            <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600">
+              <X className="w-3 h-3 text-white" />
+            </button>
+          </div>
+          <div className="flex-1 min-h-0">
+            <p className="text-xs text-purple-300/60">Photo prête à envoyer</p>
+            <input type="text" value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Ajouter une légende..." className="w-full px-2 py-1 bg-violet-950/20 border border-purple-500/30 rounded-lg text-xs text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
+          </div>
+          <button onClick={sendChatPhoto} disabled={chatSending} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50">
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Track search overlay */}
       <AnimatePresence>
@@ -970,13 +1156,52 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
         )}
       </AnimatePresence>
 
+      {/* GIF search overlay */}
+      <AnimatePresence>
+        {showGifSearch && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-purple-500/25 bg-[#14092A] max-h-52 overflow-y-auto flex-shrink-0">
+            <div className="p-3">
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
+                <input autoFocus type="text" value={gifQuery} onChange={e => setGifQuery(e.target.value)} placeholder="Chercher un GIF..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
+              </div>
+              {gifSearching ? (
+                <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 text-purple-500 animate-spin" /></div>
+              ) : (
+                <div className="grid grid-cols-2 gap-1.5">
+                  {gifResults.map((g: any) => (
+                    <button key={g.id} onClick={() => sendChatGif(g.media_formats.tinygif.url)} className="relative group overflow-hidden rounded-lg">
+                      <img src={g.media_formats.tinygif.url} alt="" className="w-full aspect-square object-cover" />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <Send className="w-4 h-4 text-white" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Chat bar */}
       <div className="px-3 py-2.5 pb-[calc(0.625rem+4.5rem)] lg:pb-2.5 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0 bg-[#14092A]/95 backdrop-blur-lg">
-        <button onClick={() => setShowTrackSearch(!showTrackSearch)} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
+        <button onClick={() => setShowTrackSearch(!showTrackSearch)} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`} title="Partager un son">
           <Music className="w-5 h-5" />
         </button>
-        <input type="text" value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Message au cercle..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatText(); } }} />
-        <button onClick={sendChatText} disabled={chatSending || !chatText.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
+        
+        <button onClick={() => setShowGifSearch(!showGifSearch)} className={`p-2 rounded-full transition-colors ${showGifSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`} title="Envoyer un GIF">
+          <Smile className="w-5 h-5" />
+        </button>
+        
+        <button onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors text-purple-300/60" title="Envoyer une photo">
+          <Camera className="w-5 h-5" />
+        </button>
+        <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+        
+        <input type="text" value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Message au cercle..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (photoFile) sendChatPhoto(); else sendChatText(); } }} />
+        
+        <button onClick={photoFile ? sendChatPhoto : sendChatText} disabled={chatSending || (!chatText.trim() && !photoFile)} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
           {chatSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
         </button>
       </div>
