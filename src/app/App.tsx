@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
 import { ProfileView } from './components/ProfileView';
-import { CreateShakeDialog } from './components/CreateShakeDialog';
+import { UnifiedComposerDialog } from './components/UnifiedComposerDialog';
 import { TrendingBar } from './components/TrendingBar';
 import { OnboardingDialog } from './components/OnboardingDialog';
 import { ShareDialog } from './components/ShareDialog';
@@ -350,7 +350,15 @@ export default function App() {
 
       {/* Dialogs */}
       {showCreateShake && (
-        <CreateShakeDialog currentUser={currentUser} onClose={() => { setShowCreateShake(false); setRefreshFeed(p => p + 1); }} />
+        <UnifiedComposerDialog
+          open={showCreateShake}
+          onClose={() => {
+            setShowCreateShake(false);
+            setRefreshFeed((p) => p + 1);
+          }}
+          onCreated={() => setRefreshFeed((p) => p + 1)}
+          currentUser={currentUser}
+        />
       )}
       {showShareDialog && <ShareDialog currentUser={currentUser} onClose={() => setShowShareDialog(false)} />}
       {showCompleteProfile && (
