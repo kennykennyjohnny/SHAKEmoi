@@ -1332,6 +1332,20 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           setStoryViewedMap(prev => ({ ...prev, [s.id]: true }));
           db.markStoryAsViewed(s.id).catch(() => {});
         }}
+        onGroupEnd={() => {
+          // Advance to next user's story group
+          const orderedUserIds = [...new Map(
+            stories.map((s: any) => [s.user?.id || s.user_id, true])
+          ).keys()];
+          const currentUserId = activeStoryGroup[0]?.user?.id || activeStoryGroup[0]?.user_id;
+          const idx = orderedUserIds.indexOf(currentUserId);
+          if (idx !== -1 && idx < orderedUserIds.length - 1) {
+            const nextUserId = orderedUserIds[idx + 1];
+            const firstStory = stories.find((s: any) => (s.user?.id || s.user_id) === nextUserId);
+            if (firstStory) { openStory(firstStory); return; }
+          }
+          setActiveStory(null);
+        }}
       />
     </div>
   );

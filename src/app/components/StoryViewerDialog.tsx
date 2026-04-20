@@ -10,9 +10,10 @@ interface StoryViewerDialogProps {
   currentUser: any;
   stories?: any[];
   onNavigate?: (story: any) => void;
+  onGroupEnd?: () => void;
 }
 
-export function StoryViewerDialog({ open, story, onClose, currentUser, stories, onNavigate }: StoryViewerDialogProps) {
+export function StoryViewerDialog({ open, story, onClose, currentUser, stories, onNavigate, onGroupEnd }: StoryViewerDialogProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [showCommentInput, setShowCommentInput] = useState(false);
@@ -26,7 +27,10 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   const hasPrev = currentIdx > 0;
   const hasNext = currentIdx < storyList.length - 1;
   const navigatePrev = () => { if (hasPrev && onNavigate) { setShowCommentInput(false); onNavigate(storyList[currentIdx - 1]); } };
-  const navigateNext = () => { if (hasNext && onNavigate) { setShowCommentInput(false); onNavigate(storyList[currentIdx + 1]); } };
+  const navigateNext = () => {
+    if (hasNext && onNavigate) { setShowCommentInput(false); onNavigate(storyList[currentIdx + 1]); }
+    else if (!hasNext) { onGroupEnd?.(); }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -129,7 +133,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
           )}
 
           {/* Next story arrow */}
-          {hasNext && (
+          {(hasNext || !!onGroupEnd) && (
             <button
               onClick={(e) => { e.stopPropagation(); navigateNext(); }}
               className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all"

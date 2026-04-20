@@ -451,7 +451,27 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated, onSubViewAct
 
   const load = async () => {
     setLoading(true);
-    try { setCircles(await getUserCircles()); } catch {}
+    try {
+      const circlesData = await getUserCircles();
+      if (circlesData.length === 0) { setCircles([]); setLoading(false); return; }
+      // Fetch last message timestamp per circle to sort by activity
+      const circleIds = circlesData.map((c: any) => c.id);
+      const { data: lastMsgs } = await supabase
+        .from('circle_messages')
+        .select('circle_id, created_at')
+        .in('circle_id', circleIds)
+        .order('created_at', { ascending: false });
+      const lastActivity: Record<string, string> = {};
+      (lastMsgs || []).forEach((m: any) => {
+        if (!lastActivity[m.circle_id]) lastActivity[m.circle_id] = m.created_at;
+      });
+      const sorted = [...circlesData].sort((a: any, b: any) => {
+        const aTime = lastActivity[a.id] || a.created_at;
+        const bTime = lastActivity[b.id] || b.created_at;
+        return new Date(bTime).getTime() - new Date(aTime).getTime();
+      });
+      setCircles(sorted);
+    } catch {}
     setLoading(false);
   };
 
