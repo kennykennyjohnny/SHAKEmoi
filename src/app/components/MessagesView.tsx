@@ -27,7 +27,7 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
   const [inSubView, setInSubView] = useState(false);
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col flex-1 overflow-hidden min-h-0">
+    <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-hidden min-h-0">
       {/* Tab bar — masqué quand on est dans une conversation ou un cercle */}
       {!inSubView && (
         <div className="flex border-b border-purple-500/25 px-4 pt-3 gap-6 flex-shrink-0">

@@ -413,6 +413,7 @@ interface FeedViewProps {
 export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId = null, onSelectFeed, onCreateCircle, onShowEphemeralShake }: FeedViewProps) {
   const [shakes, setShakes] = useState<Shake[]>([]);
   const [stories, setStories] = useState<any[]>([]);
+  const [activeStoryGroup, setActiveStoryGroup] = useState<any[]>([]);
   const [storyViewedMap, setStoryViewedMap] = useState<Record<string, boolean>>({});
   const [activeStory, setActiveStory] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -607,18 +608,10 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
       if (!currentFeedId) {
         const feedStories = await db.getFeedStories();
-        const latestByUser = new Map<string, any>();
-        for (const st of feedStories) {
-          const existing = latestByUser.get(st.user_id);
-          if (!existing || new Date(st.created_at).getTime() > new Date(existing.created_at).getTime()) {
-            latestByUser.set(st.user_id, st);
-          }
-        }
-        const list = Array.from(latestByUser.values());
-        setStories(list);
+        setStories(feedStories);
 
         const viewedEntries = await Promise.all(
-          list.map(async (st: any) => [st.id, await db.hasViewedStory(st.id)] as const)
+          feedStories.map(async (st: any) => [st.id, await db.hasViewedStory(st.id)] as const)
         );
         setStoryViewedMap(Object.fromEntries(viewedEntries));
       }
@@ -714,12 +707,22 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     setActivePlayerId(activePlayerId === shake.id ? null : shake.id);
   };
 
-  const openStory = async (story: any) => {
-    setActiveStory(story);
-    setStoryViewedMap(prev => ({ ...prev, [story.id]: true }));
-    try {
-      await db.markStoryAsViewed(story.id);
-    } catch {}
+  const openStory = (story: any) => {
+    const uid = story.user?.id || story.user_id;
+    const group = stories.filter((s: any) => (s.user?.id || s.user_id) === uid);
+    // Sort: unviewed first (ascending by date), then viewed (ascending by date)
+    const sorted = [...group].sort((a: any, b: any) => {
+      const aViewed = !!storyViewedMap[a.id];
+      const bViewed = !!storyViewedMap[b.id];
+      if (aViewed !== bViewed) return aViewed ? 1 : -1;
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+    setActiveStoryGroup(sorted);
+    // Open first unviewed, fallback to first
+    const toOpen = sorted.find((s: any) => !storyViewedMap[s.id]) || sorted[0];
+    setActiveStory(toOpen);
+    setStoryViewedMap(prev => ({ ...prev, [toOpen.id]: true }));
+    db.markStoryAsViewed(toOpen.id).catch(() => {});
   };
 
   // Circle chat: track search debounce
@@ -880,7 +883,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   // Empty state is now rendered inline, not as early return
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4" style={currentFeedId ? { minHeight: '100%' } : undefined} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4" style={currentFeedId ? { minHeight: '100%' } : undefined} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className={`p-4 space-y-6 ${currentFeedId ? 'flex-1 pb-40 lg:pb-24' : ''}`}>
         {/* Horizontal feed selector */}
         {(circles.length > 0 || !!onCreateCircle) && (
@@ -890,7 +893,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         
         {/* Stories strip - Instagram style */}
         {!currentFeedId && (
-          <div className="-mt-1">
+          <div className="-mt-1 overflow-hidden">
             <div className="flex items-start gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               <button
                 onClick={onShowEphemeralShake}
@@ -1323,8 +1326,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         story={activeStory}
         onClose={() => setActiveStory(null)}
         currentUser={currentUser}
-        stories={stories}
-        onNavigate={(s) => openStory(s)}
+        stories={activeStoryGroup}
+        onNavigate={(s) => {
+          setActiveStory(s);
+          setStoryViewedMap(prev => ({ ...prev, [s.id]: true }));
+          db.markStoryAsViewed(s.id).catch(() => {});
+        }}
       />
     </div>
   );

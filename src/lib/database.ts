@@ -1456,15 +1456,17 @@ export async function getUserCircles(): Promise<any[]> {
     const user = await getCurrentUser();
     if (!user) return [];
 
-    const { data, error } = await supabase
-      .from('circle_members')
-      .select(`
-        circle:circles(
-          id, name, created_by, invite_code, created_at, photo_url
-        )
-      `)
-      .eq('user_id', user.id);
+    // Try with photo_url; fallback without if column doesn't exist yet
+    const runQuery = (withPhoto: boolean) =>
+      supabase
+        .from('circle_members')
+        .select(`circle:circles(id, name, created_by, invite_code, created_at${withPhoto ? ', photo_url' : ''})`)
+        .eq('user_id', user.id);
 
+    let { data, error } = await runQuery(true);
+    if (error) {
+      ({ data, error } = await runQuery(false));
+    }
     if (error) {
       console.error('getUserCircles error:', error);
       throw error;
@@ -1478,11 +1480,19 @@ export async function getUserCircles(): Promise<any[]> {
 
 export async function getCircleById(circleId: string): Promise<any | null> {
   try {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('circles')
       .select('id, name, created_by, invite_code, created_at, photo_url')
       .eq('id', circleId)
       .single();
+    if (error) {
+      // Fallback without photo_url
+      ({ data, error } = await supabase
+        .from('circles')
+        .select('id, name, created_by, invite_code, created_at')
+        .eq('id', circleId)
+        .single());
+    }
     if (error) throw error;
     return data;
   } catch (error) {
