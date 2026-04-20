@@ -513,9 +513,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser }:
                 {isCreating ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : composerType === 'shake' ? (
-                  <>
-                    Shake <span>🔥</span>
-                  </>
+                  'Shake'
                 ) : (
                   <>
                     Story <span>✨</span>

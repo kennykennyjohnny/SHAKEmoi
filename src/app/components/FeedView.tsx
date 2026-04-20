@@ -598,21 +598,6 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
       // Circle chat: reverse to show oldest first (like a conversation)
       setShakes(currentFeedId ? shakes.reverse() : shakes);
-
-      if (!currentFeedId) {
-        const feedStories = await db.getFeedStories();
-        const latestByUser = new Map<string, any>();
-        for (const st of feedStories) {
-          if (!latestByUser.has(st.user_id)) latestByUser.set(st.user_id, st);
-        }
-        const list = Array.from(latestByUser.values());
-        setStories(list);
-
-        const viewedEntries = await Promise.all(
-          list.map(async (st: any) => [st.id, await db.hasViewedStory(st.id)] as const)
-        );
-        setStoryViewedMap(Object.fromEntries(viewedEntries));
-      }
     } catch (err: any) {
       console.error('Error loading feed:', err);
       setError(err.message || 'Failed to load feed');
