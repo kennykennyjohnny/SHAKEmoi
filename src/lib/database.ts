@@ -35,6 +35,24 @@ export interface Post {
   original_post?: Post;
 }
 
+export interface Story {
+  id: string;
+  user_id: string;
+  image_url?: string | null;
+  track_name?: string | null;
+  artist?: string | null;
+  cover_url?: string | null;
+  track_id?: string | null;
+  spotify_url?: string | null;
+  spotify_embed_url?: string | null;
+  text?: string | null;
+  theme_color?: string | null;
+  duration_days: number;
+  expires_at: string;
+  created_at: string;
+  user?: any;
+}
+
 // ==================== USER ====================
 
 export async function getCurrentUser() {
@@ -1681,6 +1699,148 @@ export async function joinCircle(circleId: string) {
   } catch (error: any) {
     return { success: false, error: error.message };
   }
+}
+
+// ==================== STORIES ====================
+
+export async function createStory(payload: {
+  imageUrl?: string | null;
+  track?: any;
+  text?: string;
+  themeColor?: string;
+  durationDays: 1 | 7 | 30;
+  publishAsShake?: boolean;
+}) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const track = payload.track || null;
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + payload.durationDays);
+
+    const storyData: any = {
+      user_id: user.id,
+      image_url: payload.imageUrl || null,
+      track_name: track?.name || track?.track_name || null,
+      artist: track?.artist || null,
+      cover_url: track?.cover || track?.cover_url || track?.coverUrl || null,
+      track_id: track?.id || track?.track_id || null,
+      spotify_url: track?.spotify_url || track?.spotifyUrl || null,
+      spotify_embed_url: (track?.id || track?.track_id)
+        ? `https://open.spotify.com/embed/track/${track.id || track.track_id}`
+        : null,
+      text: payload.text || null,
+      theme_color: payload.themeColor || '#1D0F3D',
+      duration_days: payload.durationDays,
+      expires_at: expiresAt.toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from('stories')
+      .insert([storyData])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    if (payload.publishAsShake && data) {
+      await createPost(
+        storyData.track_name || '',
+        storyData.artist || '',
+        storyData.cover_url || '',
+        storyData.text || '',
+        null,
+        storyData.spotify_url || null,
+        storyData.track_id || null,
+        false,
+        null,
+        storyData.image_url || null
+      );
+    }
+
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error creating story:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getFeedStories(): Promise<Story[]> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return [];
+
+    const { data: follows } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', user.id);
+
+    const followingIds = follows ? follows.map((f: any) => f.following_id) : [];
+    const ids = [user.id, ...followingIds];
+
+    const { data, error } = await supabase
+      .from('stories')
+      .select(`
+        *,
+        user:users_profile!stories_user_id_fkey(id, username, display_name, profile_album_cover_url, profile_color)
+      `)
+      .in('user_id', ids)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting feed stories:', error);
+    return [];
+  }
+}
+
+export async function getUserActiveStories(userId: string): Promise<Story[]> {
+  try {
+    const { data, error } = await supabase
+      .from('stories')
+      .select('*')
+      .eq('user_id', userId)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting user stories:', error);
+    return [];
+  }
+}
+
+export async function hasViewedStory(storyId: string): Promise<boolean> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return false;
+
+    const { data } = await supabase
+      .from('story_views')
+      .select('id')
+      .eq('story_id', storyId)
+      .eq('viewer_id', user.id)
+      .maybeSingle();
+
+    return !!data;
+  } catch {
+    return false;
+  }
+}
+
+export async function markStoryAsViewed(storyId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return;
+
+    await supabase
+      .from('story_views')
+      .insert([{ story_id: storyId, viewer_id: user.id }]);
+  } catch {}
 }
 
 // ==================== CIRCLE WEEKLY SHAKES (mini-game data) ====================

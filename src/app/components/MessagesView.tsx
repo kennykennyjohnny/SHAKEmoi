@@ -19,20 +19,20 @@ interface MessagesViewProps {
 }
 
 export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewOptions }: MessagesViewProps) {
-  const { initialTab = 'dms' } = viewOptions || {};
+  const { initialTab = 'circles' } = viewOptions || {};
   const [tab, setTab] = useState<'dms' | 'circles'>(initialTab);
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-full">
       {/* Tab bar */}
       <div className="flex border-b border-purple-500/25 px-4 pt-3 gap-6">
-        {(['dms', 'circles'] as const).map(t => (
+        {(['circles', 'dms'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`pb-2.5 text-sm font-semibold transition-colors relative ${tab === t ? 'text-white' : 'text-purple-300/60 hover:text-white'}`}
           >
-            {t === 'dms' ? 'Messages' : 'Cercles'}
+            {t === 'dms' ? 'Messages privés' : 'Groupes'}
             {tab === t && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />}
           </button>
         ))}

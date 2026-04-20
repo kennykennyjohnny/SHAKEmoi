@@ -6,8 +6,9 @@ import { EditProfileDialog } from './EditProfileDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
-import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPosts } from '../../lib/database';
+import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPosts, getUserActiveStories } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
+import { StoryViewerDialog } from './StoryViewerDialog';
 
 interface ProfileViewProps {
   user: any;
@@ -35,6 +36,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [showShareProfile, setShowShareProfile] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [activeStories, setActiveStories] = useState<any[]>([]);
+  const [selectedStory, setSelectedStory] = useState<any | null>(null);
   const [stats, setStats] = useState({
     shakes: 0,
     followers: 0,
@@ -51,11 +54,12 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
     try {
       setLoading(true);
 
-      const [posts, reshakes, followersCount, followingCount] = await Promise.all([
+      const [posts, reshakes, followersCount, followingCount, stories] = await Promise.all([
         getUserPosts(user.id),
         getUserReshakes(user.id),
         getUserFollowersCount(user.id),
-        getUserFollowingCount(user.id)
+        getUserFollowingCount(user.id),
+        getUserActiveStories(user.id)
       ]);
 
       const allPostIds = [...posts.map((p: any) => p.id), ...reshakes.map((p: any) => p.id)];
@@ -137,6 +141,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         followers: followersCount,
         following: followingCount
       });
+      setActiveStories(stories || []);
     } catch (error) {
       console.error('Failed to load user data:', error);
       setUserShakes([]);
@@ -313,6 +318,27 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         {/* Bio */}
         {user.bio && (
           <p className="text-sm text-purple-200/70 mt-3 leading-relaxed">{user.bio}</p>
+        )}
+
+        {activeStories.length > 0 && (
+          <div className="mt-4">
+            <p className="text-[11px] text-purple-300/60 uppercase tracking-wider mb-2">Stories actives</p>
+            <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              {activeStories.map((story: any) => (
+                <button key={story.id} onClick={() => setSelectedStory(story)} className="flex-shrink-0">
+                  <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
+                    <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
+                      <img
+                        src={user.avatar || user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=2A1852&color=FFEFD5`}
+                        className="w-full h-full rounded-full object-cover"
+                        alt=""
+                      />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Action Buttons */}
@@ -866,6 +892,12 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           />
         )}
       </AnimatePresence>
+
+      <StoryViewerDialog
+        open={!!selectedStory}
+        story={selectedStory}
+        onClose={() => setSelectedStory(null)}
+      />
     </div>
   );
 }

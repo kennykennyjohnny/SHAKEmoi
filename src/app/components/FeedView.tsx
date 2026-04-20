@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Image, Copy, Users, LogOut, Check, Share2, Edit3 } from 'lucide-react';
+import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Image, Copy, Users, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
 import { supabase } from '../../lib/supabase';
@@ -10,6 +10,8 @@ import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { MusicReactionsDialog } from './MusicReactionsDialog';
+import { StoryComposerDialog } from './StoryComposerDialog';
+import { StoryViewerDialog } from './StoryViewerDialog';
 
 // Sleek underline-style tab bar with pink border hint for scroll
 function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { circles: any[]; currentFeedId: string | null; onSelectFeed?: (id: string | null) => void; onCreateCircle?: () => void }) {
@@ -20,7 +22,7 @@ function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { ci
         <style>{`.feed-tabs::-webkit-scrollbar { display: none; }`}</style>
         <div className="feed-tabs inline-flex items-center gap-0 min-w-max border-b border-[#FFEFD5]/10">
           <button onClick={() => onSelectFeed?.(null)} className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${!currentFeedId ? 'text-white' : 'text-purple-300/60 hover:text-purple-200'}`}>
-            Feed
+            Accueil
             {!currentFeedId && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#FFEFD5] rounded-full" />}
           </button>
           {circles.map(circle => (
@@ -357,6 +359,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
 
 interface Shake {
   id: string;
+  sourcePostId: string;
   user: {
     id: string;
     username: string;
@@ -408,6 +411,10 @@ interface FeedViewProps {
 
 export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId = null, onSelectFeed, onCreateCircle }: FeedViewProps) {
   const [shakes, setShakes] = useState<Shake[]>([]);
+  const [stories, setStories] = useState<any[]>([]);
+  const [storyViewedMap, setStoryViewedMap] = useState<Record<string, boolean>>({});
+  const [showStoryComposer, setShowStoryComposer] = useState(false);
+  const [activeStory, setActiveStory] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reshakeDialogShake, setReshakeDialogShake] = useState<Shake | null>(null);
@@ -483,10 +490,20 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     try {
       setLoading(true);
       setError(null);
-      const posts = currentFeedId ? await db.getCircleFeed(currentFeedId) : await db.getFeed();
+      let posts = currentFeedId ? await db.getCircleFeed(currentFeedId) : await db.getFeed();
+
+      // If a reshake is present in the timeline, hide the duplicated original post.
+      if (!currentFeedId) {
+        const reshakedOriginalIds = new Set(
+          posts
+            .filter((p: any) => p.is_reshake && p.original_post_id)
+            .map((p: any) => p.original_post_id)
+        );
+        posts = posts.filter((p: any) => p.is_reshake || !reshakedOriginalIds.has(p.id));
+      }
 
       // Batch check all likes in one query
-      const postIds = posts.map((p: any) => p.id);
+      const postIds = posts.map((p: any) => (p.is_reshake && p.original_post_id ? p.original_post_id : p.id));
       const likedMap = await db.hasLikedPosts(postIds);
 
       // Pre-fetch original posts for reshakes where the join failed
@@ -504,7 +521,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       }
 
       const shakesRaw = posts.map((post: any) => {
-        const isLiked = likedMap[post.id] || false;
+        const sourcePostId = post.is_reshake && post.original_post_id ? post.original_post_id : post.id;
+        const isLiked = likedMap[sourcePostId] || false;
         const reshakerUser = post.user ? (Array.isArray(post.user) ? post.user[0] : post.user) : null;
         if (!reshakerUser) return null; // Skip invalid posts
         // Extract track_id from spotify_url for old posts missing track_id
@@ -530,10 +548,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         const originalUser = originalPost?.user ? (Array.isArray(originalPost.user) ? originalPost.user[0] : originalPost.user) : null;
         // Fix: displayTrack logic
         const displayTrack = isReshake && originalPost ? originalPost : post;
+        const displayStatsSource = isReshake && originalPost ? originalPost : post;
         // For reshakes, user = original user, reshakeFrom = reshaker
         // For normal posts, user = post user, reshakeFrom = undefined
         return {
           id: post.id,
+          sourcePostId,
           user: isReshake && originalUser ? {
             id: originalUser.id || '',
             username: originalUser.username || '',
@@ -566,9 +586,9 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           },
           caption: post.text,
           imageUrl: post.image_url || null,
-          likes: post.likes_count || 0,
-          comments: post.comments_count || 0,
-          reshakes: post.reshakes_count || 0,
+          likes: displayStatsSource?.likes_count || 0,
+          comments: displayStatsSource?.comments_count || 0,
+          reshakes: displayStatsSource?.reshakes_count || 0,
           timestamp: post.created_at,
           isLiked,
           isReshaked: false,
@@ -584,6 +604,21 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
       // Circle chat: reverse to show oldest first (like a conversation)
       setShakes(currentFeedId ? shakes.reverse() : shakes);
+
+      if (!currentFeedId) {
+        const feedStories = await db.getFeedStories();
+        const latestByUser = new Map<string, any>();
+        for (const st of feedStories) {
+          if (!latestByUser.has(st.user_id)) latestByUser.set(st.user_id, st);
+        }
+        const list = Array.from(latestByUser.values());
+        setStories(list);
+
+        const viewedEntries = await Promise.all(
+          list.map(async (st: any) => [st.id, await db.hasViewedStory(st.id)] as const)
+        );
+        setStoryViewedMap(Object.fromEntries(viewedEntries));
+      }
     } catch (err: any) {
       console.error('Error loading feed:', err);
       setError(err.message || 'Failed to load feed');
@@ -598,12 +633,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       if (!shake) return;
 
       if (shake.isLiked) {
-        await db.unlikePost(shakeId);
+          await db.unlikePost(shake.sourcePostId);
         setShakes(shakes.map(s =>
           s.id === shakeId ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) } : s
         ));
       } else {
-        await db.likePost(shakeId);
+          await db.likePost(shake.sourcePostId);
         setShakes(shakes.map(s =>
           s.id === shakeId ? { ...s, isLiked: true, likes: s.likes + 1 } : s
         ));
@@ -616,7 +651,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   const confirmReshake = async (comment?: string) => {
     if (!reshakeDialogShake) return;
     try {
-      const result = await db.reshakePost(reshakeDialogShake.id, comment);
+      const result = await db.reshakePost(reshakeDialogShake.sourcePostId, comment);
       if (result.success) {
         setShakes(shakes.map(shake =>
           shake.id === reshakeDialogShake.id ? { ...shake, isReshaked: true, reshakes: shake.reshakes + 1 } : shake
@@ -676,6 +711,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     setActivePlayerId(activePlayerId === shake.id ? null : shake.id);
   };
 
+  const openStory = async (story: any) => {
+    setActiveStory(story);
+    setStoryViewedMap(prev => ({ ...prev, [story.id]: true }));
+    await db.markStoryAsViewed(story.id);
+  };
+
   // Circle chat: track search debounce
   useEffect(() => {
     if (chatTrackQuery.length < 2) { setChatTrackResults([]); return; }
@@ -693,9 +734,11 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   const handleChatSendText = async () => {
     if (!chatText.trim() || chatSending) return;
     const text = chatText.trim();
+    const tempId = `temp-${Date.now()}`;
     // Optimistic update
     const optimisticShake: Shake = {
-      id: `temp-${Date.now()}`,
+      id: tempId,
+      sourcePostId: tempId,
       user: { id: currentUser?.id || '', username: currentUser?.username || '', displayName: currentUser?.displayName || currentUser?.display_name || '', avatar: currentUser?.avatar || '' },
       track: { id: '', title: '', artist: '', coverUrl: '', duration: '', previewUrl: '', spotifyUri: '', spotifyEmbedUrl: null },
       links: { spotify_url: null, apple_music_url: null, deezer_url: null, youtube_url: null, youtube_music_url: null, tidal_url: null, odesli_page_url: null },
@@ -794,7 +837,41 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     return (
       <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined}>
         {/* Always show feed selector even while loading */}
-        <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
+        {(circles.length > 0 || !!onCreateCircle) && (
+          <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
+        )}
+
+        {!currentFeedId && (
+          <div className="-mt-1">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <button onClick={() => setShowStoryComposer(true)} className="flex-shrink-0 text-center group">
+                <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
+                  <div className="w-full h-full rounded-full bg-[#14092A] flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-violet-900/40 border border-purple-700/40 flex items-center justify-center">
+                      <Plus className="w-5 h-5 text-[#FFEFD5]" />
+                    </div>
+                  </div>
+                </div>
+                <p className="text-[11px] text-purple-300/70 mt-1">Ta story</p>
+              </button>
+
+              {stories.map((story: any) => {
+                const user = story.user;
+                const viewed = !!storyViewedMap[story.id];
+                return (
+                  <button key={story.id} onClick={() => openStory(story)} className="flex-shrink-0 text-center group">
+                    <div className={`w-16 h-16 rounded-full p-[2px] ${viewed ? 'bg-purple-800/35' : 'bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400'}`}>
+                      <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
+                        <img src={user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`} className="w-full h-full rounded-full object-cover" alt="" />
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-purple-300/70 mt-1 max-w-16 truncate">{user?.username || 'story'}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
         <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-4" />
@@ -808,7 +885,9 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   if (error) {
     return (
       <div className="max-w-2xl mx-auto flex flex-col">
-        <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
+        {(circles.length > 0 || !!onCreateCircle) && (
+          <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
+        )}
         {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
         <div className="p-8">
           <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-6 text-center">
@@ -828,7 +907,9 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className={`p-4 space-y-6 ${currentFeedId ? 'flex-1 pb-40 lg:pb-24' : ''}`}>
         {/* Horizontal feed selector */}
-        <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
+        {(circles.length > 0 || !!onCreateCircle) && (
+          <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
+        )}
         {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
         <AnimatePresence mode="wait">
         <motion.div key={currentFeedId || 'main-feed'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.12, ease: 'easeOut' }} className="space-y-5">
@@ -1120,7 +1201,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{shake.likes}</span>
                   </button>
 
-                  <button onClick={() => setCommentsPostId(shake.id)} className="flex items-center gap-1.5 group active:scale-90 transition-transform">
+                  <button onClick={() => setCommentsPostId(shake.sourcePostId)} className="flex items-center gap-1.5 group active:scale-90 transition-transform">
                     <MessageCircle className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
                     <span className="text-xs font-medium text-purple-300/70">{shake.comments}</span>
                   </button>
@@ -1182,7 +1263,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             currentUser={currentUser}
             onCommentAdded={() => {
               setShakes(shakes.map(s =>
-                s.id === commentsPostId ? { ...s, comments: s.comments + 1 } : s
+                s.sourcePostId === commentsPostId ? { ...s, comments: s.comments + 1 } : s
               ));
             }}
           />
@@ -1191,6 +1272,19 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
       {/* Circle chat input bar — sticky at bottom when viewing a circle */}
       {currentFeedId && <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} handleChatSendImage={handleChatSendImage} handleChatSendGif={handleChatSendGif} />}
+
+      <StoryComposerDialog
+        open={showStoryComposer}
+        onClose={() => setShowStoryComposer(false)}
+        onCreated={loadFeed}
+        currentUser={currentUser}
+      />
+
+      <StoryViewerDialog
+        open={!!activeStory}
+        story={activeStory}
+        onClose={() => setActiveStory(null)}
+      />
     </div>
   );
 }

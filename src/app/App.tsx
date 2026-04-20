@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, Bell } from 'lucide-react';
+import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, Bell, Users } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
@@ -22,7 +22,7 @@ import { NotificationsView } from './components/NotificationsView';
 import { ProfilePreviewDialog } from './components/ProfilePreviewDialog';
 import { PostDetailModal } from './components/PostDetailModal';
 import { supabase } from '../lib/supabase';
-import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, getUserCircles, followUser } from '../lib/database';
+import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser } from '../lib/database';
 
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'notifications';
 
@@ -51,34 +51,14 @@ export default function App() {
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const [showShakeDuJour, setShowShakeDuJour] = useState(false);
   const [hasPostedToday, setHasPostedToday] = useState(true);
-  const [circles, setCircles] = useState<any[]>([]);
-  const [activeFeedCircleId, setActiveFeedCircleId] = useState<string | null>(null);
   const [viewOptions, setViewOptions] = useState<any>({});
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [notifPostId, setNotifPostId] = useState<string | null>(null);
   const [referrer, setReferrer] = useState<string | null>(null);
 
-  const loadUserCircles = async () => {
-    try {
-      const circles = await getUserCircles();
-      setCircles(circles || []);
-      if (activeFeedCircleId && !circles.some((c: any) => c.id === activeFeedCircleId)) {
-        setActiveFeedCircleId(null);
-      }
-    } catch (error) {
-      console.error('Error loading circles:', error);
-    }
-  };
-
-  const openCircleFeed = (circleId: string | null) => {
-    setActiveFeedCircleId(circleId);
-    setCurrentView('feed');
-  };
-
-  const handleCircleCreated = async (circleId: string) => {
-    await loadUserCircles();
-    setActiveFeedCircleId(circleId);
-    setCurrentView('feed');
+  const openCirclesInMessages = () => {
+    setCurrentView('messages');
+    setViewOptions({ initialTab: 'circles' });
   };
 
   const buildUserObject = (profile: any) => ({
@@ -109,7 +89,6 @@ export default function App() {
         const profile = await getUserProfile(session.user.id);
         if (profile) {
           setCurrentUser(buildUserObject(profile));
-          await loadUserCircles();
           if (!localStorage.getItem('shakemoi_onboarding')) setShowOnboarding(true);
           const profileCompleted = localStorage.getItem('shakemoi_profile_completed');
           if (!profileCompleted && (!profile.display_name || !profile.profile_album_cover_url)) setShowCompleteProfile(true);
@@ -121,13 +100,6 @@ export default function App() {
     };
     checkAuth();
   }, []);
-
-  // Reload circles when switching back to feed
-  useEffect(() => {
-    if (currentView === 'feed' && currentUser) {
-      loadUserCircles();
-    }
-  }, [currentView]);
 
   // Poll notifications
   useEffect(() => {
@@ -154,7 +126,6 @@ export default function App() {
   const handleAuthComplete = async (user: any) => {
     setCurrentUser(buildUserObject(user));
     setShowAuth(false);
-    loadUserCircles();
     if (!localStorage.getItem('shakemoi_onboarding')) setShowOnboarding(true);
 
     // Auto-follow referrer if one exists
@@ -201,9 +172,7 @@ export default function App() {
         currentUser={currentUser}
         onJoin={async () => {
           window.location.hash = '';
-          await loadUserCircles();
-          setActiveFeedCircleId(circleInviteId);
-          setCurrentView('feed');
+          openCirclesInMessages();
         }}
         onSignUp={() => { window.location.hash = ''; setShowAuth(true); }}
       />
@@ -225,10 +194,6 @@ export default function App() {
           <FeedView
             currentUser={currentUser}
             refreshFeed={refreshFeed}
-            circles={circles}
-            currentFeedId={activeFeedCircleId}
-            onSelectFeed={openCircleFeed}
-            onCreateCircle={() => { setCurrentView('messages'); setViewOptions({ initialTab: 'circles' }); }}
           />
         );
       case 'search':
@@ -236,7 +201,7 @@ export default function App() {
       case 'top':
         return <TopFriendsView currentUser={currentUser} onRefreshFeed={() => setRefreshFeed(p => p + 1)} />;
       case 'messages':
-        return <MessagesView currentUser={currentUser} onOpenCircle={openCircleFeed} onCircleCreated={handleCircleCreated} viewOptions={viewOptions} />;
+        return <MessagesView currentUser={currentUser} viewOptions={viewOptions} />;
       case 'notifications':
         return <NotificationsView currentUser={currentUser} onNavigateToPost={(postId) => setNotifPostId(postId)} onNavigateToProfile={(userId) => setProfilePreview({ userId, username: '' })} />;
       case 'profile':
@@ -258,13 +223,17 @@ export default function App() {
         {/* Header */}
         <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#14092A]/80 sticky top-0 z-40">
           <div className="px-4 py-2 flex items-center justify-between">
-            <button onClick={() => { setActiveFeedCircleId(null); setCurrentView('feed'); }} className="focus:outline-none">
+            <button onClick={() => { setCurrentView('feed'); }} className="focus:outline-none">
               <img src="/shakemoi-logo.png" alt="SHAKEmoi" className="h-5 object-contain" draggable={false} />
             </button>
 
             <div className="flex items-center gap-1.5">
               <button onClick={() => setShowShareDialog(true)} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors">
                 <Share2 className="w-5 h-5 text-purple-300/60" />
+              </button>
+
+              <button onClick={openCirclesInMessages} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors" title="Groupes">
+                <Users className="w-5 h-5 text-purple-300/60" />
               </button>
 
               {currentUser && (
@@ -311,7 +280,7 @@ export default function App() {
         <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-violet-900/30 backdrop-blur-lg bg-[#14092A]/95 z-50">
           <div className="px-4 py-2.5 flex items-center justify-around max-w-lg mx-auto">
             {([
-              { view: 'feed' as View, icon: Home, label: 'Feed' },
+              { view: 'feed' as View, icon: Home, label: 'Accueil' },
               { view: 'top' as View, icon: TrendingUp, label: 'TOP' },
               { view: 'search' as View, icon: Search, label: 'Recherche' },
               { view: 'messages' as View, icon: MessageCircle, label: 'DMs' },
@@ -335,7 +304,7 @@ export default function App() {
       <aside className="hidden xl:block w-64 border-l border-violet-900/30 p-4 overflow-y-auto">
         <nav className="space-y-2">
           {([
-            { view: 'feed' as View, icon: Home, label: 'Feed' },
+              { view: 'feed' as View, icon: Home, label: 'Accueil' },
             { view: 'top' as View, icon: TrendingUp, label: 'TOP' },
             { view: 'messages' as View, icon: MessageCircle, label: 'Messages' },
             { view: 'profile' as View, icon: User, label: 'Profil' },
@@ -381,7 +350,7 @@ export default function App() {
 
       {/* Dialogs */}
       {showCreateShake && (
-        <CreateShakeDialog currentUser={currentUser} circleId={activeFeedCircleId} onClose={() => { setShowCreateShake(false); setRefreshFeed(p => p + 1); }} />
+        <CreateShakeDialog currentUser={currentUser} onClose={() => { setShowCreateShake(false); setRefreshFeed(p => p + 1); }} />
       )}
       {showShareDialog && <ShareDialog currentUser={currentUser} onClose={() => setShowShareDialog(false)} />}
       {showCompleteProfile && (

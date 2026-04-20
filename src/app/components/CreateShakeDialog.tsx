@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, Search, Music2, Sparkles, Check, Loader2 } from 'lucide-react';
+import { X, Search, Music2, Sparkles, Check, Loader2, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPost } from '../../lib/database';
 import { spotify } from '../../lib/spotify';
+import { supabase } from '../../lib/supabase';
 
 interface CreateShakeDialogProps {
   currentUser: any;
@@ -20,6 +21,8 @@ export function CreateShakeDialog({ currentUser, onClose, circleId }: CreateShak
   const [recommendedTracks, setRecommendedTracks] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   // Load recommendations on mount
   useEffect(() => {
@@ -87,21 +90,46 @@ export function CreateShakeDialog({ currentUser, onClose, circleId }: CreateShak
 
   const displayTracks = searchQuery.trim() ? searchResults : recommendedTracks;
 
+  const handlePhotoSelect = (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Photo trop lourde (max 10 Mo)');
+      return;
+    }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const uploadPhotoIfNeeded = async (): Promise<string | null> => {
+    if (!photoFile || !currentUser?.id) return null;
+    const ext = photoFile.name.split('.').pop() || 'jpg';
+    const fileName = `${currentUser.id}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage
+      .from('shake-media')
+      .upload(fileName, photoFile, { cacheControl: '3600', upsert: false });
+    if (error) throw error;
+    const { data } = supabase.storage.from('shake-media').getPublicUrl(fileName);
+    return data.publicUrl;
+  };
+
   const handleShake = async () => {
-    if (!selectedTrack) return;
+    if (!selectedTrack && !photoPreview) return;
     setIsCreating(true);
     try {
+      const imageUrl = await uploadPhotoIfNeeded();
       // Create post with Supabase
       const result = await createPost(
-        selectedTrack.title,
-        selectedTrack.artist,
-        selectedTrack.coverUrl,
+        selectedTrack?.title || '',
+        selectedTrack?.artist || '',
+        selectedTrack?.coverUrl || '',
         caption,
-        selectedTrack.previewUrl,
-        selectedTrack.spotifyUri,
-        selectedTrack.id,
+        selectedTrack?.previewUrl || null,
+        selectedTrack?.spotifyUri || null,
+        selectedTrack?.id || null,
         false,
-        circleId
+        circleId,
+        imageUrl
       );
 
       if (result.success) {
@@ -181,9 +209,25 @@ export function CreateShakeDialog({ currentUser, onClose, circleId }: CreateShak
                   className="w-full mt-3 px-3 py-2 bg-purple-950/40 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors resize-none"
                   rows={3}
                 />
+
+                <label className="mt-3 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-900/25 border border-purple-700/30 cursor-pointer text-sm">
+                  <ImageIcon className="w-4 h-4 text-purple-300/70" />
+                  Ajouter une photo
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
+                </label>
+                {photoPreview && <img src={photoPreview} alt="preview" className="mt-2 w-full h-44 object-cover rounded-xl" />}
               </div>
             ) : (
               <>
+                <div className="mb-3">
+                  <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-900/25 border border-purple-700/30 cursor-pointer text-sm">
+                    <ImageIcon className="w-4 h-4 text-purple-300/70" />
+                    Ajouter une photo
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
+                  </label>
+                  {photoPreview && <img src={photoPreview} alt="preview" className="mt-2 w-full h-44 object-cover rounded-xl" />}
+                </div>
+
                 {/* Search */}
                 <div className="mb-4">
                   <div className="relative">
@@ -243,7 +287,7 @@ export function CreateShakeDialog({ currentUser, onClose, circleId }: CreateShak
             </p>
             <button
               onClick={handleShake}
-              disabled={!selectedTrack || isCreating}
+              disabled={(!selectedTrack && !photoPreview) || isCreating}
               className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
             >
               {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Shake 🔥'}
