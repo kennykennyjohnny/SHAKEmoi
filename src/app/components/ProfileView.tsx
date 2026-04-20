@@ -898,6 +898,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         story={selectedStory}
         onClose={() => { setSelectedStory(null); loadData(); }}
         currentUser={user}
+        stories={activeStories}
+        onNavigate={setSelectedStory}
       />
     </div>
   );

@@ -1306,6 +1306,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         story={activeStory}
         onClose={() => setActiveStory(null)}
         currentUser={currentUser}
+        stories={stories}
+        onNavigate={(s) => openStory(s)}
       />
     </div>
   );

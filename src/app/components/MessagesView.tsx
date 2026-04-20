@@ -228,7 +228,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+        <div className="flex-1 overflow-y-auto p-4 pb-20 space-y-3 min-h-0">
           {messages.map((msg) => {
             const isMine = msg.sender_id === currentUser?.id;
             const isTrack = !!msg.track_name;

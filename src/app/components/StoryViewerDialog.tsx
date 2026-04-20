@@ -1,4 +1,4 @@
-import { X, Heart, MessageCircle, Trash2 } from 'lucide-react';
+import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getCurrentUser } from '../../lib/database';
@@ -8,15 +8,35 @@ interface StoryViewerDialogProps {
   story: any | null;
   onClose: () => void;
   currentUser: any;
+  stories?: any[];
+  onNavigate?: (story: any) => void;
 }
 
-export function StoryViewerDialog({ open, story, onClose, currentUser }: StoryViewerDialogProps) {
+export function StoryViewerDialog({ open, story, onClose, currentUser, stories, onNavigate }: StoryViewerDialogProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [likeAnimations, setLikeAnimations] = useState<{ id: string; x: number; y: number }[]>([]);
+
+  // Navigation between stories
+  const storyList = stories && stories.length > 0 ? stories : (story ? [story] : []);
+  const currentIdx = storyList.findIndex((s: any) => s.id === story?.id);
+  const hasPrev = currentIdx > 0;
+  const hasNext = currentIdx < storyList.length - 1;
+  const navigatePrev = () => { if (hasPrev && onNavigate) { setShowCommentInput(false); onNavigate(storyList[currentIdx - 1]); } };
+  const navigateNext = () => { if (hasNext && onNavigate) { setShowCommentInput(false); onNavigate(storyList[currentIdx + 1]); } };
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') navigatePrev();
+      else if (e.key === 'ArrowRight') navigateNext();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [open, currentIdx, storyList.length]);
 
   useEffect(() => {
     if (!story) return;
@@ -98,16 +118,46 @@ export function StoryViewerDialog({ open, story, onClose, currentUser }: StoryVi
           className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
           onClick={onClose}
         >
+          {/* Prev story arrow */}
+          {hasPrev && (
+            <button
+              onClick={(e) => { e.stopPropagation(); navigatePrev(); }}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          )}
+
+          {/* Next story arrow */}
+          {hasNext && (
+            <button
+              onClick={(e) => { e.stopPropagation(); navigateNext(); }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          )}
+
+          {/* Story dot indicators */}
+          {storyList.length > 1 && (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+              {storyList.map((_: any, i: number) => (
+                <div key={i} className={`h-1 rounded-full transition-all ${i === currentIdx ? 'w-5 bg-white' : 'w-2 bg-white/30'}`} />
+              ))}
+            </div>
+          )}
+
           <motion.div
+            key={story.id}
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 10, opacity: 0 }}
-            className="w-full max-w-md rounded-3xl overflow-hidden border border-purple-800/30 relative group"
+            className="w-full max-w-sm rounded-3xl overflow-hidden border border-purple-800/30 relative flex flex-col"
             onClick={(e) => e.stopPropagation()}
-            style={{ background: story.theme_color || '#1D0F3D' }}
+            style={{ background: story.theme_color || '#1D0F3D', maxHeight: '90dvh' }}
           >
-            {/* Header */}
-            <div className="p-3 flex items-center justify-between bg-black/30 backdrop-blur-sm">
+            {/* Header — always visible */}
+            <div className="p-3 flex items-center justify-between bg-black/30 backdrop-blur-sm flex-shrink-0">
               <div className="flex items-center gap-2 min-w-0">
                 <img src={user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`} className="w-8 h-8 rounded-full object-cover" alt="" />
                 <div className="min-w-0">
@@ -127,78 +177,70 @@ export function StoryViewerDialog({ open, story, onClose, currentUser }: StoryVi
               </div>
             </div>
 
-            {/* Content */}
+            {/* Image — constrained height so actions always visible */}
             {story.image_url ? (
-              <img src={story.image_url} alt="story" className="w-full h-[28rem] object-cover" />
+              <img
+                src={story.image_url}
+                alt="story"
+                className="w-full object-cover flex-shrink-0"
+                style={{ maxHeight: 'min(50vh, 22rem)' }}
+              />
             ) : (
-              <div className="h-[20rem] flex items-center justify-center text-purple-100/90 text-center p-6 bg-gradient-to-br from-purple-900/50 to-pink-900/50">
+              <div
+                className="flex items-center justify-center text-purple-100/90 text-center p-6 bg-gradient-to-br from-purple-900/50 to-pink-900/50 flex-shrink-0"
+                style={{ minHeight: '10rem', maxHeight: '50vh' }}
+              >
                 <div>
-                  <p className="text-lg font-bold">{story.text || story.track_name || 'Shake ephemere'}</p>
+                  <p className="text-lg font-bold">{story.track_name || 'Shake éphémère'}</p>
                   <p className="text-sm text-purple-200/70 mt-1">{story.artist || 'Partage musical temporaire'}</p>
                 </div>
               </div>
             )}
 
-            {story.text && <p className="px-4 py-2.5 text-sm bg-black/25 min-h-12 flex items-center">{story.text}</p>}
-
-            {embedUrl && (
-              <div className="p-3 bg-black/20">
-                <iframe
-                  src={`${embedUrl}?theme=0`}
-                  width="100%"
-                  height="152"
-                  frameBorder="0"
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                  className="rounded-xl"
-                />
+            {/* Text + embed — scrollable if content is tall */}
+            {(story.text || embedUrl) && (
+              <div className="flex-shrink-0 overflow-y-auto" style={{ maxHeight: '20vh' }}>
+                {story.text && <p className="px-4 py-2.5 text-sm bg-black/25">{story.text}</p>}
+                {embedUrl && (
+                  <div className="p-3 bg-black/20">
+                    <iframe
+                      src={`${embedUrl}?theme=0`}
+                      width="100%"
+                      height="80"
+                      frameBorder="0"
+                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                      loading="lazy"
+                      className="rounded-xl"
+                    />
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Instagram-style bottom action bar */}
-            <div className="px-3 py-2.5 bg-black/40 backdrop-blur-sm border-t border-purple-500/20 flex flex-col gap-2">
-              {/* Like counter */}
+            {/* Actions — always visible at bottom */}
+            <div className="px-3 py-2.5 bg-black/40 backdrop-blur-sm border-t border-purple-500/20 flex-shrink-0">
               {likeCount > 0 && (
-                <div className="text-xs text-purple-200/70 px-1">
+                <div className="text-xs text-purple-200/70 px-1 mb-1.5">
                   <span className="font-medium text-purple-100">{likeCount}</span> {likeCount === 1 ? 'like' : 'likes'}
                 </div>
               )}
-              
-              {/* Like + Comment buttons */}
               <div className="flex items-center gap-3">
-                {/* Like Heart */}
                 <div className="relative">
                   <button
                     onClick={toggleLike}
-                    className={`p-2.5 rounded-full transition-all ${
-                      isLiked
-                        ? 'bg-red-500/20 text-red-400'
-                        : 'text-purple-300/60 hover:text-purple-200 hover:bg-purple-500/10'
-                    }`}
+                    className={`p-2.5 rounded-full transition-all ${isLiked ? 'bg-red-500/20 text-red-400' : 'text-purple-300/60 hover:text-purple-200 hover:bg-purple-500/10'}`}
                     title="Liker"
                   >
                     <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
                   </button>
-                  
-                  {/* Like animations */}
                   <AnimatePresence>
                     {likeAnimations.map(anim => (
-                      <motion.div
-                        key={anim.id}
-                        initial={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-                        animate={{ opacity: 0, scale: 1.5, y: -60, x: anim.x }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.8 }}
-                        className="absolute pointer-events-none"
-                        style={{ left: '50%', top: '50%' }}
-                      >
+                      <motion.div key={anim.id} initial={{ opacity: 1, scale: 1, y: 0, x: 0 }} animate={{ opacity: 0, scale: 1.5, y: -60, x: anim.x }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }} className="absolute pointer-events-none" style={{ left: '50%', top: '50%' }}>
                         <Heart className="w-8 h-8 fill-red-400 text-red-400" />
                       </motion.div>
                     ))}
                   </AnimatePresence>
                 </div>
-
-                {/* Comment */}
                 <button
                   onClick={() => setShowCommentInput(!showCommentInput)}
                   className="p-2.5 rounded-full text-purple-300/60 hover:text-purple-200 hover:bg-purple-500/10 transition-all"
@@ -207,19 +249,16 @@ export function StoryViewerDialog({ open, story, onClose, currentUser }: StoryVi
                   <MessageCircle className="w-5 h-5" />
                 </button>
               </div>
-
-              {/* Right: Empty space for balance (like Instagram) */}
-              <div className="flex-1" />
             </div>
 
-            {/* Comment input - Collapsible below buttons */}
+            {/* Comment input */}
             <AnimatePresence>
               {showCommentInput && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="px-3 py-2.5 bg-black/30 border-t border-purple-500/20 flex gap-2 overflow-hidden"
+                  className="px-3 py-2.5 bg-black/30 border-t border-purple-500/20 flex gap-2 overflow-hidden flex-shrink-0"
                 >
                   <input
                     autoFocus
@@ -228,18 +267,9 @@ export function StoryViewerDialog({ open, story, onClose, currentUser }: StoryVi
                     onChange={e => setCommentText(e.target.value)}
                     placeholder="Commenter..."
                     className="flex-1 px-3 py-2 bg-purple-500/15 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500"
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleComment();
-                      }
-                    }}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleComment(); } }}
                   />
-                  <button
-                    onClick={handleComment}
-                    disabled={isSubmitting || !commentText.trim()}
-                    className="px-4 py-2 text-purple-300/60 hover:text-purple-200 disabled:opacity-30 transition-colors"
-                  >
+                  <button onClick={handleComment} disabled={isSubmitting || !commentText.trim()} className="px-4 py-2 text-purple-300/60 hover:text-purple-200 disabled:opacity-30 transition-colors">
                     {isSubmitting ? '...' : 'OK'}
                   </button>
                 </motion.div>
