@@ -1,8 +1,9 @@
 import { X, Heart, Play, UserPlus, UserCheck, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing, getUserReshakes, getCachedTasteMatch, calculateTasteMatch } from '../../lib/database';
+import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing, getUserReshakes, getCachedTasteMatch, calculateTasteMatch, getUserActiveStories } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
+import { StoryViewerDialog } from './StoryViewerDialog';
 
 interface ProfilePreviewDialogProps {
   userId: string;
@@ -14,6 +15,8 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
   const [profile, setProfile] = useState<any>(null);
   const [shakes, setShakes] = useState<any[]>([]);
   const [reshakes, setReshakes] = useState<any[]>([]);
+  const [stories, setStories] = useState<any[]>([]);
+  const [activeStory, setActiveStory] = useState<any | null>(null);
   const [stats, setStats] = useState({ followers: 0, following: 0, posts: 0 });
   const [isFollowingUser, setIsFollowingUser] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -47,12 +50,13 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
 
       const actualId = profileData.id;
 
-      const [postsData, reshakesData, followersCount, followingCount, followingStatus] = await Promise.all([
+      const [postsData, reshakesData, followersCount, followingCount, followingStatus, storiesData] = await Promise.all([
         getUserPosts(actualId, 9),
         getUserReshakes(actualId),
         getUserFollowersCount(actualId),
         getUserFollowingCount(actualId),
-        isFollowing(actualId)
+        isFollowing(actualId),
+        getUserActiveStories(actualId)
       ]);
 
       // Separate original shakes from reshakes
@@ -61,6 +65,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
       setProfile(profileData);
       setShakes(originalShakes.slice(0, 9));
       setReshakes((reshakesData || []).slice(0, 9));
+      setStories((storiesData || []).map((s: any) => ({ ...s, user: profileData })));
       setStats({
         followers: followersCount,
         following: followingCount,
@@ -133,6 +138,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
   const expandedEmbedUrl = expandedTrackId ? `https://open.spotify.com/embed/track/${expandedTrackId}?theme=0&utm_source=generator` : null;
 
   return (
+    <>
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
@@ -213,6 +219,33 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
               <><UserPlus className="w-4 h-4" /> S'abonner</>
             )}
           </button>
+
+          {/* Stories strip — visible si l'ami a des stories actives */}
+          {stories.length > 0 && (
+            <div className="mt-4">
+              <p className="text-xs text-purple-300/60 font-semibold uppercase tracking-wider mb-2">Shakes éphémères</p>
+              <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                {stories.map((story: any, idx: number) => (
+                  <button
+                    key={story.id}
+                    onClick={() => setActiveStory(story)}
+                    className="flex-shrink-0 text-center"
+                  >
+                    <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
+                      <div className="w-full h-full rounded-full bg-[#1D0F3D] p-[2px]">
+                        <img
+                          src={story.cover_url || story.image_url || avatar}
+                          className="w-full h-full rounded-full object-cover"
+                          alt=""
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-purple-300/60 mt-1">{idx + 1}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Tabs: Shakes / Reshakes */}
           <div className="flex mt-4 border-b border-purple-800/30">
@@ -328,5 +361,16 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
         </div>
       </motion.div>
     </div>
+
+    {/* Story viewer */}
+    <StoryViewerDialog
+      open={!!activeStory}
+      story={activeStory}
+      onClose={() => setActiveStory(null)}
+      currentUser={null}
+      stories={stories}
+      onNavigate={(s) => setActiveStory(s)}
+    />
+    </>
   );
 }

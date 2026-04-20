@@ -907,24 +907,41 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 <p className="text-[11px] text-purple-300/70 mt-1">Ajouter</p>
               </button>
 
-              {stories.map((story: any) => {
-                const user = story.user;
-                const viewed = !!storyViewedMap[story.id];
-                return (
-                  <button key={story.id} onClick={() => openStory(story)} className="flex-shrink-0 text-center">
-                    <div className={`w-16 h-16 rounded-full p-[2px] ${viewed ? 'bg-purple-800/35' : 'bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400'}`}>
-                      <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
-                        <img
-                          src={story.cover_url || story.image_url || user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`}
-                          className="w-full h-full rounded-full object-cover"
-                          alt={story.track_name || ''}
-                        />
+              {(() => {
+                // Group stories by user — one bubble per user, badge if multiple
+                const groups: Map<string, any[]> = new Map();
+                for (const story of stories) {
+                  const uid = story.user?.id || story.user_id;
+                  if (!uid) continue;
+                  if (!groups.has(uid)) groups.set(uid, []);
+                  groups.get(uid)!.push(story);
+                }
+                return Array.from(groups.values()).map((group: any[]) => {
+                  const firstStory = group[0];
+                  const user = firstStory.user;
+                  const allViewed = group.every((s: any) => !!storyViewedMap[s.id]);
+                  const count = group.length;
+                  return (
+                    <button key={user?.id || firstStory.user_id} onClick={() => openStory(firstStory)} className="flex-shrink-0 text-center relative">
+                      <div className={`w-16 h-16 rounded-full p-[2px] ${allViewed ? 'bg-purple-800/35' : 'bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400'}`}>
+                        <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
+                          <img
+                            src={firstStory.cover_url || firstStory.image_url || user?.avatar || user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`}
+                            className="w-full h-full rounded-full object-cover"
+                            alt={firstStory.track_name || ''}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <p className="text-[11px] text-purple-300/70 mt-1 max-w-16 truncate">{user?.username || 'ami'}</p>
-                  </button>
-                );
-              })}
+                      {count > 1 && (
+                        <span className="absolute top-0 right-1 w-5 h-5 bg-fuchsia-500 border-2 border-[#14092A] rounded-full text-[10px] font-bold flex items-center justify-center text-white">
+                          {count}
+                        </span>
+                      )}
+                      <p className="text-[11px] text-purple-300/70 mt-1 max-w-16 truncate">{user?.username || 'ami'}</p>
+                    </button>
+                  );
+                });
+              })()}
             </div>
           </div>
         )}

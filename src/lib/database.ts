@@ -1460,7 +1460,7 @@ export async function getUserCircles(): Promise<any[]> {
       .from('circle_members')
       .select(`
         circle:circles(
-          id, name, created_by, invite_code, created_at
+          id, name, created_by, invite_code, created_at, photo_url
         )
       `)
       .eq('user_id', user.id);
@@ -1480,7 +1480,7 @@ export async function getCircleById(circleId: string): Promise<any | null> {
   try {
     const { data, error } = await supabase
       .from('circles')
-      .select('id, name, created_by, invite_code, created_at')
+      .select('id, name, created_by, invite_code, created_at, photo_url')
       .eq('id', circleId)
       .single();
     if (error) throw error;
@@ -1541,6 +1541,19 @@ export async function updateCircleName(circleId: string, newName: string) {
     const { error } = await supabase
       .from('circles')
       .update({ name: newName })
+      .eq('id', circleId);
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateCirclePhoto(circleId: string, photoUrl: string) {
+  try {
+    const { error } = await supabase
+      .from('circles')
+      .update({ photo_url: photoUrl })
       .eq('id', circleId);
     if (error) throw error;
     return { success: true };

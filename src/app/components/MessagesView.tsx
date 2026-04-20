@@ -7,7 +7,8 @@ import {
   createCircle, getUserCircles, getCircleMessages, getCircleMembers,
   searchUsers, addCircleMember, removeCircleMember, getCurrentUser,
   sendCircleMessage, hasLikedPosts, likeCircleMessage, unlikeCircleMessage,
-  hasLikedCircleMessage, getCircleMessageLikes, hasLikedCircleMessages
+  hasLikedCircleMessage, getCircleMessageLikes, hasLikedCircleMessages,
+  updateCirclePhoto
 } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
@@ -23,26 +24,29 @@ interface MessagesViewProps {
 export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewOptions }: MessagesViewProps) {
   const { initialTab = 'circles' } = viewOptions || {};
   const [tab, setTab] = useState<'dms' | 'circles'>(initialTab);
+  const [inSubView, setInSubView] = useState(false);
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col flex-1 overflow-hidden min-h-0">
-      {/* Tab bar */}
-      <div className="flex border-b border-purple-500/25 px-4 pt-3 gap-6">
-        {(['circles', 'dms'] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`pb-2.5 text-sm font-semibold transition-colors relative ${tab === t ? 'text-white' : 'text-purple-300/60 hover:text-white'}`}
-          >
-            {t === 'dms' ? 'Messages privés' : 'Groupes'}
-            {tab === t && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />}
-          </button>
-        ))}
-      </div>
+      {/* Tab bar — masqué quand on est dans une conversation ou un cercle */}
+      {!inSubView && (
+        <div className="flex border-b border-purple-500/25 px-4 pt-3 gap-6 flex-shrink-0">
+          {(['circles', 'dms'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`pb-2.5 text-sm font-semibold transition-colors relative ${tab === t ? 'text-white' : 'text-purple-300/60 hover:text-white'}`}
+            >
+              {t === 'dms' ? 'Messages privés' : 'Groupes'}
+              {tab === t && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />}
+            </button>
+          ))}
+        </div>
+      )}
 
       {tab === 'dms'
-        ? <DmsPanel currentUser={currentUser} />
-        : <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} />
+        ? <DmsPanel currentUser={currentUser} onSubViewActive={setInSubView} />
+        : <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setInSubView} />
       }
     </div>
   );
@@ -50,7 +54,7 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
 
 // ==================== DMs ====================
 
-function DmsPanel({ currentUser }: { currentUser: any }) {
+function DmsPanel({ currentUser, onSubViewActive }: { currentUser: any; onSubViewActive?: (active: boolean) => void }) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeConversation, setActiveConversation] = useState<any>(null);
@@ -113,6 +117,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
   const openConversation = async (partner: any) => {
     setActiveConversation(partner);
     setShowNewConvo(false);
+    onSubViewActive?.(true);
     try { setMessages(await getMessages(partner.id)); } catch {}
   };
 
@@ -218,7 +223,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
       <div className="flex flex-col flex-1 overflow-hidden min-h-0">
         {/* Instagram-style: sticky header, scrollable messages, sticky input */}
         <div className="px-4 py-3 border-b border-purple-500/25 flex items-center gap-3 flex-shrink-0 bg-[#14092A]/95 backdrop-blur-sm">
-          <button onClick={() => setActiveConversation(null)} className="p-1 hover:bg-violet-900/25 rounded-full">
+          <button onClick={() => { setActiveConversation(null); onSubViewActive?.(false); }} className="p-1 hover:bg-violet-900/25 rounded-full">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <img src={activeConversation.profile_album_cover_url || `https://ui-avatars.com/api/?name=${activeConversation.username}&background=2A1852&color=FFEFD5`} className="w-9 h-9 rounded-full object-cover" alt="" />
@@ -377,8 +382,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
 
   return (
     <div className="flex-1 overflow-y-auto p-4 pb-[4.5rem] lg:pb-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold">Messages directs</h2>
+      <div className="flex items-center justify-end mb-4">
         <button onClick={() => { setShowNewConvo(true); getUserFollowing(currentUser.id).then(setFriends).catch(() => {}); }} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 flex items-center gap-1.5">
           <Plus className="w-4 h-4" /> Nouveau
         </button>
@@ -437,7 +441,7 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
 
 // ==================== Cercles ====================
 
-function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void }) {
+function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated, onSubViewActive }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void }) {
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -452,21 +456,20 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentU
   };
 
   if (showCreate) {
-    return <CreateCircleFlow currentUser={currentUser} onDone={() => { setShowCreate(false); load(); }} onCreated={(circle) => { setShowCreate(false); onCircleCreated?.(circle.id); }} onBack={() => setShowCreate(false)} />;
+    return <CreateCircleFlow currentUser={currentUser} onDone={() => { setShowCreate(false); onSubViewActive?.(false); load(); }} onCreated={(circle) => { setShowCreate(false); onSubViewActive?.(false); onCircleCreated?.(circle.id); }} onBack={() => { setShowCreate(false); onSubViewActive?.(false); }} />;
   }
 
   if (selectedCircleId) {
     const circle = circles.find(c => c.id === selectedCircleId);
     if (circle) {
-      return <CircleView circle={circle} currentUser={currentUser} onBack={() => setSelectedCircleId(null)} />;
+      return <CircleView circle={circle} currentUser={currentUser} onBack={() => { setSelectedCircleId(null); onSubViewActive?.(false); }} />;
     }
   }
 
   return (
     <div className="flex-1 overflow-y-auto p-4 pb-[4.5rem] lg:pb-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold">Mes Cercles</h2>
-        <button onClick={() => setShowCreate(true)} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 flex items-center gap-1.5">
+      <div className="flex items-center justify-end mb-4">
+        <button onClick={() => { setShowCreate(true); onSubViewActive?.(true); }} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 flex items-center gap-1.5">
           <Plus className="w-4 h-4" /> Nouveau cercle
         </button>
       </div>
@@ -476,9 +479,15 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentU
       ) : circles.length > 0 ? (
         <div className="space-y-2">
           {circles.map((c) => (
-            <button key={c.id} onClick={() => setSelectedCircleId(c.id)} className="w-full flex items-center gap-3 p-3 bg-violet-950/20 hover:bg-violet-950/30 rounded-xl border border-purple-500/25 transition-all">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5 text-white" />
+            <button key={c.id} onClick={() => { setSelectedCircleId(c.id); onSubViewActive?.(true); }} className="w-full flex items-center gap-3 p-3 bg-violet-950/20 hover:bg-violet-950/30 rounded-xl border border-purple-500/25 transition-all">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {c.photo_url ? (
+                  <img src={c.photo_url} className="w-full h-full object-cover" alt="" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                )}
               </div>
               <div className="flex-1 text-left min-w-0">
                 <p className="font-semibold text-sm">{c.name}</p>
@@ -495,7 +504,7 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentU
           </div>
           <p className="text-purple-200/70 text-sm font-medium">Aucun cercle</p>
           <p className="text-purple-400/50 text-xs mt-1">Crée un espace privé avec tes amis</p>
-          <button onClick={() => setShowCreate(true)} className="mt-4 px-5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90">
+          <button onClick={() => { setShowCreate(true); onSubViewActive?.(true); }} className="mt-4 px-5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90">
             Créer un cercle
           </button>
         </div>
@@ -720,17 +729,21 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const [trackQuery, setTrackQuery] = useState('');
   const [trackResults, setTrackResults] = useState<any[]>([]);
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
-  // NEW: Photo/GIF support in circles
+  // Photo/GIF support in circles
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [showGifSearch, setShowGifSearch] = useState(false);
   const [gifQuery, setGifQuery] = useState('');
   const [gifResults, setGifResults] = useState<any[]>([]);
   const [gifSearching, setGifSearching] = useState(false);
-  // NEW: Likes system
+  // Likes system
   const [likedMessages, setLikedMessages] = useState<Record<string, boolean>>({});
   const [messageLikers, setMessageLikers] = useState<Record<string, any[]>>({});
   const [showLikers, setShowLikers] = useState<string | null>(null);
+  // Circle group photo
+  const [circlePhotoUrl, setCirclePhotoUrl] = useState<string | null>(circle.photo_url || null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const circlePhotoInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -953,6 +966,28 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
     if (user) { await removeCircleMember(circle.id, user.id); onBack(); }
   };
 
+  const handleCirclePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Photo trop lourde (max 5 Mo)'); return; }
+    setUploadingPhoto(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `circle-avatars/${circle.id}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('circle-media')
+        .upload(fileName, file, { cacheControl: '3600', upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('circle-media').getPublicUrl(fileName);
+      await updateCirclePhoto(circle.id, publicUrl);
+      setCirclePhotoUrl(publicUrl);
+    } catch (err) {
+      console.error('Error uploading circle photo:', err);
+    }
+    setUploadingPhoto(false);
+    if (e.target) e.target.value = '';
+  };
+
   const shareLink = `${window.location.origin}${window.location.pathname}#/circle/${circle.id}`;
   const [copied, setCopied] = useState(false);
   const copyLink = () => { navigator.clipboard.writeText(shareLink); setCopied(true); setTimeout(() => setCopied(false), 2000); };
@@ -972,8 +1007,14 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
         <button onClick={onBack} className="p-1 hover:bg-violet-900/25 rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="w-9 h-9 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
-          <Users className="w-4 h-4 text-white" />
+        <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden">
+          {circlePhotoUrl ? (
+            <img src={circlePhotoUrl} className="w-full h-full object-cover" alt="" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+              <Users className="w-4 h-4 text-white" />
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm">{circle.name}</p>
@@ -992,6 +1033,29 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
         {showSettings && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-b border-purple-500/25 bg-[#14092A] flex-shrink-0">
             <div className="p-4 space-y-3">
+              {/* Group Photo */}
+              <div className="flex items-center gap-3">
+                <div className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
+                  {circlePhotoUrl ? (
+                    <img src={circlePhotoUrl} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                      <Users className="w-6 h-6 text-white" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <button
+                    onClick={() => circlePhotoInputRef.current?.click()}
+                    disabled={uploadingPhoto}
+                    className="text-xs px-3 py-1.5 bg-violet-900/30 border border-purple-500/30 rounded-full hover:bg-violet-900/50 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {uploadingPhoto ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
+                    Photo du groupe
+                  </button>
+                  <input ref={circlePhotoInputRef} type="file" accept="image/*" className="hidden" onChange={handleCirclePhotoUpload} />
+                </div>
+              </div>
               {/* Invite Code */}
               {circle.invite_code && (
                 <div className="bg-purple-900/20 border border-purple-500/20 rounded-lg p-3 text-center">
