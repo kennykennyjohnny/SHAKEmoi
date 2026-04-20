@@ -422,6 +422,7 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentU
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [selectedCircleId, setSelectedCircleId] = useState<string | null>(null);
 
   useEffect(() => { load(); }, []);
 
@@ -433,6 +434,13 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentU
 
   if (showCreate) {
     return <CreateCircleFlow currentUser={currentUser} onDone={() => { setShowCreate(false); load(); }} onCreated={(circle) => { setShowCreate(false); onCircleCreated?.(circle.id); }} onBack={() => setShowCreate(false)} />;
+  }
+
+  if (selectedCircleId) {
+    const circle = circles.find(c => c.id === selectedCircleId);
+    if (circle) {
+      return <CircleView circle={circle} currentUser={currentUser} onBack={() => setSelectedCircleId(null)} />;
+    }
   }
 
   return (
@@ -449,7 +457,7 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentU
       ) : circles.length > 0 ? (
         <div className="space-y-2">
           {circles.map((c) => (
-            <button key={c.id} onClick={() => onOpenCircle?.(c.id)} className="w-full flex items-center gap-3 p-3 bg-violet-950/20 hover:bg-violet-950/30 rounded-xl border border-purple-500/25 transition-all">
+            <button key={c.id} onClick={() => setSelectedCircleId(c.id)} className="w-full flex items-center gap-3 p-3 bg-violet-950/20 hover:bg-violet-950/30 rounded-xl border border-purple-500/25 transition-all">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <Users className="w-5 h-5 text-white" />
               </div>
