@@ -10,6 +10,7 @@ import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { MusicReactionsDialog } from './MusicReactionsDialog';
+import { StoryViewerDialog } from './StoryViewerDialog';
 
 // Sleek underline-style tab bar with pink border hint for scroll
 function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { circles: any[]; currentFeedId: string | null; onSelectFeed?: (id: string | null) => void; onCreateCircle?: () => void }) {
@@ -410,6 +411,9 @@ interface FeedViewProps {
 
 export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId = null, onSelectFeed, onCreateCircle, onShowEphemeralShake }: FeedViewProps) {
   const [shakes, setShakes] = useState<Shake[]>([]);
+  const [stories, setStories] = useState<any[]>([]);
+  const [storyViewedMap, setStoryViewedMap] = useState<Record<string, boolean>>({});
+  const [activeStory, setActiveStory] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reshakeDialogShake, setReshakeDialogShake] = useState<Shake | null>(null);
@@ -599,6 +603,24 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
       // Circle chat: reverse to show oldest first (like a conversation)
       setShakes(currentFeedId ? shakes.reverse() : shakes);
+
+      if (!currentFeedId) {
+        const feedStories = await db.getFeedStories();
+        const latestByUser = new Map<string, any>();
+        for (const st of feedStories) {
+          const existing = latestByUser.get(st.user_id);
+          if (!existing || new Date(st.created_at).getTime() > new Date(existing.created_at).getTime()) {
+            latestByUser.set(st.user_id, st);
+          }
+        }
+        const list = Array.from(latestByUser.values());
+        setStories(list);
+
+        const viewedEntries = await Promise.all(
+          list.map(async (st: any) => [st.id, await db.hasViewedStory(st.id)] as const)
+        );
+        setStoryViewedMap(Object.fromEntries(viewedEntries));
+      }
     } catch (err: any) {
       console.error('Error loading feed:', err);
       setError(err.message || 'Failed to load feed');
@@ -689,6 +711,14 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   const handlePlayTrack = (shake: Shake) => {
     setActivePlayerId(activePlayerId === shake.id ? null : shake.id);
+  };
+
+  const openStory = async (story: any) => {
+    setActiveStory(story);
+    setStoryViewedMap(prev => ({ ...prev, [story.id]: true }));
+    try {
+      await db.markStoryAsViewed(story.id);
+    } catch {}
   };
 
   // Circle chat: track search debounce
@@ -854,15 +884,45 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         )}
         {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
         
-        {/* Ephemeral Shake Button - Top of feed */}
+        {/* Stories strip - Instagram style */}
         {!currentFeedId && (
-          <button
-            onClick={onShowEphemeralShake}
-            className="w-full py-3 px-4 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-600/40 rounded-xl hover:from-purple-600/30 hover:to-pink-600/30 transition-all flex items-center justify-center gap-2"
-          >
-            <Plus className="w-5 h-5 text-purple-300" />
-            <span className="text-sm font-semibold text-purple-200">Crée un Shake Éphémère</span>
-          </button>
+          <div className="-mt-1">
+            <div className="flex items-start gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <button
+                onClick={onShowEphemeralShake}
+                className="flex-shrink-0 text-center"
+                title="Créer un Shake Éphémère"
+              >
+                <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
+                  <div className="w-full h-full rounded-full bg-[#14092A] flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-violet-900/50 border border-purple-700/40 flex items-center justify-center">
+                      <Plus className="w-5 h-5 text-[#FFEFD5]" />
+                    </div>
+                  </div>
+                </div>
+                <p className="text-[11px] text-purple-300/70 mt-1">Ajouter</p>
+              </button>
+
+              {stories.map((story: any) => {
+                const user = story.user;
+                const viewed = !!storyViewedMap[story.id];
+                return (
+                  <button key={story.id} onClick={() => openStory(story)} className="flex-shrink-0 text-center">
+                    <div className={`w-16 h-16 rounded-full p-[2px] ${viewed ? 'bg-purple-800/35' : 'bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400'}`}>
+                      <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
+                        <img
+                          src={user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`}
+                          className="w-full h-full rounded-full object-cover"
+                          alt=""
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-purple-300/70 mt-1 max-w-16 truncate">{user?.username || 'ami'}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
         
         <AnimatePresence mode="wait">
@@ -1226,6 +1286,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
       {/* Circle chat input bar — sticky at bottom when viewing a circle */}
       {currentFeedId && <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} handleChatSendImage={handleChatSendImage} handleChatSendGif={handleChatSendGif} />}
+
+      <StoryViewerDialog
+        open={!!activeStory}
+        story={activeStory}
+        onClose={() => setActiveStory(null)}
+      />
     </div>
   );
 }

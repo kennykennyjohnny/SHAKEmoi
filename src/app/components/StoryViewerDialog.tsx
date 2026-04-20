@@ -47,8 +47,8 @@ export function StoryViewerDialog({ open, story, onClose }: StoryViewerDialogPro
             ) : (
               <div className="h-[20rem] flex items-center justify-center text-purple-100/90 text-center p-6">
                 <div>
-                  <p className="text-lg font-bold">{story.track_name || 'Story SHAKEmoi'}</p>
-                  <p className="text-sm text-purple-200/70">{story.artist || ''}</p>
+                  <p className="text-lg font-bold">{story.text || story.track_name || 'Shake ephemere'}</p>
+                  <p className="text-sm text-purple-200/70">{story.artist || 'Partage musical temporaire'}</p>
                 </div>
               </div>
             )}

@@ -172,8 +172,8 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
   };
 
   const handleCreateStory = async () => {
-    if (!photoPreview && !selectedTrack) {
-      alert('Ajoute une photo ou sélectionne un son');
+    if (!photoPreview && !selectedTrack && !caption.trim()) {
+      alert('Ajoute une photo, un son ou du texte');
       return;
     }
     setIsCreating(true);
@@ -216,7 +216,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-[#1D0F3D] rounded-2xl w-full max-w-lg max-h-[92vh] overflow-hidden flex flex-col border border-purple-800/20 my-auto"
+            className="bg-[#1D0F3D] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-1rem)] overflow-hidden flex flex-col border border-purple-800/20 my-auto"
           >
             {/* Header */}
             <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
@@ -325,7 +325,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                       />
                     </label>
                   )}
-                  {photoPreview && (
+                  {photoPreview && composerType === 'shake' && (
                     <img
                       src={photoPreview}
                       alt="preview"
@@ -348,7 +348,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                       />
                     </label>
                   )}
-                  {photoPreview && (
+                  {photoPreview && composerType === 'shake' && (
                     <img
                       src={photoPreview}
                       alt="preview"
@@ -483,7 +483,10 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-3 border-t border-purple-800/20 flex justify-between items-center">
+            <div
+              className="sticky bottom-0 z-10 px-4 py-3 border-t border-purple-800/20 flex justify-between items-center bg-[#1D0F3D]"
+              style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+            >
               <p className="text-xs text-purple-300/60">
                 {composerType === 'shake'
                   ? selectedTrack || photoPreview
@@ -499,7 +502,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                   isCreating ||
                   success ||
                   (composerType === 'shake' && !selectedTrack && !photoPreview) ||
-                  (composerType === 'story' && !photoPreview && !selectedTrack)
+                  (composerType === 'story' && !photoPreview && !selectedTrack && !caption.trim())
                 }
                 className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2"
               >
