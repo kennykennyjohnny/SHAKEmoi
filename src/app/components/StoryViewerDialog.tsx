@@ -12,6 +12,7 @@ interface StoryViewerDialogProps {
 
 export function StoryViewerDialog({ open, story, onClose, currentUser }: StoryViewerDialogProps) {
   const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,6 +27,8 @@ export function StoryViewerDialog({ open, story, onClose, currentUser }: StoryVi
     if (!story) return;
     const liked = await hasLikedStory(story.id);
     setIsLiked(liked);
+    const count = story.likes_count || 0;
+    setLikeCount(count);
   };
 
   const toggleLike = async () => {
@@ -33,9 +36,11 @@ export function StoryViewerDialog({ open, story, onClose, currentUser }: StoryVi
     
     if (isLiked) {
       await unlikeStory(story.id);
+      setLikeCount(Math.max(0, likeCount - 1));
     } else {
       // Send like as private message silently
       await likeStory(story.id);
+      setLikeCount(likeCount + 1);
       
       // Trigger heart animation
       const id = Math.random().toString();
@@ -151,8 +156,15 @@ export function StoryViewerDialog({ open, story, onClose, currentUser }: StoryVi
             )}
 
             {/* Instagram-style bottom action bar */}
-            <div className="px-3 py-2.5 bg-black/40 backdrop-blur-sm border-t border-purple-500/20 flex items-center justify-between">
-              {/* Left: Like + Comment buttons */}
+            <div className="px-3 py-2.5 bg-black/40 backdrop-blur-sm border-t border-purple-500/20 flex flex-col gap-2">
+              {/* Like counter */}
+              {likeCount > 0 && (
+                <div className="text-xs text-purple-200/70 px-1">
+                  <span className="font-medium text-purple-100">{likeCount}</span> {likeCount === 1 ? 'like' : 'likes'}
+                </div>
+              )}
+              
+              {/* Like + Comment buttons */}
               <div className="flex items-center gap-3">
                 {/* Like Heart */}
                 <div className="relative">

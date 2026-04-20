@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Image, Copy, Users, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
@@ -839,7 +840,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined}>
+      <div className="max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4" style={currentFeedId ? { minHeight: '100%' } : undefined}>
         {/* Always show feed selector even while loading */}
         {(circles.length > 0 || !!onCreateCircle) && (
           <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
@@ -849,14 +850,17 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-4" />
           <p className="text-purple-300/70">Chargement du feed...</p>
         </div>
-        {currentFeedId && <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} handleChatSendImage={handleChatSendImage} handleChatSendGif={handleChatSendGif} />}
+        {currentFeedId && createPortal(
+          <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} handleChatSendImage={handleChatSendImage} handleChatSendGif={handleChatSendGif} />,
+          document.body
+        )}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto flex flex-col">
+      <div className="max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4">
         {(circles.length > 0 || !!onCreateCircle) && (
           <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
         )}
@@ -876,7 +880,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   // Empty state is now rendered inline, not as early return
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col" style={currentFeedId ? { minHeight: '100%' } : undefined} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <div className="max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4" style={currentFeedId ? { minHeight: '100%' } : undefined} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className={`p-4 space-y-6 ${currentFeedId ? 'flex-1 pb-40 lg:pb-24' : ''}`}>
         {/* Horizontal feed selector */}
         {(circles.length > 0 || !!onCreateCircle) && (
@@ -1291,8 +1295,11 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         )}
       </AnimatePresence>
 
-      {/* Circle chat input bar — sticky at bottom when viewing a circle */}
-      {currentFeedId && <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} handleChatSendImage={handleChatSendImage} handleChatSendGif={handleChatSendGif} />}
+      {/* Circle chat input bar — truly fixed to viewport (rendered via Portal) */}
+      {currentFeedId && createPortal(
+        <CircleChatBar chatText={chatText} setChatText={setChatText} chatSending={chatSending} showChatTrackSearch={showChatTrackSearch} setShowChatTrackSearch={setShowChatTrackSearch} chatTrackQuery={chatTrackQuery} setChatTrackQuery={setChatTrackQuery} chatTrackResults={chatTrackResults} chatSearching={chatSearching} handleChatSendText={handleChatSendText} handleChatSendTrack={handleChatSendTrack} handleChatSendImage={handleChatSendImage} handleChatSendGif={handleChatSendGif} />,
+        document.body
+      )}
 
       <StoryViewerDialog
         open={!!activeStory}

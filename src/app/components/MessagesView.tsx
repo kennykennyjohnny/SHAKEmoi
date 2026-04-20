@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeft, Send, Search, Music, Play, Loader2, ExternalLink, Users, Plus, Copy, Check, X, Settings, LogOut, Camera, Smile, Image, Heart, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -24,7 +25,7 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
   const [tab, setTab] = useState<'dms' | 'circles'>(initialTab);
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col h-full">
+    <div className="max-w-2xl mx-auto flex flex-col flex-1 overflow-hidden min-h-0">
       {/* Tab bar */}
       <div className="flex border-b border-purple-500/25 px-4 pt-3 gap-6">
         {(['circles', 'dms'] as const).map(t => (
@@ -214,19 +215,20 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
 
   if (activeConversation) {
     return (
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <div className="px-4 py-3 border-b border-purple-500/25 flex items-center gap-3 flex-shrink-0">
+      <div className="flex flex-col flex-1 overflow-hidden min-h-0">
+        {/* Instagram-style: sticky header, scrollable messages, sticky input */}
+        <div className="px-4 py-3 border-b border-purple-500/25 flex items-center gap-3 flex-shrink-0 bg-[#14092A]/95 backdrop-blur-sm">
           <button onClick={() => setActiveConversation(null)} className="p-1 hover:bg-violet-900/25 rounded-full">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <img src={activeConversation.profile_album_cover_url || `https://ui-avatars.com/api/?name=${activeConversation.username}&background=2A1852&color=FFEFD5`} className="w-9 h-9 rounded-full object-cover" alt="" />
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm">{activeConversation.display_name || activeConversation.username}</p>
             <p className="text-xs text-purple-300/70">@{activeConversation.username}</p>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 pb-24 lg:pb-16 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
           {messages.map((msg) => {
             const isMine = msg.sender_id === currentUser?.id;
             const isTrack = !!msg.track_name;
@@ -346,32 +348,35 @@ function DmsPanel({ currentUser }: { currentUser: any }) {
           )}
         </AnimatePresence>
 
-        <div className="fixed bottom-[4.5rem] lg:bottom-0 left-0 right-0 z-40 pointer-events-none">
-          <div className="max-w-2xl mx-auto pointer-events-auto bg-[#14092A] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
-            <div className="px-3 py-2 flex items-center gap-2">
-              <button onClick={() => { setShowTrackSearch(!showTrackSearch); setShowGifSearch(false); }} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
-                <Music className="w-5 h-5" />
-              </button>
-              <button onClick={() => { setShowGifSearch(!showGifSearch); setShowTrackSearch(false); }} className={`p-2 rounded-full transition-colors ${showGifSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
-                <Smile className="w-5 h-5" />
-              </button>
-              <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full hover:bg-purple-900/40 text-purple-400 transition-colors">
-                <Camera className="w-5 h-5" />
-              </button>
-              <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoSelect} />
-              <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Envoie un message..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
-              <button onClick={() => handleSend()} disabled={sending || !newMessage.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
-                {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-              </button>
+        {createPortal(
+          <div className="fixed bottom-[4.5rem] lg:bottom-0 left-0 right-0 z-40 pointer-events-none">
+            <div className="max-w-2xl mx-auto pointer-events-auto bg-[#14092A] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+              <div className="px-3 py-2 flex items-center gap-2">
+                <button onClick={() => { setShowTrackSearch(!showTrackSearch); setShowGifSearch(false); }} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
+                  <Music className="w-5 h-5" />
+                </button>
+                <button onClick={() => { setShowGifSearch(!showGifSearch); setShowTrackSearch(false); }} className={`p-2 rounded-full transition-colors ${showGifSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
+                  <Smile className="w-5 h-5" />
+                </button>
+                <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full hover:bg-purple-900/40 text-purple-400 transition-colors">
+                  <Camera className="w-5 h-5" />
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoSelect} />
+                <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Envoie un message..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
+                <button onClick={() => handleSend()} disabled={sending || !newMessage.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
+                  {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
+          </div>,
+          document.body
+        )}
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4">
+    <div className="flex-1 overflow-y-auto p-4 pb-[4.5rem] lg:pb-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold">Messages directs</h2>
         <button onClick={() => { setShowNewConvo(true); getUserFollowing(currentUser.id).then(setFriends).catch(() => {}); }} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 flex items-center gap-1.5">
@@ -458,7 +463,7 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated }: { currentU
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4">
+    <div className="flex-1 overflow-y-auto p-4 pb-[4.5rem] lg:pb-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold">Mes Cercles</h2>
         <button onClick={() => setShowCreate(true)} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 flex items-center gap-1.5">
@@ -961,9 +966,9 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   };
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Circle header */}
-      <div className="px-4 py-3 border-b border-purple-500/25 flex items-center gap-3 flex-shrink-0">
+    <div className="flex flex-col flex-1 overflow-hidden min-h-0">
+      {/* Instagram-style: sticky circle header */}
+      <div className="px-4 py-3 border-b border-purple-500/25 flex items-center gap-3 flex-shrink-0 bg-[#14092A]/95 backdrop-blur-sm">
         <button onClick={onBack} className="p-1 hover:bg-violet-900/25 rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -1024,7 +1029,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       </AnimatePresence>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
         {loading ? (
           <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /></div>
         ) : posts.length > 0 ? [...posts].reverse().map((msg: any) => {

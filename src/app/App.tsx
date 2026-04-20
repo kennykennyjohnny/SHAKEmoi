@@ -299,10 +299,11 @@ export default function App() {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-auto pb-24 lg:pb-4">
+        <main className="flex-1 overflow-hidden flex flex-col min-h-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentView}
+              className="flex-1 flex flex-col min-h-0"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
