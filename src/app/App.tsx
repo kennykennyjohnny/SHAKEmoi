@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, Bell, Users } from 'lucide-react';
+import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, Bell } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
@@ -56,11 +56,6 @@ export default function App() {
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [notifPostId, setNotifPostId] = useState<string | null>(null);
   const [referrer, setReferrer] = useState<string | null>(null);
-
-  const openCirclesInMessages = () => {
-    setCurrentView('messages');
-    setViewOptions({ initialTab: 'circles' });
-  };
 
   const buildUserObject = (profile: any) => ({
     ...profile,
@@ -195,6 +190,7 @@ export default function App() {
           <FeedView
             currentUser={currentUser}
             refreshFeed={refreshFeed}
+            onShowEphemeralShake={() => setShowEphemeralShake(true)}
           />
         );
       case 'search':

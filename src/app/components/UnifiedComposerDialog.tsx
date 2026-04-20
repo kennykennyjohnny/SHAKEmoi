@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Search, Music2, Sparkles, Loader2, Image as ImageIcon, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPost, createStory } from '../../lib/database';
@@ -22,16 +22,13 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
   const [composerType, setComposerType] = useState<ComposerType>(initialComposerType);
 
   // Shared state
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [caption, setCaption] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTrack, setSelectedTrack] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [success, setSuccess] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [recommendedTracks, setRecommendedTracks] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
 
   // Photo/file upload
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -49,8 +46,6 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
     } else {
       // Set initial composer type when dialog opens
       setComposerType(initialComposerType);
-      // Load recommendations on open
-      loadRecommendations();
     }
   }, [open, initialComposerType]);
 
@@ -82,27 +77,6 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
     return () => clearTimeout(timer);
   }, [searchQuery, open]);
 
-  const loadRecommendations = async () => {
-    try {
-      setIsLoadingRecommendations(true);
-      const tracks = await spotify.getTop100France();
-      const formatted = tracks.slice(0, 10).map((t: any) => ({
-        id: t.id,
-        title: t.name,
-        artist: t.artist,
-        coverUrl: t.cover,
-        duration: '3:00',
-        previewUrl: t.preview_url,
-        spotifyUri: t.spotify_url,
-      }));
-      setRecommendedTracks(formatted);
-    } catch (error) {
-      console.error('Failed to load recommendations:', error);
-    } finally {
-      setIsLoadingRecommendations(false);
-    }
-  };
-
   const performSearch = async (query: string) => {
     try {
       setIsSearching(true);
@@ -125,8 +99,6 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
     }
   };
 
-  const displayTracks = searchQuery.trim() ? searchResults : recommendedTracks;
-
   const handlePhotoSelect = (e: any) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -141,14 +113,24 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
   const uploadPhotoIfNeeded = async (): Promise<string | null> => {
     if (!photoFile || !currentUser?.id) return null;
     const ext = photoFile.name.split('.').pop() || 'jpg';
-    const bucketName = composerType === 'story' ? 'story-media' : 'shake-media';
     const fileName = `${currentUser.id}/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage
-      .from(bucketName)
-      .upload(fileName, photoFile, { cacheControl: '3600', upsert: false });
-    if (error) throw error;
-    const { data } = supabase.storage.from(bucketName).getPublicUrl(fileName);
-    return data.publicUrl;
+    const bucketCandidates = composerType === 'story'
+      ? ['story-media', 'shake-media']
+      : ['shake-media'];
+
+    let lastError: any = null;
+    for (const bucketName of bucketCandidates) {
+      const { error } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, photoFile, { cacheControl: '3600', upsert: false });
+      if (!error) {
+        const { data } = supabase.storage.from(bucketName).getPublicUrl(fileName);
+        return data.publicUrl;
+      }
+      lastError = error;
+    }
+
+    throw lastError || new Error('Upload photo impossible');
   };
 
   const handleCreate = async () => {
@@ -226,7 +208,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-start justify-center p-3 sm:p-4 overflow-y-auto"
           onClick={onClose}
         >
           <motion.div
@@ -234,7 +216,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-[#1D0F3D] rounded-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col border border-purple-800/20"
+            className="bg-[#1D0F3D] rounded-2xl w-full max-w-lg max-h-[92vh] overflow-hidden flex flex-col border border-purple-800/20 my-auto"
           >
             {/* Header */}
             <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
@@ -281,7 +263,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4">
               {/* For STORY: Photo is required-ish */}
               {composerType === 'story' && (
                 <div className="bg-purple-950/40 rounded-lg p-3 border border-purple-700/30">
@@ -389,18 +371,26 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                     </div>
                   </div>
 
-                  {/* Suggestions */}
+                  {/* Search results (no suggestions) */}
                   <div>
                     <h3 className="text-sm font-semibold text-purple-300/60 mb-3">
-                      {searchQuery.trim() ? 'Résultats' : 'Suggestions'}
+                      {searchQuery.trim() ? 'Résultats' : 'Recherche musicale (optionnel)'}
                     </h3>
                     <div className="space-y-2">
-                      {isLoadingRecommendations || isSearching ? (
+                      {isSearching ? (
                         <div className="flex justify-center">
                           <Loader2 className="w-4 h-4 animate-spin text-purple-300/60" />
                         </div>
+                      ) : !searchQuery.trim() ? (
+                        <p className="text-xs text-purple-300/50">
+                          Tape au moins 1 caractere pour chercher un son.
+                        </p>
+                      ) : searchResults.length === 0 ? (
+                        <p className="text-xs text-purple-300/50">
+                          Aucun resultat.
+                        </p>
                       ) : (
-                        displayTracks.map((track) => (
+                        searchResults.map((track) => (
                           <button
                             key={track.id}
                             onClick={() => setSelectedTrack(track)}
