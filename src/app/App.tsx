@@ -22,7 +22,7 @@ import { NotificationsView } from './components/NotificationsView';
 import { ProfilePreviewDialog } from './components/ProfilePreviewDialog';
 import { PostDetailModal } from './components/PostDetailModal';
 import { supabase } from '../lib/supabase';
-import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser } from '../lib/database';
+import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount } from '../lib/database';
 
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'notifications';
 
@@ -50,6 +50,7 @@ export default function App() {
   const [showCompleteProfile, setShowCompleteProfile] = useState(false);
   const [refreshFeed, setRefreshFeed] = useState(0);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [showShakeDuJour, setShowShakeDuJour] = useState(false);
   const [hasPostedToday, setHasPostedToday] = useState(true);
   const [viewOptions, setViewOptions] = useState<any>({});
@@ -97,26 +98,65 @@ export default function App() {
     checkAuth();
   }, []);
 
-  // Poll notifications
+  // Notifications: realtime + initial load
   useEffect(() => {
     if (!currentUser) return;
-    let lastNotifId: string | null = null;
-    const check = async () => {
+
+    const fetchCounts = async () => {
       try {
-        const notifs = await getUserNotifications(currentUser.id);
+        const [notifs, msgCount] = await Promise.all([
+          getUserNotifications(currentUser.id),
+          getUnreadMessagesCount(),
+        ]);
         setUnreadNotifs(notifs.filter((n: any) => !n.is_read).length);
-        const pushEnabled = localStorage.getItem('shakemoi_push_enabled') === 'true';
-        if (pushEnabled && notifs.length > 0 && lastNotifId && notifs[0].id !== lastNotifId) {
-          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            new Notification('SHAKEmoi', { body: `@${notifs[0].actor_username} ${notifs[0].content}`, icon: '/shakemoi-favicon.png' });
-          }
-        }
-        if (notifs.length > 0) lastNotifId = notifs[0].id;
+        setUnreadMessages(msgCount);
       } catch {}
     };
-    check();
-    const iv = setInterval(check, 30000);
-    return () => clearInterval(iv);
+
+    fetchCounts();
+
+    // Realtime: new notification → update badge + push if enabled
+    const notifChannel = supabase
+      .channel(`app-notifs-${currentUser.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'notifications',
+        filter: `user_id=eq.${currentUser.id}`
+      }, (payload: any) => {
+        setUnreadNotifs(prev => prev + 1);
+        const pushEnabled = localStorage.getItem('shakemoi_push_enabled') === 'true';
+        if (pushEnabled && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          const type = payload.new?.type || '';
+          const msgMap: Record<string, string> = {
+            story_like: 'a aimé ton shake éphémère ❤️',
+            story_comment: 'a commenté ton shake éphémère 💭',
+            like: 'a aimé ton shake',
+            comment: 'a commenté ton shake',
+            follow: "s'est abonné(e) à toi",
+            reshake: 'a reshaké ton post',
+            message: "t'a envoyé un message",
+            song_share: "t'a envoyé un son",
+          };
+          const body = msgMap[type] || 'a interagi avec toi';
+          new Notification('SHAKEmoi', { body, icon: '/favicon.svg' });
+        }
+      })
+      .subscribe();
+
+    // Realtime: new message → update unread badge
+    const msgChannel = supabase
+      .channel(`app-messages-${currentUser.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'messages',
+        filter: `receiver_id=eq.${currentUser.id}`
+      }, () => {
+        setUnreadMessages(prev => prev + 1);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(notifChannel);
+      supabase.removeChannel(msgChannel);
+    };
   }, [currentUser]);
 
   const handleAuthComplete = async (user: any) => {
@@ -285,12 +325,20 @@ export default function App() {
             ]).map(({ view, icon: Icon, label }) => (
               <button
                 key={view}
-                onClick={() => setCurrentView(view)}
-                className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all active:scale-90 ${
+                onClick={() => {
+                  setCurrentView(view);
+                  if (view === 'messages') setUnreadMessages(0);
+                }}
+                className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all active:scale-90 relative ${
                   currentView === view ? 'text-fuchsia-400 bg-fuchsia-500/15 shadow-lg shadow-fuchsia-500/10' : 'text-purple-300/60 hover:text-purple-200'
                 }`}
               >
                 <Icon className={`w-6 h-6 ${currentView === view ? 'drop-shadow-[0_0_6px_rgba(217,70,239,0.5)]' : ''}`} />
+                {view === 'messages' && unreadMessages > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 bg-pink-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white">
+                    {unreadMessages > 9 ? '9+' : unreadMessages}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -308,13 +356,18 @@ export default function App() {
           ]).map(({ view, icon: Icon, label }) => (
             <button
               key={view}
-              onClick={() => setCurrentView(view)}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
+              onClick={() => { setCurrentView(view); if (view === 'messages') setUnreadMessages(0); }}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors relative ${
                 currentView === view ? 'bg-purple-500/10 text-purple-400' : 'text-purple-300/60 hover:bg-violet-900/25'
               }`}
             >
               <Icon className="w-5 h-5" />
               <span className="font-medium">{label}</span>
+              {view === 'messages' && unreadMessages > 0 && (
+                <span className="ml-auto min-w-[18px] h-[18px] px-1 bg-pink-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white">
+                  {unreadMessages > 9 ? '9+' : unreadMessages}
+                </span>
+              )}
             </button>
           ))}
 

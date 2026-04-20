@@ -970,6 +970,8 @@ function getNotificationMessage(type: string): string {
     case 'circle_create': return 'Cercle créé !';
     case 'song_share': return 't\'a envoyé un son';
     case 'message': return 't\'a envoyé un message';
+    case 'story_like': return 'a aimé ton shake éphémère ❤️';
+    case 'story_comment': return 'a commenté ton shake éphémère 💭';
     default: return 'a interagi avec toi';
   }
 }
@@ -1141,6 +1143,22 @@ export async function getMessages(partnerId: string, limit = 50): Promise<any[]>
   } catch (error) {
     console.error('Error getting messages:', error);
     return [];
+  }
+}
+
+export async function getUnreadMessagesCount(): Promise<number> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return 0;
+    const { count, error } = await supabase
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('receiver_id', user.id)
+      .eq('is_read', false);
+    if (error) throw error;
+    return count || 0;
+  } catch {
+    return 0;
   }
 }
 
@@ -2074,6 +2092,22 @@ export async function likeStory(storyId: string, emoji = '❤️') {
       console.warn('Warning: RPC increment failed:', rpcError);
     }
 
+    // Notify story author
+    try {
+      const { data: story } = await supabase
+        .from('stories')
+        .select('user_id')
+        .eq('id', storyId)
+        .single();
+      if (story && story.user_id !== user.id) {
+        await supabase.from('notifications').insert([{
+          user_id: story.user_id,
+          from_user_id: user.id,
+          type: 'story_like',
+        }]);
+      }
+    } catch {}
+
     return { success: true, data: likeData };
   } catch (error: any) {
     console.error('Error liking story:', error);
@@ -2192,6 +2226,13 @@ export async function commentOnStory(storyId: string, commentText: string) {
     if (!result.success) {
       throw new Error(result.error);
     }
+
+    // Also create a dedicated story_comment notification
+    await supabase.from('notifications').insert([{
+      user_id: storyAuthorId,
+      from_user_id: user.id,
+      type: 'story_comment',
+    }]);
 
     return { success: true };
   } catch (error: any) {
