@@ -405,9 +405,10 @@ interface FeedViewProps {
   currentFeedId?: string | null;
   onSelectFeed?: (feedId: string | null) => void;
   onCreateCircle?: () => void;
+  onShowEphemeralShake?: () => void;
 }
 
-export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId = null, onSelectFeed, onCreateCircle }: FeedViewProps) {
+export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId = null, onSelectFeed, onCreateCircle, onShowEphemeralShake }: FeedViewProps) {
   const [shakes, setShakes] = useState<Shake[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -852,6 +853,18 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
         )}
         {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
+        
+        {/* Ephemeral Shake Button - Top of feed */}
+        {!currentFeedId && (
+          <button
+            onClick={onShowEphemeralShake}
+            className="w-full py-3 px-4 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-600/40 rounded-xl hover:from-purple-600/30 hover:to-pink-600/30 transition-all flex items-center justify-center gap-2"
+          >
+            <Plus className="w-5 h-5 text-purple-300" />
+            <span className="text-sm font-semibold text-purple-200">Crée un Shake Éphémère</span>
+          </button>
+        )}
+        
         <AnimatePresence mode="wait">
         <motion.div key={currentFeedId || 'main-feed'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.12, ease: 'easeOut' }} className="space-y-5">
         {shakes.length === 0 ? (

@@ -10,15 +10,16 @@ interface UnifiedComposerDialogProps {
   onClose: () => void;
   onCreated?: () => void;
   currentUser: any;
+  initialComposerType?: 'shake' | 'story';
 }
 
 const THEMES = ['#1D0F3D', '#2A1852', '#4A1B4E'];
 
 type ComposerType = 'shake' | 'story';
 
-export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser }: UnifiedComposerDialogProps) {
-  // Type selector
-  const [composerType, setComposerType] = useState<ComposerType>('shake');
+export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, initialComposerType = 'shake' }: UnifiedComposerDialogProps) {
+  // Type selector - use initialComposerType when opening
+  const [composerType, setComposerType] = useState<ComposerType>(initialComposerType);
 
   // Shared state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,10 +47,12 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser }:
       // Reset everything
       resetForm();
     } else {
+      // Set initial composer type when dialog opens
+      setComposerType(initialComposerType);
       // Load recommendations on open
       loadRecommendations();
     }
-  }, [open]);
+  }, [open, initialComposerType]);
 
   const resetForm = () => {
     setCaption('');
@@ -238,7 +241,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser }:
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-purple-500" />
                 <h2 className="text-lg font-bold text-white">
-                  {composerType === 'shake' ? 'Crée un Shake' : 'Publie une Story'}
+                  {composerType === 'shake' ? 'Crée un Shake' : 'Publie un Shake Éphémère'}
                 </h2>
               </div>
               <button
@@ -273,7 +276,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser }:
                     : 'bg-purple-900/20 text-purple-300 hover:bg-purple-900/30'
                 }`}
               >
-                Story Éphémère
+                Shake Éphémère
               </button>
             </div>
 
@@ -498,7 +501,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser }:
                     : 'Sélectionne un son ou ajoute une photo'
                   : photoPreview || selectedTrack
                   ? 'Prêt à publier ?'
-                  : 'Ajoute une photo ou sélectionne un son'}
+                  : 'Ajoute une photo ou sélectionne un son (optionnel)'}
               </p>
               <button
                 onClick={handleCreate}
@@ -512,11 +515,9 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser }:
               >
                 {isCreating ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
-                ) : composerType === 'shake' ? (
-                  'Shake'
                 ) : (
                   <>
-                    Story <span>✨</span>
+                    {composerType === 'shake' ? 'Shake' : 'Éphémère'} ✨
                   </>
                 )}
               </button>

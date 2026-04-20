@@ -41,6 +41,7 @@ function getCircleInviteId(): string | null {
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('feed');
   const [showCreateShake, setShowCreateShake] = useState(false);
+  const [showEphemeralShake, setShowEphemeralShake] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -207,7 +208,11 @@ export default function App() {
       case 'profile':
         return <ProfileView user={currentUser} onUpdateUser={setCurrentUser} />;
       default:
-        return <FeedView currentUser={currentUser} refreshFeed={refreshFeed} />;
+        return <FeedView 
+          currentUser={currentUser} 
+          refreshFeed={refreshFeed}
+          onShowEphemeralShake={() => setShowEphemeralShake(true)}
+        />;
     }
   };
 
@@ -230,10 +235,6 @@ export default function App() {
             <div className="flex items-center gap-1.5">
               <button onClick={() => setShowShareDialog(true)} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors">
                 <Share2 className="w-5 h-5 text-purple-300/60" />
-              </button>
-
-              <button onClick={openCirclesInMessages} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors" title="Groupes">
-                <Users className="w-5 h-5 text-purple-300/60" />
               </button>
 
               {currentUser && (
@@ -358,6 +359,19 @@ export default function App() {
           }}
           onCreated={() => setRefreshFeed((p) => p + 1)}
           currentUser={currentUser}
+          initialComposerType="shake"
+        />
+      )}
+      {showEphemeralShake && (
+        <UnifiedComposerDialog
+          open={showEphemeralShake}
+          onClose={() => {
+            setShowEphemeralShake(false);
+            setRefreshFeed((p) => p + 1);
+          }}
+          onCreated={() => setRefreshFeed((p) => p + 1)}
+          currentUser={currentUser}
+          initialComposerType="story"
         />
       )}
       {showShareDialog && <ShareDialog currentUser={currentUser} onClose={() => setShowShareDialog(false)} />}
