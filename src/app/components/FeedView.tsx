@@ -911,9 +911,9 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     <div className={`w-16 h-16 rounded-full p-[2px] ${viewed ? 'bg-purple-800/35' : 'bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400'}`}>
                       <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
                         <img
-                          src={user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`}
+                          src={story.cover_url || story.image_url || user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`}
                           className="w-full h-full rounded-full object-cover"
-                          alt=""
+                          alt={story.track_name || ''}
                         />
                       </div>
                     </div>
@@ -1291,6 +1291,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         open={!!activeStory}
         story={activeStory}
         onClose={() => setActiveStory(null)}
+        currentUser={currentUser}
       />
     </div>
   );
