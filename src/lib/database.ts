@@ -2046,3 +2046,156 @@ export async function sendSongNotification(recipientId: string, track: any) {
     return { success: false, error: error.message };
   }
 }
+
+// ==================== STORY LIKES & COMMENTS ====================
+
+export async function likeStory(storyId: string, emoji = '❤️') {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data: likeData, error: likeError } = await supabase
+      .from('story_likes')
+      .insert([{
+        story_id: storyId,
+        user_id: user.id,
+        emoji: emoji
+      }])
+      .select();
+
+    if (likeError) throw likeError;
+
+    // Increment likes_count via RPC
+    const { error: rpcError } = await supabase.rpc('increment_story_likes', {
+      story_id: storyId
+    });
+
+    if (rpcError) {
+      console.warn('Warning: RPC increment failed:', rpcError);
+    }
+
+    return { success: true, data: likeData };
+  } catch (error: any) {
+    console.error('Error liking story:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function unlikeStory(storyId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error: deleteError } = await supabase
+      .from('story_likes')
+      .delete()
+      .eq('story_id', storyId)
+      .eq('user_id', user.id);
+
+    if (deleteError) throw deleteError;
+
+    // Decrement likes_count via RPC
+    const { error: rpcError } = await supabase.rpc('decrement_story_likes', {
+      story_id: storyId
+    });
+
+    if (rpcError) {
+      console.warn('Warning: RPC decrement failed:', rpcError);
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error unliking story:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function hasLikedStory(storyId: string): Promise<boolean> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return false;
+
+    const { data, error } = await supabase
+      .from('story_likes')
+      .select('id')
+      .eq('story_id', storyId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error checking story like status:', error);
+      return false;
+    }
+
+    return !!data;
+  } catch (error) {
+    console.error('Error in hasLikedStory:', error);
+    return false;
+  }
+}
+
+export async function getStoryLikes(storyId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('story_likes')
+      .select(`
+        *,
+        user:users_profile(id, username, display_name, profile_album_cover_url)
+      `)
+      .eq('story_id', storyId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting story likes:', error);
+    return [];
+  }
+}
+
+export async function commentOnStory(storyId: string, commentText: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Get story author
+    const { data: story, error: storyError } = await supabase
+      .from('stories')
+      .select('user_id')
+      .eq('id', storyId)
+      .single();
+
+    if (storyError) throw storyError;
+    if (!story || story.user_id === user.id) {
+      throw new Error('Cannot comment on own story or story not found');
+    }
+
+    const storyAuthorId = story.user_id;
+
+    // Get story info for message context
+    const { data: storyData } = await supabase
+      .from('stories')
+      .select('track_name, artist, text')
+      .eq('id', storyId)
+      .single();
+
+    // Build comment message with context
+    const storyContext = storyData?.track_name 
+      ? `${storyData.track_name} by ${storyData.artist}`
+      : storyData?.text || 'votre shake ephemere';
+    
+    const fullMessage = `💭 Commentaire sur ${storyContext}:\n${commentText}`;
+
+    // Send as private message to story author
+    const result = await sendMessage(storyAuthorId, fullMessage);
+
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error commenting on story:', error);
+    return { success: false, error: error.message };
+  }
+}

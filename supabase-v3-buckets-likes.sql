@@ -172,6 +172,6 @@ $$ LANGUAGE plpgsql;
 
 DO $$
 BEGIN
-  ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS circle_message_likes;
-EXCEPTION WHEN others THEN NULL;
+  ALTER PUBLICATION supabase_realtime ADD TABLE circle_message_likes;
+EXCEPTION WHEN duplicate_object OR others THEN NULL;
 END $$;
