@@ -56,11 +56,11 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
         : <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setInSubView} fabTrigger={fabTrigger} />
       }
 
-      {/* FAB — bouton + flottant en bas à droite */}
+      {/* FAB — bouton + fixe en bas à droite, au-dessus de la nav bar */}
       {!inSubView && (
         <button
           onClick={() => setFabTrigger(n => n + 1)}
-          className="absolute bottom-20 right-4 lg:bottom-6 w-13 h-13 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full shadow-lg shadow-purple-900/50 flex items-center justify-center active:scale-95 transition-transform hover:opacity-90 z-20"
+          className="fixed bottom-[5.5rem] right-5 lg:bottom-6 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full shadow-xl shadow-purple-900/60 flex items-center justify-center active:scale-95 transition-transform hover:opacity-90 z-50"
           style={{ width: 52, height: 52 }}
         >
           <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
