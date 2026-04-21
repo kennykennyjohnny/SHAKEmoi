@@ -23,7 +23,7 @@ export function StoryComposerDialog({ open, onClose, onCreated, currentUser }: S
   const [searching, setSearching] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<any>(null);
   const [text, setText] = useState('');
-  const [durationDays, setDurationDays] = useState<1 | 7 | 30>(1);
+  const [durationDays, setDurationDays] = useState<1 | 3 | 7>(1);
   const [themeColor, setThemeColor] = useState(THEMES[0]);
   const [publishAsShake, setPublishAsShake] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -176,7 +176,7 @@ export function StoryComposerDialog({ open, onClose, onCreated, currentUser }: S
               <div className="space-y-2">
                 <p className="text-xs text-purple-300/70 uppercase tracking-wider">Durée</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {[{ d: 1 as const, l: '1 jour' }, { d: 7 as const, l: '7 jours' }, { d: 30 as const, l: '1 mois' }].map((opt) => (
+                  {[{ d: 1 as const, l: '1 jour' }, { d: 3 as const, l: '3 jours' }, { d: 7 as const, l: '7 jours' }].map((opt) => (
                     <button key={opt.d} onClick={() => setDurationDays(opt.d)} className={`py-2 rounded-lg text-xs font-semibold border ${durationDays === opt.d ? 'bg-fuchsia-500/20 border-fuchsia-400 text-fuchsia-300' : 'bg-purple-950/30 border-purple-700/30 text-purple-200/80'}`}>
                       {opt.l}
                     </button>

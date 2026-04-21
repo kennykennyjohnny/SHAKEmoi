@@ -908,32 +908,41 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
               className="flex items-start gap-4 overflow-x-auto px-4 pb-2 pt-1"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              {/* Bouton "Ajouter" — même taille que les autres bulles */}
+              {/* Bulle propre — ouvre sa story si elle existe, sinon crée */}
+              {(() => {
+                const ownStories = stories.filter((s: any) => (s.user?.id || s.user_id) === currentUser?.id);
+                const hasOwn = ownStories.length > 0;
+                return (
               <button
-                onClick={onShowEphemeralShake}
+                onClick={hasOwn ? () => openStory(ownStories[0]) : onShowEphemeralShake}
                 className="flex-shrink-0 flex flex-col items-center gap-1.5 group"
-                title="Créer un Shake Éphémère"
+                title={hasOwn ? 'Voir mon shake éphémère' : 'Créer un Shake Éphémère'}
               >
-                <div className="w-[62px] h-[62px] rounded-full p-[2.5px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400 group-active:scale-95 transition-transform">
-                  <div className="w-full h-full rounded-full bg-[#14092A] flex items-center justify-center relative">
+                <div className={`w-[62px] h-[62px] rounded-full p-[2.5px] group-active:scale-95 transition-transform ${hasOwn ? 'bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400' : 'bg-purple-800/40'}`}>
+                  <div className="w-full h-full rounded-full bg-[#14092A] flex items-center justify-center relative p-[2px]">
                     <img
                       src={currentUser?.avatar || `https://ui-avatars.com/api/?name=${currentUser?.username || 'M'}&background=2A1852&color=FFEFD5`}
                       className="w-full h-full rounded-full object-cover"
                       alt=""
                     />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full border-2 border-[#14092A] flex items-center justify-center shadow-md">
-                      <Plus className="w-3 h-3 text-white" strokeWidth={3} />
-                    </div>
+                    {!hasOwn && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full border-2 border-[#14092A] flex items-center justify-center shadow-md">
+                        <Plus className="w-3 h-3 text-white" strokeWidth={3} />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <p className="text-[11px] text-purple-300/70 leading-none">Ton shake</p>
               </button>
+                );
+              })()}
 
               {(() => {
                 const groups: Map<string, any[]> = new Map();
                 for (const story of stories) {
                   const uid = story.user?.id || story.user_id;
                   if (!uid) continue;
+                  if (uid === currentUser?.id) continue; // propre story exclue
                   if (!groups.has(uid)) groups.set(uid, []);
                   groups.get(uid)!.push(story);
                 }

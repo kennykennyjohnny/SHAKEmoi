@@ -70,6 +70,75 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
   );
 }
 
+// ==================== New conversation search ====================
+
+function NewConvoSearch({ friends, onSelect, onClose }: { friends: any[]; onSelect: (f: any) => void; onClose: () => void }) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) { setResults(friends); return; }
+    const local = friends.filter(f =>
+      f.username?.toLowerCase().includes(q.toLowerCase()) ||
+      f.display_name?.toLowerCase().includes(q.toLowerCase())
+    );
+    setResults(local);
+    // Also search all users after a short debounce
+    setSearching(true);
+    const t = setTimeout(async () => {
+      try {
+        const all = await searchUsers(q);
+        // merge: local first, then non-duplicate remote results
+        const ids = new Set(local.map((f: any) => f.id));
+        setResults([...local, ...all.filter((u: any) => !ids.has(u.id))]);
+      } catch {}
+      setSearching(false);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [query, friends]);
+
+  // init with friends list
+  useEffect(() => { setResults(friends); }, [friends]);
+
+  return (
+    <div className="mb-4 bg-violet-950/20 rounded-xl border border-purple-500/25 p-3">
+      <div className="flex items-center justify-between mb-2.5">
+        <p className="text-sm font-semibold">Nouvelle conversation</p>
+        <button onClick={onClose}><X className="w-4 h-4 text-purple-300/60" /></button>
+      </div>
+      <div className="relative mb-2">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
+        <input
+          autoFocus
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Rechercher un utilisateur..."
+          className="w-full pl-9 pr-3 py-2 bg-violet-950/30 border border-purple-500/25 rounded-lg text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-500"
+        />
+        {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-purple-400 animate-spin" />}
+      </div>
+      {results.length > 0 ? (
+        <div className="space-y-0.5 max-h-52 overflow-y-auto">
+          {results.map((f: any) => (
+            <button key={f.id} onClick={() => onSelect(f)} className="w-full flex items-center gap-2.5 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
+              <img src={f.profile_album_cover_url || `https://ui-avatars.com/api/?name=${f.username}&background=2A1852&color=FFEFD5`} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+              <div className="text-left min-w-0">
+                <p className="text-sm font-medium truncate">{f.display_name || f.username}</p>
+                <p className="text-xs text-purple-300/60">@{f.username}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-purple-300/50 text-center py-3">{query ? 'Aucun résultat' : 'Aucun ami pour l\'instant'}</p>
+      )}
+    </div>
+  );
+}
+
 // ==================== DMs ====================
 
 function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: any; onSubViewActive?: (active: boolean) => void; fabTrigger?: number }) {
@@ -406,25 +475,11 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
   return (
     <div className="flex-1 overflow-y-auto p-4 pb-[4.5rem] lg:pb-4">
       {showNewConvo && (
-        <div className="mb-4 bg-violet-950/20 rounded-xl border border-purple-500/25 p-3">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium">Envoyer à :</p>
-            <button onClick={() => setShowNewConvo(false)}><X className="w-4 h-4 text-purple-300/60" /></button>
-          </div>
-          {friends.length > 0 ? (
-            <div className="space-y-1 max-h-48 overflow-y-auto">
-              {friends.map((f: any) => (
-                <button key={f.id} onClick={() => openConversation(f)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
-                  <img src={f.profile_album_cover_url || `https://ui-avatars.com/api/?name=${f.username}&background=2A1852&color=FFEFD5`} className="w-8 h-8 rounded-full object-cover" alt="" />
-                  <div className="text-left">
-                    <p className="text-sm font-medium">{f.display_name || f.username}</p>
-                    <p className="text-xs text-purple-300/70">@{f.username}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : <p className="text-xs text-purple-300/60">Aucun ami pour l'instant</p>}
-        </div>
+        <NewConvoSearch
+          friends={friends}
+          onSelect={openConversation}
+          onClose={() => setShowNewConvo(false)}
+        />
       )}
 
       {loading ? (
