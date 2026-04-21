@@ -1885,8 +1885,22 @@ export async function markStoryAsViewed(storyId: string) {
 
     await supabase
       .from('story_views')
-      .insert([{ story_id: storyId, viewer_id: user.id }]);
+      .upsert([{ story_id: storyId, viewer_id: user.id }], { onConflict: 'story_id,viewer_id', ignoreDuplicates: true });
   } catch {}
+}
+
+export async function getStoryViewers(storyId: string): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from('story_views')
+      .select('viewer_id, viewed_at, viewer:users_profile!story_views_viewer_id_fkey(id, username, display_name, profile_album_cover_url)')
+      .eq('story_id', storyId)
+      .order('viewed_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((v: any) => ({ ...v.viewer, viewed_at: v.viewed_at }));
+  } catch {
+    return [];
+  }
 }
 
 // ==================== CIRCLE WEEKLY SHAKES (mini-game data) ====================

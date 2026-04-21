@@ -13,6 +13,16 @@ import { CommentsDialog } from './CommentsDialog';
 import { MusicReactionsDialog } from './MusicReactionsDialog';
 import { StoryViewerDialog } from './StoryViewerDialog';
 
+function storyTimeRemaining(expiresAt: string): string {
+  const diff = new Date(expiresAt).getTime() - Date.now();
+  if (diff <= 0) return '';
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(diff / 86400000)}j`;
+}
+
 // Sleek underline-style tab bar with pink border hint for scroll
 function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { circles: any[]; currentFeedId: string | null; onSelectFeed?: (id: string | null) => void; onCreateCircle?: () => void }) {
   const truncName = (name: string) => name.length > 9 ? name.slice(0, 9) + '…' : name;
@@ -964,6 +974,11 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                       <p className="text-[11px] leading-none text-purple-300/70 w-[62px] text-center truncate">
                         {user?.username || 'ami'}
                       </p>
+                      {firstStory.expires_at && storyTimeRemaining(firstStory.expires_at) && (
+                        <p className="text-[9px] leading-none text-purple-400/40 -mt-0.5">
+                          {storyTimeRemaining(firstStory.expires_at)}
+                        </p>
+                      )}
                     </button>
                   );
                 });

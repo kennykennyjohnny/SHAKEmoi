@@ -1,7 +1,7 @@
-import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send } from 'lucide-react';
+import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
-import { likeStory, unlikeStory, hasLikedStory, commentOnStory } from '../../lib/database';
+import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers, markStoryAsViewed } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 
 interface StoryViewerDialogProps {
@@ -16,6 +16,17 @@ interface StoryViewerDialogProps {
 
 const STORY_DURATION = 5000;
 
+function getTimeRemaining(expiresAt: string): string {
+  const diff = new Date(expiresAt).getTime() - Date.now();
+  if (diff <= 0) return 'Expiré';
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(diff / 86400000);
+  return `${days}j`;
+}
+
 export function StoryViewerDialog({ open, story, onClose, currentUser, stories, onNavigate, onGroupEnd }: StoryViewerDialogProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -25,6 +36,9 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   const [likeAnimations, setLikeAnimations] = useState<{ id: string; x: number; y: number }[]>([]);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [showViewers, setShowViewers] = useState(false);
+  const [viewers, setViewers] = useState<any[]>([]);
+  const [loadingViewers, setLoadingViewers] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
   const elapsedRef = useRef<number>(0);
@@ -33,12 +47,13 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   const currentIdx = storyList.findIndex((s: any) => s.id === story?.id);
   const hasPrev = currentIdx > 0;
   const hasNext = currentIdx < storyList.length - 1;
+  const isOwner = currentUser?.id === story?.user_id;
 
   const navigatePrev = () => {
-    if (hasPrev && onNavigate) { setShowCommentInput(false); onNavigate(storyList[currentIdx - 1]); }
+    if (hasPrev && onNavigate) { setShowCommentInput(false); setShowViewers(false); onNavigate(storyList[currentIdx - 1]); }
   };
   const navigateNext = () => {
-    if (hasNext && onNavigate) { setShowCommentInput(false); onNavigate(storyList[currentIdx + 1]); }
+    if (hasNext && onNavigate) { setShowCommentInput(false); setShowViewers(false); onNavigate(storyList[currentIdx + 1]); }
     else if (!hasNext) { onGroupEnd?.(); }
   };
 
@@ -85,12 +100,12 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
 
   useEffect(() => {
     if (!open || !story) return;
-    if (isPaused || showCommentInput) {
+    if (isPaused || showCommentInput || showViewers) {
       pauseProgress();
     } else {
       startProgress();
     }
-  }, [isPaused, showCommentInput]);
+  }, [isPaused, showCommentInput, showViewers]);
 
   useEffect(() => {
     if (!open) return;
@@ -107,8 +122,25 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     if (!story) return;
     setIsLiked(false);
     setLikeCount(story.likes_count || 0);
+    setShowViewers(false);
+    setViewers([]);
     hasLikedStory(story.id).then(setIsLiked);
+    markStoryAsViewed(story.id);
   }, [story?.id]);
+
+  const loadViewers = async () => {
+    if (!story || loadingViewers) return;
+    setLoadingViewers(true);
+    const data = await getStoryViewers(story.id);
+    setViewers(data);
+    setLoadingViewers(false);
+  };
+
+  const toggleViewers = () => {
+    const next = !showViewers;
+    setShowViewers(next);
+    if (next && viewers.length === 0) loadViewers();
+  };
 
   const toggleLike = async () => {
     if (!story) return;
@@ -137,8 +169,9 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     if (!story || !currentUser || story.user_id !== currentUser.id) return;
     if (confirm('Supprimer cette story?')) {
       try {
-        await supabase.from('stories').delete().eq('id', story.id);
-        onClose();
+        const { error } = await supabase.from('stories').delete().eq('id', story.id);
+        if (!error) onClose();
+        else console.error('Error deleting story:', error);
       } catch (err) { console.error('Error deleting story:', err); }
     }
   };
@@ -147,8 +180,8 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
 
   const embedUrl = story.spotify_embed_url || (story.track_id ? `https://open.spotify.com/embed/track/${story.track_id}` : null);
   const user = story.user;
-  const isOwner = currentUser?.id === story.user_id;
   const avatarSrc = user?.profile_album_cover_url || user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`;
+  const timeRemaining = story.expires_at ? getTimeRemaining(story.expires_at) : null;
 
   const bgStyle: React.CSSProperties = story.theme_color
     ? { background: story.theme_color }
@@ -165,7 +198,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
           style={{ background: 'rgba(0,0,0,0.92)' }}
           onClick={onClose}
         >
-          {/* Flèches navigation desktop */}
+          {/* Navigation arrows desktop */}
           {hasPrev && (
             <button
               onClick={(e) => { e.stopPropagation(); navigatePrev(); }}
@@ -183,7 +216,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
             </button>
           )}
 
-          {/* Carte story — ratio 9:16 Instagram */}
+          {/* Story card — 9:16 ratio */}
           <motion.div
             key={story.id}
             initial={{ scale: 0.96, opacity: 0 }}
@@ -197,7 +230,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
             onPointerUp={() => { setIsPaused(false); }}
             onPointerLeave={() => { setIsPaused(false); }}
           >
-            {/* Barres de progression — une par story du groupe */}
+            {/* Progress bars */}
             <div className="absolute top-0 left-0 right-0 flex gap-1 px-3 pt-3 z-30">
               {storyList.map((_: any, i: number) => (
                 <div key={i} className="flex-1 h-[2px] rounded-full bg-white/30 overflow-hidden">
@@ -211,7 +244,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
               ))}
             </div>
 
-            {/* Header utilisateur */}
+            {/* Header */}
             <div className="absolute top-7 left-0 right-0 px-3 py-2 z-20 flex items-center justify-between">
               <div className="flex items-center gap-2.5 min-w-0">
                 <img
@@ -223,17 +256,30 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                   <p className="text-[13px] font-bold text-white drop-shadow leading-tight truncate">
                     {user?.display_name || user?.username}
                   </p>
-                  <p className="text-[10px] text-white/60 truncate">@{user?.username}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[10px] text-white/60 truncate">@{user?.username}</p>
+                    {timeRemaining && (
+                      <span className="text-[10px] text-white/40">· {timeRemaining}</span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 {isOwner && (
-                  <button
-                    onClick={handleDelete}
-                    className="p-2 rounded-full bg-black/30 text-white/70 hover:text-red-300 hover:bg-red-500/20 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleViewers(); }}
+                      className={`p-2 rounded-full transition-colors ${showViewers ? 'bg-white/20 text-white' : 'bg-black/30 text-white/70 hover:text-white hover:bg-white/10'}`}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="p-2 rounded-full bg-black/30 text-white/70 hover:text-red-300 hover:bg-red-500/20 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={onClose}
@@ -244,7 +290,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
               </div>
             </div>
 
-            {/* Zones de tap gauche/droite (mobile) */}
+            {/* Tap zones mobile */}
             <div
               className="absolute left-0 top-0 bottom-0 w-1/3 z-10"
               onClick={(e) => { e.stopPropagation(); navigatePrev(); }}
@@ -254,7 +300,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
               onClick={(e) => { e.stopPropagation(); navigateNext(); }}
             />
 
-            {/* Contenu central */}
+            {/* Central content */}
             <div className="flex-1 flex flex-col items-center justify-center px-5 pt-20 pb-24 gap-4">
               {story.image_url ? (
                 <img
@@ -302,7 +348,61 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
               )}
             </div>
 
-            {/* Zone actions en bas */}
+            {/* Viewers panel (owner only) */}
+            <AnimatePresence>
+              {showViewers && (
+                <motion.div
+                  initial={{ y: '100%' }}
+                  animate={{ y: 0 }}
+                  exit={{ y: '100%' }}
+                  transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+                  className="absolute bottom-0 left-0 right-0 z-30 bg-black/80 backdrop-blur-xl rounded-t-2xl max-h-[55%] flex flex-col"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                    <div className="flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-white/60" />
+                      <span className="text-sm font-bold text-white">
+                        Vues {viewers.length > 0 ? `(${viewers.length})` : ''}
+                      </span>
+                    </div>
+                    <button onClick={() => setShowViewers(false)} className="p-1 text-white/50 hover:text-white">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="overflow-y-auto flex-1 py-2">
+                    {loadingViewers ? (
+                      <div className="flex justify-center py-6">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      </div>
+                    ) : viewers.length === 0 ? (
+                      <p className="text-center text-sm text-white/40 py-6">Personne n'a encore vu cette story</p>
+                    ) : (
+                      viewers.map((viewer: any) => (
+                        <div key={viewer.id} className="flex items-center gap-3 px-4 py-2.5">
+                          <img
+                            src={viewer.profile_album_cover_url || `https://ui-avatars.com/api/?name=${viewer.username || 'U'}&background=2A1852&color=FFEFD5`}
+                            className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                            alt=""
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-white truncate">{viewer.display_name || viewer.username}</p>
+                            <p className="text-xs text-white/40 truncate">@{viewer.username}</p>
+                          </div>
+                          {viewer.viewed_at && (
+                            <span className="text-[10px] text-white/30 flex-shrink-0">
+                              {new Date(viewer.viewed_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Bottom actions */}
             <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-5">
               <AnimatePresence>
                 {showCommentInput && (
