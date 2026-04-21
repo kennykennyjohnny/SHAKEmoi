@@ -25,9 +25,10 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
   const { initialTab = 'circles' } = viewOptions || {};
   const [tab, setTab] = useState<'dms' | 'circles'>(initialTab);
   const [inSubView, setInSubView] = useState(false);
+  const [fabTrigger, setFabTrigger] = useState(0);
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-hidden min-h-0">
+    <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-hidden min-h-0 relative">
       {/* Tab bar — masqué quand on est dans une conversation ou un cercle */}
       {!inSubView && (
         <div className="flex items-center border-b border-purple-500/20 px-4 pt-2 pb-0 gap-1 flex-shrink-0">
@@ -51,16 +52,27 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
       )}
 
       {tab === 'dms'
-        ? <DmsPanel currentUser={currentUser} onSubViewActive={setInSubView} />
-        : <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setInSubView} />
+        ? <DmsPanel currentUser={currentUser} onSubViewActive={setInSubView} fabTrigger={fabTrigger} />
+        : <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setInSubView} fabTrigger={fabTrigger} />
       }
+
+      {/* FAB — bouton + flottant en bas à droite */}
+      {!inSubView && (
+        <button
+          onClick={() => setFabTrigger(n => n + 1)}
+          className="absolute bottom-20 right-4 lg:bottom-6 w-13 h-13 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full shadow-lg shadow-purple-900/50 flex items-center justify-center active:scale-95 transition-transform hover:opacity-90 z-20"
+          style={{ width: 52, height: 52 }}
+        >
+          <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+        </button>
+      )}
     </div>
   );
 }
 
 // ==================== DMs ====================
 
-function DmsPanel({ currentUser, onSubViewActive }: { currentUser: any; onSubViewActive?: (active: boolean) => void }) {
+function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: any; onSubViewActive?: (active: boolean) => void; fabTrigger?: number }) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeConversation, setActiveConversation] = useState<any>(null);
@@ -84,6 +96,11 @@ function DmsPanel({ currentUser, onSubViewActive }: { currentUser: any; onSubVie
 
   useEffect(() => { loadConversations(); }, []);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => {
+    if (!fabTrigger) return;
+    setShowNewConvo(true);
+    getUserFollowing(currentUser.id).then(setFriends).catch(() => {});
+  }, [fabTrigger]);
 
   // Realtime subscription for DMs
   useEffect(() => {
@@ -388,12 +405,6 @@ function DmsPanel({ currentUser, onSubViewActive }: { currentUser: any; onSubVie
 
   return (
     <div className="flex-1 overflow-y-auto p-4 pb-[4.5rem] lg:pb-4">
-      <div className="flex items-center justify-end mb-4">
-        <button onClick={() => { setShowNewConvo(true); getUserFollowing(currentUser.id).then(setFriends).catch(() => {}); }} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 flex items-center gap-1.5">
-          <Plus className="w-4 h-4" /> Nouveau
-        </button>
-      </div>
-
       {showNewConvo && (
         <div className="mb-4 bg-violet-950/20 rounded-xl border border-purple-500/25 p-3">
           <div className="flex items-center justify-between mb-2">
@@ -461,13 +472,18 @@ function DmsPanel({ currentUser, onSubViewActive }: { currentUser: any; onSubVie
 
 // ==================== Cercles ====================
 
-function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated, onSubViewActive }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void }) {
+function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated, onSubViewActive, fabTrigger }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void; fabTrigger?: number }) {
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedCircleId, setSelectedCircleId] = useState<string | null>(null);
 
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (!fabTrigger) return;
+    setShowCreate(true);
+    onSubViewActive?.(true);
+  }, [fabTrigger]);
 
   const load = async () => {
     setLoading(true);
@@ -508,12 +524,6 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated, onSubViewAct
 
   return (
     <div className="flex-1 overflow-y-auto p-4 pb-[4.5rem] lg:pb-4">
-      <div className="flex items-center justify-end mb-4">
-        <button onClick={() => { setShowCreate(true); onSubViewActive?.(true); }} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 flex items-center gap-1.5">
-          <Plus className="w-4 h-4" /> Nouveau cercle
-        </button>
-      </div>
-
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /></div>
       ) : circles.length > 0 ? (
