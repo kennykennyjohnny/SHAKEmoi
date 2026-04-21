@@ -232,37 +232,63 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
         <div className="space-y-4">
           {/* Podium — top 3 */}
           {top3.length > 0 && (
-            <div className="mb-2">
-              <p className="text-xs font-semibold text-purple-300/60 uppercase tracking-wider mb-3">Podium</p>
-              <div className="flex items-end justify-center gap-3">
-                {/* 2nd */}
-                {top3[1] && (
-                  <PodiumCard track={top3[1]} rank={2} onPlay={() => setActiveEmbedId(activeEmbedId === 'pod-1' ? null : 'pod-1')} onOpen={() => openInMusicApp(top3[1])} isOpen={activeEmbedId === 'pod-1'} height="h-28" />
-                )}
-                {/* 1st */}
+            <div className="mb-4 bg-gradient-to-b from-violet-950/30 to-violet-950/10 rounded-2xl border border-purple-500/15 overflow-hidden">
+              <div className="px-3 pt-3 pb-1 flex items-center gap-2">
+                <Crown className="w-4 h-4 text-yellow-400" />
+                <p className="text-xs font-bold text-purple-300/70 uppercase tracking-wider">Podium de tes amis</p>
+              </div>
+              {/* Podium visuel — colonnes fixes, alignées en bas */}
+              <div className="flex items-end justify-center gap-2 px-3 pb-0 pt-2">
+                {/* 2ème — gauche */}
+                {top3[1] ? (
+                  <PodiumCard
+                    track={top3[1]} rank={2}
+                    barHeight={96}
+                    isOpen={activeEmbedId === 'pod-1'}
+                    onPlay={() => setActiveEmbedId(activeEmbedId === 'pod-1' ? null : 'pod-1')}
+                    onOpen={() => openInMusicApp(top3[1])}
+                  />
+                ) : <div className="w-[100px]" />}
+                {/* 1er — centre, plus grand */}
                 {top3[0] && (
-                  <PodiumCard track={top3[0]} rank={1} onPlay={() => setActiveEmbedId(activeEmbedId === 'pod-0' ? null : 'pod-0')} onOpen={() => openInMusicApp(top3[0])} isOpen={activeEmbedId === 'pod-0'} height="h-36" crown />
+                  <PodiumCard
+                    track={top3[0]} rank={1}
+                    barHeight={128}
+                    isOpen={activeEmbedId === 'pod-0'}
+                    onPlay={() => setActiveEmbedId(activeEmbedId === 'pod-0' ? null : 'pod-0')}
+                    onOpen={() => openInMusicApp(top3[0])}
+                    crown
+                  />
                 )}
-                {/* 3rd */}
-                {top3[2] && (
-                  <PodiumCard track={top3[2]} rank={3} onPlay={() => setActiveEmbedId(activeEmbedId === 'pod-2' ? null : 'pod-2')} onOpen={() => openInMusicApp(top3[2])} isOpen={activeEmbedId === 'pod-2'} height="h-20" />
-                )}
+                {/* 3ème — droite */}
+                {top3[2] ? (
+                  <PodiumCard
+                    track={top3[2]} rank={3}
+                    barHeight={68}
+                    isOpen={activeEmbedId === 'pod-2'}
+                    onPlay={() => setActiveEmbedId(activeEmbedId === 'pod-2' ? null : 'pod-2')}
+                    onOpen={() => openInMusicApp(top3[2])}
+                  />
+                ) : <div className="w-[100px]" />}
               </div>
 
-              {/* Embed for podium */}
+              {/* Embed Spotify pour le podium sélectionné */}
               <AnimatePresence>
-                {(activeEmbedId === 'pod-0' || activeEmbedId === 'pod-1' || activeEmbedId === 'pod-2') && (() => {
-                  const idx = activeEmbedId === 'pod-0' ? 0 : activeEmbedId === 'pod-1' ? 1 : 2;
+                {(['pod-0', 'pod-1', 'pod-2'] as const).map(podId => {
+                  if (activeEmbedId !== podId) return null;
+                  const idx = podId === 'pod-0' ? 0 : podId === 'pod-1' ? 1 : 2;
                   const t = top3[idx];
                   const trackId = t?.track_id || t?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1];
                   const embedUrl = trackId ? `https://open.spotify.com/embed/track/${trackId}` : null;
                   if (!embedUrl) return null;
                   return (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mt-3">
-                      <iframe src={`${embedUrl}?theme=0`} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
+                    <motion.div key={podId} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <div className="px-3 pb-3 pt-2">
+                        <iframe src={`${embedUrl}?theme=0`} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
+                      </div>
                     </motion.div>
                   );
-                })()}
+                })}
               </AnimatePresence>
             </div>
           )}
@@ -366,49 +392,76 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
   );
 }
 
-function PodiumCard({ track, rank, onPlay, onOpen, isOpen, height, crown }: {
-  track: any; rank: number; onPlay: () => void; onOpen: () => void; isOpen: boolean; height: string; crown?: boolean;
+function PodiumCard({ track, rank, barHeight, onPlay, onOpen, isOpen, crown }: {
+  track: any;
+  rank: number;
+  barHeight: number;
+  onPlay: () => void;
+  onOpen: () => void;
+  isOpen: boolean;
+  crown?: boolean;
 }) {
-  const rankColors: Record<number, string> = {
-    1: 'from-yellow-500 to-amber-600',
-    2: 'from-slate-400 to-slate-500',
-    3: 'from-amber-700 to-amber-800',
-  };
+  const rankBorderColor =
+    rank === 1 ? 'border-yellow-400/50' : rank === 2 ? 'border-slate-400/40' : 'border-amber-700/40';
+  const rankBadgeBg =
+    rank === 1 ? 'from-yellow-400 to-amber-500' : rank === 2 ? 'from-slate-300 to-slate-400' : 'from-amber-600 to-amber-700';
+  const barGradient =
+    rank === 1 ? 'from-yellow-400/25 to-yellow-400/5' : rank === 2 ? 'from-slate-400/20 to-slate-400/5' : 'from-amber-700/20 to-amber-700/5';
+  const imgSize = rank === 1 ? 'w-20 h-20' : 'w-16 h-16';
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: rank * 0.1 }}
-      className="flex-1 flex flex-col items-center gap-2 max-w-[110px]"
+      transition={{ delay: rank * 0.08, duration: 0.3 }}
+      className="flex flex-col items-center"
+      style={{ width: rank === 1 ? 112 : 96 }}
     >
-      {crown && (
-        <Crown className="w-5 h-5 text-[#FFEFD5] animate-bounce" />
+      {crown ? (
+        <Crown className="w-5 h-5 text-yellow-400 mb-1.5 drop-shadow-[0_0_6px_rgba(250,204,21,0.6)]" />
+      ) : (
+        <div className="h-6 mb-1.5" />
       )}
-      <div className="relative cursor-pointer group" onClick={onPlay}>
-        <img src={track.cover_url} alt={track.track_name} className={`w-16 h-16 rounded-xl object-cover transition-all ${isOpen ? 'ring-2 ring-purple-500/70 scale-105' : 'hover:scale-105'}`} />
-        <div className={`absolute inset-0 flex items-center justify-center rounded-xl transition-opacity ${isOpen ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'}`}>
+
+      {/* Album art */}
+      <button
+        onClick={onPlay}
+        className="relative group flex-shrink-0 mb-0"
+        title={track.track_name}
+      >
+        <img
+          src={track.cover_url}
+          alt={track.track_name}
+          className={`${imgSize} rounded-xl object-cover shadow-lg transition-transform group-hover:scale-105 ${isOpen ? `ring-2 ${rankBorderColor} scale-105` : ''}`}
+        />
+        <div className={`absolute inset-0 rounded-xl flex items-center justify-center transition-opacity ${isOpen ? 'bg-black/40 opacity-100' : 'opacity-0 group-hover:opacity-100 bg-black/40'}`}>
           {isOpen ? (
-            <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
-              <div className="flex items-center gap-0.5">
-                <span className="w-0.5 h-2.5 bg-white rounded-full animate-pulse" />
-                <span className="w-0.5 h-3.5 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
-                <span className="w-0.5 h-2 bg-white rounded-full animate-pulse [animation-delay:0.3s]" />
-              </div>
+            <div className="flex items-end gap-[2px] h-5">
+              <span className="w-[3px] bg-white rounded-full animate-pulse" style={{ height: '10px' }} />
+              <span className="w-[3px] bg-white rounded-full animate-pulse" style={{ height: '18px', animationDelay: '0.15s' }} />
+              <span className="w-[3px] bg-white rounded-full animate-pulse" style={{ height: '12px', animationDelay: '0.3s' }} />
             </div>
-          ) : <Play className="w-4 h-4 text-white fill-white" />}
+          ) : (
+            <Play className="w-5 h-5 text-white fill-white" />
+          )}
         </div>
-        <div className={`absolute -bottom-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br ${rankColors[rank]} flex items-center justify-center text-white text-xs font-bold shadow-lg`}>
+        <div className={`absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-br ${rankBadgeBg} flex items-center justify-center text-white text-[10px] font-bold shadow-md border border-[#14092A]`}>
           {rank}
         </div>
-      </div>
+      </button>
 
-      <div className={`w-full ${height} bg-gradient-to-t ${rank === 1 ? 'from-yellow-500/20 to-transparent border-yellow-500/30' : rank === 2 ? 'from-slate-500/15 to-transparent border-slate-500/20' : 'from-amber-700/15 to-transparent border-amber-700/20'} border-t-2 rounded-b-xl flex flex-col items-center justify-start pt-2 px-1`}>
-        <p className="text-xs font-bold text-center text-white leading-tight line-clamp-2">{track.track_name}</p>
-        <p className="text-[10px] text-purple-300/60 truncate w-full text-center mt-0.5">{track.artist}</p>
-        <div className="flex items-center gap-1 mt-1">
-          <Users className="w-2.5 h-2.5 text-purple-300/60" />
-          <span className="text-[10px] text-purple-300/60">{track.share_count}</span>
+      {/* Barre de podium — hauteur variable */}
+      <div
+        className={`w-full bg-gradient-to-t ${barGradient} border-t-2 ${rankBorderColor} flex flex-col items-center justify-start px-1.5 pt-2 pb-1 rounded-b-lg`}
+        style={{ height: barHeight }}
+      >
+        <p className="text-[11px] font-bold text-white text-center leading-tight line-clamp-2 w-full" title={track.track_name}>
+          {track.track_name}
+        </p>
+        <p className="text-[9px] text-purple-300/60 truncate w-full text-center mt-0.5">{track.artist}</p>
+        <div className="flex items-center gap-0.5 mt-1">
+          <Users className="w-2 h-2 text-purple-300/50" />
+          <span className="text-[9px] text-purple-300/50 font-medium">{track.share_count}×</span>
         </div>
       </div>
     </motion.div>

@@ -30,15 +30,21 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
     <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-hidden min-h-0">
       {/* Tab bar — masqué quand on est dans une conversation ou un cercle */}
       {!inSubView && (
-        <div className="flex border-b border-purple-500/25 px-4 pt-3 gap-6 flex-shrink-0">
-          {(['circles', 'dms'] as const).map(t => (
+        <div className="flex items-center border-b border-purple-500/20 px-4 pt-2 pb-0 gap-1 flex-shrink-0">
+          {(['dms', 'circles'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`pb-2.5 text-sm font-semibold transition-colors relative ${tab === t ? 'text-white' : 'text-purple-300/60 hover:text-white'}`}
+              className={`relative px-4 py-2.5 text-sm font-semibold transition-all rounded-t-lg ${
+                tab === t
+                  ? 'text-white'
+                  : 'text-purple-300/50 hover:text-purple-200'
+              }`}
             >
-              {t === 'dms' ? 'Messages privés' : 'Groupes'}
-              {tab === t && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />}
+              {t === 'dms' ? 'Messages' : 'Groupes'}
+              {tab === t && (
+                <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
+              )}
             </button>
           ))}
         </div>
@@ -413,18 +419,32 @@ function DmsPanel({ currentUser, onSubViewActive }: { currentUser: any; onSubVie
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /></div>
       ) : conversations.length > 0 ? (
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {conversations.map((c) => (
-            <button key={c.partnerId} onClick={() => openConversation(c.partner)} className="w-full flex items-center gap-3 p-3 hover:bg-violet-950/20 rounded-xl transition-colors">
-              <div className="relative">
-                <img src={c.partner?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${c.partner?.username}&background=2A1852&color=FFEFD5`} className="w-12 h-12 rounded-full object-cover" alt="" />
-                {c.unreadCount > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 rounded-full text-[10px] font-bold flex items-center justify-center">{c.unreadCount}</span>}
+            <button key={c.partnerId} onClick={() => openConversation(c.partner)} className="w-full flex items-center gap-3 px-3 py-3 hover:bg-violet-950/25 rounded-xl transition-colors">
+              <div className="relative flex-shrink-0">
+                <img
+                  src={c.partner?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${c.partner?.username}&background=2A1852&color=FFEFD5`}
+                  className="w-12 h-12 rounded-full object-cover ring-1 ring-purple-700/30"
+                  alt=""
+                />
+                {c.unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-pink-500 border-2 border-[#14092A] rounded-full text-[9px] font-bold flex items-center justify-center text-white">
+                    {c.unreadCount}
+                  </span>
+                )}
               </div>
               <div className="flex-1 text-left min-w-0">
-                <p className="font-semibold text-sm">{c.partner?.display_name || c.partner?.username}</p>
-                <p className="text-xs text-purple-200/70 truncate">{c.lastMessage?.track_name ? `?? ${c.lastMessage.track_name}` : c.lastMessage?.text || '...'}</p>
+                <p className={`text-sm truncate ${c.unreadCount > 0 ? 'font-bold text-white' : 'font-semibold text-white/90'}`}>
+                  {c.partner?.display_name || c.partner?.username}
+                </p>
+                <p className={`text-xs truncate ${c.unreadCount > 0 ? 'text-purple-200/80 font-medium' : 'text-purple-300/60'}`}>
+                  {c.lastMessage?.track_name ? `🎵 ${c.lastMessage.track_name}` : c.lastMessage?.text || '…'}
+                </p>
               </div>
-              <span className="text-xs text-purple-300/60">{new Date(c.lastMessage?.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span className="text-[10px] text-purple-300/50 flex-shrink-0">
+                {new Date(c.lastMessage?.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </button>
           ))}
         </div>

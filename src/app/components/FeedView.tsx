@@ -891,27 +891,35 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         )}
         {activeCircle && <CircleHeader circle={activeCircle} onBack={() => onSelectFeed?.(null)} onLeaveCircle={handleLeaveCircle} onRenameCircle={handleRenameCircle} currentUser={currentUser} />}
         
-        {/* Stories strip - Instagram style */}
+        {/* Stories strip — Instagram style, tailles uniformes */}
         {!currentFeedId && (
-          <div className="-mt-1 overflow-hidden">
-            <div className="flex items-start gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="-mx-4 overflow-hidden">
+            <div
+              className="flex items-start gap-4 overflow-x-auto px-4 pb-2 pt-1"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {/* Bouton "Ajouter" — même taille que les autres bulles */}
               <button
                 onClick={onShowEphemeralShake}
-                className="flex-shrink-0 text-center"
+                className="flex-shrink-0 flex flex-col items-center gap-1.5 group"
                 title="Créer un Shake Éphémère"
               >
-                <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
-                  <div className="w-full h-full rounded-full bg-[#14092A] flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-violet-900/50 border border-purple-700/40 flex items-center justify-center">
-                      <Plus className="w-5 h-5 text-[#FFEFD5]" />
+                <div className="w-[62px] h-[62px] rounded-full p-[2.5px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400 group-active:scale-95 transition-transform">
+                  <div className="w-full h-full rounded-full bg-[#14092A] flex items-center justify-center relative">
+                    <img
+                      src={currentUser?.avatar || `https://ui-avatars.com/api/?name=${currentUser?.username || 'M'}&background=2A1852&color=FFEFD5`}
+                      className="w-full h-full rounded-full object-cover"
+                      alt=""
+                    />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full border-2 border-[#14092A] flex items-center justify-center shadow-md">
+                      <Plus className="w-3 h-3 text-white" strokeWidth={3} />
                     </div>
                   </div>
                 </div>
-                <p className="text-[11px] text-purple-300/70 mt-1">Ajouter</p>
+                <p className="text-[11px] text-purple-300/70 leading-none">Ton shake</p>
               </button>
 
               {(() => {
-                // Group stories by user — one bubble per user, badge if multiple
                 const groups: Map<string, any[]> = new Map();
                 for (const story of stories) {
                   const uid = story.user?.id || story.user_id;
@@ -924,28 +932,45 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   const user = firstStory.user;
                   const allViewed = group.every((s: any) => !!storyViewedMap[s.id]);
                   const count = group.length;
+                  const avatarSrc = user?.profile_album_cover_url || user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`;
                   return (
-                    <button key={user?.id || firstStory.user_id} onClick={() => openStory(firstStory)} className="flex-shrink-0 text-center relative">
-                      <div className={`w-16 h-16 rounded-full p-[2px] ${allViewed ? 'bg-purple-800/35' : 'bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400'}`}>
-                        <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
-                          <img
-                            src={firstStory.cover_url || firstStory.image_url || user?.avatar || user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`}
-                            className="w-full h-full rounded-full object-cover"
-                            alt={firstStory.track_name || ''}
-                          />
+                    <button
+                      key={user?.id || firstStory.user_id}
+                      onClick={() => openStory(firstStory)}
+                      className="flex-shrink-0 flex flex-col items-center gap-1.5 group active:scale-95 transition-transform"
+                    >
+                      <div className="relative">
+                        <div
+                          className={`w-[62px] h-[62px] rounded-full p-[2.5px] transition-all ${
+                            allViewed
+                              ? 'bg-purple-800/40'
+                              : 'bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400'
+                          }`}
+                        >
+                          <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
+                            <img
+                              src={avatarSrc}
+                              className="w-full h-full rounded-full object-cover"
+                              alt={user?.username || ''}
+                            />
+                          </div>
                         </div>
+                        {count > 1 && (
+                          <span className="absolute -bottom-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-fuchsia-500 border-2 border-[#14092A] rounded-full text-[9px] font-bold flex items-center justify-center text-white leading-none">
+                            {count}
+                          </span>
+                        )}
                       </div>
-                      {count > 1 && (
-                        <span className="absolute top-0 right-1 w-5 h-5 bg-fuchsia-500 border-2 border-[#14092A] rounded-full text-[10px] font-bold flex items-center justify-center text-white">
-                          {count}
-                        </span>
-                      )}
-                      <p className="text-[11px] text-purple-300/70 mt-1 max-w-16 truncate">{user?.username || 'ami'}</p>
+                      <p className="text-[11px] leading-none text-purple-300/70 w-[62px] text-center truncate">
+                        {user?.username || 'ami'}
+                      </p>
                     </button>
                   );
                 });
               })()}
             </div>
+            {/* Séparateur fin */}
+            <div className="h-px bg-purple-900/30 mx-4" />
           </div>
         )}
         
