@@ -46,13 +46,13 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
   useEffect(() => {
     loadUserData();
-  }, [user, activeTab]);
+  }, [user?.id]);
 
   const loadUserData = async () => {
     if (!user) return;
 
     try {
-      setLoading(true);
+      if (userShakes.length === 0 && userReshakes.length === 0) setLoading(true);
 
       const [posts, reshakes, followersCount, followingCount, stories] = await Promise.all([
         getUserPosts(user.id),

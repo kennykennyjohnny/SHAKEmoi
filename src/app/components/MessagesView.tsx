@@ -51,10 +51,12 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
         </div>
       )}
 
-      {tab === 'dms'
-        ? <DmsPanel currentUser={currentUser} onSubViewActive={setInSubView} fabTrigger={fabTrigger} />
-        : <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setInSubView} fabTrigger={fabTrigger} />
-      }
+      <div className={tab !== 'dms' ? 'hidden' : ''}>
+        <DmsPanel currentUser={currentUser} onSubViewActive={setInSubView} fabTrigger={fabTrigger} />
+      </div>
+      <div className={tab !== 'circles' ? 'hidden' : ''}>
+        <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setInSubView} fabTrigger={fabTrigger} />
+      </div>
 
       {/* FAB — bouton + fixe en bas à droite, au-dessus de la nav bar */}
       {!inSubView && (
