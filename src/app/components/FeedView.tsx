@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Image, Copy, Users, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
+import { getPostLikers } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -435,6 +436,9 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
   const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
   const [musicReactionsPostId, setMusicReactionsPostId] = useState<string | null>(null);
+  const [likersPostId, setLikersPostId] = useState<string | null>(null);
+  const [likers, setLikers] = useState<any[]>([]);
+  const [likersLoading, setLikersLoading] = useState(false);
 
   // Circle chat input state
   const [chatText, setChatText] = useState('');
@@ -652,6 +656,15 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     } catch (err) {
       console.error('Error toggling like:', err);
     }
+  };
+
+  const openLikers = async (sourcePostId: string) => {
+    setLikersPostId(sourcePostId);
+    setLikersLoading(true);
+    setLikers([]);
+    const data = await getPostLikers(sourcePostId);
+    setLikers(data);
+    setLikersLoading(false);
   };
 
   const confirmReshake = async (comment?: string) => {
@@ -904,6 +917,18 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         {/* Stories strip — Instagram style, tailles uniformes */}
         {!currentFeedId && (
           <div className="-mx-4 overflow-hidden">
+            <style>{`
+              @keyframes storyWavePurple {
+                0%, 65%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+                30% { box-shadow: 0 0 0 5px rgba(139, 92, 246, 0.55), 0 0 0 10px rgba(168, 85, 247, 0.15); }
+              }
+              @keyframes storyWaveGray {
+                0%, 65%, 100% { box-shadow: 0 0 0 0 rgba(107, 114, 128, 0); }
+                30% { box-shadow: 0 0 0 4px rgba(107, 114, 128, 0.4), 0 0 0 8px rgba(107, 114, 128, 0.08); }
+              }
+              .story-ring-pulse { animation: storyWavePurple 3.5s ease-out infinite; }
+              .story-ring-pulse-gray { animation: storyWaveGray 4.5s ease-out infinite; }
+            `}</style>
             <div
               className="flex items-start gap-4 overflow-x-auto px-4 pb-2 pt-1"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -913,27 +938,33 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 const ownStories = stories.filter((s: any) => (s.user?.id || s.user_id) === currentUser?.id);
                 const hasOwn = ownStories.length > 0;
                 return (
-              <button
-                onClick={hasOwn ? () => openStory(ownStories[0]) : onShowEphemeralShake}
-                className="flex-shrink-0 flex flex-col items-center gap-1.5 group"
-                title={hasOwn ? 'Voir mon shake éphémère' : 'Créer un Shake Éphémère'}
-              >
-                <div className={`w-[62px] h-[62px] rounded-full p-[2.5px] group-active:scale-95 transition-transform ${hasOwn ? 'bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400' : 'bg-purple-800/40'}`}>
-                  <div className="w-full h-full rounded-full bg-[#14092A] flex items-center justify-center relative p-[2px]">
-                    <img
-                      src={currentUser?.avatar || `https://ui-avatars.com/api/?name=${currentUser?.username || 'M'}&background=2A1852&color=FFEFD5`}
-                      className="w-full h-full rounded-full object-cover"
-                      alt=""
-                    />
-                    {!hasOwn && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full border-2 border-[#14092A] flex items-center justify-center shadow-md">
-                        <Plus className="w-3 h-3 text-white" strokeWidth={3} />
+              <div className="flex-shrink-0 flex flex-col items-center gap-1.5">
+                <div className="relative">
+                  <button
+                    onClick={hasOwn ? () => openStory(ownStories[0]) : onShowEphemeralShake}
+                    className="group block"
+                    title={hasOwn ? 'Voir mon shake éphémère' : 'Créer un Shake Éphémère'}
+                  >
+                    <div className={`w-[62px] h-[62px] rounded-full p-[2.5px] group-active:scale-95 transition-transform ${hasOwn ? 'bg-gradient-to-br from-violet-600 via-fuchsia-500 to-purple-700 story-ring-pulse' : 'bg-purple-800/40'}`}>
+                      <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
+                        <img
+                          src={currentUser?.avatar || `https://ui-avatars.com/api/?name=${currentUser?.username || 'M'}&background=2A1852&color=FFEFD5`}
+                          className="w-full h-full rounded-full object-cover"
+                          alt=""
+                        />
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={onShowEphemeralShake}
+                    className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-full border-2 border-[#14092A] flex items-center justify-center shadow-md z-10"
+                    title="Ajouter une story"
+                  >
+                    <Plus className="w-3 h-3 text-white" strokeWidth={3} />
+                  </button>
                 </div>
                 <p className="text-[11px] text-purple-300/70 leading-none">Ton shake</p>
-              </button>
+              </div>
                 );
               })()}
 
@@ -962,8 +993,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                         <div
                           className={`w-[62px] h-[62px] rounded-full p-[2.5px] transition-all ${
                             allViewed
-                              ? 'bg-purple-800/40'
-                              : 'bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400'
+                              ? 'bg-gradient-to-br from-gray-600 via-gray-500 to-gray-700 story-ring-pulse-gray'
+                              : 'bg-gradient-to-br from-violet-600 via-fuchsia-500 to-purple-700 story-ring-pulse'
                           }`}
                         >
                           <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
@@ -1292,7 +1323,14 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 <div className="px-4 pb-2.5 flex items-center gap-6">
                   <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group active:scale-90 transition-transform">
                     <Heart className={`w-5 h-5 transition-all duration-200 ${shake.isLiked ? 'text-pink-500 fill-pink-500 scale-110' : 'text-purple-300/70 group-hover:text-pink-500 group-active:scale-125'}`} />
-                    <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{shake.likes}</span>
+                    {shake.likes > 0 && shake.user.id === currentUser?.id ? (
+                      <button
+                        onClick={e => { e.stopPropagation(); openLikers(shake.sourcePostId); }}
+                        className="text-xs font-medium text-pink-400/80 hover:text-pink-400 underline underline-offset-2 decoration-dotted transition-colors"
+                      >{shake.likes}</button>
+                    ) : (
+                      <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{shake.likes}</span>
+                    )}
                   </button>
 
                   <button onClick={() => setCommentsPostId(shake.sourcePostId)} className="flex items-center gap-1.5 group active:scale-90 transition-transform">
@@ -1363,6 +1401,65 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           />
         )}
       </AnimatePresence>
+
+      {/* Likers bottom-sheet — visible only to post owner */}
+      {createPortal(
+        <AnimatePresence>
+          {likersPostId && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end"
+              onClick={() => setLikersPostId(null)}
+            >
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-lg mx-auto bg-[#1D0F3D] rounded-t-2xl border border-purple-800/30 overflow-hidden max-h-[70vh] flex flex-col"
+              >
+                <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
+                  <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-pink-500 fill-pink-500" />
+                    Likes
+                  </h3>
+                  <button onClick={() => setLikersPostId(null)} className="p-1.5 hover:bg-purple-900/30 rounded-full">
+                    <X className="w-4 h-4 text-purple-300/70" />
+                  </button>
+                </div>
+                {likersLoading ? (
+                  <div className="flex-1 flex items-center justify-center p-8">
+                    <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+                  </div>
+                ) : likers.length === 0 ? (
+                  <div className="p-8 text-center text-purple-300/60 text-sm">Aucun like encore</div>
+                ) : (
+                  <div className="overflow-y-auto flex-1 py-1">
+                    {likers.map((u: any) => (
+                      <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-purple-900/20 transition-colors">
+                        <img
+                          src={u.profile_album_cover_url || `https://ui-avatars.com/api/?name=${u.username}&background=2A1852&color=FFEFD5`}
+                          alt=""
+                          className="w-9 h-9 rounded-full object-cover ring-1 ring-purple-700/30"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{u.display_name || u.username}</p>
+                          <p className="text-xs text-purple-300/60">@{u.username}</p>
+                        </div>
+                        <Heart className="w-4 h-4 text-pink-500 fill-pink-500 flex-shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Circle chat input bar — truly fixed to viewport (rendered via Portal) */}
       {currentFeedId && createPortal(

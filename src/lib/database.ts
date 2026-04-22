@@ -496,6 +496,20 @@ export async function hasLikedPosts(postIds: string[]): Promise<Record<string, b
   }
 }
 
+export async function getPostLikers(postId: string): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from('likes')
+      .select('user_id, created_at, user:users_profile!likes_user_id_fkey(id, username, display_name, profile_album_cover_url)')
+      .eq('post_id', postId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((l: any) => ({ ...l.user, liked_at: l.created_at }));
+  } catch {
+    return [];
+  }
+}
+
 export async function getUserLikedPosts(userId: string, limit = 50): Promise<Post[]> {
   try {
     const { data, error } = await supabase
