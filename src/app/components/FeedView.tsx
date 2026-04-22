@@ -368,6 +368,63 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
   );
 }
 
+function StoryWaveRing({ viewed = false }: { viewed?: boolean }) {
+  const bars = 44;
+  const innerR = 34; // starts 3px outside a 62px bubble
+  const maxH = 9;
+  const pad = 14; // room for bars + gap
+  const total = 62 + pad * 2;
+  const cx = total / 2;
+  const cy = total / 2;
+  const colorStops: [number, number, number][] = [
+    [124, 58, 237],  // violet-600
+    [168, 85, 247],  // purple-500
+    [217, 70, 239],  // fuchsia-500
+    [236, 72, 153],  // pink-500
+  ];
+  return (
+    <svg
+      width={total} height={total}
+      className="absolute pointer-events-none"
+      style={{ top: -pad, left: -pad, zIndex: 0 }}
+    >
+      {Array.from({ length: bars }, (_, i) => {
+        const t = i / bars;
+        const angle = t * 2 * Math.PI - Math.PI / 2;
+        const h = 2 + Math.abs(
+          Math.sin(t * Math.PI * 5.5) * 0.55 +
+          Math.sin(t * Math.PI * 12 + 0.8) * 0.3 +
+          Math.sin(t * Math.PI * 2.3 + 2) * 0.15
+        ) * maxH;
+        const x1 = cx + innerR * Math.cos(angle);
+        const y1 = cy + innerR * Math.sin(angle);
+        const x2 = cx + (innerR + h) * Math.cos(angle);
+        const y2 = cy + (innerR + h) * Math.sin(angle);
+        let stroke: string;
+        if (viewed) {
+          const v = Math.round(80 + t * 70);
+          stroke = `rgba(${v},${v},${v + 12},0.85)`;
+        } else {
+          const seg = t * (colorStops.length - 1);
+          const si = Math.min(Math.floor(seg), colorStops.length - 2);
+          const sf = seg - si;
+          const r = Math.round(colorStops[si][0] + (colorStops[si + 1][0] - colorStops[si][0]) * sf);
+          const g = Math.round(colorStops[si][1] + (colorStops[si + 1][1] - colorStops[si][1]) * sf);
+          const b = Math.round(colorStops[si][2] + (colorStops[si + 1][2] - colorStops[si][2]) * sf);
+          stroke = `rgba(${r},${g},${b},0.9)`;
+        }
+        return (
+          <line
+            key={i} x1={x1} y1={y1} x2={x2} y2={y2}
+            stroke={stroke} strokeWidth={1.5} strokeLinecap="round"
+            style={{ animation: 'waveBarPulse 3s ease-in-out infinite', animationDelay: `${-t * 3}s` }}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
 interface Shake {
   id: string;
   sourcePostId: string;
@@ -918,16 +975,10 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         {!currentFeedId && (
           <div className="-mx-4 overflow-hidden">
             <style>{`
-              @keyframes storyWavePurple {
-                0%, 65%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
-                30% { box-shadow: 0 0 0 5px rgba(139, 92, 246, 0.55), 0 0 0 10px rgba(168, 85, 247, 0.15); }
+              @keyframes waveBarPulse {
+                0%, 100% { opacity: 0.35; }
+                50% { opacity: 1; }
               }
-              @keyframes storyWaveGray {
-                0%, 65%, 100% { box-shadow: 0 0 0 0 rgba(107, 114, 128, 0); }
-                30% { box-shadow: 0 0 0 4px rgba(107, 114, 128, 0.4), 0 0 0 8px rgba(107, 114, 128, 0.08); }
-              }
-              .story-ring-pulse { animation: storyWavePurple 3.5s ease-out infinite; }
-              .story-ring-pulse-gray { animation: storyWaveGray 4.5s ease-out infinite; }
             `}</style>
             <div
               className="flex items-start gap-4 overflow-x-auto px-4 pb-2 pt-1"
@@ -942,17 +993,16 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 <div className="relative">
                   <button
                     onClick={hasOwn ? () => openStory(ownStories[0]) : onShowEphemeralShake}
-                    className="group block"
+                    className="block active:scale-95 transition-transform relative"
                     title={hasOwn ? 'Voir mon shake éphémère' : 'Créer un Shake Éphémère'}
                   >
-                    <div className={`w-[62px] h-[62px] rounded-full p-[2.5px] group-active:scale-95 transition-transform ${hasOwn ? 'bg-gradient-to-br from-violet-600 via-fuchsia-500 to-purple-700 story-ring-pulse' : 'bg-purple-800/40'}`}>
-                      <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
-                        <img
-                          src={currentUser?.avatar || `https://ui-avatars.com/api/?name=${currentUser?.username || 'M'}&background=2A1852&color=FFEFD5`}
-                          className="w-full h-full rounded-full object-cover"
-                          alt=""
-                        />
-                      </div>
+                    {hasOwn && <StoryWaveRing />}
+                    <div className={`w-[62px] h-[62px] rounded-full overflow-hidden relative z-10 ${!hasOwn ? 'ring-2 ring-purple-800/50' : ''}`}>
+                      <img
+                        src={currentUser?.avatar || `https://ui-avatars.com/api/?name=${currentUser?.username || 'M'}&background=2A1852&color=FFEFD5`}
+                        className="w-full h-full object-cover"
+                        alt=""
+                      />
                     </div>
                   </button>
                   <button
@@ -990,23 +1040,16 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                       className="flex-shrink-0 flex flex-col items-center gap-1.5 group active:scale-95 transition-transform"
                     >
                       <div className="relative">
-                        <div
-                          className={`w-[62px] h-[62px] rounded-full p-[2.5px] transition-all ${
-                            allViewed
-                              ? 'bg-gradient-to-br from-gray-600 via-gray-500 to-gray-700 story-ring-pulse-gray'
-                              : 'bg-gradient-to-br from-violet-600 via-fuchsia-500 to-purple-700 story-ring-pulse'
-                          }`}
-                        >
-                          <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
-                            <img
-                              src={avatarSrc}
-                              className="w-full h-full rounded-full object-cover"
-                              alt={user?.username || ''}
-                            />
-                          </div>
+                        <StoryWaveRing viewed={allViewed} />
+                        <div className="w-[62px] h-[62px] rounded-full overflow-hidden relative z-10">
+                          <img
+                            src={avatarSrc}
+                            className="w-full h-full object-cover"
+                            alt={user?.username || ''}
+                          />
                         </div>
                         {count > 1 && (
-                          <span className="absolute -bottom-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-fuchsia-500 border-2 border-[#14092A] rounded-full text-[9px] font-bold flex items-center justify-center text-white leading-none">
+                          <span className="absolute -bottom-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-fuchsia-500 border-2 border-[#14092A] rounded-full text-[9px] font-bold flex items-center justify-center text-white leading-none z-20">
                             {count}
                           </span>
                         )}
