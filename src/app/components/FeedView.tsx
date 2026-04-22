@@ -923,7 +923,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4" style={currentFeedId ? { minHeight: '100%' } : undefined}>
+      <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4" style={currentFeedId ? { minHeight: '100%' } : undefined}>
         {/* Always show feed selector even while loading */}
         {(circles.length > 0 || !!onCreateCircle) && (
           <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
@@ -943,7 +943,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4">
+      <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4">
         {(circles.length > 0 || !!onCreateCircle) && (
           <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
         )}

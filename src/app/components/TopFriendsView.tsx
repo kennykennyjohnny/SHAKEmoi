@@ -135,7 +135,7 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
   const rest = trending.slice(3);
 
   return (
-    <div className="max-w-2xl mx-auto p-4 flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4">
+    <div className="w-full max-w-2xl mx-auto p-4 flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4">
       {/* Header + period selector */}
       <div className="flex items-center justify-between mb-5">
         <div>

@@ -89,7 +89,7 @@ export function WeeklyWrapView({ currentUser }: Props) {
   };
 
   if (loading) return (
-    <div className="max-w-2xl mx-auto p-8 flex flex-col items-center justify-center min-h-[400px]">
+    <div className="w-full max-w-2xl mx-auto p-8 flex flex-col items-center justify-center min-h-[400px]">
       <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-4" />
       <p className="text-purple-400/50">Calcul de ton résumé...</p>
     </div>
@@ -106,7 +106,7 @@ export function WeeklyWrapView({ currentUser }: Props) {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
+    <div className="w-full max-w-2xl mx-auto p-4">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
           Ton résumé de la semaine
