@@ -369,18 +369,18 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
 }
 
 function StoryWaveRing({ viewed = false }: { viewed?: boolean }) {
-  const bars = 44;
-  const innerR = 34; // starts 3px outside a 62px bubble
-  const maxH = 9;
-  const pad = 14; // room for bars + gap
+  const bars = 52;
+  const innerR = 32; // 1px outside the 62px bubble edge (r=31)
+  const maxH = 4;    // short, tight bars
+  const pad = 7;     // minimal overflow
   const total = 62 + pad * 2;
   const cx = total / 2;
   const cy = total / 2;
   const colorStops: [number, number, number][] = [
-    [124, 58, 237],  // violet-600
-    [168, 85, 247],  // purple-500
-    [217, 70, 239],  // fuchsia-500
-    [236, 72, 153],  // pink-500
+    [124, 58, 237],
+    [168, 85, 247],
+    [217, 70, 239],
+    [236, 72, 153],
   ];
   return (
     <svg
@@ -391,10 +391,10 @@ function StoryWaveRing({ viewed = false }: { viewed?: boolean }) {
       {Array.from({ length: bars }, (_, i) => {
         const t = i / bars;
         const angle = t * 2 * Math.PI - Math.PI / 2;
-        const h = 2 + Math.abs(
-          Math.sin(t * Math.PI * 5.5) * 0.55 +
-          Math.sin(t * Math.PI * 12 + 0.8) * 0.3 +
-          Math.sin(t * Math.PI * 2.3 + 2) * 0.15
+        const h = 1 + Math.abs(
+          Math.sin(t * Math.PI * 6) * 0.55 +
+          Math.sin(t * Math.PI * 14 + 0.8) * 0.3 +
+          Math.sin(t * Math.PI * 2.5 + 2) * 0.15
         ) * maxH;
         const x1 = cx + innerR * Math.cos(angle);
         const y1 = cy + innerR * Math.sin(angle);
@@ -402,8 +402,8 @@ function StoryWaveRing({ viewed = false }: { viewed?: boolean }) {
         const y2 = cy + (innerR + h) * Math.sin(angle);
         let stroke: string;
         if (viewed) {
-          const v = Math.round(80 + t * 70);
-          stroke = `rgba(${v},${v},${v + 12},0.85)`;
+          const v = Math.round(85 + t * 65);
+          stroke = `rgba(${v},${v},${v + 10},0.8)`;
         } else {
           const seg = t * (colorStops.length - 1);
           const si = Math.min(Math.floor(seg), colorStops.length - 2);
@@ -416,7 +416,7 @@ function StoryWaveRing({ viewed = false }: { viewed?: boolean }) {
         return (
           <line
             key={i} x1={x1} y1={y1} x2={x2} y2={y2}
-            stroke={stroke} strokeWidth={1.5} strokeLinecap="round"
+            stroke={stroke} strokeWidth={1} strokeLinecap="round"
             style={{ animation: 'waveBarPulse 3s ease-in-out infinite', animationDelay: `${-t * 3}s` }}
           />
         );
