@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles, UserPlus, UserCheck, Send, Share2 } from 'lucide-react';
+import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles, UserPlus, UserCheck, Send, Share2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
 import { searchUsers, createPost, searchCircles, joinCircle, joinCircleByCode, followUser, unfollowUser, isFollowing } from '../../lib/database';
@@ -210,71 +210,75 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                       : 'bg-violet-950/20 hover:bg-violet-950/25 border-purple-500/25'
                   }`}
                 >
-                  <div className="p-3 flex items-center gap-3">
-                    {/* Cover - click to play */}
-                    <div
-                      className="relative flex-shrink-0 group cursor-pointer"
-                      onClick={() => toggleEmbed(`search-${track.id}`)}
-                    >
-                      <img src={track.coverUrl} alt={track.title} className={`w-14 h-14 rounded-lg object-cover transition-all ${isEmbedOpen ? 'ring-2 ring-purple-500/50' : ''}`} />
-                      <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
-                        isEmbedOpen ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
-                      }`}>
-                        {isEmbedOpen ? (
-                          <div className="w-7 h-7 bg-purple-500 rounded-full flex items-center justify-center">
-                            <div className="flex items-center gap-0.5">
-                              <span className="w-0.5 h-3 bg-white rounded-full animate-pulse" />
-                              <span className="w-0.5 h-4 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
-                              <span className="w-0.5 h-2 bg-white rounded-full animate-pulse [animation-delay:0.3s]" />
+                  <div className="p-3 space-y-2.5">
+                    {/* Row 1: cover + info */}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="relative flex-shrink-0 group cursor-pointer"
+                        onClick={() => toggleEmbed(`search-${track.id}`)}
+                      >
+                        <img src={track.coverUrl} alt={track.title} className={`w-12 h-12 rounded-lg object-cover transition-all ${isEmbedOpen ? 'ring-2 ring-purple-500/50' : ''}`} />
+                        <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
+                          isEmbedOpen ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
+                        }`}>
+                          {isEmbedOpen ? (
+                            <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                              <div className="flex items-center gap-0.5">
+                                <span className="w-0.5 h-2.5 bg-white rounded-full animate-pulse" />
+                                <span className="w-0.5 h-3.5 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
+                                <span className="w-0.5 h-2 bg-white rounded-full animate-pulse [animation-delay:0.3s]" />
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <Play className="w-5 h-5 text-white fill-white" />
-                        )}
+                          ) : (
+                            <Play className="w-4 h-4 text-white fill-white" />
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm text-white truncate">{track.title}</h3>
+                        <p className="text-xs text-purple-300/60 truncate">{track.artists || track.artist}</p>
                       </div>
                     </div>
 
-                    <div className="flex-1 text-left min-w-0">
-                      <h3 className="font-semibold text-sm text-white truncate">{track.title}</h3>
-                      <p className="text-xs text-purple-200/70 truncate">{track.artists || track.artist}</p>
-                      <p className="text-xs text-purple-300/60 truncate">{track.album}</p>
-                    </div>
-
-                    {/* Share + Send + Shake buttons */}
-                    <button
-                      onClick={async () => {
-                        const url = 'https://shakemoi.fr';
-                        if (navigator.share) {
-                          try { await navigator.share({ title: `${track.title} - ${track.artist}`, text: `Écoute "${track.title}" de ${track.artist} sur SHAKEmoi ! 🎵`, url }); } catch {}
-                        } else {
-                          await navigator.clipboard.writeText(`${track.title} - ${track.artist} 🎵 ${url}`);
-                        }
-                      }}
-                      className="flex-shrink-0 p-2 hover:bg-purple-900/40 rounded-full transition-colors group"
-                      title="Partager"
-                    >
-                      <Share2 className="w-4 h-4 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
-                    </button>
-
-                    <button
-                      onClick={() => setSendSongTrack(track)}
-                      className="flex-shrink-0 p-2 hover:bg-purple-900/40 rounded-full transition-colors group"
-                      title="Envoyer à un ami"
-                    >
-                      <Send className="w-4 h-4 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
-                    </button>
-
-                    {shakedIds.has(track.id) ? (
-                      <span className="text-xs text-fuchsia-400 font-semibold px-3 py-1.5">Shaké !</span>
-                    ) : showCaptionFor === track.id ? null : (
+                    {/* Row 2: action buttons */}
+                    <div className="flex items-center gap-2">
+                      {shakedIds.has(track.id) ? (
+                        <span className="flex-1 text-center text-xs text-fuchsia-400 font-semibold py-1.5">Shaké ✓</span>
+                      ) : (
+                        <button
+                          onClick={() => setShowCaptionFor(showCaptionFor === track.id ? null : track.id)}
+                          className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                            showCaptionFor === track.id
+                              ? 'bg-fuchsia-500/20 border border-fuchsia-500/40 text-fuchsia-300'
+                              : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90'
+                          }`}
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          {showCaptionFor === track.id ? 'Annuler' : 'Shake !'}
+                        </button>
+                      )}
                       <button
-                        onClick={() => setShowCaptionFor(track.id)}
-                        className="flex-shrink-0 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1"
+                        onClick={() => setSendSongTrack(track)}
+                        className="flex-shrink-0 p-2.5 bg-violet-950/40 hover:bg-purple-800/40 border border-purple-700/30 rounded-xl transition-colors"
+                        title="Envoyer à un ami"
                       >
-                        <Sparkles className="w-3 h-3" />
-                        Shake
+                        <Send className="w-4 h-4 text-purple-300/70" />
                       </button>
-                    )}
+                      <button
+                        onClick={async () => {
+                          const url = 'https://shakemoi.fr';
+                          if (navigator.share) {
+                            try { await navigator.share({ title: `${track.title} - ${track.artist}`, text: `Écoute "${track.title}" de ${track.artist} sur SHAKEmoi ! 🎵`, url }); } catch {}
+                          } else {
+                            await navigator.clipboard.writeText(`${track.title} - ${track.artist} 🎵 ${url}`);
+                          }
+                        }}
+                        className="flex-shrink-0 p-2.5 bg-violet-950/40 hover:bg-purple-800/40 border border-purple-700/30 rounded-xl transition-colors"
+                        title="Partager"
+                      >
+                        <Share2 className="w-4 h-4 text-purple-300/70" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Spotify Embed */}
@@ -328,15 +332,9 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                           <button
                             onClick={() => handleShake(track)}
                             disabled={shakingTrackId === track.id}
-                            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-bold hover:opacity-90 disabled:opacity-50"
+                            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-bold hover:opacity-90 disabled:opacity-50 flex items-center gap-1"
                           >
-                            {shakingTrackId === track.id ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Shake !'}
-                          </button>
-                          <button
-                            onClick={() => { setShowCaptionFor(null); setShakeCaption(''); }}
-                            className="px-2 py-2 text-purple-300/70 hover:text-white"
-                          >
-                            ?
+                            {shakingTrackId === track.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Sparkles className="w-3.5 h-3.5" /> Shake !</>}
                           </button>
                         </div>
                       </motion.div>
