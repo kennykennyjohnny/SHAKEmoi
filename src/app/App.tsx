@@ -285,7 +285,7 @@ export default function App() {
         <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/80 sticky top-0 z-40">
           <div className="px-4 py-2 flex items-center justify-between">
             <button onClick={() => { setCurrentView('feed'); }} className="focus:outline-none">
-              <img src="/shakemoi-logo.png" alt="SHAKEmoi" className="h-6 object-contain drop-shadow-[0_0_10px_rgba(217,70,239,0.45)]" draggable={false} />
+              <img src="/shakemoi-logo.png" alt="SHAKEmoi" className="h-6 object-contain" draggable={false} />
             </button>
 
             <div className="flex items-center gap-1.5">

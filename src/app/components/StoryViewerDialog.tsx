@@ -1,9 +1,9 @@
-import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye } from 'lucide-react';
+import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Play, Pause } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers, markStoryAsViewed } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
-import { resolvePreviewUrl, playPreview, stopPreview } from '../../lib/preview';
+import { resolvePreviewUrl, playPreview, stopPreview, togglePreview, onPreviewChange, getPreviewState } from '../../lib/preview';
 
 interface StoryViewerDialogProps {
   open: boolean;
@@ -138,6 +138,8 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
 
   // Le son de la story démarre dès son ouverture (extrait 30s, résolu via
   // preview.ts). Coupé au changement de story et à la fermeture du viewer.
+  const storyKey = story ? `story-${story.id}` : '';
+
   useEffect(() => {
     if (!open || !story?.track_name) return;
     let cancelled = false;
@@ -146,6 +148,18 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     });
     return () => { cancelled = true; stopPreview(); };
   }, [story?.id, open]);
+
+  // État réel du son pour afficher le bon bouton play/pause sur la pochette.
+  const [preview, setPreview] = useState(getPreviewState());
+  useEffect(() => onPreviewChange(() => setPreview(getPreviewState())), []);
+  const isSounding = preview.key === storyKey && preview.playing;
+
+  const toggleStorySound = async () => {
+    if (!story?.track_name) return;
+    if (getPreviewState().key === storyKey) { togglePreview(storyKey); return; }
+    const url = await resolvePreviewUrl(story.track_name, story.artist || '', (story as any).preview_url);
+    if (url) playPreview(storyKey, url);
+  };
 
   const loadViewers = async () => {
     if (!story || loadingViewers) return;
@@ -333,11 +347,41 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
               ) : (
                 <div className="text-center">
                   {story.cover_url && (
-                    <img
-                      src={story.cover_url}
-                      alt={story.track_name || ''}
-                      className="w-36 h-36 rounded-2xl object-cover mx-auto mb-4 shadow-2xl ring-4 ring-white/10"
-                    />
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); toggleStorySound(); }}
+                      aria-label={isSounding ? 'Mettre en pause' : 'Écouter'}
+                      className="relative z-20 block w-36 h-36 mx-auto mb-4 group focus:outline-none"
+                    >
+                      <img
+                        src={story.cover_url}
+                        alt={story.track_name || ''}
+                        className={`w-36 h-36 rounded-2xl object-cover shadow-2xl ring-4 transition-all ${isSounding ? 'ring-fuchsia-500/40' : 'ring-white/10'}`}
+                      />
+                      {story.track_name && (
+                        <span className={`absolute inset-0 flex items-center justify-center rounded-2xl transition-opacity ${
+                          isSounding ? 'bg-black/30 opacity-0 group-hover:opacity-100' : 'bg-black/40 opacity-100'
+                        }`}>
+                          {isSounding ? (
+                            <Pause className="w-10 h-10 text-white fill-white drop-shadow-lg" />
+                          ) : (
+                            <Play className="w-10 h-10 text-white fill-white drop-shadow-lg" />
+                          )}
+                        </span>
+                      )}
+                      {isSounding && (
+                        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-end gap-0.5 h-3">
+                          {[0, 1, 2, 3].map(i => (
+                            <motion.span
+                              key={i}
+                              className="w-1 bg-fuchsia-400 rounded-full"
+                              animate={{ height: ['30%', '100%', '40%', '80%', '30%'] }}
+                              transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.12 }}
+                            />
+                          ))}
+                        </span>
+                      )}
+                    </button>
                   )}
                   <p className="text-2xl font-bold text-white leading-tight drop-shadow-lg">
                     {story.track_name || 'Shake éphémère'}

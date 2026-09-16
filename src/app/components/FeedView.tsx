@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Heart, MessageCircle, Repeat2, Play, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Image, Copy, Users, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
+import { Heart, MessageCircle, Repeat2, Play, Pause, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Image, Copy, Users, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
 import { getPostLikers } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
-import { resolvePreviewUrl, playPreview, stopPreview } from '../../lib/preview';
+import { resolvePreviewUrl, playPreview, stopPreview, togglePreview, onPreviewChange, getPreviewState } from '../../lib/preview';
 import { ReshakeDialog } from './ReshakeDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
@@ -496,6 +496,11 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   const activePlayerIdRef = useRef<string | null>(null);
   const [musicReactionsPostId, setMusicReactionsPostId] = useState<string | null>(null);
 
+  // État réel de l'extrait en cours : c'est lui qui pilote les icônes play/pause
+  // (l'embed Spotify garde son propre état, qu'on ne peut pas lire depuis la page).
+  const [preview, setPreview] = useState(getPreviewState());
+  useEffect(() => onPreviewChange(() => setPreview(getPreviewState())), []);
+
   // Si l'utilisateur clique dans l'embed Spotify (iframe), on coupe l'extrait
   // pour éviter deux sons superposés ; on coupe aussi en quittant le feed.
   useEffect(() => {
@@ -805,6 +810,13 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     resolvePreviewUrl(shake.track.title, shake.track.artist, shake.track.previewUrl).then(url => {
       if (url && activePlayerIdRef.current === shake.id) playPreview(shake.id, url);
     });
+  };
+
+  // Clic sur la pochette = play/pause de l'extrait, sans toucher à l'embed.
+  const handleTogglePreview = async (shake: Shake) => {
+    if (getPreviewState().key === shake.id) { togglePreview(shake.id); return; }
+    const url = await resolvePreviewUrl(shake.track.title, shake.track.artist, shake.track.previewUrl);
+    if (url) playPreview(shake.id, url);
   };
 
   const openStory = (story: any) => {
@@ -1174,6 +1186,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           // Standard feed layout for "All"
           shakes.map((shake, index) => {
             const isPlayerOpen = activePlayerId === shake.id;
+            const isSounding = preview.key === shake.id && preview.playing;
 
             return (
               <motion.article
@@ -1304,39 +1317,45 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     }`}
                     onClick={() => handlePlayTrack(shake)}
                   >
-                    <div className="relative flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleTogglePreview(shake); }}
+                      aria-label={isSounding ? 'Mettre en pause' : 'Écouter un extrait'}
+                      className="relative flex-shrink-0 rounded-lg focus:outline-none"
+                    >
                       <img
                         src={shake.track.coverUrl}
                         alt={shake.track.title}
-                        className={`w-11 h-11 rounded-lg object-cover transition-all ${isPlayerOpen ? 'ring-2 ring-purple-500/50' : ''}`}
+                        className={`w-11 h-11 rounded-lg object-cover transition-all ${isSounding ? 'ring-2 ring-purple-500/60' : ''}`}
                       />
                       <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
-                        isPlayerOpen ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
+                        isSounding ? 'bg-black/45 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
                       }`}>
-                        {isPlayerOpen ? (
-                          <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
-                            <div className="flex items-center gap-0.5">
-                              <span className="w-0.5 h-2.5 bg-white rounded-full animate-pulse" />
-                              <span className="w-0.5 h-3 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
-                              <span className="w-0.5 h-2 bg-white rounded-full animate-pulse [animation-delay:0.3s]" />
-                            </div>
-                          </div>
+                        {isSounding ? (
+                          <Pause className="w-5 h-5 text-white fill-white" />
                         ) : (
                           <Play className="w-5 h-5 text-white fill-white" />
                         )}
                       </div>
-                    </div>
+                    </button>
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                       <h3 className="font-bold text-sm truncate">{shake.track.title}</h3>
                       <p className="text-xs text-purple-200/70 truncate">{shake.track.artist}</p>
                     </div>
-                    {!isPlayerOpen && (
-                      <div className="flex items-center">
-                        <div className="w-7 h-7 bg-[#FFEFD5] rounded-full flex items-center justify-center shadow-sm shadow-[#FFEFD5]/20 group-hover:scale-105 transition-transform">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleTogglePreview(shake); }}
+                      aria-label={isSounding ? 'Mettre en pause' : 'Écouter un extrait'}
+                      className="flex items-center focus:outline-none"
+                    >
+                      <div className="w-7 h-7 bg-[#FFEFD5] rounded-full flex items-center justify-center shadow-sm shadow-[#FFEFD5]/20 group-hover:scale-105 transition-transform">
+                        {isSounding ? (
+                          <Pause className="w-3.5 h-3.5 text-[#1E1440] fill-[#1E1440]" />
+                        ) : (
                           <Play className="w-3.5 h-3.5 text-[#1E1440] fill-[#1E1440] ml-0.5" />
-                        </div>
+                        )}
                       </div>
-                    )}
+                    </button>
                   </div>
                 </div>
 
