@@ -213,7 +213,6 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
 
   if (!story) return null;
 
-  const embedUrl = story.spotify_embed_url || (story.track_id ? `https://open.spotify.com/embed/track/${story.track_id}` : null);
   const user = story.user;
   const avatarSrc = user?.profile_album_cover_url || user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`;
   const timeRemaining = story.expires_at ? getTimeRemaining(story.expires_at) : null;
@@ -398,19 +397,9 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                 </p>
               )}
 
-              {embedUrl && (
-                <div className="w-full">
-                  <iframe
-                    src={`${embedUrl}?theme=0`}
-                    width="100%"
-                    height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
-                    className="rounded-xl"
-                  />
-                </div>
-              )}
+              {/* Pas d'embed Spotify ici : il a son propre bouton (état illisible
+                  depuis la page) et il contredisait le lecteur. Le son de la story
+                  passe uniquement par l'extrait, piloté depuis la pochette. */}
             </div>
 
             {/* Viewers panel (owner only) */}

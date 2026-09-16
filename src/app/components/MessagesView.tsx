@@ -164,8 +164,32 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Toujours coller en bas de la conversation (comme les autres messageries) :
+  // instantané à l'ouverture, animé ensuite pour les nouveaux messages.
+  const initialScrollRef = useRef(true);
+  const scrollToBottom = (instant = false) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: instant ? 'auto' : 'smooth', block: 'end' });
+  };
+
   useEffect(() => { loadConversations(); }, []);
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => {
+    if (!messages.length) return;
+    const instant = initialScrollRef.current;
+    initialScrollRef.current = false;
+    scrollToBottom(instant);
+    // Les images/pochettes changent la hauteur après coup : on recale.
+    const t = setTimeout(() => scrollToBottom(true), 150);
+    return () => clearTimeout(t);
+  }, [messages]);
+
+  // Ouverture du clavier mobile : la zone visible rétrécit, on reste en bas.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv || !activeConversation) return;
+    const onResize = () => scrollToBottom(true);
+    vv.addEventListener('resize', onResize);
+    return () => vv.removeEventListener('resize', onResize);
+  }, [activeConversation?.id]);
   useEffect(() => {
     if (!fabTrigger) return;
     setShowNewConvo(true);
@@ -241,6 +265,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
     setActiveConversation(partner);
     setShowNewConvo(false);
     onSubViewActive?.(true);
+    initialScrollRef.current = true;   // on ouvre directement en bas
     try { setMessages(await getMessages(partner.id)); } catch {}
   };
 
@@ -488,7 +513,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
                   <Camera className="w-5 h-5" />
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoSelect} />
-                <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Envoie un message..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
+                <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Envoie un message..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onFocus={() => setTimeout(() => scrollToBottom(true), 300)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
                 <button onClick={() => handleSend()} disabled={sending || !newMessage.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
                   {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                 </button>

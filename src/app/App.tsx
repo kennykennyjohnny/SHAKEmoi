@@ -273,7 +273,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-screen bg-[#1E1440] text-white overflow-hidden flex">
+    <div className="h-[100dvh] w-screen bg-[#1E1440] text-white overflow-hidden flex">
       {/* Sidebar gauche - Trending */}
       <aside className="hidden lg:block w-80 border-r border-violet-900/30 overflow-y-auto">
         <TrendingBar />
