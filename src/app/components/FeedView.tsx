@@ -7,6 +7,7 @@ import { getPostLikers } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
+import { resolvePreviewUrl, playPreview, stopPreview } from '../../lib/preview';
 import { ReshakeDialog } from './ReshakeDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
@@ -492,7 +493,18 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   const [sendSongTrack, setSendSongTrack] = useState<any>(null);
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
   const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
+  const activePlayerIdRef = useRef<string | null>(null);
   const [musicReactionsPostId, setMusicReactionsPostId] = useState<string | null>(null);
+
+  // Si l'utilisateur clique dans l'embed Spotify (iframe), on coupe l'extrait
+  // pour éviter deux sons superposés ; on coupe aussi en quittant le feed.
+  useEffect(() => {
+    const onBlur = () => {
+      if (document.activeElement?.tagName === 'IFRAME') stopPreview();
+    };
+    window.addEventListener('blur', onBlur);
+    return () => { window.removeEventListener('blur', onBlur); stopPreview(); };
+  }, []);
   const [likersPostId, setLikersPostId] = useState<string | null>(null);
   const [likers, setLikers] = useState<any[]>([]);
   const [likersLoading, setLikersLoading] = useState(false);
@@ -784,7 +796,15 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   };
 
   const handlePlayTrack = (shake: Shake) => {
-    setActivePlayerId(activePlayerId === shake.id ? null : shake.id);
+    const closing = activePlayerId === shake.id;
+    setActivePlayerId(closing ? null : shake.id);
+    activePlayerIdRef.current = closing ? null : shake.id;
+    if (closing) { stopPreview(); return; }
+    // Astuce play-en-1-clic : l'extrait 30s démarre immédiatement pendant que
+    // l'embed Spotify s'ouvre (lui demande un 2e clic, pas l'extrait).
+    resolvePreviewUrl(shake.track.title, shake.track.artist, shake.track.previewUrl).then(url => {
+      if (url && activePlayerIdRef.current === shake.id) playPreview(shake.id, url);
+    });
   };
 
   const openStory = (story: any) => {

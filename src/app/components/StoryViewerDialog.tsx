@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers, markStoryAsViewed } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
+import { resolvePreviewUrl, playPreview, stopPreview } from '../../lib/preview';
 
 interface StoryViewerDialogProps {
   open: boolean;
@@ -134,6 +135,17 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     hasLikedStory(story.id).then(setIsLiked);
     markStoryAsViewed(story.id);
   }, [story?.id]);
+
+  // Le son de la story démarre dès son ouverture (extrait 30s, résolu via
+  // preview.ts). Coupé au changement de story et à la fermeture du viewer.
+  useEffect(() => {
+    if (!open || !story?.track_name) return;
+    let cancelled = false;
+    resolvePreviewUrl(story.track_name, story.artist || '', (story as any).preview_url).then(url => {
+      if (!cancelled && url) playPreview(`story-${story.id}`, url);
+    });
+    return () => { cancelled = true; stopPreview(); };
+  }, [story?.id, open]);
 
   const loadViewers = async () => {
     if (!story || loadingViewers) return;
