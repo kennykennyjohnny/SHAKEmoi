@@ -295,7 +295,14 @@ export default function App() {
 
               {currentUser && (
                 <button
-                  onClick={() => { if (currentView === 'notifications') { setCurrentView('feed'); return; } setCurrentView('notifications'); setUnreadNotifs(0); supabase.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false); }}
+                  onClick={async () => {
+                    if (currentView === 'notifications') { setCurrentView('feed'); return; }
+                    setCurrentView('notifications');
+                    setUnreadNotifs(0);
+                    try {
+                      await supabase.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false);
+                    } catch (err) { console.error('mark notifs read failed', err); }
+                  }}
                   className="p-2 hover:bg-violet-900/25 rounded-full transition-colors relative"
                 >
                   <Bell className={`w-5 h-5 ${currentView === 'notifications' ? 'text-purple-400' : 'text-purple-300/60'}`} />

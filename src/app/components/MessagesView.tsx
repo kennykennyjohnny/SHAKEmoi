@@ -178,16 +178,46 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
     if (!activeConversation || !currentUser) return;
     const channel = supabase
       .channel(`dm-${currentUser.id}-${activeConversation.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async (payload: any) => {
         const msg = payload.new;
-        if (
+        const involvesPartner =
           (msg.sender_id === activeConversation.id && msg.receiver_id === currentUser.id) ||
-          (msg.sender_id === currentUser.id && msg.receiver_id === activeConversation.id)
-        ) {
-          setMessages(prev => {
-            if (prev.some((m: any) => m.id === msg.id)) return prev;
-            return [...prev, msg];
-          });
+          (msg.sender_id === currentUser.id && msg.receiver_id === activeConversation.id);
+        if (!involvesPartner) return;
+
+        // Enrich with sender profile (realtime payload lacks joined sender)
+        let enriched = msg;
+        try {
+          const { data: senderProfile } = await supabase
+            .from('users_profile')
+            .select('id, username, display_name, profile_album_cover_url')
+            .eq('id', msg.sender_id)
+            .single();
+          if (senderProfile) enriched = { ...msg, sender: senderProfile };
+        } catch {}
+
+        setMessages(prev => {
+          // Already present (real id)
+          if (prev.some((m: any) => m.id === enriched.id)) return prev;
+          // Replace matching optimistic temp (same sender + text/track/image within 10s)
+          const tempIdx = prev.findIndex((m: any) =>
+            typeof m.id === 'string' && m.id.startsWith('temp-') &&
+            m.sender_id === enriched.sender_id &&
+            (m.text || null) === (enriched.text || null) &&
+            (m.image_url || null) === (enriched.image_url || null) &&
+            (m.track_id || null) === (enriched.track_id || null)
+          );
+          if (tempIdx >= 0) {
+            const next = [...prev];
+            next[tempIdx] = enriched;
+            return next;
+          }
+          return [...prev, enriched];
+        });
+
+        // Auto mark-as-read if I'm the receiver and actively viewing
+        if (msg.receiver_id === currentUser.id && !msg.is_read) {
+          supabase.from('messages').update({ is_read: true }).eq('id', msg.id).then(() => {}, () => {});
         }
       })
       .subscribe();

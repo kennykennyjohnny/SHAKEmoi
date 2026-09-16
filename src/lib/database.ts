@@ -585,6 +585,69 @@ export async function getPostComments(postId: string) {
   }
 }
 
+export async function likeComment(commentId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+    const { error } = await supabase
+      .from('comment_likes')
+      .insert([{ comment_id: commentId, user_id: user.id }]);
+    if (error && !String(error.message || '').toLowerCase().includes('duplicate')) throw error;
+
+    // Notify comment author (best-effort, don't fail the like)
+    try {
+      const { data: c } = await supabase.from('comments').select('user_id, post_id').eq('id', commentId).single();
+      if (c && c.user_id !== user.id) {
+        await supabase.from('notifications').insert([{
+          user_id: c.user_id,
+          from_user_id: user.id,
+          type: 'comment_like',
+          post_id: c.post_id,
+          comment_id: commentId,
+        }]);
+      }
+    } catch {}
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error liking comment:', error);
+    return { success: false, error: error?.message };
+  }
+}
+
+export async function unlikeComment(commentId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+    const { error } = await supabase
+      .from('comment_likes')
+      .delete()
+      .eq('comment_id', commentId)
+      .eq('user_id', user.id);
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error unliking comment:', error);
+    return { success: false, error: error?.message };
+  }
+}
+
+export async function getLikedCommentIds(commentIds: string[]): Promise<Set<string>> {
+  try {
+    const user = await getCurrentUser();
+    if (!user || commentIds.length === 0) return new Set();
+    const { data, error } = await supabase
+      .from('comment_likes')
+      .select('comment_id')
+      .eq('user_id', user.id)
+      .in('comment_id', commentIds);
+    if (error) throw error;
+    return new Set((data || []).map((r: any) => r.comment_id));
+  } catch {
+    return new Set();
+  }
+}
+
 // ==================== FOLLOWS ====================
 
 export async function followUser(targetUserId: string) {

@@ -177,10 +177,12 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     if (confirm('Supprimer cette story?')) {
       try {
         const { error } = await supabase.from('stories').delete().eq('id', story.id);
-        if (!error) onClose();
-        else console.error('Error deleting story:', error);
-      } catch (err) { console.error('Error deleting story:', err); }
-    }
+        if (error) throw error;
+        onClose();
+      } catch (err) {
+        console.error('Error deleting story:', err);
+        alert('Impossible de supprimer la story.');
+      }    }
   };
 
   if (!story) return null;
