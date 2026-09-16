@@ -273,7 +273,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-screen bg-[#14092A] text-white overflow-hidden flex">
+    <div className="h-screen w-screen bg-[#1E1440] text-white overflow-hidden flex">
       {/* Sidebar gauche - Trending */}
       <aside className="hidden lg:block w-80 border-r border-violet-900/30 overflow-y-auto">
         <TrendingBar />
@@ -282,7 +282,7 @@ export default function App() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#14092A]/80 sticky top-0 z-40">
+        <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/80 sticky top-0 z-40">
           <div className="px-4 py-2 flex items-center justify-between">
             <button onClick={() => { setCurrentView('feed'); }} className="focus:outline-none">
               <img src="/shakemoi-logo.png" alt="SHAKEmoi" className="h-5 object-contain" draggable={false} />
@@ -342,7 +342,7 @@ export default function App() {
         </main>
 
         {/* Bottom Navigation Mobile — Feed, Top, Search, DMs, Profile */}
-        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-violet-900/30 backdrop-blur-lg bg-[#14092A]/95 z-50">
+        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/95 z-50">
           <div className="px-4 py-2.5 flex items-center justify-around max-w-lg mx-auto">
             {([
               { view: 'feed' as View, icon: Home, label: 'Accueil' },

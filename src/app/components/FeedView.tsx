@@ -49,7 +49,7 @@ function FeedTabs({ circles, currentFeedId, onSelectFeed, onCreateCircle }: { ci
       </div>
       {/* Pink fade hint on right edge to indicate scrollability */}
       {circles.length > 2 && (
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#14092A] to-transparent pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#1E1440] to-transparent pointer-events-none" />
       )}
     </div>
   );
@@ -291,10 +291,10 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
 
   return (
     <div className="fixed bottom-[4.5rem] lg:bottom-0 left-0 right-0 z-40 pointer-events-none">
-      <div className="max-w-2xl mx-auto pointer-events-auto bg-[#14092A] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+      <div className="max-w-2xl mx-auto pointer-events-auto bg-[#1E1440] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
       <AnimatePresence>
         {showChatTrackSearch && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-purple-500/25 bg-[#14092A]">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-60 overflow-y-auto border-b border-purple-500/25 bg-[#1E1440]">
             <div className="p-3">
               <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
@@ -312,7 +312,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
           </motion.div>
         )}
         {showGifSearch && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-72 overflow-hidden border-b border-purple-500/25 bg-[#14092A] flex flex-col">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-72 overflow-hidden border-b border-purple-500/25 bg-[#1E1440] flex flex-col">
             <div className="p-3 pb-0">
               <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
@@ -332,7 +332,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
           </motion.div>
         )}
         {photoPreview && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="p-3 border-b border-purple-500/25 bg-[#14092A]">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="p-3 border-b border-purple-500/25 bg-[#1E1440]">
             <div className="flex items-end gap-3">
               <div className="relative inline-block">
                 <img src={photoPreview} alt="Aperçu" className="max-h-40 rounded-lg object-cover" />
@@ -1007,7 +1007,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   </button>
                   <button
                     onClick={onShowEphemeralShake}
-                    className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-full border-2 border-[#14092A] flex items-center justify-center shadow-md z-10"
+                    className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-full border-2 border-[#1E1440] flex items-center justify-center shadow-md z-10"
                     title="Ajouter une story"
                   >
                     <Plus className="w-3 h-3 text-white" strokeWidth={3} />
@@ -1049,7 +1049,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                           />
                         </div>
                         {count > 1 && (
-                          <span className="absolute -bottom-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-fuchsia-500 border-2 border-[#14092A] rounded-full text-[9px] font-bold flex items-center justify-center text-white leading-none z-20">
+                          <span className="absolute -bottom-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-fuchsia-500 border-2 border-[#1E1440] rounded-full text-[9px] font-bold flex items-center justify-center text-white leading-none z-20">
                             {count}
                           </span>
                         )}
@@ -1313,7 +1313,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     {!isPlayerOpen && (
                       <div className="flex items-center">
                         <div className="w-7 h-7 bg-[#FFEFD5] rounded-full flex items-center justify-center shadow-sm shadow-[#FFEFD5]/20 group-hover:scale-105 transition-transform">
-                          <Play className="w-3.5 h-3.5 text-[#14092A] fill-[#14092A] ml-0.5" />
+                          <Play className="w-3.5 h-3.5 text-[#1E1440] fill-[#1E1440] ml-0.5" />
                         </div>
                       </div>
                     )}

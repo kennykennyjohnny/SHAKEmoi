@@ -121,7 +121,7 @@
 
 /* ── DS v1.1 — SHAKEmoi Color System ──────────────────────── */
 @theme inline {
-  /* Purple palette: deeper, richer — calibrated for opacity overlays on #14092A void */
+  /* Purple palette: deeper, richer — calibrated for opacity overlays on #1E1440 void */
   --color-purple-950: #4B2F8E;
   --color-purple-900: #3A1F6E;
   --color-purple-800: #4A2E7A;
@@ -141,7 +141,7 @@
   --color-pink-600: #E91E80;
 
   /* Named tokens */
-  --color-shake-void: #14092A;
+  --color-shake-void: #1E1440;
   --color-shake-panel: #1D0F3D;
   --color-shake-card: #2A1852;
   --color-shake-border: #4A2E7A;

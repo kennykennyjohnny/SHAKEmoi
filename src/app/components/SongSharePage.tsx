@@ -83,13 +83,13 @@ export function SongSharePage({ slug, onJoin }: Props) {
   };
 
   if (loading) return (
-    <div className="h-screen bg-[#14092A] flex items-center justify-center">
+    <div className="h-screen bg-[#1E1440] flex items-center justify-center">
       <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
     </div>
   );
 
   if (!song) return (
-    <div className="min-h-screen bg-[#14092A] flex flex-col items-center justify-center gap-4 text-center p-6">
+    <div className="min-h-screen bg-[#1E1440] flex flex-col items-center justify-center gap-4 text-center p-6">
       <Logo size="sm" animated={false} showText={true} />
       <p className="text-purple-300/60">Ce son n'existe plus ou le lien est invalide.</p>
       <button onClick={onJoin} className="px-6 py-3 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-xl font-bold text-sm">
@@ -104,11 +104,11 @@ export function SongSharePage({ slug, onJoin }: Props) {
   );
 
   return (
-    <div className="min-h-screen bg-[#14092A] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#1E1440] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {song.cover_url && (
         <div className="absolute inset-0 pointer-events-none">
           <img src={song.cover_url} className="w-full h-full object-cover opacity-15 blur-3xl scale-110" alt="" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#14092A]/80 via-[#14092A]/60 to-[#14092A]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1E1440]/80 via-[#1E1440]/60 to-[#1E1440]" />
         </div>
       )}
 

@@ -445,7 +445,7 @@ function PodiumCard({ track, rank, barHeight, onPlay, onOpen, isOpen, crown }: {
             <Play className="w-5 h-5 text-white fill-white" />
           )}
         </div>
-        <div className={`absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-br ${rankBadgeBg} flex items-center justify-center text-white text-[10px] font-bold shadow-md border border-[#14092A]`}>
+        <div className={`absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-br ${rankBadgeBg} flex items-center justify-center text-white text-[10px] font-bold shadow-md border border-[#1E1440]`}>
           {rank}
         </div>
       </button>

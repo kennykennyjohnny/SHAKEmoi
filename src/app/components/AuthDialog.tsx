@@ -113,7 +113,7 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#14092A] z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-[#1E1440] z-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -327,7 +327,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
               {activeStories.map((story: any) => (
                 <button key={story.id} onClick={() => setSelectedStory(story)} className="flex-shrink-0">
                   <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
-                    <div className="w-full h-full rounded-full bg-[#14092A] p-[2px]">
+                    <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
                       <img
                         src={story.cover_url || story.image_url || user.avatar || `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=2A1852&color=FFEFD5`}
                         className="w-full h-full rounded-full object-cover"
@@ -367,7 +367,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       </div>
 
       {/* Tabs */}
-      <div className="border-y border-purple-800/20 px-4 sticky top-0 bg-[#14092A] z-30">
+      <div className="border-y border-purple-800/20 px-4 sticky top-0 bg-[#1E1440] z-30">
         <div className="flex gap-6">
           <button
             onClick={() => { setActiveTab('shakes'); }}
@@ -509,7 +509,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           {!showDetailEmbed && (
                             <div className="flex items-center">
                               <div className="w-7 h-7 bg-[#FFEFD5] rounded-full flex items-center justify-center shadow-sm shadow-[#FFEFD5]/20 group-hover:scale-105 transition-transform">
-                                <Play className="w-3.5 h-3.5 text-[#14092A] fill-[#14092A] ml-0.5" />
+                                <Play className="w-3.5 h-3.5 text-[#1E1440] fill-[#1E1440] ml-0.5" />
                               </div>
                             </div>
                           )}

@@ -194,7 +194,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
 
   const bgStyle: React.CSSProperties = story.theme_color
     ? { background: story.theme_color }
-    : { background: 'linear-gradient(135deg, #1D0F3D 0%, #2d1057 50%, #14092A 100%)' };
+    : { background: 'linear-gradient(135deg, #1D0F3D 0%, #2d1057 50%, #1E1440 100%)' };
 
   return (
     <AnimatePresence>
