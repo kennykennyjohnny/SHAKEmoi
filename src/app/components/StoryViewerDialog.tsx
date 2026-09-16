@@ -14,7 +14,10 @@ interface StoryViewerDialogProps {
   onGroupEnd?: () => void;
 }
 
-const STORY_DURATION = 5000;
+// Durée d'affichage d'une story. Trop court à 5s : on laisse le temps de lire,
+// et bien plus quand il y a un son (le temps de viber dessus).
+const STORY_DURATION_DEFAULT = 7000;
+const STORY_DURATION_MUSIC = 15000;
 
 function getTimeRemaining(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -42,6 +45,10 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
   const elapsedRef = useRef<number>(0);
+
+  // Story avec musique => on laisse plus de temps.
+  const hasMusic = !!(story?.spotify_embed_url || story?.track_id);
+  const STORY_DURATION = hasMusic ? STORY_DURATION_MUSIC : STORY_DURATION_DEFAULT;
 
   const storyList = stories && stories.length > 0 ? stories : (story ? [story] : []);
   const currentIdx = storyList.findIndex((s: any) => s.id === story?.id);
