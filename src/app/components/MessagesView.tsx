@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { ArrowLeft, Send, Search, Music, Play, Loader2, ExternalLink, Users, Plus, Copy, Check, X, Settings, LogOut, Camera, Smile, Image, Heart, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -51,10 +50,10 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
         </div>
       )}
 
-      <div className={tab !== 'dms' ? 'hidden' : ''}>
+      <div className={tab === 'dms' ? 'flex flex-col flex-1 min-h-0 overflow-hidden' : 'hidden'}>
         <DmsPanel currentUser={currentUser} onSubViewActive={setInSubView} fabTrigger={fabTrigger} />
       </div>
-      <div className={tab !== 'circles' ? 'hidden' : ''}>
+      <div className={tab === 'circles' ? 'flex flex-col flex-1 min-h-0 overflow-hidden' : 'hidden'}>
         <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setInSubView} fabTrigger={fabTrigger} />
       </div>
 
@@ -357,7 +356,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 pb-20 space-y-3 min-h-0">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
           {messages.map((msg) => {
             const isMine = msg.sender_id === currentUser?.id;
             const isTrack = !!msg.track_name;
@@ -477,10 +476,8 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
           )}
         </AnimatePresence>
 
-        {createPortal(
-          <div className="fixed bottom-[4.5rem] lg:bottom-0 left-0 right-0 z-40 pointer-events-none">
-            <div className="max-w-2xl mx-auto pointer-events-auto bg-[#14092A] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
-              <div className="px-3 py-2 flex items-center gap-2">
+        <div className="flex-shrink-0 bg-[#14092A] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] pb-[4.5rem] lg:pb-0">
+          <div className="px-3 py-2 flex items-center gap-2">
                 <button onClick={() => { setShowTrackSearch(!showTrackSearch); setShowGifSearch(false); }} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
                   <Music className="w-5 h-5" />
                 </button>
@@ -497,10 +494,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
                 </button>
               </div>
             </div>
-          </div>,
-          document.body
-        )}
-      </div>
+        </div>
     );
   }
 
