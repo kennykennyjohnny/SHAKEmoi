@@ -1,8 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 
 // SHAKEMOI - Supabase Configuration
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://vbjmhtwrfboqziwibsut.supabase.co';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiam1odHdyZmJvcXppd2lic3V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4MTg4MDUsImV4cCI6MjA4MTM5NDgwNX0.yo5fmTzu_M5llIYLsxgL00nVkH11wTuFAkQoqLd6Bks';
+// Les clés viennent EXCLUSIVEMENT des variables d'environnement :
+//   - en local : fichier .env (gitignoré) — voir .env.example
+//   - en prod  : variables d'environnement Vercel
+// Aucune clé n'est codée en dur dans le source.
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error(
+    "[SHAKEmoi] Configuration Supabase manquante : définis VITE_SUPABASE_URL et " +
+      "VITE_SUPABASE_ANON_KEY (fichier .env en local — voir .env.example — ou variables " +
+      "d'environnement Vercel en prod)."
+  );
+}
 
 // Initialize Supabase client
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
