@@ -12,6 +12,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
+import { useBackHandler } from '../../lib/navigation';
 
 interface MessagesViewProps {
   currentUser: any;
@@ -181,6 +182,13 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
     const t = setTimeout(() => scrollToBottom(true), 150);
     return () => clearTimeout(t);
   }, [messages]);
+
+  // Retour système depuis une conversation : on revient à la liste des
+  // messages, pas au site précédent.
+  useBackHandler(!!activeConversation, () => {
+    setActiveConversation(null);
+    onSubViewActive?.(false);
+  });
 
   // Ouverture du clavier mobile : la zone visible rétrécit, on reste en bas.
   useEffect(() => {
@@ -590,6 +598,10 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated, onSubViewAct
     setShowCreate(true);
     onSubViewActive?.(true);
   }, [fabTrigger]);
+
+  // Retour système : on referme le cercle / la création avant de quitter.
+  useBackHandler(!!selectedCircleId, () => { setSelectedCircleId(null); onSubViewActive?.(false); });
+  useBackHandler(showCreate, () => { setShowCreate(false); onSubViewActive?.(false); });
 
   const load = async () => {
     setLoading(true);

@@ -24,6 +24,7 @@ import { ProfilePreviewDialog } from './components/ProfilePreviewDialog';
 import { PostDetailModal } from './components/PostDetailModal';
 import { supabase } from '../lib/supabase';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount } from '../lib/database';
+import { useBackHandler } from '../lib/navigation';
 
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'notifications';
 
@@ -64,6 +65,10 @@ export default function App() {
   const [notifPostId, setNotifPostId] = useState<string | null>(null);
   const [referrer, setReferrer] = useState<string | null>(null);
 
+  // Retour système : depuis un autre onglet, on revient au feed avant de
+  // pouvoir quitter le site (les vues empilées se ferment en premier).
+  useBackHandler(currentView !== 'feed', () => setCurrentView('feed'));
+
   const buildUserObject = (profile: any) => ({
     ...profile,
     avatar: profile.profile_album_cover_url || profile.avatar || `https://ui-avatars.com/api/?name=${profile.username}&background=2A1852&color=FFEFD5`,
@@ -97,7 +102,13 @@ export default function App() {
           if (!profileCompleted && (!profile.display_name || !profile.profile_album_cover_url)) setShowCompleteProfile(true);
           const postedToday = await hasShakeToday();
           setHasPostedToday(postedToday);
-          if (!postedToday) setShowShakeDuJour(true);
+          // Le Shake du jour ne s'ouvre qu'une fois par jour : sinon la popup
+          // revient à chaque rechargement, ce qui est vite pénible.
+          const todayKey = new Date().toISOString().slice(0, 10);
+          if (!postedToday && localStorage.getItem('shakemoi_sdj_shown') !== todayKey) {
+            localStorage.setItem('shakemoi_sdj_shown', todayKey);
+            setShowShakeDuJour(true);
+          }
         } else { setShowAuth(true); }
       } else { setShowAuth(true); }
     };

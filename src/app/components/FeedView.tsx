@@ -800,24 +800,17 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   };
 
-  const handlePlayTrack = (shake: Shake) => {
-    const closing = activePlayerId === shake.id;
-    setActivePlayerId(closing ? null : shake.id);
-    activePlayerIdRef.current = closing ? null : shake.id;
-    if (closing) { stopPreview(); return; }
-    // Astuce play-en-1-clic : l'extrait 30s démarre immédiatement pendant que
-    // l'embed Spotify s'ouvre (lui demande un 2e clic, pas l'extrait).
-    resolvePreviewUrl(shake.track.title, shake.track.artist, shake.track.previewUrl).then(url => {
-      if (url && activePlayerIdRef.current === shake.id) playPreview(shake.id, url);
-    });
-  };
-
-  // Clic sur la pochette = play/pause de l'extrait, sans toucher à l'embed.
+  // Un clic = play/pause de l'extrait 30s. Plus d'embed Spotify à ouvrir :
+  // le bouton « Écouter » envoie vers l'app de musique de l'utilisateur.
   const handleTogglePreview = async (shake: Shake) => {
     if (getPreviewState().key === shake.id) { togglePreview(shake.id); return; }
+    activePlayerIdRef.current = shake.id;
+    setActivePlayerId(shake.id);
     const url = await resolvePreviewUrl(shake.track.title, shake.track.artist, shake.track.previewUrl);
-    if (url) playPreview(shake.id, url);
+    if (url && activePlayerIdRef.current === shake.id) playPreview(shake.id, url);
   };
+
+  const handlePlayTrack = (shake: Shake) => { handleTogglePreview(shake); };
 
   const openStory = (story: any) => {
     const uid = story.user?.id || story.user_id;
@@ -1359,47 +1352,9 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   </div>
                 </div>
 
-                {/* Spotify Embed Player - slides open on click, with autoplay */}
-                <AnimatePresence>
-                  {isPlayerOpen && shake.track.spotifyEmbedUrl && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: 'easeInOut' }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-4 pb-2">
-                        <iframe
-                          src={shake.track.spotifyEmbedUrl.includes('?') ? shake.track.spotifyEmbedUrl : `${shake.track.spotifyEmbedUrl}?theme=0&utm_source=generator`}
-                          width="100%"
-                          height="152"
-                          frameBorder="0"
-                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                          loading="lazy"
-                          className="rounded-xl"
-                          title={`${shake.track.title} - ${shake.track.artist}`}
-                        />
-                      </div>
-                      {/* Open in app button */}
-                      <div className="px-4 pb-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); openInMusicApp(shake); }}
-                          className="w-full py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          Ouvrir dans {
-                            currentUser?.musicService === 'apple_music' || currentUser?.musicService === 'apple' ? 'Apple Music' :
-                            currentUser?.musicService === 'youtube_music' ? 'YouTube Music' :
-                            currentUser?.musicService === 'deezer' ? 'Deezer' :
-                            currentUser?.musicService === 'tidal' ? 'Tidal' :
-                            'Spotify'
-                          }
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* Pas d'embed Spotify : son bouton a son propre état, illisible
+                    depuis la page, et il doublonnait avec le lecteur d'extrait.
+                    Le bouton « Écouter » ouvre le son dans l'app de l'utilisateur. */}
 
                 {/* Actions */}
                 <div className="px-4 pb-2.5 flex items-center gap-6">

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers, markStoryAsViewed } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { resolvePreviewUrl, playPreview, stopPreview, togglePreview, onPreviewChange, getPreviewState } from '../../lib/preview';
+import { useBackHandler } from '../../lib/navigation';
 
 interface StoryViewerDialogProps {
   open: boolean;
@@ -154,6 +155,9 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   useEffect(() => onPreviewChange(() => setPreview(getPreviewState())), []);
   const isSounding = preview.key === storyKey && preview.playing;
 
+  // Retour système : ferme la story au lieu de quitter le site.
+  useBackHandler(open, onClose);
+
   const toggleStorySound = async () => {
     if (!story?.track_name) return;
     if (getPreviewState().key === storyKey) { togglePreview(storyKey); return; }
@@ -217,9 +221,12 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   const avatarSrc = user?.profile_album_cover_url || user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`;
   const timeRemaining = story.expires_at ? getTimeRemaining(story.expires_at) : null;
 
+  // Fond : la pochette floutée donne sa couleur à la story (chaque son a son
+  // ambiance), avec un dégradé de marque par-dessus pour garder le texte lisible.
+  const artwork = story.cover_url || story.image_url || null;
   const bgStyle: React.CSSProperties = story.theme_color
     ? { background: story.theme_color }
-    : { background: 'linear-gradient(135deg, #1D0F3D 0%, #2d1057 50%, #1E1440 100%)' };
+    : { background: 'linear-gradient(160deg, #2A1852 0%, #1E1440 55%, #150B31 100%)' };
 
   return (
     <AnimatePresence>
@@ -263,7 +270,26 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
             onPointerDown={() => { setIsPaused(true); }}
             onPointerUp={() => { setIsPaused(false); }}
             onPointerLeave={() => { setIsPaused(false); }}
+            /* Glisser vers le bas pour fermer, comme Instagram. */
+            drag="y"
+            dragDirectionLock
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.6 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 120 || info.velocity.y > 700) onClose();
+            }}
           >
+            {/* Pochette floutée : la story prend la couleur du son */}
+            {artwork && (
+              <div className="absolute inset-0 pointer-events-none">
+                <img src={artwork} alt="" className="w-full h-full object-cover opacity-40 blur-2xl scale-125" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/75" />
+              </div>
+            )}
+
+            {/* Poignée de fermeture (affordance du glisser) */}
+            <div className="absolute top-1.5 left-1/2 -translate-x-1/2 z-30 w-10 h-1 rounded-full bg-white/25" />
+
             {/* Progress bars */}
             <div className="absolute top-0 left-0 right-0 flex gap-1 px-3 pt-3 z-30">
               {storyList.map((_: any, i: number) => (

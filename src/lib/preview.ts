@@ -65,6 +65,31 @@ function ensureAudio(): HTMLAudioElement {
   return audio;
 }
 
+// Les navigateurs n'autorisent la lecture programmée qu'après une interaction.
+// Au tout premier geste, on "réveille" l'élément audio avec un silence : les
+// play() déclenchés plus tard (ouverture d'une story, par ex.) passent alors.
+let unlocked = false;
+const SILENCE =
+  'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
+
+function unlockAudio() {
+  if (unlocked) return;
+  unlocked = true;
+  const el = ensureAudio();
+  if (el.src) return;               // déjà utilisé, rien à débloquer
+  el.muted = true;
+  el.src = SILENCE;
+  el.play()
+    .then(() => { el.pause(); el.currentTime = 0; el.muted = false; el.removeAttribute('src'); })
+    .catch(() => { el.muted = false; el.removeAttribute('src'); });
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointerdown', unlockAudio, { once: true });
+  window.addEventListener('touchstart', unlockAudio, { once: true });
+  window.addEventListener('keydown', unlockAudio, { once: true });
+}
+
 /** S'abonner aux changements de lecture (retourne un unsubscribe). */
 export function onPreviewChange(cb: () => void): () => void {
   listeners.add(cb);
