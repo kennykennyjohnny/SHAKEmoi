@@ -15,6 +15,7 @@ import { ShakeDuJourDialog } from './components/ShakeDuJourDialog';
 import { MessagesView } from './components/MessagesView';
 import { TopFriendsView } from './components/TopFriendsView';
 import { SharedPostView } from './components/SharedPostView';
+import { SongSharePage } from './components/SongSharePage';
 
 import { CircleInviteView } from './components/CircleInviteView';
 import { NotificationsDropdown } from './components/NotificationsDropdown';
@@ -30,6 +31,11 @@ function getSharedPostId(): string | null {
   const hash = window.location.hash;
   const m = hash.match(/\/s\/([a-f0-9-]+)/i) || window.location.pathname.match(/\/s\/([a-f0-9-]+)/i);
   return m ? m[1] : null;
+}
+
+function getSharedSongSlug(): string | null {
+  const s = new URLSearchParams(window.location.search).get('song');
+  return s && /^[a-z0-9]{6,}$/i.test(s) ? s : null;
 }
 
 function getCircleInviteId(): string | null {
@@ -219,6 +225,20 @@ export default function App() {
   const sharedPostId = getSharedPostId();
   if (sharedPostId && !currentUser) {
     return <SharedPostView postId={sharedPostId} onJoin={() => { window.location.hash = ''; setShowAuth(true); }} />;
+  }
+
+  // Shared song (partage sans compte) — page son publique
+  const sharedSongSlug = getSharedSongSlug();
+  if (sharedSongSlug && !currentUser) {
+    return (
+      <SongSharePage
+        slug={sharedSongSlug}
+        onJoin={() => {
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setShowAuth(true);
+        }}
+      />
+    );
   }
   if (showOnboarding) return <OnboardingDialog onComplete={handleOnboardingComplete} />;
   if (showAuth) return <AuthDialog onComplete={handleAuthComplete} referrer={referrer} />;
