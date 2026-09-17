@@ -1,17 +1,21 @@
-import { useState, useEffect } from 'react';
-import { Search as SearchIcon, Play, User, Music, Loader2, Sparkles, UserPlus, UserCheck, Send, Share2, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search as SearchIcon, Play, Pause, User, Music, Loader2, Sparkles, UserPlus, UserCheck, Send, Share2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
 import { searchUsers, createPost, searchCircles, joinCircle, joinCircleByCode, followUser, unfollowUser, isFollowing } from '../../lib/database';
+import { resolvePreviewUrl, playPreview, togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
+import { createSongShare } from '../../lib/shares';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
 
 interface SearchViewProps {
   currentUser?: any;
   onRefreshFeed?: () => void;
+  /** Appelé quand une action nécessite un compte (visiteur non connecté). */
+  onRequireAuth?: () => void;
 }
 
-export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
+export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: SearchViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'tracks' | 'users' | 'circles'>('tracks');
   const [circleResults, setCircleResults] = useState<any[]>([]);
@@ -127,12 +131,64 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
     setActiveEmbedId(activeEmbedId === id ? null : id);
   };
 
+  // Extrait 30s : même comportement que le feed et les stories (pas d'embed).
+  const [preview, setPreview] = useState(getPreviewState());
+  useEffect(() => onPreviewChange(() => setPreview(getPreviewState())), []);
+  useEffect(() => () => stopPreview(), []);
+
+  const toggleTrackPreview = async (track: any) => {
+    const key = `search-${track.id}`;
+    if (getPreviewState().key === key) { togglePreview(key); return; }
+    const url = await resolvePreviewUrl(track.title, track.artist || track.artists || '', track.previewUrl);
+    if (url) playPreview(key, url);
+  };
+
+  // Partage : on crée un vrai lien vers la page du son (marche sans compte)
+  // au lieu d'envoyer sur l'accueil du site.
+  const [sharingId, setSharingId] = useState<string | null>(null);
+  const shareTrack = async (track: any) => {
+    setSharingId(track.id);
+    let url = 'https://shakemoi.fr';
+    try {
+      const res = await createSongShare(
+        {
+          source: 'spotify',
+          sourceId: track.id,
+          trackName: track.title,
+          artist: track.artist || track.artists || '',
+          coverUrl: track.coverUrl,
+          previewUrl: track.previewUrl,
+          spotifyUrl: track.spotifyUrl || `https://open.spotify.com/track/${track.id}`,
+        },
+        { userId: currentUser?.id ?? null, channel: 'web-share' }
+      );
+      url = res.url;
+    } catch (e) {
+      console.error('Erreur création du lien de partage:', e);
+    }
+    setSharingId(null);
+
+    const text = `Écoute "${track.title}" de ${track.artist || track.artists} 👇`;
+    if (navigator.share) {
+      try { await navigator.share({ title: `${track.title} - ${track.artist}`, text, url }); } catch {}
+    } else {
+      try { await navigator.clipboard.writeText(`${text} ${url}`); } catch {}
+    }
+  };
+
+  // Mobile : on referme le clavier dès qu'on fait défiler les résultats.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const onScrollDismissKeyboard = () => {
+    const el = document.activeElement as HTMLElement | null;
+    if (el && el.tagName === 'INPUT') el.blur();
+  };
+
   const hasQuery = searchQuery.length >= 2;
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4">
-      {/* Search Bar */}
-      <div className="sticky top-0 z-30 bg-[#1E1440] pb-4 w-full">
+    <div className="w-full max-w-2xl mx-auto flex-1 flex flex-col min-h-0 overflow-hidden">
+      {/* Search Bar — en-tête fixe, ne défile pas avec les résultats */}
+      <div className="flex-shrink-0 z-30 bg-[#1E1440] px-4 pt-4 pb-3 w-full">
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/70" />
           <input
@@ -184,6 +240,13 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
         )}
       </div>
 
+      {/* Résultats — seule zone qui défile (le clavier se referme au scroll) */}
+      <div
+        ref={scrollRef}
+        onScroll={onScrollDismissKeyboard}
+        onTouchMove={onScrollDismissKeyboard}
+        className="flex-1 min-h-0 overflow-y-auto px-4 pb-[4.5rem] lg:pb-4"
+      >
       {loading && (
         <div className="flex justify-center py-8">
           <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
@@ -196,7 +259,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
           {trackResults.length > 0 ? (
             trackResults.map((track, index) => {
               const isEmbedOpen = activeEmbedId === `search-${track.id}`;
-              const embedUrl = `https://open.spotify.com/embed/track/${track.id}`;
+              const isSounding = preview.key === `search-${track.id}` && preview.playing;
 
               return (
                 <motion.div
@@ -213,27 +276,23 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                   <div className="p-3 space-y-2.5">
                     {/* Row 1: cover + info */}
                     <div className="flex items-center gap-3">
-                      <div
-                        className="relative flex-shrink-0 group cursor-pointer"
-                        onClick={() => toggleEmbed(`search-${track.id}`)}
+                      <button
+                        type="button"
+                        className="relative flex-shrink-0 group focus:outline-none rounded-lg"
+                        aria-label={isSounding ? 'Mettre en pause' : 'Écouter un extrait'}
+                        onClick={() => toggleTrackPreview(track)}
                       >
-                        <img src={track.coverUrl} alt={track.title} className={`w-12 h-12 rounded-lg object-cover transition-all ${isEmbedOpen ? 'ring-2 ring-purple-500/50' : ''}`} />
+                        <img src={track.coverUrl} alt={track.title} className={`w-12 h-12 rounded-lg object-cover transition-all ${isSounding ? 'ring-2 ring-purple-500/60' : ''}`} />
                         <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
-                          isEmbedOpen ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
+                          isSounding ? 'bg-black/45 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
                         }`}>
-                          {isEmbedOpen ? (
-                            <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
-                              <div className="flex items-center gap-0.5">
-                                <span className="w-0.5 h-2.5 bg-white rounded-full animate-pulse" />
-                                <span className="w-0.5 h-3.5 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
-                                <span className="w-0.5 h-2 bg-white rounded-full animate-pulse [animation-delay:0.3s]" />
-                              </div>
-                            </div>
+                          {isSounding ? (
+                            <Pause className="w-4 h-4 text-white fill-white" />
                           ) : (
                             <Play className="w-4 h-4 text-white fill-white" />
                           )}
                         </div>
-                      </div>
+                      </button>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm text-white truncate">{track.title}</h3>
                         <p className="text-xs text-purple-300/60 truncate">{track.artists || track.artist}</p>
@@ -246,7 +305,10 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                         <span className="flex-1 text-center text-xs text-fuchsia-400 font-semibold py-1.5">Shaké ✓</span>
                       ) : (
                         <button
-                          onClick={() => setShowCaptionFor(showCaptionFor === track.id ? null : track.id)}
+                          onClick={() => {
+                            if (!currentUser) { onRequireAuth?.(); return; }
+                            setShowCaptionFor(showCaptionFor === track.id ? null : track.id);
+                          }}
                           className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                             showCaptionFor === track.id
                               ? 'bg-fuchsia-500/20 border border-fuchsia-500/40 text-fuchsia-300'
@@ -258,21 +320,14 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                         </button>
                       )}
                       <button
-                        onClick={() => setSendSongTrack(track)}
+                        onClick={() => { if (!currentUser) { onRequireAuth?.(); return; } setSendSongTrack(track); }}
                         className="flex-shrink-0 p-2.5 bg-violet-950/40 hover:bg-purple-800/40 border border-purple-700/30 rounded-xl transition-colors"
                         title="Envoyer à un ami"
                       >
                         <Send className="w-4 h-4 text-purple-300/70" />
                       </button>
                       <button
-                        onClick={async () => {
-                          const url = 'https://shakemoi.fr';
-                          if (navigator.share) {
-                            try { await navigator.share({ title: `${track.title} - ${track.artist}`, text: `Écoute "${track.title}" de ${track.artist} sur SHAKEmoi ! 🎵`, url }); } catch {}
-                          } else {
-                            await navigator.clipboard.writeText(`${track.title} - ${track.artist} 🎵 ${url}`);
-                          }
-                        }}
+                        onClick={() => shareTrack(track)}
                         className="flex-shrink-0 p-2.5 bg-violet-950/40 hover:bg-purple-800/40 border border-purple-700/30 rounded-xl transition-colors"
                         title="Partager"
                       >
@@ -281,31 +336,7 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
                     </div>
                   </div>
 
-                  {/* Spotify Embed */}
-                  <AnimatePresence>
-                    {isEmbedOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="px-3 pb-3">
-                          <iframe
-                            src={`${embedUrl}?theme=0&utm_source=generator`}
-                            width="100%"
-                            height="152"
-                            frameBorder="0"
-                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                            loading="lazy"
-                            className="rounded-xl"
-                            title={`${track.title} - ${track.artist}`}
-                          />
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {/* Pas d'embed Spotify : l'extrait 30s se lance depuis la pochette. */}
 
                   {/* Caption input */}
                   <AnimatePresence>
@@ -473,6 +504,8 @@ export function SearchView({ currentUser, onRefreshFeed }: SearchViewProps) {
           </div>
         </div>
       )}
+
+      </div>
 
       {/* Profile Preview */}
       <AnimatePresence>

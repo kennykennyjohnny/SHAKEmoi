@@ -16,6 +16,29 @@ function writeCache(cache: Record<string, string | null>) {
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch {}
 }
 
+// Beaucoup de titres portent des ornements ("ε. Signaler", "X (feat. Y)")
+// qu'iTunes ne reconnaît pas : on réessaie avec une version nettoyée.
+function cleanTitle(title: string): string {
+  return title
+    .replace(/^\S{1,2}\.\s+/u, '')            // préfixe type "ε. " / "Θ. "
+    .replace(/\s*[([].*?[)\]]\s*/g, ' ')      // (feat. …) / [Remix]
+    .replace(/\s*-\s*(feat|ft)\..*$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+async function searchItunesPreview(term: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&limit=1`
+    );
+    const data = await res.json();
+    return data?.results?.[0]?.previewUrl ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function resolvePreviewUrl(
   trackName: string,
   artist: string,
@@ -26,15 +49,38 @@ export async function resolvePreviewUrl(
   const key = `${trackName}::${artist}`.toLowerCase();
   const cache = readCache();
   if (key in cache) return cache[key];
+
+  let url = await searchItunesPreview(`${trackName} ${artist}`);
+  const cleaned = cleanTitle(trackName);
+  if (!url && cleaned && cleaned !== trackName) {
+    url = await searchItunesPreview(`${cleaned} ${artist}`);
+  }
+  if (!url && cleaned) url = await searchItunesPreview(cleaned);
+
+  cache[key] = url;
+  writeCache(cache);
+  return url;
+}
+
+// Titre d'un son à partir de son id Spotify, via l'oEmbed public (sans clé,
+// CORS ouvert). Sert aux stories créées avant que le titre soit enregistré :
+// sans titre, impossible de retrouver l'extrait ni d'afficher le bon nom.
+const TITLE_CACHE_KEY = 'shakemoi_title_cache_v1';
+
+export async function getSpotifyTrackTitle(trackId: string): Promise<string | null> {
+  if (!trackId) return null;
+  let cache: Record<string, string | null> = {};
+  try { cache = JSON.parse(localStorage.getItem(TITLE_CACHE_KEY) || '{}'); } catch {}
+  if (trackId in cache) return cache[trackId];
   try {
     const res = await fetch(
-      `https://itunes.apple.com/search?term=${encodeURIComponent(`${trackName} ${artist}`)}&media=music&entity=song&limit=1`
+      `https://open.spotify.com/oembed?url=${encodeURIComponent(`https://open.spotify.com/track/${trackId}`)}`
     );
     const data = await res.json();
-    const url: string | null = data?.results?.[0]?.previewUrl ?? null;
-    cache[key] = url;
-    writeCache(cache);
-    return url;
+    const title: string | null = data?.title ?? null;
+    cache[trackId] = title;
+    try { localStorage.setItem(TITLE_CACHE_KEY, JSON.stringify(cache)); } catch {}
+    return title;
   } catch {
     return null;
   }
@@ -45,11 +91,16 @@ export async function resolvePreviewUrl(
 export interface PreviewState {
   key: string | null;   // identifiant du son en cours (id de post / story)
   playing: boolean;     // true seulement si le son sort vraiment
+  muted: boolean;       // lecture en cours mais sans son (stories façon Insta)
 }
 
 let audio: HTMLAudioElement | null = null;
 let currentKey: string | null = null;
 let playing = false;
+let muted = false;
+// Mémorisé tant que la page n'est pas rechargée : une fois le son activé sur
+// une story, les suivantes s'enchaînent avec le son.
+let sessionUnmuted = false;
 const listeners = new Set<() => void>();
 
 function emit() { listeners.forEach(l => l()); }
@@ -97,19 +148,36 @@ export function onPreviewChange(cb: () => void): () => void {
 }
 
 export function getPreviewState(): PreviewState {
-  return { key: currentKey, playing };
+  return { key: currentKey, playing, muted };
+}
+
+/** L'utilisateur a-t-il déjà activé le son des stories dans cette session ? */
+export function isSessionUnmuted(): boolean {
+  return sessionUnmuted;
+}
+
+/** Active/coupe le son ; le choix vaut pour toutes les stories suivantes. */
+export function setMuted(next: boolean) {
+  muted = next;
+  sessionUnmuted = !next;
+  if (audio) audio.muted = next;
+  emit();
 }
 
 export function isPreviewPlaying(key: string): boolean {
   return currentKey === key && playing;
 }
 
-export function playPreview(key: string, url: string) {
+export function playPreview(key: string, url: string, opts?: { muted?: boolean }) {
   const el = ensureAudio();
   if (currentKey !== key || !el.src) {
     el.src = url;
     currentKey = key;
   }
+  // Les stories démarrent en sourdine tant que l'utilisateur n'a pas activé
+  // le son (comportement Instagram) ; ailleurs le son est direct.
+  muted = opts?.muted ?? false;
+  el.muted = muted;
   el.play().catch(() => {
     // Autoplay refusé par le navigateur : l'UI retombe sur "play".
     playing = false;

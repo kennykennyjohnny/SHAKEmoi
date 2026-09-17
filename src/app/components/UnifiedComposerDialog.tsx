@@ -13,7 +13,16 @@ interface UnifiedComposerDialogProps {
   initialComposerType?: 'shake' | 'story';
 }
 
-const THEMES = ['#1D0F3D', '#2A1852', '#4A1B4E'];
+// null = "Auto" : le fond reprend la pochette floutée (rendu le plus réussi).
+const THEMES: (string | null)[] = [
+  null,
+  '#2A1852', // violet profond
+  '#3A1F6E', // violet
+  '#4A1B4E', // prune
+  '#7B2CBF', // violet vif
+  '#E91E80', // rose marque
+  '#150B31', // nuit
+];
 
 type ComposerType = 'shake' | 'story';
 
@@ -463,20 +472,31 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                     <label className="text-xs text-purple-300/70 font-medium">
                       Couleur de fond
                     </label>
-                    <div className="flex gap-2 mt-2">
-                      {THEMES.map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => setThemeColor(color)}
-                          style={{ backgroundColor: color }}
-                          className={`w-12 h-12 rounded-lg border-2 transition-all ${
-                            themeColor === color
-                              ? 'border-yellow-400 shadow-lg shadow-yellow-400/30'
-                              : 'border-purple-600/30'
-                          }`}
-                        />
-                      ))}
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      {THEMES.map((color) => {
+                        const selected = themeColor === color;
+                        return (
+                          <button
+                            key={color ?? 'auto'}
+                            onClick={() => setThemeColor(color)}
+                            title={color ? undefined : 'Auto — couleurs de la pochette'}
+                            style={color ? { backgroundColor: color } : undefined}
+                            className={`w-11 h-11 rounded-lg border-2 transition-all flex items-center justify-center ${
+                              color ? '' : 'bg-gradient-to-br from-fuchsia-500 via-purple-600 to-amber-400'
+                            } ${
+                              selected
+                                ? 'border-white shadow-lg shadow-white/20 scale-105'
+                                : 'border-purple-600/30 hover:border-purple-400/60'
+                            }`}
+                          >
+                            {!color && <span className="text-[9px] font-bold text-white drop-shadow">AUTO</span>}
+                          </button>
+                        );
+                      })}
                     </div>
+                    <p className="text-[11px] text-purple-300/50 mt-1.5">
+                      « Auto » reprend les couleurs de la pochette.
+                    </p>
                   </div>
                 </>
               )}

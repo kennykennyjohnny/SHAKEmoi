@@ -1830,7 +1830,7 @@ export async function createStory(payload: {
   imageUrl?: string | null;
   track?: any;
   text?: string;
-  themeColor?: string;
+  themeColor?: string | null;
   durationDays: 1 | 7 | 30;
   publishAsShake?: boolean;
 }) {
@@ -1845,7 +1845,9 @@ export async function createStory(payload: {
     const storyData: any = {
       user_id: user.id,
       image_url: payload.imageUrl || null,
-      track_name: track?.name || track?.track_name || null,
+      // Le composer fournit `title` : sans lui, le titre était perdu (stories
+      // affichées « Shake éphémère » et son impossible à retrouver).
+      track_name: track?.title || track?.name || track?.track_name || null,
       artist: track?.artist || null,
       cover_url: track?.cover || track?.cover_url || track?.coverUrl || null,
       track_id: track?.id || track?.track_id || null,
@@ -1854,7 +1856,9 @@ export async function createStory(payload: {
         ? `https://open.spotify.com/embed/track/${track.id || track.track_id}`
         : null,
       text: payload.text || null,
-      theme_color: payload.themeColor || '#1D0F3D',
+      // null = fond "Auto" : la pochette floutée colore la story.
+      theme_color: payload.themeColor ?? null,
+      preview_url: track?.previewUrl || track?.preview_url || null,
       duration_days: payload.durationDays,
       expires_at: expiresAt.toISOString(),
     };
@@ -1909,7 +1913,8 @@ export async function getFeedStories(): Promise<Story[]> {
         user:users_profile!stories_user_id_fkey(id, username, display_name, profile_album_cover_url, profile_color)
       `)
       .in('user_id', ids)
-      .gt('expires_at', new Date().toISOString())
+      // Les stories épinglées restent visibles à vie, les autres expirent.
+      .or(`expires_at.gt.${new Date().toISOString()},is_pinned.eq.true`)
       .order('created_at', { ascending: false });
 
     if (error) throw error;

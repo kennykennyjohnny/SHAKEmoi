@@ -64,6 +64,7 @@ export default function App() {
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [notifPostId, setNotifPostId] = useState<string | null>(null);
   const [referrer, setReferrer] = useState<string | null>(null);
+  const [songPageDismissed, setSongPageDismissed] = useState(false);
 
   // Retour système : depuis un autre onglet, on revient au feed avant de
   // pouvoir quitter le site (les vues empilées se ferment en premier).
@@ -109,8 +110,10 @@ export default function App() {
             localStorage.setItem('shakemoi_sdj_shown', todayKey);
             setShowShakeDuJour(true);
           }
-        } else { setShowAuth(true); }
-      } else { setShowAuth(true); }
+        }
+      }
+      // Pas de session : on n'impose plus le mur d'inscription, le visiteur
+      // atterrit sur la recherche/partage de son (voir plus bas).
     };
     checkAuth();
   }, []);
@@ -238,21 +241,64 @@ export default function App() {
     return <SharedPostView postId={sharedPostId} onJoin={() => { window.location.hash = ''; setShowAuth(true); }} />;
   }
 
-  // Shared song (partage sans compte) — page son publique
+  // Page son publique : elle s'ouvre pour tout le monde (connecté ou non),
+  // sinon un lien partagé tombait sur l'accueil quand on avait un compte.
   const sharedSongSlug = getSharedSongSlug();
-  if (sharedSongSlug && !currentUser) {
+  if (sharedSongSlug && !songPageDismissed) {
     return (
       <SongSharePage
         slug={sharedSongSlug}
+        currentUser={currentUser}
         onJoin={() => {
           window.history.replaceState({}, document.title, window.location.pathname);
-          setShowAuth(true);
+          if (currentUser) setSongPageDismissed(true);
+          else setShowAuth(true);
         }}
       />
     );
   }
   if (showOnboarding) return <OnboardingDialog onComplete={handleOnboardingComplete} />;
   if (showAuth) return <AuthDialog onComplete={handleAuthComplete} referrer={referrer} />;
+
+  // Visiteur sans compte : il peut chercher et partager un son librement.
+  // Le compte n'est demandé que pour entrer dans la boucle sociale (shaker,
+  // envoyer, liker) — la découverte, elle, reste ouverte.
+  if (!currentUser) {
+    return (
+      <div className="h-[100dvh] w-screen bg-[#1E1440] text-white overflow-hidden flex flex-col">
+        <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/80 sticky top-0 z-40 flex-shrink-0">
+          <div className="px-4 py-2 flex items-center justify-between gap-3">
+            <img src="/shakemoi-logo.png" alt="SHAKEmoi" className="h-6 object-contain" draggable={false} />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAuth(true)}
+                className="px-3 py-1.5 rounded-full text-sm font-semibold text-purple-200/80 hover:text-white hover:bg-violet-900/30 transition-colors"
+              >
+                Se connecter
+              </button>
+              <button
+                onClick={() => setShowAuth(true)}
+                className="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-bold hover:opacity-90 transition-opacity"
+              >
+                S'inscrire
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div className="px-4 pt-4 flex-shrink-0 text-center">
+          <h1 className="text-lg font-bold">Cherche un son, partage-le à qui tu veux 🎧</h1>
+          <p className="text-xs text-purple-300/60 mt-1">
+            Pas besoin de compte. Crée-en un pour shaker et répondre à tes potes.
+          </p>
+        </div>
+
+        <main className="flex-1 overflow-hidden flex flex-col min-h-0">
+          <SearchView currentUser={null} onRequireAuth={() => setShowAuth(true)} />
+        </main>
+      </div>
+    );
+  }
 
   const renderView = () => {
     switch (currentView) {

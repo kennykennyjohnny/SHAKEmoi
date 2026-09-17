@@ -15,11 +15,53 @@ interface OdesliPlatformLink {
   entityUniqueId: string;
 }
 
+interface OdesliEntity {
+  title?: string;
+  artistName?: string;
+  thumbnailUrl?: string;
+}
+
 interface OdesliResponse {
   entityUniqueId: string;
   userCountry: string;
   pageUrl: string;
   linksByPlatform: Record<string, OdesliPlatformLink>;
+  entitiesByUniqueId?: Record<string, OdesliEntity>;
+}
+
+export interface OdesliInfo extends OdesliLinks {
+  title: string | null;
+  artist: string | null;
+  thumbnail: string | null;
+  spotify_url: string | null;
+}
+
+// Métadonnées + liens d'un son à partir d'une URL (Spotify par ex.).
+// Sert notamment aux stories créées avant que le titre soit enregistré.
+export async function getOdesliInfo(url: string): Promise<OdesliInfo | null> {
+  if (!url) return null;
+  try {
+    const response = await fetch(
+      `https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(url)}`
+    );
+    if (!response.ok) return null;
+    const data: OdesliResponse = await response.json();
+    const entity = data.entitiesByUniqueId?.[data.entityUniqueId];
+    return {
+      title: entity?.title ?? null,
+      artist: entity?.artistName ?? null,
+      thumbnail: entity?.thumbnailUrl ?? null,
+      spotify_url: data.linksByPlatform?.spotify?.url ?? null,
+      apple_music_url: data.linksByPlatform?.appleMusic?.url ?? null,
+      deezer_url: data.linksByPlatform?.deezer?.url ?? null,
+      youtube_url: data.linksByPlatform?.youtube?.url ?? null,
+      youtube_music_url: data.linksByPlatform?.youtubeMusic?.url ?? null,
+      tidal_url: data.linksByPlatform?.tidal?.url ?? null,
+      odesli_page_url: data.pageUrl ?? null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function getOdesliLinks(spotifyUrl: string): Promise<OdesliLinks> {

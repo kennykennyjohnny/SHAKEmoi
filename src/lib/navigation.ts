@@ -15,11 +15,16 @@ const handlers: Handler[] = [];
 let counter = 0;
 let poppingFromBrowser = false;
 let initialized = false;
+// Quand on ferme une vue depuis l'UI, on consomme nous-mêmes l'entrée
+// d'historique : le popstate qui en découle ne doit PAS fermer la vue suivante
+// (sinon fermer une conversation renvoyait aussi à l'accueil).
+let ignoreNextPop = 0;
 
 function init() {
   if (initialized || typeof window === 'undefined') return;
   initialized = true;
   window.addEventListener('popstate', () => {
+    if (ignoreNextPop > 0) { ignoreNextPop--; return; }
     const h = handlers.pop();
     if (!h) return;                    // plus rien à fermer : on laisse sortir
     poppingFromBrowser = true;
@@ -46,8 +51,9 @@ export function useBackHandler(active: boolean, onBack: () => void) {
       const idx = handlers.findIndex(h => h.id === id);
       if (idx === -1) return;          // déjà consommé par le retour système
       handlers.splice(idx, 1);
-      // Fermeture via l'UI : on consomme l'entrée d'historique correspondante.
-      if (!poppingFromBrowser) window.history.back();
+      // Fermeture via l'UI : on consomme l'entrée d'historique correspondante,
+      // en ignorant le popstate qu'elle provoque.
+      if (!poppingFromBrowser) { ignoreNextPop++; window.history.back(); }
     };
   }, [active]);
 }

@@ -1,10 +1,11 @@
-import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Play, Pause } from 'lucide-react';
+import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Play, Pause, ExternalLink, Pin, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers, markStoryAsViewed } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
-import { resolvePreviewUrl, playPreview, stopPreview, togglePreview, onPreviewChange, getPreviewState } from '../../lib/preview';
+import { resolvePreviewUrl, playPreview, stopPreview, togglePreview, onPreviewChange, getPreviewState, getSpotifyTrackTitle, isSessionUnmuted, setMuted } from '../../lib/preview';
 import { useBackHandler } from '../../lib/navigation';
+import { getPlatformUrl } from '../../lib/odesli';
 
 interface StoryViewerDialogProps {
   open: boolean;
@@ -141,27 +142,74 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   // preview.ts). Coupé au changement de story et à la fermeture du viewer.
   const storyKey = story ? `story-${story.id}` : '';
 
+  // Stories créées avant l'enregistrement du titre : on le récupère depuis
+  // l'oEmbed Spotify (sans clé, mis en cache).
+  const [fetchedTitle, setFetchedTitle] = useState<string | null>(null);
   useEffect(() => {
-    if (!open || !story?.track_name) return;
+    setFetchedTitle(null);
+    if (!open || !story?.track_id || story?.track_name) return;
     let cancelled = false;
-    resolvePreviewUrl(story.track_name, story.artist || '', (story as any).preview_url).then(url => {
-      if (!cancelled && url) playPreview(`story-${story.id}`, url);
+    getSpotifyTrackTitle(story.track_id).then(t => { if (!cancelled) setFetchedTitle(t); });
+    return () => { cancelled = true; };
+  }, [story?.id, open]);
+
+  useEffect(() => {
+    if (!open || !story) return;
+    // Le titre peut arriver après coup (résolution Odesli) : on attend de
+    // l'avoir, sinon impossible de retrouver l'extrait.
+    const title = story.track_name || fetchedTitle;
+    if (!title) return;
+    let cancelled = false;
+    resolvePreviewUrl(title, story.artist || '', (story as any).preview_url).then(url => {
+      // Démarrage en sourdine tant que le son n'a pas été activé une fois
+      // (comme Instagram) ; ensuite les stories s'enchaînent avec le son.
+      if (!cancelled && url) playPreview(`story-${story.id}`, url, { muted: !isSessionUnmuted() });
     });
     return () => { cancelled = true; stopPreview(); };
-  }, [story?.id, open]);
+  }, [story?.id, open, fetchedTitle]);
 
   // État réel du son pour afficher le bon bouton play/pause sur la pochette.
   const [preview, setPreview] = useState(getPreviewState());
   useEffect(() => onPreviewChange(() => setPreview(getPreviewState())), []);
   const isSounding = preview.key === storyKey && preview.playing;
 
+  const trackTitle: string | null = story?.track_name || fetchedTitle || null;
+  const trackArtist: string | null = story?.artist || null;
+
+  const openInApp = () => {
+    // song.link redirige vers la plateforme du visiteur sans dépendre d'une API.
+    const links = {
+      spotify_url: story?.spotify_url
+        || (story?.track_id ? `https://open.spotify.com/track/${story.track_id}` : null),
+      apple_music_url: null,
+      deezer_url: null,
+      youtube_url: null,
+      youtube_music_url: null,
+      tidal_url: story?.track_id ? null : null,
+      odesli_page_url: story?.track_id ? `https://song.link/s/${story.track_id}` : null,
+    };
+    const url = getPlatformUrl(links, currentUser?.musicService || 'spotify');
+    if (url) window.open(url, '_blank');
+  };
+
+  const [pinned, setPinned] = useState<boolean>(!!story?.is_pinned);
+  useEffect(() => { setPinned(!!story?.is_pinned); }, [story?.id]);
+
+  const togglePin = async () => {
+    if (!story || !isOwner) return;
+    const next = !pinned;
+    setPinned(next);
+    const { error } = await supabase.from('stories').update({ is_pinned: next }).eq('id', story.id);
+    if (error) { setPinned(!next); console.error('Erreur épinglage story:', error); }
+  };
+
   // Retour système : ferme la story au lieu de quitter le site.
   useBackHandler(open, onClose);
 
   const toggleStorySound = async () => {
-    if (!story?.track_name) return;
+    if (!trackTitle) return;
     if (getPreviewState().key === storyKey) { togglePreview(storyKey); return; }
-    const url = await resolvePreviewUrl(story.track_name, story.artist || '', (story as any).preview_url);
+    const url = await resolvePreviewUrl(trackTitle, trackArtist || '', (story as any).preview_url);
     if (url) playPreview(storyKey, url);
   };
 
@@ -325,8 +373,30 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
+                {/* Son : coupé au départ (comme Insta), activé d'un tap.
+                    Le choix vaut pour les stories suivantes. */}
+                {trackTitle && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setMuted(!preview.muted); }}
+                    title={preview.muted ? 'Activer le son' : 'Couper le son'}
+                    className={`p-2 rounded-full transition-colors ${
+                      preview.muted
+                        ? 'bg-white/90 text-[#1E1440]'
+                        : 'bg-black/30 text-white/80 hover:bg-white/10'
+                    }`}
+                  >
+                    {preview.muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  </button>
+                )}
                 {isOwner && (
                   <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); togglePin(); }}
+                      title={pinned ? 'Ne plus épingler sur mon profil' : 'Épingler à vie sur mon profil'}
+                      className={`p-2 rounded-full transition-colors ${pinned ? 'bg-fuchsia-500/30 text-fuchsia-300' : 'bg-black/30 text-white/70 hover:text-white hover:bg-white/10'}`}
+                    >
+                      <Pin className={`w-4 h-4 ${pinned ? 'fill-current' : ''}`} />
+                    </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleViewers(); }}
                       className={`p-2 rounded-full transition-colors ${showViewers ? 'bg-white/20 text-white' : 'bg-black/30 text-white/70 hover:text-white hover:bg-white/10'}`}
@@ -380,10 +450,10 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                     >
                       <img
                         src={story.cover_url}
-                        alt={story.track_name || ''}
+                        alt={trackTitle || ''}
                         className={`w-36 h-36 rounded-2xl object-cover shadow-2xl ring-4 transition-all ${isSounding ? 'ring-fuchsia-500/40' : 'ring-white/10'}`}
                       />
-                      {story.track_name && (
+                      {trackTitle && (
                         <span className={`absolute inset-0 flex items-center justify-center rounded-2xl transition-opacity ${
                           isSounding ? 'bg-black/30 opacity-0 group-hover:opacity-100' : 'bg-black/40 opacity-100'
                         }`}>
@@ -408,17 +478,29 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                       )}
                     </button>
                   )}
-                  <p className="text-2xl font-bold text-white leading-tight drop-shadow-lg">
-                    {story.track_name || 'Shake éphémère'}
+                  <p className="text-2xl font-bold text-white leading-tight drop-shadow-lg px-2">
+                    {trackTitle || 'Shake éphémère'}
                   </p>
-                  {story.artist && (
-                    <p className="text-sm text-white/70 mt-1.5">{story.artist}</p>
+                  {trackArtist && (
+                    <p className="text-sm text-white/70 mt-1.5">{trackArtist}</p>
+                  )}
+
+                  {/* Ouvrir le son dans l'appli de l'utilisateur */}
+                  {(trackTitle || story.track_id) && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); openInApp(); }}
+                      className="relative z-20 mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 text-xs font-semibold text-white transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      Ouvrir dans mon appli
+                    </button>
                   )}
                 </div>
               )}
 
               {story.text && (
-                <p className="text-sm text-white/90 text-center leading-relaxed bg-black/35 rounded-2xl px-4 py-3 backdrop-blur-sm w-full">
+                <p className="mt-6 text-sm text-white/90 text-center leading-relaxed bg-black/35 rounded-2xl px-4 py-3 backdrop-blur-sm w-full">
                   {story.text}
                 </p>
               )}

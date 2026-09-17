@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Play, Pause, Loader2, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getPlatformUrl } from '../../lib/odesli';
+import { resolvePreviewUrl, playPreview, togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
 import {
   getSharedSong,
   incrementShareViews,
@@ -13,6 +14,8 @@ import { Logo } from './Logo';
 interface Props {
   slug: string;
   onJoin: () => void;
+  /** Si connecté, on propose de revenir dans l'app au lieu de s'inscrire. */
+  currentUser?: any;
 }
 
 // Boutons plateformes (mêmes logos que SharedPostView, factorisés ici).
@@ -31,12 +34,10 @@ const PLATFORMS = [
   ) },
 ];
 
-export function SongSharePage({ slug, onJoin }: Props) {
+export function SongSharePage({ slug, onJoin, currentUser }: Props) {
   const [song, setSong] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [playing, setPlaying] = useState(false);
   const [preferred, setPreferred] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     setPreferred(getPreferredPlatform());
@@ -51,20 +52,27 @@ export function SongSharePage({ slug, onJoin }: Props) {
     return () => { cancelled = true; };
   }, [slug]);
 
-  // Astuce 1 clic : dès que le son est chargé, on tente de lancer l'extrait 30s.
-  // Si le navigateur bloque l'autoplay, le bouton lecture prend le relais.
+  // Même lecteur que le reste de l'app : l'extrait vient du preview stocké ou,
+  // à défaut, d'iTunes — donc ça marche aussi pour les sons non-Spotify.
+  const previewKey = `share-${slug}`;
+  const [preview, setPreview] = useState(getPreviewState());
+  useEffect(() => onPreviewChange(() => setPreview(getPreviewState())), []);
+  useEffect(() => () => stopPreview(), []);
+  const playing = preview.key === previewKey && preview.playing;
+
   useEffect(() => {
-    if (!song?.preview_url || !audioRef.current) return;
-    const el = audioRef.current;
-    el.volume = 0.9;
-    el.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    if (!song) return;
+    let cancelled = false;
+    resolvePreviewUrl(song.track_name, song.artist || '', song.preview_url).then(url => {
+      if (!cancelled && url) playPreview(previewKey, url);
+    });
+    return () => { cancelled = true; };
   }, [song]);
 
-  const togglePlay = () => {
-    const el = audioRef.current;
-    if (!el) return;
-    if (el.paused) { el.play().then(() => setPlaying(true)).catch(() => {}); }
-    else { el.pause(); setPlaying(false); }
+  const togglePlay = async () => {
+    if (getPreviewState().key === previewKey) { togglePreview(previewKey); return; }
+    const url = await resolvePreviewUrl(song.track_name, song.artist || '', song.preview_url);
+    if (url) playPreview(previewKey, url);
   };
 
   const openPlatform = (platform: string) => {
@@ -112,14 +120,6 @@ export function SongSharePage({ slug, onJoin }: Props) {
         </div>
       )}
 
-      {song.preview_url && (
-        <audio
-          ref={audioRef}
-          src={song.preview_url}
-          onEnded={() => setPlaying(false)}
-          preload="auto"
-        />
-      )}
 
       <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm relative z-10">
         <div className="flex justify-center mb-6">
@@ -181,16 +181,23 @@ export function SongSharePage({ slug, onJoin }: Props) {
         {/* Mur re-shake = inscription (capture l'intention) */}
         <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl p-4 text-center">
           <p className="text-sm text-purple-200/80 mb-3 flex items-center justify-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-yellow-400" /> Tu kiffes ? Re-shake-le à tes potes
+            <Sparkles className="w-4 h-4 text-yellow-400" />
+            {currentUser ? 'Envie de le shaker à ton tour ?' : 'Tu kiffes ? Re-shake-le à tes potes'}
           </p>
-          <div className="flex gap-3">
-            <button onClick={onJoin} className="flex-1 py-3 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-xl font-bold hover:opacity-90 text-sm">
-              Inscription
+          {currentUser ? (
+            <button onClick={onJoin} className="w-full py-3 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-xl font-bold hover:opacity-90 text-sm">
+              Continuer sur SHAKEmoi
             </button>
-            <button onClick={onJoin} className="flex-1 py-3 bg-purple-950/60 border border-purple-700/40 rounded-xl font-bold hover:bg-purple-900/50 transition-colors text-sm">
-              Connexion
-            </button>
-          </div>
+          ) : (
+            <div className="flex gap-3">
+              <button onClick={onJoin} className="flex-1 py-3 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-xl font-bold hover:opacity-90 text-sm">
+                Inscription
+              </button>
+              <button onClick={onJoin} className="flex-1 py-3 bg-purple-950/60 border border-purple-700/40 rounded-xl font-bold hover:bg-purple-900/50 transition-colors text-sm">
+                Connexion
+              </button>
+            </div>
+          )}
         </div>
 
         <p className="text-center text-[10px] text-purple-500/30 mt-6">shakemoi.fr</p>
