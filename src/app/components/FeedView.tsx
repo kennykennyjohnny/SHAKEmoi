@@ -1052,7 +1052,17 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   if (!groups.has(uid)) groups.set(uid, []);
                   groups.get(uid)!.push(story);
                 }
-                return Array.from(groups.values()).map((group: any[]) => {
+                // Ordre : les non-vues d'abord (comme Instagram), puis les
+                // plus récentes. Sinon une story déjà vue restait en tête.
+                const ordered = Array.from(groups.values()).sort((a: any[], b: any[]) => {
+                  const aUnseen = a.some((s: any) => !storyViewedMap[s.id]);
+                  const bUnseen = b.some((s: any) => !storyViewedMap[s.id]);
+                  if (aUnseen !== bUnseen) return aUnseen ? -1 : 1;
+                  const aLast = Math.max(...a.map((s: any) => new Date(s.created_at).getTime()));
+                  const bLast = Math.max(...b.map((s: any) => new Date(s.created_at).getTime()));
+                  return bLast - aLast;
+                });
+                return ordered.map((group: any[]) => {
                   const firstStory = group[0];
                   const user = firstStory.user;
                   const allViewed = group.every((s: any) => !!storyViewedMap[s.id]);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Play, Pause, Loader2, Sparkles } from 'lucide-react';
+import { Play, Pause, Loader2, Sparkles, Search } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getPlatformUrl } from '../../lib/odesli';
 import { resolvePreviewUrl, playPreview, togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
@@ -16,6 +16,8 @@ interface Props {
   onJoin: () => void;
   /** Si connecté, on propose de revenir dans l'app au lieu de s'inscrire. */
   currentUser?: any;
+  /** Aller chercher un son à partager à son tour (relance la boucle). */
+  onSearch?: () => void;
 }
 
 // Boutons plateformes (mêmes logos que SharedPostView, factorisés ici).
@@ -34,7 +36,7 @@ const PLATFORMS = [
   ) },
 ];
 
-export function SongSharePage({ slug, onJoin, currentUser }: Props) {
+export function SongSharePage({ slug, onJoin, currentUser, onSearch }: Props) {
   const [song, setSong] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [preferred, setPreferred] = useState<string | null>(null);
@@ -199,6 +201,17 @@ export function SongSharePage({ slug, onJoin, currentUser }: Props) {
             </div>
           )}
         </div>
+
+        {/* Relance la boucle : chercher son propre son et le partager */}
+        {onSearch && (
+          <button
+            onClick={onSearch}
+            className="mt-3 w-full py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+          >
+            <Search className="w-4 h-4" />
+            Chercher un son à partager
+          </button>
+        )}
 
         <p className="text-center text-[10px] text-purple-500/30 mt-6">shakemoi.fr</p>
       </motion.div>

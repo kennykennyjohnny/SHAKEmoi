@@ -27,13 +27,45 @@ function cleanTitle(title: string): string {
     .trim();
 }
 
-async function searchItunesPreview(term: string): Promise<string | null> {
+// Comparaison tolérante (accents, ponctuation, casse) pour vérifier qu'iTunes
+// nous renvoie bien LE bon morceau.
+function norm(s: string): string {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function looksLikeSame(resultTitle: string, resultArtist: string, title: string, artist: string): boolean {
+  const rt = norm(resultTitle);
+  const ra = norm(resultArtist);
+  const wantT = norm(cleanTitle(title));
+  const wantA = norm(artist);
+  if (!rt || !wantT) return false;
+  // L'artiste doit correspondre (sauf si on ne le connaît pas).
+  const artistOk = !wantA || ra.includes(wantA) || wantA.includes(ra);
+  const titleOk = rt === wantT || rt.includes(wantT) || wantT.includes(rt);
+  return artistOk && titleOk;
+}
+
+// Renvoie l'extrait SEULEMENT si le résultat correspond vraiment au morceau :
+// un mauvais son est pire que pas de son.
+async function searchItunesPreview(
+  term: string,
+  title: string,
+  artist: string,
+  country = 'FR'
+): Promise<string | null> {
   try {
     const res = await fetch(
-      `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&limit=1`
+      `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&limit=8&country=${country}`
     );
     const data = await res.json();
-    return data?.results?.[0]?.previewUrl ?? null;
+    const results: any[] = data?.results ?? [];
+    const match = results.find(r => r.previewUrl && looksLikeSame(r.trackName, r.artistName, title, artist));
+    return match?.previewUrl ?? null;
   } catch {
     return null;
   }
@@ -50,12 +82,15 @@ export async function resolvePreviewUrl(
   const cache = readCache();
   if (key in cache) return cache[key];
 
-  let url = await searchItunesPreview(`${trackName} ${artist}`);
+  // Catalogue français d'abord (l'app est FR), puis international.
+  let url = await searchItunesPreview(`${trackName} ${artist}`, trackName, artist);
   const cleaned = cleanTitle(trackName);
   if (!url && cleaned && cleaned !== trackName) {
-    url = await searchItunesPreview(`${cleaned} ${artist}`);
+    url = await searchItunesPreview(`${cleaned} ${artist}`, trackName, artist);
   }
-  if (!url && cleaned) url = await searchItunesPreview(cleaned);
+  if (!url) {
+    url = await searchItunesPreview(`${cleaned || trackName} ${artist}`, trackName, artist, 'US');
+  }
 
   cache[key] = url;
   writeCache(cache);

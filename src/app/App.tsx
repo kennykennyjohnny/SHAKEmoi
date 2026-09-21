@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, Bell } from 'lucide-react';
+import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, Bell, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
@@ -254,11 +254,18 @@ export default function App() {
           if (currentUser) setSongPageDismissed(true);
           else setShowAuth(true);
         }}
+        onSearch={() => {
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setSongPageDismissed(true);
+          setCurrentView('search');
+        }}
       />
     );
   }
   if (showOnboarding) return <OnboardingDialog onComplete={handleOnboardingComplete} />;
-  if (showAuth) return <AuthDialog onComplete={handleAuthComplete} referrer={referrer} />;
+  // Connecté (ou déconnexion en cours) : l'auth prend tout l'écran.
+  // Pour un visiteur, elle s'ouvre en popup par-dessus la recherche (plus bas).
+  if (showAuth && currentUser) return <AuthDialog onComplete={handleAuthComplete} referrer={referrer} />;
 
   // Visiteur sans compte : il peut chercher et partager un son librement.
   // Le compte n'est demandé que pour entrer dans la boucle sociale (shaker,
@@ -296,6 +303,31 @@ export default function App() {
         <main className="flex-1 overflow-hidden flex flex-col min-h-0">
           <SearchView currentUser={null} onRequireAuth={() => setShowAuth(true)} />
         </main>
+
+        {/* Connexion en popup : on revient à la recherche d'un seul geste,
+            sans perdre ce qu'on était en train de faire. */}
+        <AnimatePresence>
+          {showAuth && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm overflow-y-auto"
+              onClick={() => setShowAuth(false)}
+            >
+              <button
+                onClick={() => setShowAuth(false)}
+                aria-label="Fermer"
+                className="fixed top-4 right-4 z-[80] p-2.5 rounded-full bg-black/50 hover:bg-white/15 text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <div onClick={(e) => e.stopPropagation()}>
+                <AuthDialog onComplete={handleAuthComplete} referrer={referrer} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
