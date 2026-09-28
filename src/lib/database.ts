@@ -1913,9 +1913,11 @@ export async function getFeedStories(): Promise<Story[]> {
         user:users_profile!stories_user_id_fkey(id, username, display_name, profile_album_cover_url, profile_color)
       `)
       .in('user_id', ids)
-      // Les stories épinglées restent visibles à vie, les autres expirent.
-      .or(`expires_at.gt.${new Date().toISOString()},is_pinned.eq.true`)
-      .order('created_at', { ascending: false });
+      // Barre des stories : seulement les stories en cours. Les épinglées
+      // vivent sur le profil (« À la une »), comme sur Instagram.
+      .gt('expires_at', new Date().toISOString())
+      // Ordre chronologique : la plus ancienne d'abord, la dernière publiée à la fin.
+      .order('created_at', { ascending: true });
 
     if (error) throw error;
     return data || [];
@@ -1925,14 +1927,18 @@ export async function getFeedStories(): Promise<Story[]> {
   }
 }
 
+// Profil de l'auteur joint à chaque story : sans lui, l'en-tête de la story
+// (photo + pseudo) restait vide quand on l'ouvrait depuis un profil.
+const STORY_WITH_USER = `*, user:users_profile!stories_user_id_fkey(id, username, display_name, profile_album_cover_url, profile_color)`;
+
 export async function getUserActiveStories(userId: string): Promise<Story[]> {
   try {
     const { data, error } = await supabase
       .from('stories')
-      .select('*')
+      .select(STORY_WITH_USER)
       .eq('user_id', userId)
       .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: true });
 
     if (error) throw error;
     return data || [];
@@ -1940,6 +1946,47 @@ export async function getUserActiveStories(userId: string): Promise<Story[]> {
     console.error('Error getting user stories:', error);
     return [];
   }
+}
+
+/** Stories épinglées sur le profil (« À la une »), de la plus ancienne à la plus récente. */
+export async function getUserPinnedStories(userId: string): Promise<Story[]> {
+  try {
+    const { data, error } = await supabase
+      .from('stories')
+      .select(STORY_WITH_USER)
+      .eq('user_id', userId)
+      .eq('is_pinned', true)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting pinned stories:', error);
+    return [];
+  }
+}
+
+/** Toutes ses stories, expirées comprises (archives), les plus récentes d'abord. */
+export async function getMyStoryArchive(): Promise<Story[]> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return [];
+    const { data, error } = await supabase
+      .from('stories')
+      .select(STORY_WITH_USER)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting story archive:', error);
+    return [];
+  }
+}
+
+export async function setStoryPinned(storyId: string, pinned: boolean): Promise<boolean> {
+  const { error } = await supabase.from('stories').update({ is_pinned: pinned }).eq('id', storyId);
+  if (error) console.error('Erreur épinglage story:', error);
+  return !error;
 }
 
 export async function hasViewedStory(storyId: string): Promise<boolean> {

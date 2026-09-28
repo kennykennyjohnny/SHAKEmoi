@@ -78,13 +78,13 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
   };
 
   if (loading) return (
-    <div className="h-screen bg-[#1E1440] flex items-center justify-center">
+    <div className="h-[100dvh] bg-[#1E1440] flex items-center justify-center">
       <Loader2 className="w-8 h-8 text-fuchsia-500 animate-spin" />
     </div>
   );
 
   if (!circle) return (
-    <div className="h-screen bg-[#1E1440] flex flex-col items-center justify-center gap-4 p-4">
+    <div className="h-[100dvh] bg-[#1E1440] flex flex-col items-center justify-center gap-4 p-4">
       <p className="text-purple-300/60 text-center">Ce cercle n'existe pas ou a été supprimé</p>
       <button onClick={() => { onJoin(); }} className="px-5 py-2.5 bg-purple-600/30 rounded-full text-sm text-purple-300 hover:bg-purple-600/40 transition-colors">
         Retour à l'accueil
@@ -96,7 +96,7 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
   const creator = members.find((m: any) => m.id === circle.created_by);
 
   return (
-    <div className="min-h-screen bg-[#1E1440] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-[100dvh] bg-[#1E1440] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[120px]" />

@@ -161,7 +161,7 @@ export function CreateShakeDialog({ currentUser, onClose, circleId }: CreateShak
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-[#1D0F3D] rounded-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col border border-purple-800/20"
+          className="bg-[#1D0F3D] rounded-2xl w-full max-w-lg max-h-[85dvh] overflow-hidden flex flex-col border border-purple-800/20"
         >
           {/* Header */}
           <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">

@@ -8,17 +8,32 @@ import { createSongShare } from '../../lib/shares';
 import { SongShareSheet } from './SongShareSheet';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
+import { setPendingAction, type PendingAction } from '../../lib/pendingAction';
 
 interface SearchViewProps {
   currentUser?: any;
   onRefreshFeed?: () => void;
   /** Appelé quand une action nécessite un compte (visiteur non connecté). */
-  onRequireAuth?: () => void;
+  /** Visiteur : l'action demande un compte (connexion / inscription). */
+  onRequireAuth?: (action?: PendingAction) => void;
 }
 
 export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: SearchViewProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'tracks' | 'users' | 'circles'>('tracks');
+  const saved = (() => {
+    try { return JSON.parse(sessionStorage.getItem('shakemoi_search') || 'null'); } catch { return null; }
+  })();
+  const [searchQuery, setSearchQuery] = useState<string>(saved?.query || '');
+  const [activeTab, setActiveTab] = useState<'tracks' | 'users' | 'circles'>(saved?.tab || 'tracks');
+  useEffect(() => {
+    try { sessionStorage.setItem('shakemoi_search', JSON.stringify({ query: searchQuery, tab: activeTab })); } catch { /* ignoré */ }
+  }, [searchQuery, activeTab]);
+
+  // Sans compte : on retient ce que la personne voulait faire, on ouvre la
+  // connexion, et l'action se termine toute seule une fois connecté.
+  const requireAuth = (action: PendingAction) => {
+    setPendingAction(action);
+    onRequireAuth?.(action);
+  };
   const [circleResults, setCircleResults] = useState<any[]>([]);
   const [joinedCircleIds, setJoinedCircleIds] = useState<Set<string>>(new Set());
   const [trackResults, setTrackResults] = useState<any[]>([]);
@@ -112,6 +127,11 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
   };
 
   const handleToggleFollow = async (userId: string) => {
+    if (!currentUser) {
+      const u = userResults.find((x: any) => x.id === userId);
+      requireAuth({ type: 'follow', userId, username: u?.username || '' });
+      return;
+    }
     setFollowLoading(userId);
     try {
       if (followingMap[userId]) {
@@ -288,20 +308,33 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                       </div>
                     </div>
 
-                    {/* Row 2: action buttons */}
+                    {/* Row 2: action buttons — Partager aussi grand et clair que Shake */}
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setShareTrackId(track.id)}
+                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          currentUser
+                            ? 'bg-white/10 border border-white/15 text-white hover:bg-white/15'
+                            : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 shadow-lg shadow-fuchsia-600/20'
+                        }`}
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                        Partager
+                      </button>
                       {shakedIds.has(track.id) ? (
-                        <span className="flex-1 text-center text-xs text-fuchsia-400 font-semibold py-1.5">Shaké ✓</span>
+                        <span className="flex-1 text-center text-xs text-fuchsia-400 font-semibold py-2.5">Shaké ✓</span>
                       ) : (
                         <button
                           onClick={() => {
-                            if (!currentUser) { onRequireAuth?.(); return; }
+                            if (!currentUser) { requireAuth({ type: 'shake', title: track.title }); return; }
                             setShowCaptionFor(showCaptionFor === track.id ? null : track.id);
                           }}
-                          className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                             showCaptionFor === track.id
                               ? 'bg-fuchsia-500/20 border border-fuchsia-500/40 text-fuchsia-300'
-                              : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90'
+                              : currentUser
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90'
+                                : 'bg-white/10 border border-white/15 text-white hover:bg-white/15'
                           }`}
                         >
                           <Sparkles className="w-3.5 h-3.5" />
@@ -309,9 +342,10 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                         </button>
                       )}
                       <button
-                        onClick={() => { if (!currentUser) { onRequireAuth?.(); return; } setSendSongTrack(track); }}
+                        onClick={() => { if (!currentUser) { requireAuth({ type: 'send', title: track.title }); return; } setSendSongTrack(track); }}
                         className="flex-shrink-0 p-2.5 bg-violet-950/40 hover:bg-purple-800/40 border border-purple-700/30 rounded-xl transition-colors"
                         title="Envoyer à un ami"
+                        aria-label="Envoyer à un ami"
                       >
                         <Send className="w-4 h-4 text-purple-300/70" />
                       </button>
@@ -323,13 +357,6 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                           onClose={() => setShareTrackId(null)}
                         />
                       )}
-                      <button
-                        onClick={() => setShareTrackId(track.id)}
-                        className="flex-shrink-0 p-2.5 bg-violet-950/40 hover:bg-purple-800/40 border border-purple-700/30 rounded-xl transition-colors"
-                        title="Partager"
-                      >
-                        <Share2 className="w-4 h-4 text-purple-300/70" />
-                      </button>
                     </div>
                   </div>
 
@@ -511,6 +538,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
             userId={profilePreview.userId}
             username={profilePreview.username}
             onClose={() => setProfilePreview(null)}
+            onRequireAuth={currentUser ? undefined : (u) => { setProfilePreview(null); requireAuth({ type: 'follow', userId: u.id, username: u.username }); }}
           />
         )}
       </AnimatePresence>

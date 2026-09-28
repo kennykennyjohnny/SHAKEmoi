@@ -120,7 +120,7 @@ export function StoryComposerDialog({ open, onClose, onCreated, currentUser }: S
               <button onClick={onClose} className="p-1.5 hover:bg-purple-900/30 rounded-full"><X className="w-4 h-4 text-purple-300/70" /></button>
             </div>
 
-            <div className="p-4 space-y-3 max-h-[75vh] overflow-y-auto">
+            <div className="p-4 space-y-3 max-h-[75dvh] overflow-y-auto">
               <button onClick={() => fileInputRef.current?.click()} className="w-full rounded-xl border border-purple-700/30 bg-purple-950/30 p-3 text-left hover:bg-purple-900/30 transition-colors flex items-center gap-2">
                 <ImageIcon className="w-4 h-4 text-purple-300/70" />
                 <span className="text-sm">Ajouter une photo</span>

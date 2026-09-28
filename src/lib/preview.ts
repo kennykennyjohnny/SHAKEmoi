@@ -7,7 +7,10 @@
 // toujours le bon bouton play/pause — l'embed Spotify, lui, a son propre état
 // qu'on ne peut pas piloter depuis la page.
 
-const CACHE_KEY = 'shakemoi_preview_cache_v1';
+import { resolveLinks } from './platforms';
+
+// v2 : les anciens « pas d'extrait » (null) sont réessayés avec la nouvelle source.
+const CACHE_KEY = 'shakemoi_preview_cache_v2';
 
 function readCache(): Record<string, string | null> {
   try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}'); } catch { return {}; }
@@ -92,6 +95,15 @@ export async function resolvePreviewUrl(
     url = await searchItunesPreview(`${cleaned || trackName} ${artist}`, trackName, artist, 'US');
   }
 
+  // Dernier recours : l'extrait Spotify ou Deezer trouvé par /api/links.
+  if (!url) {
+    const resolved = await resolveLinks({ title: trackName, artist }).catch(() => null);
+    const fallback = resolved?.preview ?? null;
+    // Extrait Deezer = URL signée qui expire : utilisé, mais pas mis en cache.
+    if (fallback && fallback.includes('dzcdn.net')) return fallback;
+    url = fallback;
+  }
+
   cache[key] = url;
   writeCache(cache);
   return url;
@@ -134,9 +146,9 @@ let currentKey: string | null = null;
 let currentUrl: string | null = null;   // extrait réellement chargé pour currentKey
 let playing = false;
 let muted = false;
-// Mémorisé tant que la page n'est pas rechargée : une fois le son activé sur
-// une story, les suivantes s'enchaînent avec le son.
-let sessionUnmuted = false;
+// Son des stories : actif par défaut (c'est une app de musique). Si on le
+// coupe, le choix vaut pour les stories suivantes jusqu'au rechargement.
+let sessionUnmuted = true;
 const listeners = new Set<() => void>();
 
 function emit() { listeners.forEach(l => l()); }

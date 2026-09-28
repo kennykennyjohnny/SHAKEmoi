@@ -15,6 +15,8 @@ import { ShakeDuJourDialog } from './components/ShakeDuJourDialog';
 import { MessagesView } from './components/MessagesView';
 import { TopFriendsView } from './components/TopFriendsView';
 import { SongLanding } from './components/SongLanding';
+import { PrivacyPage } from './components/PrivacyPage';
+import { takePendingAction, pendingActionReason } from '../lib/pendingAction';
 
 import { CircleInviteView } from './components/CircleInviteView';
 import { NotificationsDropdown } from './components/NotificationsDropdown';
@@ -55,6 +57,12 @@ export default function App() {
   const [route, setRoute] = useState<Route | null>(() =>
     parseRoute(window.location.pathname, window.location.search, window.location.hash)
   );
+  // Pourquoi on demande de se connecter (ex. « pour suivre @x »), affiché
+  // au-dessus du formulaire dans la popup des visiteurs.
+  const [authReason, setAuthReason] = useState<string | null>(null);
+
+  // Page publique /confidentialite (politique de confidentialité).
+  const [showPrivacy, setShowPrivacy] = useState(() => /^\/confidentialite\/?$/.test(window.location.pathname));
   const leaveRoute = () => {
     window.history.replaceState({}, document.title, '/');
     setRoute(null);
@@ -206,6 +214,17 @@ export default function App() {
       setRoute({ type: 'circle', id: pendingCircle });
     }
     if (!localStorage.getItem('shakemoi_onboarding')) setShowOnboarding(true);
+    setAuthReason(null);
+
+    // Action lancée sans compte (suivre, shaker, envoyer) : on la termine et
+    // on revient sur la recherche en cours, pas sur l'accueil.
+    const pending = takePendingAction();
+    if (pending) {
+      if (pending.type === 'follow' && pending.userId && pending.userId !== user.id) {
+        try { await followUser(pending.userId); } catch (err) { console.error('Suivi après connexion :', err); }
+      }
+      setCurrentView('search');
+    }
 
     // Auto-follow referrer if one exists
     const ref = localStorage.getItem('shakemoi_referrer');
@@ -241,6 +260,10 @@ export default function App() {
       }
     } catch {}
   };
+
+  if (showPrivacy) {
+    return <PrivacyPage onBack={() => { window.history.replaceState({}, document.title, '/'); setShowPrivacy(false); }} />;
+  }
 
   // Invitation dans un cercle.
   if (route?.type === 'circle') {
@@ -325,7 +348,10 @@ export default function App() {
         </div>
 
         <main className="flex-1 overflow-hidden flex flex-col min-h-0">
-          <SearchView currentUser={null} onRequireAuth={() => setShowAuth(true)} />
+          <SearchView
+            currentUser={null}
+            onRequireAuth={(action) => { setAuthReason(action ? pendingActionReason(action) : null); setShowAuth(true); }}
+          />
         </main>
 
         {/* Connexion en popup : on revient à la recherche d'un seul geste,
@@ -337,16 +363,23 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm overflow-y-auto"
-              onClick={() => setShowAuth(false)}
+              onClick={() => { setShowAuth(false); setAuthReason(null); takePendingAction(); }}
             >
               <button
-                onClick={() => setShowAuth(false)}
+                onClick={() => { setShowAuth(false); setAuthReason(null); takePendingAction(); }}
                 aria-label="Fermer"
                 className="fixed top-4 right-4 z-[80] p-2.5 rounded-full bg-black/50 hover:bg-white/15 text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
               <div onClick={(e) => e.stopPropagation()}>
+                {authReason && (
+                  <div className="relative z-[75] mx-auto max-w-md px-4 pt-[max(1rem,env(safe-area-inset-top))]">
+                    <p className="mt-12 rounded-2xl bg-gradient-to-r from-purple-600/90 to-pink-600/90 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg">
+                      {authReason}
+                    </p>
+                  </div>
+                )}
                 <AuthDialog onComplete={handleAuthComplete} referrer={referrer} />
               </div>
             </motion.div>
@@ -455,8 +488,8 @@ export default function App() {
         </main>
 
         {/* Bottom Navigation Mobile — Feed, Top, Search, DMs, Profile */}
-        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/95 z-50">
-          <div className="px-4 py-2.5 flex items-center justify-around max-w-lg mx-auto">
+        <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/95 z-40">
+          <div className="px-4 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] flex items-center justify-around max-w-lg mx-auto">
             {([
               { view: 'feed' as View, icon: Home, label: 'Accueil' },
               { view: 'top' as View, icon: TrendingUp, label: 'TOP' },

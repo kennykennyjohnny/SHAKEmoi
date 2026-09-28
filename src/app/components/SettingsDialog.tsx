@@ -1,4 +1,4 @@
-import { X, Music2, Check, LogOut, User, Bell, Info, BellRing } from 'lucide-react';
+import { X, Music2, Check, LogOut, User, Bell, Info, BellRing, Shield, Trash2, ChevronRight, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 
@@ -115,6 +115,30 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
     }
   };
 
+  // Suppression du compte : double confirmation (on tape SUPPRIMER), puis
+  // tout part côté serveur (fonction delete_my_account) et on se déconnecte.
+  const [deleting, setDeleting] = useState(false);
+  const handleDeleteAccount = async () => {
+    const typed = prompt(
+      'Supprimer ton compte efface définitivement ton profil, tes shakes, stories, messages et abonnements.\n\nTape SUPPRIMER pour confirmer.'
+    );
+    if (typed?.trim().toUpperCase() !== 'SUPPRIMER') return;
+    setDeleting(true);
+    try {
+      const { supabase } = await import('../../lib/supabase');
+      const { error } = await supabase.rpc('delete_my_account');
+      if (error) throw error;
+      await supabase.auth.signOut().catch(() => {});
+      Object.keys(localStorage).filter(k => k.startsWith('shakemoi')).forEach(k => localStorage.removeItem(k));
+      alert('Ton compte a été supprimé.');
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Suppression du compte :', err);
+      alert('La suppression a échoué. Réessaie, ou écris-nous à contact@shakemoi.fr.');
+      setDeleting(false);
+    }
+  };
+
   const handleLogout = async () => {
     if (confirm('Te déconnecter de Shakemoi ?')) {
       try {
@@ -147,12 +171,12 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
   const displayName = currentUser?.displayName || currentUser?.display_name || currentUser?.username;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={handleClose}>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))]" onClick={handleClose}>
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-[#1D0F3D] rounded-2xl w-full max-w-md border border-purple-800/30 max-h-[85vh] overflow-y-auto"
+        className="bg-[#1D0F3D] rounded-2xl w-full max-w-md border border-purple-800/30 max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -163,7 +187,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
           </button>
         </div>
 
-        <div className="p-4 space-y-6">
+        <div className="p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] space-y-6">
           {/* Compte with avatar */}
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -312,8 +336,38 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-purple-300/60">Intégrations</span>
-                <span className="text-sm text-white">Spotify, Odesli, YouTube</span>
+                <span className="text-sm text-white">Spotify, Apple Music, Deezer, YouTube Music</span>
               </div>
+            </div>
+          </div>
+
+          {/* Confidentialité */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="w-4 h-4 text-purple-400" />
+              <h3 className="text-sm font-semibold text-purple-200/80 uppercase tracking-wide">Confidentialité</h3>
+            </div>
+            <div className="bg-purple-950/40 rounded-xl divide-y divide-purple-800/20">
+              <a
+                href="/confidentialite"
+                target="_blank"
+                rel="noopener"
+                className="flex items-center justify-between px-3 py-3 text-sm text-white hover:bg-white/5 rounded-t-xl"
+              >
+                Politique de confidentialité
+                <ChevronRight className="w-4 h-4 text-purple-300/60" />
+              </a>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="w-full flex items-center justify-between px-3 py-3 text-sm text-red-300 hover:bg-red-500/10 rounded-b-xl disabled:opacity-60"
+              >
+                <span className="flex items-center gap-2">
+                  {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  Supprimer mon compte
+                </span>
+                <ChevronRight className="w-4 h-4 text-red-300/50" />
+              </button>
             </div>
           </div>
 

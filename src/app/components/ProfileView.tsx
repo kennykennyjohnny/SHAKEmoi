@@ -1,4 +1,4 @@
-import { Users, Music, Heart, Settings, Play, Pause, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, ExternalLink, UserMinus, Share2, Copy, Check, Instagram, Send, ArrowLeft } from 'lucide-react';
+import { Archive, Pin, Users, Music, Heart, Settings, Play, Pause, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, ExternalLink, UserMinus, Share2, Copy, Check, Instagram, Send, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useRef } from 'react';
 import { SettingsDialog } from './SettingsDialog';
@@ -6,12 +6,14 @@ import { EditProfileDialog } from './EditProfileDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
-import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPosts, getUserActiveStories } from '../../lib/database';
+import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPosts, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 import { StoryViewerDialog } from './StoryViewerDialog';
+import { StoryArchiveDialog } from './StoryArchiveDialog';
 import { inviteLink, postLink, profileLink } from '../../lib/links';
 import { SongShareSheet } from './SongShareSheet';
 import { openExternal } from '../../lib/platforms';
+import { LikersSheet } from './LikersSheet';
 
 interface ProfileViewProps {
   user: any;
@@ -23,6 +25,7 @@ type TabType = 'shakes' | 'reshakes';
 export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [shareShakeId, setShareShakeId] = useState<string | null>(null);
+  const [likersPostId, setLikersPostId] = useState<string | null>(null);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('shakes');
   const [userShakes, setUserShakes] = useState<any[]>([]);
@@ -41,7 +44,11 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
   const [showShareProfile, setShowShareProfile] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [activeStories, setActiveStories] = useState<any[]>([]);
+  const [pinnedStories, setPinnedStories] = useState<any[]>([]);
   const [selectedStory, setSelectedStory] = useState<any | null>(null);
+  // Liste parcourue par le lecteur (stories en cours OU « À la une »).
+  const [storyList, setStoryList] = useState<any[]>([]);
+  const [showArchive, setShowArchive] = useState(false);
   const [stats, setStats] = useState({
     shakes: 0,
     followers: 0,
@@ -58,12 +65,13 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
     try {
       if (userShakes.length === 0 && userReshakes.length === 0) setLoading(true);
 
-      const [posts, reshakes, followersCount, followingCount, stories] = await Promise.all([
+      const [posts, reshakes, followersCount, followingCount, stories, pinned] = await Promise.all([
         getUserPosts(user.id),
         getUserReshakes(user.id),
         getUserFollowersCount(user.id),
         getUserFollowingCount(user.id),
-        getUserActiveStories(user.id)
+        getUserActiveStories(user.id),
+        getUserPinnedStories(user.id)
       ]);
 
       const allPostIds = [...posts.map((p: any) => p.id), ...reshakes.map((p: any) => p.id)];
@@ -146,6 +154,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         following: followingCount
       });
       setActiveStories(stories || []);
+      setPinnedStories(pinned || []);
     } catch (error) {
       console.error('Failed to load user data:', error);
       setUserShakes([]);
@@ -324,26 +333,49 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           <p className="text-sm text-purple-200/70 mt-3 leading-relaxed">{user.bio}</p>
         )}
 
-        {activeStories.length > 0 && (
-          <div className="mt-4">
-            <p className="text-[11px] text-purple-300/60 uppercase tracking-wider mb-2">Stories actives</p>
-            <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              {activeStories.map((story: any) => (
-                <button key={story.id} onClick={() => setSelectedStory(story)} className="flex-shrink-0">
-                  <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
-                    <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
-                      <img
-                        src={story.cover_url || story.image_url || user.avatar || `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=2A1852&color=FFEFD5`}
-                        className="w-full h-full rounded-full object-cover"
-                        alt={story.track_name || ''}
-                      />
-                    </div>
+        {/* Stories : en cours, « À la une » (épinglées) et accès aux archives */}
+        <div className="mt-4">
+          <p className="text-[11px] text-purple-300/60 uppercase tracking-wider mb-2">Stories</p>
+          <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {activeStories.map((story: any) => (
+              <button key={story.id} onClick={() => { setStoryList(activeStories); setSelectedStory(story); }} className="flex-shrink-0 flex flex-col items-center gap-1 w-16">
+                <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
+                  <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
+                    <img
+                      src={story.image_url || story.cover_url || user.avatar || `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=2A1852&color=FFEFD5`}
+                      className="w-full h-full rounded-full object-cover"
+                      alt={story.track_name || ''}
+                    />
                   </div>
-                </button>
-              ))}
-            </div>
+                </div>
+                <span className="text-[10px] text-purple-200/80 truncate w-full text-center">En cours</span>
+              </button>
+            ))}
+            {pinnedStories.map((story: any) => (
+              <button key={story.id} onClick={() => { setStoryList(pinnedStories); setSelectedStory(story); }} className="flex-shrink-0 flex flex-col items-center gap-1 w-16">
+                <div className="relative w-16 h-16 rounded-full p-[2px] bg-purple-700/50">
+                  <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
+                    <img
+                      src={story.image_url || story.cover_url || user.avatar}
+                      className="w-full h-full rounded-full object-cover"
+                      alt={story.track_name || ''}
+                    />
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-fuchsia-500 border-2 border-[#1E1440] flex items-center justify-center">
+                    <Pin className="w-2.5 h-2.5 text-white fill-white" />
+                  </span>
+                </div>
+                <span className="text-[10px] text-purple-200/80 truncate w-full text-center">{story.track_name || 'À la une'}</span>
+              </button>
+            ))}
+            <button onClick={() => setShowArchive(true)} className="flex-shrink-0 flex flex-col items-center gap-1 w-16">
+              <div className="w-16 h-16 rounded-full border-2 border-dashed border-purple-500/40 flex items-center justify-center bg-purple-950/40 hover:bg-purple-900/40 transition-colors">
+                <Archive className="w-6 h-6 text-purple-300" />
+              </div>
+              <span className="text-[10px] text-purple-200/80">Archives</span>
+            </button>
           </div>
-        )}
+        </div>
 
         {/* Action Buttons */}
         <div className="flex gap-2 mt-4">
@@ -538,10 +570,20 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
                       {/* Action bar */}
                       <div className="px-4 py-3 flex items-center gap-3 flex-wrap">
-                        <button onClick={() => toggleLike(detailShake.id)} className="flex items-center gap-1.5 group">
-                          <Heart className={`w-5 h-5 transition-all duration-200 ${detailShake.isLiked ? 'text-pink-500 fill-pink-500 scale-110' : 'text-purple-300/70 scale-100 group-hover:text-pink-500 group-active:scale-125'}`} />
-                          <span className={`text-sm font-medium ${detailShake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{detailShake.likes}</span>
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button onClick={() => toggleLike(detailShake.id)} aria-label={detailShake.isLiked ? 'Retirer le like' : 'Liker'} className="group">
+                            <Heart className={`w-5 h-5 transition-all duration-200 ${detailShake.isLiked ? 'text-pink-500 fill-pink-500 scale-110' : 'text-purple-300/70 scale-100 group-hover:text-pink-500 group-active:scale-125'}`} />
+                          </button>
+                          {detailShake.likes > 0 && activeTab === 'shakes' ? (
+                            <button
+                              onClick={() => setLikersPostId(detailShake.id)}
+                              title="Voir qui a liké"
+                              className="text-sm font-medium text-pink-400/90 underline underline-offset-2 decoration-dotted px-1 -mx-1 py-1"
+                            >{detailShake.likes}</button>
+                          ) : (
+                            <span className={`text-sm font-medium ${detailShake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{detailShake.likes}</span>
+                          )}
+                        </div>
 
                         <button onClick={() => setCommentsPostId(detailShake.id)} className="flex items-center gap-1.5 group">
                           <MessageCircle className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
@@ -631,7 +673,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 50, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#1D0F3D] rounded-2xl w-full max-w-sm max-h-[70vh] flex flex-col border border-purple-800/30"
+              className="bg-[#1D0F3D] rounded-2xl w-full max-w-sm max-h-[70dvh] flex flex-col border border-purple-800/30"
             >
               {/* Header */}
               <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
@@ -901,11 +943,28 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       <StoryViewerDialog
         open={!!selectedStory}
         story={selectedStory}
-        onClose={() => { setSelectedStory(null); loadData(); }}
+        onClose={() => { setSelectedStory(null); loadUserData(); }}
         currentUser={user}
-        stories={activeStories}
+        stories={storyList}
         onNavigate={setSelectedStory}
       />
+
+      {likersPostId && (
+        <LikersSheet
+          postId={likersPostId}
+          onClose={() => setLikersPostId(null)}
+          onOpenProfile={u => { setLikersPostId(null); setProfilePreview({ userId: u.id, username: u.username }); }}
+        />
+      )}
+
+      {showArchive && (
+        <StoryArchiveDialog
+          currentUser={user}
+          onClose={() => setShowArchive(false)}
+          onChanged={loadUserData}
+        />
+      )}
+
     </div>
   );
 }

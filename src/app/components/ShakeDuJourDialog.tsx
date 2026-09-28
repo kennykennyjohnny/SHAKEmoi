@@ -75,7 +75,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-[#1D0F3D] rounded-2xl w-full max-w-md border border-purple-800/20 max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-[#1D0F3D] rounded-2xl w-full max-w-md border border-purple-800/20 max-h-[90dvh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

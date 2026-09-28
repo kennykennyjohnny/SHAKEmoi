@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { Heart, MessageCircle, Repeat2, Play, Pause, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Image, Copy, Users, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
-import { getPostLikers } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -17,6 +16,7 @@ import { StoryViewerDialog } from './StoryViewerDialog';
 import { circleLink, postLink } from '../../lib/links';
 import { SongShareSheet } from './SongShareSheet';
 import { openExternal } from '../../lib/platforms';
+import { LikersSheet } from './LikersSheet';
 
 function storyTimeRemaining(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -515,8 +515,6 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     return () => { window.removeEventListener('blur', onBlur); stopPreview(); };
   }, []);
   const [likersPostId, setLikersPostId] = useState<string | null>(null);
-  const [likers, setLikers] = useState<any[]>([]);
-  const [likersLoading, setLikersLoading] = useState(false);
 
   // Circle chat input state
   const [chatText, setChatText] = useState('');
@@ -736,14 +734,6 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     }
   };
 
-  const openLikers = async (sourcePostId: string) => {
-    setLikersPostId(sourcePostId);
-    setLikersLoading(true);
-    setLikers([]);
-    const data = await getPostLikers(sourcePostId);
-    setLikers(data);
-    setLikersLoading(false);
-  };
 
   const confirmReshake = async (comment?: string) => {
     if (!reshakeDialogShake) return;
@@ -816,19 +806,24 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   const handlePlayTrack = (shake: Shake) => { handleTogglePreview(shake); };
 
+  // Ordre des groupes dans la barre, figé à l'ouverture : l'enchaînement
+  // d'un ami au suivant suit ce qu'on voit à l'écran.
+  const trayOrderRef = useRef<string[]>([]);
+
   const openStory = (story: any) => {
     const uid = story.user?.id || story.user_id;
-    const group = stories.filter((s: any) => (s.user?.id || s.user_id) === uid);
-    // Sort: unviewed first (ascending by date), then viewed (ascending by date)
-    const sorted = [...group].sort((a: any, b: any) => {
-      const aViewed = !!storyViewedMap[a.id];
-      const bViewed = !!storyViewedMap[b.id];
-      if (aViewed !== bViewed) return aViewed ? 1 : -1;
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-    });
+    // Toujours dans l'ordre chronologique : la plus ancienne d'abord, la
+    // dernière publiée à la fin (avant, une story non vue passait devant).
+    const sorted = stories
+      .filter((s: any) => (s.user?.id || s.user_id) === uid)
+      .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    if (!sorted.length) return;
     setActiveStoryGroup(sorted);
-    // Open first unviewed, fallback to first
-    const toOpen = sorted.find((s: any) => !storyViewedMap[s.id]) || sorted[0];
+    // Ses propres stories : depuis le début. Celles des amis : à la première
+    // non vue (les précédentes restent accessibles en revenant en arrière).
+    const toOpen = uid === currentUser?.id
+      ? sorted[0]
+      : sorted.find((s: any) => !storyViewedMap[s.id]) || sorted[0];
     setActiveStory(toOpen);
     setStoryViewedMap(prev => ({ ...prev, [toOpen.id]: true }));
     db.markStoryAsViewed(toOpen.id).catch(() => {});
@@ -1021,7 +1016,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
               <div className="flex-shrink-0 flex flex-col items-center gap-1.5">
                 <div className="relative">
                   <button
-                    onClick={hasOwn ? () => openStory(ownStories[0]) : onShowEphemeralShake}
+                    onClick={hasOwn ? () => { trayOrderRef.current = []; openStory(ownStories[0]); } : onShowEphemeralShake}
                     className="block active:scale-95 transition-transform relative"
                     title={hasOwn ? 'Voir mon shake éphémère' : 'Créer un Shake Éphémère'}
                   >
@@ -1066,6 +1061,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   const bLast = Math.max(...b.map((s: any) => new Date(s.created_at).getTime()));
                   return bLast - aLast;
                 });
+                const trayOrder = ordered.map((g: any[]) => g[0].user?.id || g[0].user_id);
                 return ordered.map((group: any[]) => {
                   const firstStory = group[0];
                   const user = firstStory.user;
@@ -1075,7 +1071,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   return (
                     <button
                       key={user?.id || firstStory.user_id}
-                      onClick={() => openStory(firstStory)}
+                      onClick={() => { trayOrderRef.current = trayOrder; openStory(firstStory); }}
                       className="flex-shrink-0 flex flex-col items-center gap-1.5 group active:scale-95 transition-transform"
                     >
                       <div className="relative">
@@ -1373,17 +1369,23 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
                 {/* Actions */}
                 <div className="px-4 pb-2.5 flex items-center gap-6">
-                  <button onClick={() => toggleLike(shake.id)} className="flex items-center gap-1.5 group active:scale-90 transition-transform">
-                    <Heart className={`w-5 h-5 transition-all duration-200 ${shake.isLiked ? 'text-pink-500 fill-pink-500 scale-110' : 'text-purple-300/70 group-hover:text-pink-500 group-active:scale-125'}`} />
+                  {/* Cœur = liker ; le nombre = qui a liké (pour l'auteur du post).
+                      Deux boutons séparés : un bouton dans un bouton est invalide
+                      et, sur mobile, le tap sur le nombre likait le post. */}
+                  <div className="flex items-center gap-1.5">
+                    <button onClick={() => toggleLike(shake.id)} aria-label={shake.isLiked ? 'Retirer le like' : 'Liker'} className="group active:scale-90 transition-transform">
+                      <Heart className={`w-5 h-5 transition-all duration-200 ${shake.isLiked ? 'text-pink-500 fill-pink-500 scale-110' : 'text-purple-300/70 group-hover:text-pink-500 group-active:scale-125'}`} />
+                    </button>
                     {shake.likes > 0 && shake.user.id === currentUser?.id ? (
                       <button
-                        onClick={e => { e.stopPropagation(); openLikers(shake.sourcePostId); }}
-                        className="text-xs font-medium text-pink-400/80 hover:text-pink-400 underline underline-offset-2 decoration-dotted transition-colors"
+                        onClick={() => setLikersPostId(shake.sourcePostId)}
+                        className="text-xs font-medium text-pink-400/90 hover:text-pink-400 underline underline-offset-2 decoration-dotted transition-colors px-1 -mx-1 py-1"
+                        title="Voir qui a liké"
                       >{shake.likes}</button>
                     ) : (
                       <span className={`text-xs font-medium ${shake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{shake.likes}</span>
                     )}
-                  </button>
+                  </div>
 
                   <button onClick={() => setCommentsPostId(shake.sourcePostId)} className="flex items-center gap-1.5 group active:scale-90 transition-transform">
                     <MessageCircle className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
@@ -1454,63 +1456,13 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         )}
       </AnimatePresence>
 
-      {/* Likers bottom-sheet — visible only to post owner */}
-      {createPortal(
-        <AnimatePresence>
-          {likersPostId && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end"
-              onClick={() => setLikersPostId(null)}
-            >
-              <motion.div
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%' }}
-                transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-                onClick={e => e.stopPropagation()}
-                className="w-full max-w-lg mx-auto bg-[#1D0F3D] rounded-t-2xl border border-purple-800/30 overflow-hidden max-h-[70vh] flex flex-col"
-              >
-                <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
-                  <h3 className="font-bold text-white text-sm flex items-center gap-2">
-                    <Heart className="w-4 h-4 text-pink-500 fill-pink-500" />
-                    Likes
-                  </h3>
-                  <button onClick={() => setLikersPostId(null)} className="p-1.5 hover:bg-purple-900/30 rounded-full">
-                    <X className="w-4 h-4 text-purple-300/70" />
-                  </button>
-                </div>
-                {likersLoading ? (
-                  <div className="flex-1 flex items-center justify-center p-8">
-                    <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
-                  </div>
-                ) : likers.length === 0 ? (
-                  <div className="p-8 text-center text-purple-300/60 text-sm">Aucun like encore</div>
-                ) : (
-                  <div className="overflow-y-auto flex-1 py-1">
-                    {likers.map((u: any) => (
-                      <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-purple-900/20 transition-colors">
-                        <img
-                          src={u.profile_album_cover_url || `https://ui-avatars.com/api/?name=${u.username}&background=2A1852&color=FFEFD5`}
-                          alt=""
-                          className="w-9 h-9 rounded-full object-cover ring-1 ring-purple-700/30"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white truncate">{u.display_name || u.username}</p>
-                          <p className="text-xs text-purple-300/60">@{u.username}</p>
-                        </div>
-                        <Heart className="w-4 h-4 text-pink-500 fill-pink-500 flex-shrink-0" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
+      {/* Qui a liké — visible par l'auteur du post */}
+      {likersPostId && (
+        <LikersSheet
+          postId={likersPostId}
+          onClose={() => setLikersPostId(null)}
+          onOpenProfile={u => { setLikersPostId(null); setProfilePreview({ userId: u.id, username: u.username }); }}
+        />
       )}
 
       {/* Circle chat input bar — truly fixed to viewport (rendered via Portal) */}
@@ -1531,10 +1483,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           db.markStoryAsViewed(s.id).catch(() => {});
         }}
         onGroupEnd={() => {
-          // Advance to next user's story group
-          const orderedUserIds = [...new Map(
-            stories.map((s: any) => [s.user?.id || s.user_id, true])
-          ).keys()];
+          // Ami suivant, dans l'ordre de la barre au moment de l'ouverture.
+          const orderedUserIds = trayOrderRef.current;
           const currentUserId = activeStoryGroup[0]?.user?.id || activeStoryGroup[0]?.user_id;
           const idx = orderedUserIds.indexOf(currentUserId);
           if (idx !== -1 && idx < orderedUserIds.length - 1) {

@@ -23,6 +23,9 @@ interface StoryViewerDialogProps {
 const STORY_DURATION_DEFAULT = 7000;
 const STORY_DURATION_MUSIC = 15000;
 
+// Profils déjà chargés (auteurs des stories), pour ne pas les redemander.
+const ownerCache = new Map<string, any>();
+
 function getTimeRemaining(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
   if (diff <= 0) return 'Expiré';
@@ -59,6 +62,31 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   const hasPrev = currentIdx > 0;
   const hasNext = currentIdx < storyList.length - 1;
   const isOwner = currentUser?.id === story?.user_id;
+
+  // Auteur : fourni avec la story (fil) ou chargé à part (stories ouvertes
+  // depuis un profil, sans jointure) — sinon l'en-tête restait vide.
+  const [owner, setOwner] = useState<any>(story?.user ?? null);
+  useEffect(() => {
+    if (!story) return;
+    if (story.user?.username) { setOwner(story.user); ownerCache.set(story.user_id, story.user); return; }
+    if (isOwner && currentUser) {
+      setOwner({
+        id: currentUser.id,
+        username: currentUser.username,
+        display_name: currentUser.displayName || currentUser.display_name,
+        profile_album_cover_url: currentUser.avatar || currentUser.profile_album_cover_url,
+      });
+      return;
+    }
+    const cached = ownerCache.get(story.user_id);
+    if (cached) { setOwner(cached); return; }
+    setOwner(null);
+    let cancelled = false;
+    supabase.from('users_profile').select('id, username, display_name, profile_album_cover_url')
+      .eq('id', story.user_id).maybeSingle()
+      .then(({ data }) => { if (data) ownerCache.set(story.user_id, data); if (!cancelled) setOwner(data); });
+    return () => { cancelled = true; };
+  }, [story?.id]);
 
   const navigatePrev = () => {
     if (hasPrev && onNavigate) { setShowCommentInput(false); setShowViewers(false); onNavigate(storyList[currentIdx - 1]); }
@@ -154,17 +182,20 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     return () => { cancelled = true; };
   }, [story?.id, open]);
 
+  const [storyPreviewUrl, setStoryPreviewUrl] = useState<string | null>(null);
   useEffect(() => {
+    setStoryPreviewUrl(null);
     if (!open || !story) return;
-    // Le titre peut arriver après coup (résolution Odesli) : on attend de
+    // Le titre peut arriver après coup (oEmbed Spotify) : on attend de
     // l'avoir, sinon impossible de retrouver l'extrait.
     const title = story.track_name || fetchedTitle;
     if (!title) return;
     let cancelled = false;
     resolvePreviewUrl(title, story.artist || '', (story as any).preview_url).then(url => {
-      // Démarrage en sourdine tant que le son n'a pas été activé une fois
-      // (comme Instagram) ; ensuite les stories s'enchaînent avec le son.
-      if (!cancelled && url) playPreview(`story-${story.id}`, url, { muted: !isSessionUnmuted() });
+      if (cancelled || !url) return;
+      setStoryPreviewUrl(url);
+      // Son actif par défaut ; coupé seulement si on l'a coupé soi-même.
+      playPreview(`story-${story.id}`, url, { muted: !isSessionUnmuted() });
     });
     return () => { cancelled = true; stopPreview(); };
   }, [story?.id, open, fetchedTitle]);
@@ -207,11 +238,19 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   // Retour système : ferme la story au lieu de quitter le site.
   useBackHandler(open, onClose);
 
+  // Tap sur la pochette : lance / met en pause, et réactive le son s'il était
+  // coupé. Synchrone quand l'extrait est connu (iOS exige un geste direct).
   const toggleStorySound = async () => {
     if (!trackTitle) return;
-    if (getPreviewState().key === storyKey) { togglePreview(storyKey); return; }
+    const state = getPreviewState();
+    if (state.key === storyKey && state.muted) {
+      setMuted(false);
+      if (!state.playing) togglePreview(storyKey, storyPreviewUrl);
+      return;
+    }
+    if (storyPreviewUrl) { togglePreview(storyKey, storyPreviewUrl); return; }
     const url = await resolvePreviewUrl(trackTitle, trackArtist || '', (story as any).preview_url);
-    if (url) playPreview(storyKey, url);
+    if (url) { setStoryPreviewUrl(url); playPreview(storyKey, url); }
   };
 
   const loadViewers = async () => {
@@ -266,13 +305,14 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
 
   if (!story) return null;
 
-  const user = story.user;
-  const avatarSrc = user?.profile_album_cover_url || user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`;
+  const user = owner;
+  const avatarSrc = user?.profile_album_cover_url || user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'S'}&background=2A1852&color=FFEFD5`;
   const timeRemaining = story.expires_at ? getTimeRemaining(story.expires_at) : null;
 
   // Fond : la pochette floutée donne sa couleur à la story (chaque son a son
   // ambiance), avec un dégradé de marque par-dessus pour garder le texte lisible.
-  const artwork = story.cover_url || story.image_url || null;
+  const artwork = story.image_url ? null : story.cover_url || null;
+  const hasTrack = !!(trackTitle || story.track_id);
   const bgStyle: React.CSSProperties = story.theme_color
     ? { background: story.theme_color }
     : { background: 'linear-gradient(160deg, #2A1852 0%, #1E1440 55%, #150B31 100%)' };
@@ -328,6 +368,14 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
               if (info.offset.y > 120 || info.velocity.y > 700) onClose();
             }}
           >
+            {/* Photo : plein cadre, comme une story Instagram */}
+            {story.image_url && (
+              <div className="absolute inset-0 pointer-events-none">
+                <img src={story.image_url} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/75" />
+              </div>
+            )}
+
             {/* Pochette floutée : la story prend la couleur du son */}
             {artwork && (
               <div className="absolute inset-0 pointer-events-none">
@@ -363,10 +411,10 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                 />
                 <div className="min-w-0">
                   <p className="text-[13px] font-bold text-white drop-shadow leading-tight truncate">
-                    {user?.display_name || user?.username}
+                    {user ? (user.display_name || user.username) : ' '}
                   </p>
                   <div className="flex items-center gap-1.5">
-                    <p className="text-[10px] text-white/60 truncate">@{user?.username}</p>
+                    {user?.username && <p className="text-[10px] text-white/60 truncate">@{user.username}</p>}
                     {timeRemaining && (
                       <span className="text-[10px] text-white/40">· {timeRemaining}</span>
                     )}
@@ -434,12 +482,60 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
             {/* Central content */}
             <div className="flex-1 flex flex-col items-center justify-center px-5 pt-20 pb-24 gap-4">
               {story.image_url ? (
-                <img
-                  src={story.image_url}
-                  alt="story"
-                  className="w-full rounded-2xl object-cover shadow-xl"
-                  style={{ maxHeight: '52%' }}
-                />
+                <div className="mt-auto w-full flex flex-col items-center gap-3">
+                  {story.text && (
+                    <p className="text-sm text-white text-center leading-relaxed bg-black/40 rounded-2xl px-4 py-3 backdrop-blur-sm w-full">
+                      {story.text}
+                    </p>
+                  )}
+                  {/* Sticker musique : la photo ne fait plus disparaître le son */}
+                  {hasTrack && (
+                    <div
+                      className="relative z-20 w-full flex items-center gap-3 p-2 pr-2.5 rounded-2xl bg-black/50 backdrop-blur-md border border-white/15 shadow-xl"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={toggleStorySound}
+                        aria-label={isSounding ? 'Mettre en pause' : 'Écouter'}
+                        className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0"
+                      >
+                        {story.cover_url
+                          ? <img src={story.cover_url} alt="" className="w-full h-full object-cover" />
+                          : <span className="block w-full h-full bg-gradient-to-br from-purple-600 to-pink-600" />}
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/35">
+                          {isSounding
+                            ? <Pause className="w-6 h-6 text-white fill-white" />
+                            : <Play className="w-6 h-6 text-white fill-white" />}
+                        </span>
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-white truncate">{trackTitle || 'Son'}</p>
+                        {trackArtist && <p className="text-xs text-white/70 truncate">{trackArtist}</p>}
+                        {isSounding && (
+                          <span className="mt-1 flex items-end gap-0.5 h-2.5">
+                            {[0, 1, 2, 3].map(i => (
+                              <motion.span
+                                key={i}
+                                className="w-0.5 bg-fuchsia-400 rounded-full"
+                                animate={{ height: ['30%', '100%', '40%', '80%', '30%'] }}
+                                transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.12 }}
+                              />
+                            ))}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={openInApp}
+                        title="Ouvrir dans mon appli"
+                        className="p-2.5 rounded-full bg-white/15 hover:bg-white/25 text-white flex-shrink-0"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="text-center">
                   {story.cover_url && (
@@ -500,7 +596,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                 </div>
               )}
 
-              {story.text && (
+              {story.text && !story.image_url && (
                 <p className="mt-6 text-sm text-white/90 text-center leading-relaxed bg-black/35 rounded-2xl px-4 py-3 backdrop-blur-sm w-full">
                   {story.text}
                 </p>

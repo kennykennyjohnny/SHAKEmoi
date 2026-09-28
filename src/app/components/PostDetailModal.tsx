@@ -7,6 +7,7 @@ import { spotify } from '../../lib/spotify';
 import { postLink } from '../../lib/links';
 import { SongShareSheet } from './SongShareSheet';
 import { openExternal } from '../../lib/platforms';
+import { LikersSheet } from './LikersSheet';
 
 interface PostDetailModalProps {
   postId: string;
@@ -18,6 +19,7 @@ interface PostDetailModalProps {
 export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: PostDetailModalProps) {
   const [post, setPost] = useState<any>(null);
   const [showShare, setShowShare] = useState(false);
+  const [showLikers, setShowLikers] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -186,7 +188,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-[#1D0F3D] rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-purple-800/30 overflow-hidden"
+        className="bg-[#1D0F3D] rounded-2xl w-full max-w-lg max-h-[90dvh] flex flex-col border border-purple-800/30 overflow-hidden"
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center gap-3 flex-shrink-0">
@@ -255,10 +257,21 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
 
           {/* Action bar */}
           <div className="px-4 py-3 flex items-center gap-5">
-            <button onClick={toggleLike} className="flex items-center gap-1.5 group">
-              <Heart className={`w-6 h-6 transition-all ${isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-300/70 group-hover:text-pink-500'}`} />
-              <span className={`text-sm font-medium ${isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{likeCount}</span>
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button onClick={toggleLike} aria-label={isLiked ? 'Retirer le like' : 'Liker'} className="group">
+                <Heart className={`w-6 h-6 transition-all ${isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-300/70 group-hover:text-pink-500'}`} />
+              </button>
+              {isOwner && likeCount > 0 ? (
+                <button
+                  onClick={() => setShowLikers(true)}
+                  title="Voir qui a liké"
+                  className="text-sm font-medium text-pink-400/90 underline underline-offset-2 decoration-dotted px-1 -mx-1 py-1"
+                >{likeCount}</button>
+              ) : (
+                <span className={`text-sm font-medium ${isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{likeCount}</span>
+              )}
+            </div>
+            {showLikers && post && <LikersSheet postId={post.id} onClose={() => setShowLikers(false)} />}
 
             <button onClick={() => setTab('comments')} className="flex items-center gap-1.5 group">
               <MessageCircle className="w-6 h-6 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />

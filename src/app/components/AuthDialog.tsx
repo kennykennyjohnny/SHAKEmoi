@@ -243,6 +243,14 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
                 mode === 'login' ? 'Se connecter' : "S'inscrire"
               )}
             </button>
+            {mode === 'signup' && (
+              <p className="text-[11px] text-center text-purple-300/50 leading-snug">
+                En t'inscrivant, tu acceptes notre{' '}
+                <a href="/confidentialite" target="_blank" rel="noopener" className="underline hover:text-purple-200">
+                  politique de confidentialité
+                </a>.
+              </p>
+            )}
 
             <div className="text-center pt-3 border-t border-purple-800/20">
               <p className="text-purple-300/60 text-sm">

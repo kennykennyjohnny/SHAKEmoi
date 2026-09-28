@@ -1,12 +1,21 @@
 {
+  "id": "/",
   "name": "SHAKEmoi",
   "short_name": "SHAKEmoi",
   "description": "Partage ce qui te fait vibrer. Tes sons, avec tes amis, quelle que soit leur plateforme.",
-  "start_url": "/",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#14092A",
   "theme_color": "#14092A",
-  "orientation": "portrait",
+  "categories": [
+    "music",
+    "social",
+    "entertainment"
+  ],
   "icons": [
     {
       "src": "/icon-192.png",

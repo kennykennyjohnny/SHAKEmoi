@@ -1,7 +1,7 @@
 import { X, Heart, Play, UserPlus, UserCheck, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing, getUserReshakes, getCachedTasteMatch, calculateTasteMatch, getUserActiveStories } from '../../lib/database';
+import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing, getUserReshakes, getCachedTasteMatch, calculateTasteMatch, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { StoryViewerDialog } from './StoryViewerDialog';
 
@@ -9,14 +9,19 @@ interface ProfilePreviewDialogProps {
   userId: string;
   username: string;
   onClose: () => void;
+  /** Visiteur sans compte : « Suivre » propose de se connecter / s'inscrire. */
+  onRequireAuth?: (user: { id: string; username: string }) => void;
 }
 
-export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePreviewDialogProps) {
+export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth }: ProfilePreviewDialogProps) {
   const [profile, setProfile] = useState<any>(null);
   const [shakes, setShakes] = useState<any[]>([]);
   const [reshakes, setReshakes] = useState<any[]>([]);
   const [stories, setStories] = useState<any[]>([]);
   const [activeStory, setActiveStory] = useState<any | null>(null);
+  // Stories « À la une » (épinglées) + liste parcourue par le lecteur.
+  const [pinnedStories, setPinnedStories] = useState<any[]>([]);
+  const [viewerList, setViewerList] = useState<any[]>([]);
   const [stats, setStats] = useState({ followers: 0, following: 0, posts: 0 });
   const [isFollowingUser, setIsFollowingUser] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -58,6 +63,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
         isFollowing(actualId),
         getUserActiveStories(actualId)
       ]);
+      const pinnedData = await getUserPinnedStories(actualId);
 
       // Separate original shakes from reshakes
       const originalShakes = postsData.filter((p: any) => !p.is_reshake);
@@ -66,6 +72,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
       setShakes(originalShakes.slice(0, 9));
       setReshakes((reshakesData || []).slice(0, 9));
       setStories((storiesData || []).map((s: any) => ({ ...s, user: profileData })));
+      setPinnedStories((pinnedData || []).map((s: any) => ({ ...s, user: profileData })));
       setStats({
         followers: followersCount,
         following: followingCount,
@@ -89,6 +96,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
 
   const handleFollowToggle = async () => {
     if (!profile) return;
+    if (onRequireAuth) { onRequireAuth({ id: profile.id, username: profile.username }); return; }
     try {
       if (isFollowingUser) {
         await unfollowUser(profile.id);
@@ -144,7 +152,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-[#1D0F3D] rounded-2xl w-full max-w-md border border-purple-800/30 overflow-hidden max-h-[85vh] overflow-y-auto relative"
+        className="bg-[#1D0F3D] rounded-2xl w-full max-w-md border border-purple-800/30 overflow-hidden max-h-[85dvh] overflow-y-auto relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -220,16 +228,16 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
             )}
           </button>
 
-          {/* Stories strip — visible si l'ami a des stories actives */}
-          {stories.length > 0 && (
+          {/* Stories : en cours + « À la une » (épinglées) */}
+          {(stories.length > 0 || pinnedStories.length > 0) && (
             <div className="mt-4">
-              <p className="text-xs text-purple-300/60 font-semibold uppercase tracking-wider mb-2">Shakes éphémères</p>
+              <p className="text-xs text-purple-300/60 font-semibold uppercase tracking-wider mb-2">Stories</p>
               <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-                {stories.map((story: any, idx: number) => (
+                {stories.map((story: any) => (
                   <button
                     key={story.id}
-                    onClick={() => setActiveStory(story)}
-                    className="flex-shrink-0 text-center"
+                    onClick={() => { setViewerList(stories); setActiveStory(story); }}
+                    className="flex-shrink-0 text-center w-14"
                   >
                     <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
                       <div className="w-full h-full rounded-full bg-[#1D0F3D] p-[2px]">
@@ -240,7 +248,21 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
                         />
                       </div>
                     </div>
-                    <p className="text-[10px] text-purple-300/60 mt-1">{idx + 1}</p>
+                    <p className="text-[10px] text-purple-300/60 mt-1">En cours</p>
+                  </button>
+                ))}
+                {pinnedStories.map((story: any) => (
+                  <button
+                    key={story.id}
+                    onClick={() => { setViewerList(pinnedStories); setActiveStory(story); }}
+                    className="flex-shrink-0 text-center w-14"
+                  >
+                    <div className="w-14 h-14 rounded-full p-[2px] bg-purple-700/50">
+                      <div className="w-full h-full rounded-full bg-[#1D0F3D] p-[2px]">
+                        <img src={story.image_url || story.cover_url || avatar} className="w-full h-full rounded-full object-cover" alt="" />
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-purple-300/60 mt-1 truncate">{story.track_name || 'À la une'}</p>
                   </button>
                 ))}
               </div>
@@ -368,7 +390,7 @@ export function ProfilePreviewDialog({ userId, username, onClose }: ProfilePrevi
       story={activeStory}
       onClose={() => setActiveStory(null)}
       currentUser={null}
-      stories={stories}
+      stories={viewerList}
       onNavigate={(s) => setActiveStory(s)}
     />
     </>
