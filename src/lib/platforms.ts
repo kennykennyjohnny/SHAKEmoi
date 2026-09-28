@@ -126,7 +126,8 @@ export function resolveLinks(q: { title?: string | null; artist?: string | null;
         const cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
         const keys = Object.keys(cache);
         if (keys.length > 200) delete cache[keys[0]];
-        cache[key] = data;
+        // Extrait Deezer = URL signée qui expire : on ne le garde pas.
+        cache[key] = data.preview?.includes('dzcdn.net') ? { ...data, preview: null } : data;
         localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
       } catch { /* pas grave */ }
       return data;

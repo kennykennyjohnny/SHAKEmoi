@@ -188,12 +188,16 @@ export async function GET(req: Request) {
     },
   };
 
+  // Les liens d'un son ne bougent pas : une semaine en cache CDN. Sauf si
+  // l'extrait vient de Deezer : son URL est signée et expire au bout d'une heure.
+  const expiring = !!body.preview && !spotify?.preview && !itunes?.preview;
   return new Response(JSON.stringify(body), {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'Access-Control-Allow-Origin': '*',
-      // Les liens d'un son ne bougent pas : une semaine en cache CDN.
-      'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000',
+      'Cache-Control': expiring
+        ? 'public, max-age=600, s-maxage=1200'
+        : 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000',
     },
   });
 }
