@@ -8,9 +8,11 @@ import { Slogan } from './Slogan';
 interface AuthDialogProps {
   onComplete: (user: any) => void;
   referrer?: string | null;
+  /** Pourquoi on demande un compte (ex. « pour suivre @x »), affiché en tête. */
+  reason?: string | null;
 }
 
-export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
+export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,13 +115,19 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#1E1440] z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-[#1E1440] z-50 overflow-y-auto overscroll-contain">
+      <div className="min-h-full flex items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
       <div className="w-full max-w-sm">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-[#1D0F3D] rounded-2xl border border-purple-800/30 overflow-hidden shadow-2xl shadow-purple-900/20"
         >
+          {reason && (
+            <p className="px-5 py-3 text-center text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600">
+              {reason}
+            </p>
+          )}
           {/* Header */}
           <div className="p-6 text-center">
             {referrerProfile ? (
@@ -268,9 +276,7 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
           </form>
         </motion.div>
 
-        <p className="text-center text-purple-400/50 text-xs mt-4">
-          En continuant, tu acceptes nos conditions d'utilisation
-        </p>
+      </div>
       </div>
     </div>
   );

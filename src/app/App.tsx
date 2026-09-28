@@ -319,17 +319,17 @@ export default function App() {
       <div className="h-[100dvh] w-screen bg-[#1E1440] text-white overflow-hidden flex flex-col">
         <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/80 sticky top-0 z-40 flex-shrink-0">
           <div className="px-4 py-2 flex items-center justify-between gap-3">
-            <img src="/shakemoi-logo.png" alt="SHAKEmoi" className="h-6 object-contain" draggable={false} />
+            <img src="/shakemoi-logo.png" alt="SHAKEmoi" className="h-6 min-w-0 flex-shrink object-contain object-left" draggable={false} />
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowAuth(true)}
-                className="px-3 py-1.5 rounded-full text-sm font-semibold text-purple-200/80 hover:text-white hover:bg-violet-900/30 transition-colors"
+                className="px-2.5 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap text-purple-200/80 hover:text-white hover:bg-violet-900/30 transition-colors"
               >
                 Se connecter
               </button>
               <button
                 onClick={() => setShowAuth(true)}
-                className="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-bold hover:opacity-90 transition-opacity"
+                className="px-3.5 py-1.5 whitespace-nowrap bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-bold hover:opacity-90 transition-opacity"
               >
                 S'inscrire
               </button>
@@ -373,14 +373,7 @@ export default function App() {
                 <X className="w-5 h-5" />
               </button>
               <div onClick={(e) => e.stopPropagation()}>
-                {authReason && (
-                  <div className="relative z-[75] mx-auto max-w-md px-4 pt-[max(1rem,env(safe-area-inset-top))]">
-                    <p className="mt-12 rounded-2xl bg-gradient-to-r from-purple-600/90 to-pink-600/90 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg">
-                      {authReason}
-                    </p>
-                  </div>
-                )}
-                <AuthDialog onComplete={handleAuthComplete} referrer={referrer} />
+                <AuthDialog onComplete={handleAuthComplete} referrer={referrer} reason={authReason} />
               </div>
             </motion.div>
           )}
