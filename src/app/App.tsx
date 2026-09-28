@@ -14,8 +14,7 @@ import { CompleteProfileDialog } from './components/CompleteProfileDialog';
 import { ShakeDuJourDialog } from './components/ShakeDuJourDialog';
 import { MessagesView } from './components/MessagesView';
 import { TopFriendsView } from './components/TopFriendsView';
-import { SharedPostView } from './components/SharedPostView';
-import { SongSharePage } from './components/SongSharePage';
+import { SongLanding } from './components/SongLanding';
 
 import { CircleInviteView } from './components/CircleInviteView';
 import { NotificationsDropdown } from './components/NotificationsDropdown';
@@ -127,10 +126,7 @@ export default function App() {
       return;
     }
     if (!currentUser) return;
-    if (route.type === 'post') {
-      setNotifPostId(route.id);
-      leaveRoute();
-    } else if (route.type === 'profile') {
+    if (route.type === 'profile') {
       const username = route.id;
       leaveRoute();
       supabase.from('users_profile').select('id').eq('username', username).maybeSingle()
@@ -266,26 +262,23 @@ export default function App() {
     );
   }
 
-  // Post partagé : page publique pour les visiteurs ; connecté, il s'ouvre
-  // dans l'app (voir l'effet sur `route`).
-  if (route?.type === 'post' && !currentUser) {
-    return <SharedPostView postId={route.id} onJoin={() => { leaveRoute(); setShowAuth(true); }} />;
-  }
-
-  // Page son publique : elle s'ouvre pour tout le monde (connecté ou non),
-  // sinon un lien partagé tombait sur l'accueil quand on avait un compte.
-  if (route?.type === 'song') {
+  // Son ou post partagé : UNE seule page publique, identique pour tout le
+  // monde (connecté ou non). Seul le bloc « compte » change.
+  if (route?.type === 'song' || route?.type === 'post') {
     return (
-      <SongSharePage
-        slug={route.id}
+      <SongLanding
+        source={route.type === 'song' ? { type: 'song', slug: route.id } : { type: 'post', id: route.id }}
         currentUser={currentUser}
-        onJoin={() => {
-          leaveRoute();
-          if (!currentUser) setShowAuth(true);
-        }}
-        onSearch={() => {
-          leaveRoute();
-          setCurrentView('search');
+        onSignUp={() => { leaveRoute(); setShowAuth(true); }}
+        onLogin={() => { leaveRoute(); setShowAuth(true); }}
+        onOpenApp={() => { leaveRoute(); setCurrentView('feed'); }}
+        onSearch={() => { leaveRoute(); setCurrentView('search'); }}
+        onSharer={(username) => {
+          // Visiteur : la personne qui partage devient son parrain, suivie
+          // automatiquement à l'inscription (handleAuthComplete).
+          if (currentUser) return;
+          localStorage.setItem('shakemoi_referrer', username);
+          setReferrer(username);
         }}
       />
     );

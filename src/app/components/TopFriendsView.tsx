@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getFriendsTrending, getCurrentUser, getUserFollowing, createPost } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 import { supabase } from '../../lib/supabase';
+import { openExternal } from '../../lib/platforms';
 
 interface TopFriendsViewProps {
   currentUser: any;
@@ -103,8 +104,8 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
       youtube_music_url: track.latest_post?.youtube_music_url,
       tidal_url: track.latest_post?.tidal_url,
       odesli_page_url: track.latest_post?.odesli_page_url,
-    }, platform);
-    if (url) window.open(url, '_blank');
+    }, platform, { title: track.track_name, artist: track.artist });
+    if (url) openExternal(url);
   };
 
   const handleShakeFromTop = async (track: any) => {

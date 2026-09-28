@@ -16,6 +16,7 @@ import { MusicReactionsDialog } from './MusicReactionsDialog';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { circleLink, postLink } from '../../lib/links';
 import { SongShareSheet } from './SongShareSheet';
+import { openExternal } from '../../lib/platforms';
 
 function storyTimeRemaining(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -769,10 +770,10 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       spotify_url: shake.links.spotify_url || shake.track.spotifyUri || (shake.track.id ? `https://open.spotify.com/track/${shake.track.id}` : null),
     };
 
-    const url = getPlatformUrl(links, platform);
+    const url = getPlatformUrl(links, platform, { title: trackName, artist });
 
     if (url) {
-      window.open(url, '_blank');
+      openExternal(url);
     } else {
       const searchQuery = encodeURIComponent(`${trackName} ${artist}`);
       const fallbacks: Record<string, string> = {

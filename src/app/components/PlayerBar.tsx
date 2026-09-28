@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Volume2, VolumeX, X, Heart, ExternalLink } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getPlatformUrl } from '../../lib/odesli';
+import { openExternal } from '../../lib/platforms';
 
 interface PlayerBarProps {
   track: any;
@@ -86,18 +87,11 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
       odesli_page_url: track.odesli_page_url || null,
     };
 
-    const url = getPlatformUrl(links, musicService);
+    // Lien https universel : il ouvre l'app installée, sinon le site.
+    const url = getPlatformUrl(links, musicService, { title: track.title || track.track_name, artist: track.artist });
 
     if (url) {
-      // Try deep link for mobile
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        if (musicService === 'spotify' && trackId) {
-          window.location.href = `spotify:track:${trackId}`;
-          setTimeout(() => window.open(url, '_blank'), 1500);
-          return;
-        }
-      }
-      window.open(url, '_blank');
+      openExternal(url);
     } else if (spotifyUrl) {
       window.open(spotifyUrl, '_blank');
     }

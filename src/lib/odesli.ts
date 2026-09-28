@@ -1,5 +1,9 @@
-// SHAKEMOI - Odesli (song.link) API for cross-platform links
-// Free API, no auth needed, ~10 req/sec rate limit
+// SHAKEMOI - Liens multi-plateformes d'un son.
+// L'API Odesli (song.link) n'est plus publique (401 PUBLIC_API_ACCESS_DEPRECATED) :
+// ces fonctions gardent leur nom et leur forme pour le reste de l'app, mais
+// passent désormais par /api/links (voir lib/platforms.ts).
+
+import { normalizePlatform, resolveLinks, searchUrl, storedUrl, type StoredLinks } from './platforms';
 
 export interface OdesliLinks {
   apple_music_url: string | null;
@@ -10,25 +14,6 @@ export interface OdesliLinks {
   odesli_page_url: string | null;
 }
 
-interface OdesliPlatformLink {
-  url: string;
-  entityUniqueId: string;
-}
-
-interface OdesliEntity {
-  title?: string;
-  artistName?: string;
-  thumbnailUrl?: string;
-}
-
-interface OdesliResponse {
-  entityUniqueId: string;
-  userCountry: string;
-  pageUrl: string;
-  linksByPlatform: Record<string, OdesliPlatformLink>;
-  entitiesByUniqueId?: Record<string, OdesliEntity>;
-}
-
 export interface OdesliInfo extends OdesliLinks {
   title: string | null;
   artist: string | null;
@@ -36,121 +21,66 @@ export interface OdesliInfo extends OdesliLinks {
   spotify_url: string | null;
 }
 
-// Métadonnées + liens d'un son à partir d'une URL (Spotify par ex.).
+const EMPTY: OdesliLinks = {
+  apple_music_url: null,
+  deezer_url: null,
+  youtube_url: null,
+  youtube_music_url: null,
+  tidal_url: null,
+  odesli_page_url: null,
+};
+
+// Métadonnées + liens d'un son à partir d'une URL Spotify.
 // Sert notamment aux stories créées avant que le titre soit enregistré.
 export async function getOdesliInfo(url: string): Promise<OdesliInfo | null> {
   if (!url) return null;
-  try {
-    const response = await fetch(
-      `https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(url)}`
-    );
-    if (!response.ok) return null;
-    const data: OdesliResponse = await response.json();
-    const entity = data.entitiesByUniqueId?.[data.entityUniqueId];
-    return {
-      title: entity?.title ?? null,
-      artist: entity?.artistName ?? null,
-      thumbnail: entity?.thumbnailUrl ?? null,
-      spotify_url: data.linksByPlatform?.spotify?.url ?? null,
-      apple_music_url: data.linksByPlatform?.appleMusic?.url ?? null,
-      deezer_url: data.linksByPlatform?.deezer?.url ?? null,
-      youtube_url: data.linksByPlatform?.youtube?.url ?? null,
-      youtube_music_url: data.linksByPlatform?.youtubeMusic?.url ?? null,
-      tidal_url: data.linksByPlatform?.tidal?.url ?? null,
-      odesli_page_url: data.pageUrl ?? null,
-    };
-  } catch {
-    return null;
-  }
-}
-
-export async function getOdesliLinks(spotifyUrl: string): Promise<OdesliLinks> {
-  const emptyLinks: OdesliLinks = {
-    apple_music_url: null,
-    deezer_url: null,
+  const r = await resolveLinks({ spotifyUrl: url });
+  if (!r) return null;
+  return {
+    title: r.title,
+    artist: r.artist,
+    thumbnail: r.cover,
+    spotify_url: r.exact.spotify ? r.links.spotify : null,
+    apple_music_url: r.exact.apple_music ? r.links.apple_music : null,
+    deezer_url: r.exact.deezer ? r.links.deezer : null,
     youtube_url: null,
     youtube_music_url: null,
     tidal_url: null,
     odesli_page_url: null,
   };
-
-  if (!spotifyUrl) return emptyLinks;
-
-  try {
-    const response = await fetch(
-      `https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(spotifyUrl)}`
-    );
-
-    if (!response.ok) {
-      console.warn('[Odesli] API error:', response.status);
-      return emptyLinks;
-    }
-
-    const data: OdesliResponse = await response.json();
-
-    return {
-      apple_music_url: data.linksByPlatform?.appleMusic?.url ?? null,
-      deezer_url: data.linksByPlatform?.deezer?.url ?? null,
-      youtube_url: data.linksByPlatform?.youtube?.url ?? null,
-      youtube_music_url: data.linksByPlatform?.youtubeMusic?.url ?? null,
-      tidal_url: data.linksByPlatform?.tidal?.url ?? null,
-      odesli_page_url: data.pageUrl ?? null,
-    };
-  } catch (error) {
-    console.error('[Odesli] Failed to fetch links:', error);
-    return emptyLinks;
-  }
 }
 
-// Maps platform preference to the correct URL from OdesliLinks
-// On mobile, attempts native app deep links first
+// Liens exacts à enregistrer avec un post / message / partage. Seuls les liens
+// vérifiés sont stockés : les recherches se recalculent à l'affichage.
+export async function getOdesliLinks(
+  spotifyUrl: string,
+  meta?: { title?: string | null; artist?: string | null },
+): Promise<OdesliLinks> {
+  if (!spotifyUrl && !meta?.title) return EMPTY;
+  const r = await resolveLinks({ spotifyUrl, title: meta?.title, artist: meta?.artist });
+  if (!r) return EMPTY;
+  return {
+    ...EMPTY,
+    apple_music_url: r.exact.apple_music ? r.links.apple_music : null,
+    deezer_url: r.exact.deezer ? r.links.deezer : null,
+  };
+}
+
+/**
+ * Lien à ouvrir pour la plateforme demandée. Toujours en https (ouvre l'app
+ * si elle est installée). Si on ne connaît pas le lien exact et qu'on a le
+ * titre, on ouvre la recherche de la plateforme plutôt que rien.
+ */
 export function getPlatformUrl(
-  links: OdesliLinks & { spotify_url?: string | null },
-  platform: string
+  links: StoredLinks,
+  platform: string,
+  meta?: { title?: string | null; artist?: string | null },
 ): string | null {
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-  switch (platform) {
-    case 'spotify': {
-      const url = links.spotify_url ?? null;
-      if (!url) return null;
-      // Convert web URL to native URI on mobile: spotify:track:ID
-      if (isMobile) {
-        const trackMatch = url.match(/track\/([a-zA-Z0-9]+)/);
-        if (trackMatch) return `spotify:track:${trackMatch[1]}`;
-        const albumMatch = url.match(/album\/([a-zA-Z0-9]+)/);
-        if (albumMatch) return `spotify:album:${albumMatch[1]}`;
-      }
-      return url;
-    }
-    case 'apple':
-    case 'apple_music':
-      return links.apple_music_url;
-    case 'deezer': {
-      const url = links.deezer_url ?? null;
-      if (!url) return null;
-      // Convert to deezer:// deep link on mobile
-      if (isMobile) {
-        const trackMatch = url.match(/track\/(\d+)/);
-        if (trackMatch) return `deezer://www.deezer.com/track/${trackMatch[1]}`;
-      }
-      return url;
-    }
-    case 'youtube':
-      return links.youtube_url;
-    case 'youtube_music':
-      return links.youtube_music_url;
-    case 'tidal': {
-      const url = links.tidal_url ?? null;
-      if (!url) return null;
-      // Tidal deep link
-      if (isMobile) {
-        const trackMatch = url.match(/track\/(\d+)/);
-        if (trackMatch) return `tidal://track/${trackMatch[1]}`;
-      }
-      return url;
-    }
-    default:
-      return links.odesli_page_url;
-  }
+  const key = normalizePlatform(platform) ?? 'spotify';
+  const exact = storedUrl(links, key);
+  if (exact) return exact;
+  if (meta?.title) return searchUrl(key, meta.title, meta.artist || '');
+  return storedUrl(links, 'spotify') || links.odesli_page_url || null;
 }
+
+export { searchUrl };

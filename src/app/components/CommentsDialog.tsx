@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getPostComments, addComment, getMusicReactions, addMusicReaction } from '../../lib/database';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
+import { openExternal } from '../../lib/platforms';
 
 interface CommentsDialogProps {
   postId: string;
@@ -89,8 +90,8 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, currentUser }:
   };
 
   const openInApp = (r: any) => {
-    const url = getPlatformUrl({ spotify_url: r.spotify_url, apple_music_url: r.apple_music_url, deezer_url: r.deezer_url, youtube_url: r.youtube_url, youtube_music_url: r.youtube_music_url, tidal_url: r.tidal_url, odesli_page_url: r.odesli_page_url }, currentUser?.musicService || 'spotify');
-    if (url) window.open(url, '_blank');
+    const url = getPlatformUrl({ spotify_url: r.spotify_url, apple_music_url: r.apple_music_url, deezer_url: r.deezer_url, youtube_url: r.youtube_url, youtube_music_url: r.youtube_music_url, tidal_url: r.tidal_url, odesli_page_url: r.odesli_page_url }, currentUser?.musicService || 'spotify', { title: r.track_name, artist: r.artist });
+    if (url) openExternal(url);
   };
 
   const formatTime = (timestamp: string) => {

@@ -63,9 +63,9 @@ export async function upsertSong(input: SongInput): Promise<string> {
     tidal_url: null as string | null,
     odesli_page_url: null as string | null,
   };
-  if (input.spotifyUrl) {
+  if (input.spotifyUrl || input.trackName) {
     try {
-      odesli = await getOdesliLinks(input.spotifyUrl);
+      odesli = await getOdesliLinks(input.spotifyUrl || '', { title: input.trackName, artist: input.artist });
     } catch {
       /* best-effort : on partage même sans les liens croisés */
     }

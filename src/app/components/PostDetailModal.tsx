@@ -6,6 +6,7 @@ import { getPlatformUrl } from '../../lib/odesli';
 import { spotify } from '../../lib/spotify';
 import { postLink } from '../../lib/links';
 import { SongShareSheet } from './SongShareSheet';
+import { openExternal } from '../../lib/platforms';
 
 interface PostDetailModalProps {
   postId: string;
@@ -129,13 +130,13 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
       youtube_music_url: post.youtube_music_url,
       tidal_url: post.tidal_url,
       odesli_page_url: post.odesli_page_url,
-    }, currentUser?.musicService || 'spotify');
-    if (url) window.open(url, '_blank');
+    }, currentUser?.musicService || 'spotify', { title: post.track_name, artist: post.artist });
+    if (url) openExternal(url);
   };
 
   const openReactionInApp = (r: any) => {
-    const url = getPlatformUrl({ spotify_url: r.spotify_url, apple_music_url: r.apple_music_url, deezer_url: r.deezer_url, youtube_url: r.youtube_url, youtube_music_url: r.youtube_music_url, tidal_url: r.tidal_url, odesli_page_url: r.odesli_page_url }, currentUser?.musicService || 'spotify');
-    if (url) window.open(url, '_blank');
+    const url = getPlatformUrl({ spotify_url: r.spotify_url, apple_music_url: r.apple_music_url, deezer_url: r.deezer_url, youtube_url: r.youtube_url, youtube_music_url: r.youtube_music_url, tidal_url: r.tidal_url, odesli_page_url: r.odesli_page_url }, currentUser?.musicService || 'spotify', { title: r.track_name, artist: r.artist });
+    if (url) openExternal(url);
   };
 
   const formatTime = (timestamp: string) => {

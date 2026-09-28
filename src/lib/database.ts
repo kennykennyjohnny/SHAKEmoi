@@ -234,7 +234,7 @@ export async function createPost(
     if (!user) throw new Error('Not authenticated');
 
     // Fetch cross-platform links from Odesli
-    const odesliLinks = spotifyUrl ? await getOdesliLinks(spotifyUrl) : null;
+    const odesliLinks = spotifyUrl || trackName ? await getOdesliLinks(spotifyUrl || '', { title: trackName, artist }) : null;
 
     // Build embed URL from track ID
     const spotifyEmbedUrl = trackId
@@ -1266,8 +1266,8 @@ export async function sendMessage(receiverId: string, text?: string, track?: any
       messageData.spotify_embed_url = track.id ? `https://open.spotify.com/embed/track/${track.id}` : null;
 
       // Fetch Odesli links if we have a spotify URL
-      if (messageData.spotify_url) {
-        const odesliLinks = await getOdesliLinks(messageData.spotify_url);
+      if (messageData.spotify_url || messageData.track_name) {
+        const odesliLinks = await getOdesliLinks(messageData.spotify_url || '', { title: messageData.track_name, artist: messageData.artist });
         Object.assign(messageData, odesliLinks);
       }
     }
@@ -1316,8 +1316,8 @@ export async function addMusicReaction(postId: string, track: any, text?: string
     };
 
     // Fetch Odesli links
-    if (reactionData.spotify_url) {
-      const odesliLinks = await getOdesliLinks(reactionData.spotify_url);
+    if (reactionData.spotify_url || reactionData.track_name) {
+      const odesliLinks = await getOdesliLinks(reactionData.spotify_url || '', { title: reactionData.track_name, artist: reactionData.artist });
       Object.assign(reactionData, odesliLinks);
     }
 

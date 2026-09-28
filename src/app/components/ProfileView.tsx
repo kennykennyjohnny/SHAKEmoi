@@ -11,6 +11,7 @@ import { getPlatformUrl } from '../../lib/odesli';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { inviteLink, postLink, profileLink } from '../../lib/links';
 import { SongShareSheet } from './SongShareSheet';
+import { openExternal } from '../../lib/platforms';
 
 interface ProfileViewProps {
   user: any;
@@ -227,9 +228,9 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       ...shake.links,
       spotify_url: shake.links?.spotify_url || shake.track.spotifyUrl || null,
     };
-    const url = getPlatformUrl(links, platform);
+    const url = getPlatformUrl(links, platform, { title: shake.track.title, artist: shake.track.artist });
     if (url) {
-      window.open(url, '_blank');
+      openExternal(url);
     } else {
       const q = encodeURIComponent(`${shake.track.title} ${shake.track.artist}`);
       window.open(`https://open.spotify.com/search/${q}`, '_blank');

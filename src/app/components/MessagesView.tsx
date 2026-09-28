@@ -14,6 +14,7 @@ import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 import { useBackHandler } from '../../lib/navigation';
 import { circleLink } from '../../lib/links';
+import { openExternal } from '../../lib/platforms';
 
 interface MessagesViewProps {
   currentUser: any;
@@ -437,7 +438,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
                           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mt-2">
                             <iframe src={`${embedUrl}?theme=0`} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
                             <button
-                              onClick={(e) => { e.stopPropagation(); const url = getPlatformUrl({ spotify_url: msg.spotify_url, apple_music_url: msg.apple_music_url, deezer_url: msg.deezer_url, youtube_url: msg.youtube_url, youtube_music_url: msg.youtube_music_url, tidal_url: msg.tidal_url, odesli_page_url: msg.odesli_page_url }, currentUser?.musicService || 'spotify'); if (url) window.open(url, '_blank'); }}
+                              onClick={(e) => { e.stopPropagation(); const url = getPlatformUrl({ spotify_url: msg.spotify_url, apple_music_url: msg.apple_music_url, deezer_url: msg.deezer_url, youtube_url: msg.youtube_url, youtube_music_url: msg.youtube_music_url, tidal_url: msg.tidal_url, odesli_page_url: msg.odesli_page_url }, currentUser?.musicService || 'spotify', { title: msg.track_name, artist: msg.artist }); if (url) openExternal(url); }}
                               className="w-full mt-1 py-1.5 flex items-center justify-center gap-1.5 bg-purple-600/20 rounded-lg text-xs font-medium hover:bg-purple-600/30 transition-colors"
                             >
                               <ExternalLink className="w-3 h-3" /> Ouvrir dans mon app

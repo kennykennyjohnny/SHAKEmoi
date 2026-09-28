@@ -131,6 +131,7 @@ export interface PreviewState {
 
 let audio: HTMLAudioElement | null = null;
 let currentKey: string | null = null;
+let currentUrl: string | null = null;   // extrait réellement chargé pour currentKey
 let playing = false;
 let muted = false;
 // Mémorisé tant que la page n'est pas rechargée : une fois le son activé sur
@@ -162,12 +163,20 @@ function unlockAudio() {
   if (unlocked) return;
   unlocked = true;
   const el = ensureAudio();
-  if (el.src) return;               // déjà utilisé, rien à débloquer
+  // Un extrait est déjà chargé (lecture auto refusée, ex. page d'un son
+  // partagé) : c'est le geste lui-même qui va le lancer. Surtout ne pas le
+  // remplacer par le silence — c'était le bug « la pochette ne joue pas ».
+  if (el.src || currentKey) return;
   el.muted = true;
   el.src = SILENCE;
-  el.play()
-    .then(() => { el.pause(); el.currentTime = 0; el.muted = false; el.removeAttribute('src'); })
-    .catch(() => { el.muted = false; el.removeAttribute('src'); });
+  const reset = () => {
+    // Un vrai extrait a pu être lancé entre-temps : on n'y touche pas.
+    if (el.src !== SILENCE) return;
+    el.pause();
+    el.muted = false;
+    el.removeAttribute('src');
+  };
+  el.play().then(reset).catch(reset);
 }
 
 if (typeof window !== 'undefined') {
@@ -205,8 +214,9 @@ export function isPreviewPlaying(key: string): boolean {
 
 export function playPreview(key: string, url: string, opts?: { muted?: boolean }) {
   const el = ensureAudio();
-  if (currentKey !== key || !el.src) {
+  if (currentKey !== key || currentUrl !== url || !el.src || el.src === SILENCE) {
     el.src = url;
+    currentUrl = url;
     currentKey = key;
   }
   // Les stories démarrent en sourdine tant que l'utilisateur n'a pas activé
@@ -224,12 +234,14 @@ export function playPreview(key: string, url: string, opts?: { muted?: boolean }
 /** Bascule lecture/pause. `url` n'est requis que pour un son pas encore chargé. */
 export function togglePreview(key: string, url?: string | null) {
   const el = ensureAudio();
-  if (currentKey === key && el.src) {
-    if (el.paused) el.play().catch(() => {});
+  const loaded = currentKey === key && !!currentUrl && !!el.src && el.src !== SILENCE;
+  if (loaded) {
+    if (el.paused) el.play().catch(() => { playing = false; emit(); });
     else el.pause();
     return;
   }
-  if (url) playPreview(key, url);
+  const target = url || (currentKey === key ? currentUrl : null);
+  if (target) playPreview(key, target);
 }
 
 export function stopPreview() {

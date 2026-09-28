@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { resolvePreviewUrl, playPreview, stopPreview, togglePreview, onPreviewChange, getPreviewState, getSpotifyTrackTitle, isSessionUnmuted, setMuted } from '../../lib/preview';
 import { useBackHandler } from '../../lib/navigation';
 import { getPlatformUrl } from '../../lib/odesli';
+import { openExternal } from '../../lib/platforms';
 
 interface StoryViewerDialogProps {
   open: boolean;
@@ -188,8 +189,8 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
       tidal_url: story?.track_id ? null : null,
       odesli_page_url: story?.track_id ? `https://song.link/s/${story.track_id}` : null,
     };
-    const url = getPlatformUrl(links, currentUser?.musicService || 'spotify');
-    if (url) window.open(url, '_blank');
+    const url = getPlatformUrl(links, currentUser?.musicService || 'spotify', { title: trackTitle, artist: trackArtist });
+    if (url) openExternal(url);
   };
 
   const [pinned, setPinned] = useState<boolean>(!!story?.is_pinned);
