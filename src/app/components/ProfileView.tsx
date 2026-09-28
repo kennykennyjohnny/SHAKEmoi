@@ -10,6 +10,7 @@ import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUs
 import { getPlatformUrl } from '../../lib/odesli';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { inviteLink, postLink, profileLink } from '../../lib/links';
+import { SongShareSheet } from './SongShareSheet';
 
 interface ProfileViewProps {
   user: any;
@@ -20,6 +21,7 @@ type TabType = 'shakes' | 'reshakes';
 
 export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
   const [showSettings, setShowSettings] = useState(false);
+  const [shareShakeId, setShareShakeId] = useState<string | null>(null);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('shakes');
   const [userShakes, setUserShakes] = useState<any[]>([]);
@@ -545,15 +547,16 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           <span className="text-sm font-medium text-purple-300/70">{detailShake.comments}</span>
                         </button>
 
+                        {shareShakeId === detailShake.id && (
+                          <SongShareSheet
+                            song={{ title: detailShake.track.title, artist: detailShake.track.artist, cover: detailShake.track.coverUrl, previewUrl: detailShake.track.previewUrl }}
+                            by={user?.username}
+                            link={postLink(detailShake.id)}
+                            onClose={() => setShareShakeId(null)}
+                          />
+                        )}
                         <button
-                          onClick={async () => {
-                            const url = postLink(detailShake.id);
-                            if (navigator.share) {
-                              try { await navigator.share({ title: `${detailShake.track.title} - ${detailShake.track.artist}`, text: `Écoute "${detailShake.track.title}" de ${detailShake.track.artist} sur SHAKEmoi !`, url }); } catch {}
-                            } else {
-                              await navigator.clipboard.writeText(url);
-                            }
-                          }}
+                          onClick={() => setShareShakeId(detailShake.id)}
                           className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors group"
                           title="Partager"
                         >

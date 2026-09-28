@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Play, Pause, Loader2, Sparkles, Search } from 'lucide-react';
+import { Play, Pause, Loader2, Sparkles, Search, Share2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getPlatformUrl } from '../../lib/odesli';
 import { resolvePreviewUrl, playPreview, togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
@@ -10,6 +10,8 @@ import {
   setPreferredPlatform,
 } from '../../lib/shares';
 import { Logo } from './Logo';
+import { SongShareSheet } from './SongShareSheet';
+import { songLink } from '../../lib/links';
 import { Slogan } from './Slogan';
 
 interface Props {
@@ -41,6 +43,7 @@ export function SongSharePage({ slug, onJoin, currentUser, onSearch }: Props) {
   const [song, setSong] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [preferred, setPreferred] = useState<string | null>(null);
+  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     setPreferred(getPreferredPlatform());
@@ -202,6 +205,23 @@ export function SongSharePage({ slug, onJoin, currentUser, onSearch }: Props) {
             </div>
           )}
         </div>
+
+        {/* Faire tourner ce son : vidéo story, WhatsApp, lien… */}
+        <button
+          onClick={() => setShowShare(true)}
+          className="mt-3 w-full py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+        >
+          <Share2 className="w-4 h-4" />
+          Partager ce son
+        </button>
+        {showShare && (
+          <SongShareSheet
+            song={{ title: song.track_name, artist: song.artist || '', cover: song.cover_url, previewUrl: song.preview_url }}
+            by={currentUser?.username}
+            link={songLink(slug)}
+            onClose={() => setShowShare(false)}
+          />
+        )}
 
         {/* Relance la boucle : chercher son propre son et le partager */}
         {onSearch && (

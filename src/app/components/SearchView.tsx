@@ -5,6 +5,7 @@ import { spotify } from '../../lib/spotify';
 import { searchUsers, createPost, searchCircles, joinCircle, joinCircleByCode, followUser, unfollowUser, isFollowing } from '../../lib/database';
 import { resolvePreviewUrl, playPreview, togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
 import { createSongShare } from '../../lib/shares';
+import { SongShareSheet } from './SongShareSheet';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
 
@@ -144,36 +145,24 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
   };
 
   // Partage : on crée un vrai lien vers la page du son (marche sans compte)
-  // au lieu d'envoyer sur l'accueil du site.
-  const [sharingId, setSharingId] = useState<string | null>(null);
-  const shareTrack = async (track: any) => {
-    setSharingId(track.id);
-    let url = 'https://shakemoi.fr';
-    try {
-      const res = await createSongShare(
-        {
-          source: 'spotify',
-          sourceId: track.id,
-          trackName: track.title,
-          artist: track.artist || track.artists || '',
-          coverUrl: track.coverUrl,
-          previewUrl: track.previewUrl,
-          spotifyUrl: track.spotifyUrl || `https://open.spotify.com/track/${track.id}`,
-        },
-        { userId: currentUser?.id ?? null, channel: 'web-share' }
-      );
-      url = res.url;
-    } catch (e) {
-      console.error('Erreur création du lien de partage:', e);
-    }
-    setSharingId(null);
-
-    const text = `Écoute "${track.title}" de ${track.artist || track.artists} 👇`;
-    if (navigator.share) {
-      try { await navigator.share({ title: `${track.title} - ${track.artist}`, text, url }); } catch {}
-    } else {
-      try { await navigator.clipboard.writeText(`${text} ${url}`); } catch {}
-    }
+  // au lieu d'envoyer sur l'accueil du site. La feuille de partage le crée dès
+  // son ouverture, pour que le partage parte ensuite dans le geste de
+  // l'utilisateur (sinon iOS refuse la feuille native).
+  const [shareTrackId, setShareTrackId] = useState<string | null>(null);
+  const createShareLink = async (track: any): Promise<string> => {
+    const res = await createSongShare(
+      {
+        source: 'spotify',
+        sourceId: track.id,
+        trackName: track.title,
+        artist: track.artist || track.artists || '',
+        coverUrl: track.coverUrl,
+        previewUrl: track.previewUrl,
+        spotifyUrl: track.spotifyUrl || `https://open.spotify.com/track/${track.id}`,
+      },
+      { userId: currentUser?.id ?? null, channel: 'web-share' }
+    );
+    return res.url;
   };
 
   // Mobile : on referme le clavier dès qu'on fait défiler les résultats.
@@ -326,8 +315,16 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                       >
                         <Send className="w-4 h-4 text-purple-300/70" />
                       </button>
+                      {shareTrackId === track.id && (
+                        <SongShareSheet
+                          song={{ title: track.title, artist: track.artist || track.artists || '', cover: track.coverUrl, previewUrl: track.previewUrl }}
+                          by={currentUser?.username}
+                          link={() => createShareLink(track)}
+                          onClose={() => setShareTrackId(null)}
+                        />
+                      )}
                       <button
-                        onClick={() => shareTrack(track)}
+                        onClick={() => setShareTrackId(track.id)}
                         className="flex-shrink-0 p-2.5 bg-violet-950/40 hover:bg-purple-800/40 border border-purple-700/30 rounded-xl transition-colors"
                         title="Partager"
                       >

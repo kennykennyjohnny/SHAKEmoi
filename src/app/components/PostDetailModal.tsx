@@ -5,6 +5,7 @@ import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addCo
 import { getPlatformUrl } from '../../lib/odesli';
 import { spotify } from '../../lib/spotify';
 import { postLink } from '../../lib/links';
+import { SongShareSheet } from './SongShareSheet';
 
 interface PostDetailModalProps {
   postId: string;
@@ -15,6 +16,7 @@ interface PostDetailModalProps {
 
 export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: PostDetailModalProps) {
   const [post, setPost] = useState<any>(null);
+  const [showShare, setShowShare] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -194,18 +196,19 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
           </div>
 
           <button
-            onClick={async () => {
-              const url = postLink(post.id);
-              if (navigator.share) {
-                try { await navigator.share({ title: `${post.track_name} - ${post.artist}`, text: `Écoute "${post.track_name}" de ${post.artist} sur SHAKEmoi ! 🎵`, url }); } catch {}
-              } else {
-                await navigator.clipboard.writeText(url);
-              }
-            }}
+            onClick={() => setShowShare(true)}
             className="p-2 hover:bg-purple-900/40 rounded-full transition-colors"
           >
             <Share2 className="w-5 h-5 text-purple-300/60" />
           </button>
+          {showShare && (
+            <SongShareSheet
+              song={{ title: post.track_name, artist: post.artist, cover: post.cover_url, previewUrl: post.preview_url }}
+              by={currentUser?.username}
+              link={postLink(post.id)}
+              onClose={() => setShowShare(false)}
+            />
+          )}
           <button onClick={onClose} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
             <X className="w-6 h-6 text-purple-300/60" />
           </button>

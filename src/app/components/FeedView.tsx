@@ -15,6 +15,7 @@ import { CommentsDialog } from './CommentsDialog';
 import { MusicReactionsDialog } from './MusicReactionsDialog';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { circleLink, postLink } from '../../lib/links';
+import { SongShareSheet } from './SongShareSheet';
 
 function storyTimeRemaining(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -482,6 +483,7 @@ interface FeedViewProps {
 
 export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId = null, onSelectFeed, onCreateCircle, onShowEphemeralShake }: FeedViewProps) {
   const [shakes, setShakes] = useState<Shake[]>([]);
+  const [shareShakeId, setShareShakeId] = useState<string | null>(null);
   const [stories, setStories] = useState<any[]>([]);
   const [activeStoryGroup, setActiveStoryGroup] = useState<any[]>([]);
   const [storyViewedMap, setStoryViewedMap] = useState<Record<string, boolean>>({});
@@ -1246,19 +1248,20 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
                   {/* Share button */}
                   <button
-                    onClick={async () => {
-                      const url = postLink(shake.id);
-                      if (navigator.share) {
-                        try { await navigator.share({ title: `${shake.track.title} - ${shake.track.artist}`, text: `Écoute "${shake.track.title}" de ${shake.track.artist} sur SHAKEmoi ! 🎵`, url }); } catch {}
-                      } else {
-                        await navigator.clipboard.writeText(url);
-                      }
-                    }}
+                    onClick={() => setShareShakeId(shake.id)}
                     className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
                     title="Partager ce shake"
                   >
                     <Share2 className="w-4 h-4 text-purple-300/70" />
                   </button>
+                  {shareShakeId === shake.id && (
+                    <SongShareSheet
+                      song={{ title: shake.track.title, artist: shake.track.artist, cover: shake.track.coverUrl, previewUrl: shake.track.previewUrl }}
+                      by={currentUser?.username}
+                      link={postLink(shake.id)}
+                      onClose={() => setShareShakeId(null)}
+                    />
+                  )}
 
                   {/* More Menu */}
                   <div className="relative">
