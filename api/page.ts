@@ -2,8 +2,8 @@
 // Renvoie l'index.html de l'app avec les métadonnées propres au lien : les
 // robots d'aperçu lisent ces balises, les visiteurs chargent l'app normalement.
 
-import { OG_VERSION, SITE_NAME, paramsFromUrl, resolveLink } from './_lib/links';
-import { routePath } from '../src/lib/links';
+import { OG_VERSION, SITE_NAME, paramsFromUrl, resolveLink, selfFetch } from './_lib/links.js';
+import { routePath } from '../src/lib/links.js';
 
 export const config = { runtime: 'edge' };
 
@@ -25,7 +25,7 @@ export default async function handler(req: Request) {
 
   const [meta, shell] = await Promise.all([
     resolveLink(params),
-    fetch(`${origin}/index.html`).then(r => r.text()),
+    selfFetch(`${origin}/index.html`).then(r => r.text()),
   ]);
 
   // URL publique du lien (celle d'avant le rewrite vers /api/page).

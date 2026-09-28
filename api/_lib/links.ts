@@ -22,6 +22,16 @@ export const SITE_NAME = 'SHAKEmoi';
 // Description par défaut. Provisoire tant que le nouveau slogan n'est pas choisi.
 export const DEFAULT_DESCRIPTION = 'Partage tes sons avec tes amis, quelle que soit leur plateforme.';
 
+/**
+ * Requête vers le site lui-même (index.html, polices, logos). Sur les
+ * déploiements de preview protégés, passe la protection si Vercel fournit le
+ * secret « Protection Bypass for Automation ». Sans effet en production.
+ */
+export function selfFetch(url: string) {
+  const secret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  return fetch(url, secret ? { headers: { 'x-vercel-protection-bypass': secret } } : undefined);
+}
+
 export type LinkType = 'song' | 'post' | 'profile' | 'invite' | 'circle' | 'conversation' | 'home';
 
 export interface LinkParams {

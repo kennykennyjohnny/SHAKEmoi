@@ -6,15 +6,14 @@
 
 import { ImageResponse } from '@vercel/og';
 import sharp from 'sharp';
-import { DEFAULT_DESCRIPTION, paramsFromUrl, resolveLink } from './_lib/links';
-import { HEIGHT, WIDTH, loadFonts, renderCard } from './_lib/card';
+import { DEFAULT_DESCRIPTION, paramsFromUrl, resolveLink } from './_lib/links.js';
+import { HEIGHT, WIDTH, loadAssets, renderCard } from './_lib/card.js';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const origin = url.origin;
-  const [meta, fonts] = await Promise.all([resolveLink(paramsFromUrl(url)), loadFonts(origin)]);
+  const [meta, { fonts, assets }] = await Promise.all([resolveLink(paramsFromUrl(url)), loadAssets()]);
 
-  const png = await new ImageResponse(renderCard(meta.card, origin, DEFAULT_DESCRIPTION) as any, {
+  const png = await new ImageResponse(renderCard(meta.card, assets, DEFAULT_DESCRIPTION) as any, {
     width: WIDTH,
     height: HEIGHT,
     fonts,

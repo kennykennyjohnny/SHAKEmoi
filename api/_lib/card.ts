@@ -2,7 +2,12 @@
 // Arbre d'éléments au format satori (ce que consomme @vercel/og), écrit sans
 // JSX pour ne dépendre d'aucune config de compilation côté fonctions.
 
-import type { CardData } from './links';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import type { CardData } from './links.js';
+
+/** Logos de la marque, en data URI (voir loadAssets). */
+export interface Assets { icon: string; logo: string }
 
 type Style = Record<string, string | number>;
 type Child = El | string | null | false | undefined;
@@ -44,7 +49,7 @@ function titleSize(s: string, big: number, small: number) {
   return s.length > 38 ? small : s.length > 22 ? Math.round((big + small) / 2) : big;
 }
 
-function frame(origin: string, content: El, opts: { footer?: boolean } = {}): El {
+function frame(a: Assets, content: El, opts: { footer?: boolean } = {}): El {
   return h(
     'div',
     {
@@ -65,8 +70,8 @@ function frame(origin: string, content: El, opts: { footer?: boolean } = {}): El
         h(
           'div',
           { alignItems: 'center', gap: 16 },
-          img(`${origin}/favicon.png`, { width: 52, height: 52, borderRadius: 14 }),
-          img(`${origin}/shakemoi-logo.png`, { width: 220, height: 34 }),
+          img(a.icon, { width: 52, height: 52, borderRadius: 14 }),
+          img(a.logo, { width: 220, height: 34 }),
         ),
         h('div', { fontSize: 26, color: C.muted, fontWeight: 600 }, 'shakemoi.fr'),
       ),
@@ -121,10 +126,10 @@ function pill(text: string): El {
   );
 }
 
-function songCard(d: Extract<CardData, { kind: 'song' }>, origin: string): El {
+function songCard(d: Extract<CardData, { kind: 'song' }>, a: Assets): El {
   const title = clip(d.title, 60);
   return frame(
-    origin,
+    a,
     h(
       'div',
       { alignItems: 'center', gap: 56, width: '100%' },
@@ -174,10 +179,10 @@ function avatar(src: string | null, label: string, size: number): El {
   );
 }
 
-function profileCard(d: Extract<CardData, { kind: 'profile' }>, origin: string): El {
+function profileCard(d: Extract<CardData, { kind: 'profile' }>, a: Assets): El {
   const name = clip(d.name, 28);
   return frame(
-    origin,
+    a,
     h(
       'div',
       { alignItems: 'center', gap: 60, width: '100%' },
@@ -198,10 +203,10 @@ function profileCard(d: Extract<CardData, { kind: 'profile' }>, origin: string):
   );
 }
 
-function circleCard(d: Extract<CardData, { kind: 'circle' }>, origin: string): El {
+function circleCard(d: Extract<CardData, { kind: 'circle' }>, a: Assets): El {
   const name = clip(d.name, 40);
   return frame(
-    origin,
+    a,
     h(
       'div',
       { alignItems: 'center', gap: 56, width: '100%' },
@@ -217,10 +222,10 @@ function circleCard(d: Extract<CardData, { kind: 'circle' }>, origin: string): E
   );
 }
 
-function inviteCard(d: Extract<CardData, { kind: 'invite' }>, origin: string): El {
+function inviteCard(d: Extract<CardData, { kind: 'invite' }>, a: Assets): El {
   const where = d.circle ? `dans le cercle ${clip(d.circle, 30)}` : 'sur SHAKEmoi';
   return frame(
-    origin,
+    a,
     h(
       'div',
       { alignItems: 'center', gap: 60, width: '100%' },
@@ -235,9 +240,9 @@ function inviteCard(d: Extract<CardData, { kind: 'invite' }>, origin: string): E
   );
 }
 
-function centered(origin: string, title: string, subtitle: string, icon: El): El {
+function centered(a: Assets, title: string, subtitle: string, icon: El): El {
   return frame(
-    origin,
+    a,
     h(
       'div',
       { flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', gap: 28 },
@@ -259,42 +264,52 @@ function bubble(): El {
   );
 }
 
-function homeCard(origin: string, tagline: string): El {
+function homeCard(a: Assets, tagline: string): El {
   return frame(
-    origin,
+    a,
     h(
       'div',
       { flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', gap: 36 },
-      img(`${origin}/favicon.png`, { width: 200, height: 200, borderRadius: 48, border: `2px solid ${C.stroke}` }),
-      img(`${origin}/shakemoi-logo.png`, { width: 560, height: 86 }),
+      img(a.icon, { width: 200, height: 200, borderRadius: 48, border: `2px solid ${C.stroke}` }),
+      img(a.logo, { width: 560, height: 86 }),
       h('div', { fontSize: 34, fontWeight: 600, color: C.text2, textAlign: 'center' }, tagline),
     ),
     { footer: false },
   );
 }
 
-export function renderCard(card: CardData, origin: string, tagline: string): El {
+export function renderCard(card: CardData, a: Assets, tagline: string): El {
   switch (card.kind) {
-    case 'song': return songCard(card, origin);
-    case 'profile': return profileCard(card, origin);
-    case 'circle': return circleCard(card, origin);
-    case 'invite': return inviteCard(card, origin);
-    case 'conversation': return centered(origin, 'Rejoins la conversation', 'Ouvre SHAKEmoi pour lire les messages.', bubble());
-    default: return homeCard(origin, tagline);
+    case 'song': return songCard(card, a);
+    case 'profile': return profileCard(card, a);
+    case 'circle': return circleCard(card, a);
+    case 'invite': return inviteCard(card, a);
+    case 'conversation': return centered(a, 'Rejoins la conversation', 'Ouvre SHAKEmoi pour lire les messages.', bubble());
+    default: return homeCard(a, tagline);
   }
 }
 
-/** Polices des images (servies depuis public/fonts). */
-export async function loadFonts(origin: string) {
-  const get = (f: string) => fetch(`${origin}/fonts/${f}`).then(r => r.arrayBuffer());
-  const [bricolage, manrope600, manrope800] = await Promise.all([
-    get('bricolage-800.woff'),
-    get('manrope-600.woff'),
-    get('manrope-800.woff'),
+/**
+ * Polices et logos des images, lus dans public/ (embarqué avec la fonction via
+ * `includeFiles` dans vercel.json). Les logos passent en data URI : satori n'a
+ * alors plus rien à télécharger.
+ */
+export async function loadAssets() {
+  const get = (path: string) => readFile(join(process.cwd(), 'public', path));
+  const dataUri = async (path: string) => `data:image/png;base64,${(await get(path)).toString('base64')}`;
+  const [bricolage, manrope600, manrope800, icon, logo] = await Promise.all([
+    get('/fonts/bricolage-800.woff'),
+    get('/fonts/manrope-600.woff'),
+    get('/fonts/manrope-800.woff'),
+    dataUri('/favicon.png'),
+    dataUri('/shakemoi-logo.png'),
   ]);
-  return [
-    { name: 'Bricolage', data: bricolage, weight: 800 as const, style: 'normal' as const },
-    { name: 'Manrope', data: manrope600, weight: 600 as const, style: 'normal' as const },
-    { name: 'Manrope', data: manrope800, weight: 800 as const, style: 'normal' as const },
-  ];
+  return {
+    assets: { icon, logo } as Assets,
+    fonts: [
+      { name: 'Bricolage', data: bricolage, weight: 800 as const, style: 'normal' as const },
+      { name: 'Manrope', data: manrope600, weight: 600 as const, style: 'normal' as const },
+      { name: 'Manrope', data: manrope800, weight: 800 as const, style: 'normal' as const },
+    ],
+  };
 }

@@ -1,13 +1,42 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/og.ts": {
+      "includeFiles": "public/{fonts/*.woff,favicon.png,shakemoi-logo.png}"
+    }
+  },
   "rewrites": [
-    { "source": "/s/:id", "destination": "/api/page?type=song&id=:id" },
-    { "source": "/p/:id", "destination": "/api/page?type=post&id=:id" },
-    { "source": "/u/:id", "destination": "/api/page?type=profile&id=:id" },
-    { "source": "/i/:id", "destination": "/api/page?type=invite&id=:id" },
-    { "source": "/c/:id", "destination": "/api/page?type=circle&id=:id" },
-    { "source": "/m", "destination": "/api/page?type=conversation" },
-    { "source": "/m/:path*", "destination": "/api/page?type=conversation" },
-    { "source": "/((?!api/)(?!.*\\.).*)", "destination": "/index.html" }
+    {
+      "source": "/s/:id",
+      "destination": "/api/page?type=song&id=:id"
+    },
+    {
+      "source": "/p/:id",
+      "destination": "/api/page?type=post&id=:id"
+    },
+    {
+      "source": "/u/:id",
+      "destination": "/api/page?type=profile&id=:id"
+    },
+    {
+      "source": "/i/:id",
+      "destination": "/api/page?type=invite&id=:id"
+    },
+    {
+      "source": "/c/:id",
+      "destination": "/api/page?type=circle&id=:id"
+    },
+    {
+      "source": "/m",
+      "destination": "/api/page?type=conversation"
+    },
+    {
+      "source": "/m/:path*",
+      "destination": "/api/page?type=conversation"
+    },
+    {
+      "source": "/((?!api/)(?!.*\\.).*)",
+      "destination": "/index.html"
+    }
   ]
 }
