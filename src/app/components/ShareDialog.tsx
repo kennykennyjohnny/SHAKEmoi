@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Copy, Check, Share2, Sparkles, Heart, Music2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getAppStats } from '../../lib/database';
+import { inviteLink } from '../../lib/links';
 
 interface ShareDialogProps {
   currentUser: any;
@@ -11,7 +12,7 @@ interface ShareDialogProps {
 export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState({ users: 0, shakes: 0, likes: 0 });
-  const shareUrl = currentUser ? `https://shakemoi.fr?ref=${currentUser.username}` : 'https://shakemoi.fr';
+  const shareUrl = inviteLink(currentUser?.username);
 
   useEffect(() => {
     getAppStats().then(setStats);

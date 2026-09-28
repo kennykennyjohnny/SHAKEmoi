@@ -9,6 +9,7 @@ import { SendSongDialog } from './SendSongDialog';
 import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPosts, getUserActiveStories } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 import { StoryViewerDialog } from './StoryViewerDialog';
+import { inviteLink, postLink, profileLink } from '../../lib/links';
 
 interface ProfileViewProps {
   user: any;
@@ -546,7 +547,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
                         <button
                           onClick={async () => {
-                            const url = `https://shakemoi.fr/#/s/${detailShake.id}`;
+                            const url = postLink(detailShake.id);
                             if (navigator.share) {
                               try { await navigator.share({ title: `${detailShake.track.title} - ${detailShake.track.artist}`, text: `Écoute "${detailShake.track.title}" de ${detailShake.track.artist} sur SHAKEmoi !`, url }); } catch {}
                             } else {
@@ -793,10 +794,10 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                 <div className="bg-purple-950/40 border border-purple-800/30 rounded-xl p-3 mb-4">
                   <p className="text-[10px] text-purple-400/50 mb-1">Mon lien de profil</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm text-white font-mono flex-1 truncate">shakemoi.fr?ref={user.username}</p>
+                    <p className="text-sm text-white font-mono flex-1 truncate">shakemoi.fr/u/{user.username}</p>
                     <button
                       onClick={async () => {
-                        await navigator.clipboard.writeText(`https://shakemoi.fr?ref=${user.username}`);
+                        await navigator.clipboard.writeText(profileLink(user.username));
                         setShareCopied(true);
                         setTimeout(() => setShareCopied(false), 2000);
                       }}
@@ -812,7 +813,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                   {/* Instagram Story */}
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`Hey ! 👋 Rejoins-moi sur SHAKEmoi 🎵🔥 https://shakemoi.fr?ref=${user.username}`);
+                      navigator.clipboard.writeText(`Hey ! 👋 Rejoins-moi sur SHAKEmoi 🎵🔥 ${inviteLink(user.username)}`);
                       window.open('instagram://camera', '_blank');
                       setTimeout(() => { window.open('https://instagram.com', '_blank'); }, 500);
                     }}
@@ -825,7 +826,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                   {/* WhatsApp */}
                   <button
                     onClick={() => {
-                      const text = encodeURIComponent(`Hey ! 👋 Rejoins-moi sur SHAKEmoi, l'appli où on partage nos sons préférés avec nos amis 🎵🔥\n\nInscris-toi ici : https://shakemoi.fr?ref=${user.username}`);
+                      const text = encodeURIComponent(`Hey ! 👋 Rejoins-moi sur SHAKEmoi, l'appli où on partage nos sons préférés avec nos amis 🎵🔥\n\nInscris-toi ici : ${inviteLink(user.username)}`);
                       window.open(`https://wa.me/?text=${text}`, '_blank');
                     }}
                     className="flex items-center justify-center gap-2 py-3 rounded-xl bg-green-600 text-white font-semibold text-sm hover:opacity-90 transition-opacity"
@@ -837,7 +838,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                   {/* Twitter/X */}
                   <button
                     onClick={() => {
-                      const text = encodeURIComponent(`Découvrez ce que vos amis écoutent vraiment 🎵 Rejoignez-moi sur @SHAKEmoi !\nhttps://shakemoi.fr?ref=${user.username}`);
+                      const text = encodeURIComponent(`Découvrez ce que vos amis écoutent vraiment 🎵 Rejoignez-moi sur @SHAKEmoi !\n${inviteLink(user.username)}`);
                       window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
                     }}
                     className="flex items-center justify-center gap-2 py-3 rounded-xl bg-neutral-800 text-white font-semibold text-sm hover:opacity-90 transition-opacity"
@@ -849,8 +850,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                   {/* Snapchat */}
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`Rejoins-moi sur SHAKEmoi 🎵🔥 https://shakemoi.fr?ref=${user.username}`);
-                      window.open(`https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(`https://shakemoi.fr?ref=${user.username}`)}`, '_blank');
+                      navigator.clipboard.writeText(`Rejoins-moi sur SHAKEmoi 🎵🔥 ${inviteLink(user.username)}`);
+                      window.open(`https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(inviteLink(user.username))}`, '_blank');
                     }}
                     className="flex items-center justify-center gap-2 py-3 rounded-xl bg-yellow-400 text-black font-semibold text-sm hover:opacity-90 transition-opacity"
                   >
@@ -867,7 +868,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                         await navigator.share({
                           title: `${user.displayName} sur SHAKEmoi`,
                           text: `Découvre mon profil sur SHAKEmoi ! 🎵`,
-                          url: `https://shakemoi.fr?ref=${user.username}`,
+                          url: profileLink(user.username),
                         });
                       } catch {}
                     }}

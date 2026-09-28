@@ -13,6 +13,7 @@ import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 import { useBackHandler } from '../../lib/navigation';
+import { circleLink } from '../../lib/links';
 
 interface MessagesViewProps {
   currentUser: any;
@@ -735,7 +736,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
     setStep(3);
   };
 
-  const shareLink = createdCircle ? `${window.location.origin}${window.location.pathname}#/circle/${createdCircle.id}` : '';
+  const shareLink = createdCircle ? circleLink(createdCircle.id, currentUser?.username) : '';
 
   const copyLink = () => {
     navigator.clipboard.writeText(shareLink);
@@ -1156,7 +1157,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
     if (e.target) e.target.value = '';
   };
 
-  const shareLink = `${window.location.origin}${window.location.pathname}#/circle/${circle.id}`;
+  const shareLink = circleLink(circle.id, currentUser?.username);
   const [copied, setCopied] = useState(false);
   const copyLink = () => { navigator.clipboard.writeText(shareLink); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 

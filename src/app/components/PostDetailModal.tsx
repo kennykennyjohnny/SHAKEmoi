@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 import { spotify } from '../../lib/spotify';
+import { postLink } from '../../lib/links';
 
 interface PostDetailModalProps {
   postId: string;
@@ -194,7 +195,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
 
           <button
             onClick={async () => {
-              const url = `https://shakemoi.fr/#/s/${post.id}`;
+              const url = postLink(post.id);
               if (navigator.share) {
                 try { await navigator.share({ title: `${post.track_name} - ${post.artist}`, text: `Écoute "${post.track_name}" de ${post.artist} sur SHAKEmoi ! 🎵`, url }); } catch {}
               } else {

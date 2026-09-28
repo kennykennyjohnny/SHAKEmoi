@@ -25,25 +25,12 @@ import { PostDetailModal } from './components/PostDetailModal';
 import { supabase } from '../lib/supabase';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount } from '../lib/database';
 import { useBackHandler } from '../lib/navigation';
+import { parseRoute, type Route } from '../lib/links';
 
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'notifications';
 
-function getSharedPostId(): string | null {
-  const hash = window.location.hash;
-  const m = hash.match(/\/s\/([a-f0-9-]+)/i) || window.location.pathname.match(/\/s\/([a-f0-9-]+)/i);
-  return m ? m[1] : null;
-}
-
-function getSharedSongSlug(): string | null {
-  const s = new URLSearchParams(window.location.search).get('song');
-  return s && /^[a-z0-9]{6,}$/i.test(s) ? s : null;
-}
-
-function getCircleInviteId(): string | null {
-  const hash = window.location.hash;
-  const m = hash.match(/\/circle\/([a-f0-9-]+)/i);
-  return m ? m[1] : null;
-}
+// Cercle à rejoindre après inscription (lien d'invitation ouvert sans compte).
+const PENDING_CIRCLE_KEY = 'shakemoi_pending_circle';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('feed');
@@ -64,7 +51,14 @@ export default function App() {
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [notifPostId, setNotifPostId] = useState<string | null>(null);
   const [referrer, setReferrer] = useState<string | null>(null);
-  const [songPageDismissed, setSongPageDismissed] = useState(false);
+  // Lien d'arrivée (/s, /p, /u, /i, /c, /m ou ancien format), voir lib/links.
+  const [route, setRoute] = useState<Route | null>(() =>
+    parseRoute(window.location.pathname, window.location.search, window.location.hash)
+  );
+  const leaveRoute = () => {
+    window.history.replaceState({}, document.title, '/');
+    setRoute(null);
+  };
 
   // Retour système : depuis un autre onglet, on revient au feed avant de
   // pouvoir quitter le site (les vues empilées se ferment en premier).
@@ -80,14 +74,13 @@ export default function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Handle referral parameter
-      const urlParams = new URLSearchParams(window.location.search);
-      const ref = urlParams.get('ref');
+      // Invitation (/i/<pseudo>, ancien ?ref=) : on retient le parrain pour
+      // l'abonnement automatique à l'inscription, puis on atterrit sur l'accueil.
+      const ref = route?.type === 'invite' ? route.id : null;
       if (ref) {
         localStorage.setItem('shakemoi_referrer', ref);
         setReferrer(ref);
-        // Clean up URL
-        window.history.replaceState({}, document.title, window.location.pathname);
+        leaveRoute();
       } else {
         const storedRef = localStorage.getItem('shakemoi_referrer');
         if (storedRef) setReferrer(storedRef);
@@ -113,10 +106,36 @@ export default function App() {
         }
       }
       // Pas de session : on n'impose plus le mur d'inscription, le visiteur
-      // atterrit sur la recherche/partage de son (voir plus bas).
+      // atterrit sur la recherche/partage de son (voir plus bas). Un lien de
+      // profil vaut alors invitation : il suivra cette personne à l'inscription.
+      else if (route?.type === 'profile') {
+        localStorage.setItem('shakemoi_referrer', route.id);
+        setReferrer(route.id);
+      }
     };
     checkAuth();
   }, []);
+
+  // Liens qui ouvrent quelque chose DANS l'app une fois connecté.
+  useEffect(() => {
+    if (!route) return;
+    if (route.type === 'conversation') {
+      leaveRoute();
+      if (currentUser) { setViewOptions({ initialTab: 'dms' }); setCurrentView('messages'); }
+      else setShowAuth(true);
+      return;
+    }
+    if (!currentUser) return;
+    if (route.type === 'post') {
+      setNotifPostId(route.id);
+      leaveRoute();
+    } else if (route.type === 'profile') {
+      const username = route.id;
+      leaveRoute();
+      supabase.from('users_profile').select('id').eq('username', username).maybeSingle()
+        .then(({ data }) => { if (data?.id) setProfilePreview({ userId: data.id, username }); });
+    }
+  }, [route, currentUser]);
 
   // Notifications: realtime + initial load
   useEffect(() => {
@@ -182,6 +201,13 @@ export default function App() {
   const handleAuthComplete = async (user: any) => {
     setCurrentUser(buildUserObject(user));
     setShowAuth(false);
+    // Inscription lancée depuis une invitation de cercle : on y revient.
+    const pendingCircle = localStorage.getItem(PENDING_CIRCLE_KEY);
+    if (pendingCircle) {
+      localStorage.removeItem(PENDING_CIRCLE_KEY);
+      window.history.replaceState({}, document.title, `/c/${pendingCircle}`);
+      setRoute({ type: 'circle', id: pendingCircle });
+    }
     if (!localStorage.getItem('shakemoi_onboarding')) setShowOnboarding(true);
 
     // Auto-follow referrer if one exists
@@ -219,44 +245,45 @@ export default function App() {
     } catch {}
   };
 
-  // Circle invite — show landing page
-  const circleInviteId = getCircleInviteId();
-  if (circleInviteId) {
+  // Invitation dans un cercle.
+  if (route?.type === 'circle') {
     return (
       <CircleInviteView
-        circleId={circleInviteId}
+        circleId={route.id}
         currentUser={currentUser}
-        onJoin={async () => {
-          window.location.hash = '';
-          openCirclesInMessages();
+        onJoin={() => {
+          leaveRoute();
+          setViewOptions({ initialTab: 'circles' });
+          setCurrentView('messages');
         }}
-        onSignUp={() => { window.location.hash = ''; setShowAuth(true); }}
+        onSignUp={() => {
+          localStorage.setItem(PENDING_CIRCLE_KEY, route.id);
+          leaveRoute();
+          setShowAuth(true);
+        }}
       />
     );
   }
 
-  // Shared post — public, no auth
-  const sharedPostId = getSharedPostId();
-  if (sharedPostId && !currentUser) {
-    return <SharedPostView postId={sharedPostId} onJoin={() => { window.location.hash = ''; setShowAuth(true); }} />;
+  // Post partagé : page publique pour les visiteurs ; connecté, il s'ouvre
+  // dans l'app (voir l'effet sur `route`).
+  if (route?.type === 'post' && !currentUser) {
+    return <SharedPostView postId={route.id} onJoin={() => { leaveRoute(); setShowAuth(true); }} />;
   }
 
   // Page son publique : elle s'ouvre pour tout le monde (connecté ou non),
   // sinon un lien partagé tombait sur l'accueil quand on avait un compte.
-  const sharedSongSlug = getSharedSongSlug();
-  if (sharedSongSlug && !songPageDismissed) {
+  if (route?.type === 'song') {
     return (
       <SongSharePage
-        slug={sharedSongSlug}
+        slug={route.id}
         currentUser={currentUser}
         onJoin={() => {
-          window.history.replaceState({}, document.title, window.location.pathname);
-          if (currentUser) setSongPageDismissed(true);
-          else setShowAuth(true);
+          leaveRoute();
+          if (!currentUser) setShowAuth(true);
         }}
         onSearch={() => {
-          window.history.replaceState({}, document.title, window.location.pathname);
-          setSongPageDismissed(true);
+          leaveRoute();
           setCurrentView('search');
         }}
       />

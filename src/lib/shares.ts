@@ -4,6 +4,7 @@
 
 import { supabase } from './supabase';
 import { getOdesliLinks } from './odesli';
+import { songLink } from './links';
 
 export interface SongInput {
   source?: string;          // 'spotify' | 'itunes' | ...
@@ -29,12 +30,6 @@ export interface SharedSong {
   song: any;
 }
 
-// Base publique. On garde le domaine custom pour des liens propres dans les DM.
-const BASE_URL =
-  typeof window !== 'undefined' && window.location?.origin
-    ? window.location.origin
-    : 'https://shakemoi.fr';
-
 // Slug court, URL-safe, suffisamment anti-collision pour le MVP (10 chars base36).
 function makeSlug(): string {
   let s = '';
@@ -44,7 +39,7 @@ function makeSlug(): string {
 
 // Construit l'URL publique d'un partage à partir de son slug.
 export function shareUrl(slug: string): string {
-  return `${BASE_URL}/?song=${slug}`;
+  return songLink(slug);
 }
 
 // Upsert d'un son dans le cache. Réutilise la ligne existante (UNIQUE source+source_id),

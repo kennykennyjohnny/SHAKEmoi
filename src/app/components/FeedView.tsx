@@ -14,6 +14,7 @@ import { SendSongDialog } from './SendSongDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { MusicReactionsDialog } from './MusicReactionsDialog';
 import { StoryViewerDialog } from './StoryViewerDialog';
+import { circleLink, postLink } from '../../lib/links';
 
 function storyTimeRemaining(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -68,7 +69,7 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
 
-  const shareLink = `${window.location.origin}${window.location.pathname}#/circle/${circle.id}`;
+  const shareLink = circleLink(circle.id, currentUser?.username);
 
   const copyCode = () => {
     navigator.clipboard.writeText(circle.invite_code || '');
@@ -1246,7 +1247,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   {/* Share button */}
                   <button
                     onClick={async () => {
-                      const url = `https://shakemoi.fr/#/s/${shake.id}`;
+                      const url = postLink(shake.id);
                       if (navigator.share) {
                         try { await navigator.share({ title: `${shake.track.title} - ${shake.track.artist}`, text: `Écoute "${shake.track.title}" de ${shake.track.artist} sur SHAKEmoi ! 🎵`, url }); } catch {}
                       } else {

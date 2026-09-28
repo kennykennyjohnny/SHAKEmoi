@@ -6,20 +6,32 @@
       <!-- interactive-widget=resizes-content : le clavier mobile réduit la zone
            visible au lieu de pousser la page (header de conversation conservé). -->
       <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
-      <title>SHAKEmoi - Partage ta musique, connecte avec le monde 🎵</title>
-      <meta name="description" content="La couche sociale au-dessus de la musique. Shake tes sons préférés, découvre les tendances et connecte avec une communauté passionnée." />
-      <meta property="og:title" content="SHAKEmoi" />
-      <meta property="og:description" content="La couche sociale au-dessus de la musique. Partage le son qui te fait bouger." />
+      <!-- Métadonnées par défaut. Pour les liens partagés (/s, /p, /u, /i, /c, /m),
+           api/page.ts remplace tout ce qui est entre ces deux marqueurs. -->
+      <!-- link-meta:start -->
+      <title>SHAKEmoi</title>
+      <meta name="description" content="Partage tes sons avec tes amis, quelle que soit leur plateforme." />
+      <meta property="og:site_name" content="SHAKEmoi" />
       <meta property="og:type" content="website" />
       <meta property="og:locale" content="fr_FR" />
-      <meta name="twitter:card" content="summary" />
+      <meta property="og:title" content="SHAKEmoi" />
+      <meta property="og:description" content="Partage tes sons avec tes amis, quelle que soit leur plateforme." />
+      <meta property="og:url" content="https://shakemoi.fr/" />
+      <meta property="og:image" content="https://shakemoi.fr/api/og?type=home&v=1" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content="SHAKEmoi" />
-      <meta name="twitter:description" content="La couche sociale au-dessus de la musique." />
+      <meta name="twitter:description" content="Partage tes sons avec tes amis, quelle que soit leur plateforme." />
+      <meta name="twitter:image" content="https://shakemoi.fr/api/og?type=home&v=1" />
+      <!-- link-meta:end -->
       <meta name="theme-color" content="#14092A" />
       <meta name="apple-mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-      <link rel="icon" type="image/png" href="/favicon.png" />
-      <link rel="apple-touch-icon" href="/favicon.png" />
+      <link rel="icon" href="/favicon.ico" sizes="48x48" />
+      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+      <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+      <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
       <link rel="manifest" href="/manifest.json" />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Users, Loader2, UserPlus, Music, Sparkles, Disc3 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getCircleById, getCircleMembers, getCircleFeed, joinCircle } from '../../lib/database';
+import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
 
 interface Props {
@@ -19,6 +20,7 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
   const [joining, setJoining] = useState(false);
   const [joined, setJoined] = useState(false);
   const [error, setError] = useState('');
+  const [memberCount, setMemberCount] = useState(0);
 
   useEffect(() => {
     loadCircle();
@@ -31,7 +33,18 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
         getCircleMembers(circleId),
         getCircleFeed(circleId, 6),
       ]);
-      setCircle(circleData);
+      if (circleData) {
+        setCircle(circleData);
+      } else {
+        // Sans compte, les cercles ne sont pas lisibles : on se contente de
+        // l'aperçu public (nom, photo, nombre de membres).
+        const { data } = await supabase.rpc('get_circle_preview', { p_circle_id: circleId });
+        const preview = Array.isArray(data) ? data[0] : data;
+        if (preview?.name) {
+          setCircle({ id: circleId, name: preview.name, photo_url: preview.photo_url });
+          setMemberCount(Number(preview.member_count) || 0);
+        }
+      }
       setMembers(membersData || []);
       // Get unique tracks with covers
       const tracks = (feedData || []).filter((p: any) => p.cover_url).slice(0, 4);
@@ -52,7 +65,6 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
       if (result.success) {
         setJoined(true);
         setTimeout(() => {
-          window.location.hash = '';
           onJoin();
         }, 1500);
       } else {
@@ -73,7 +85,7 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
   if (!circle) return (
     <div className="h-screen bg-[#1E1440] flex flex-col items-center justify-center gap-4 p-4">
       <p className="text-purple-300/60 text-center">Ce cercle n'existe pas ou a été supprimé</p>
-      <button onClick={() => { window.location.hash = ''; onJoin(); }} className="px-5 py-2.5 bg-purple-600/30 rounded-full text-sm text-purple-300 hover:bg-purple-600/40 transition-colors">
+      <button onClick={() => { onJoin(); }} className="px-5 py-2.5 bg-purple-600/30 rounded-full text-sm text-purple-300 hover:bg-purple-600/40 transition-colors">
         Retour à l'accueil
       </button>
     </div>
@@ -173,6 +185,11 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
               </p>
             </div>
           )}
+          {members.length === 0 && memberCount > 0 && (
+            <p className="px-6 pb-4 text-center text-xs text-purple-300/60">
+              {memberCount} membre{memberCount > 1 ? 's' : ''} actif{memberCount > 1 ? 's' : ''}
+            </p>
+          )}
 
           {/* Recent tracks teaser */}
           {recentTracks.length > 0 && recentTracks.length < 4 && (
@@ -211,7 +228,7 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
               </motion.div>
             ) : alreadyMember ? (
               <button
-                onClick={() => { window.location.hash = ''; onJoin(); }}
+                onClick={() => { onJoin(); }}
                 className="w-full py-3.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 <Music className="w-4 h-4" />
