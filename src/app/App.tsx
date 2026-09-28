@@ -26,6 +26,7 @@ import { supabase } from '../lib/supabase';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount } from '../lib/database';
 import { useBackHandler } from '../lib/navigation';
 import { parseRoute, type Route } from '../lib/links';
+import { Slogan } from './components/Slogan';
 
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'notifications';
 
@@ -321,6 +322,9 @@ export default function App() {
         </header>
 
         <div className="px-4 pt-4 flex-shrink-0 text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">
+            <Slogan />
+          </p>
           <h1 className="text-lg font-bold">Cherche un son, partage-le à qui tu veux 🎧</h1>
           <p className="text-xs text-purple-300/60 mt-1">
             Pas besoin de compte. Crée-en un pour shaker et répondre à tes potes.

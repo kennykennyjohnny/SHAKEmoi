@@ -10,6 +10,7 @@ import {
   setPreferredPlatform,
 } from '../../lib/shares';
 import { Logo } from './Logo';
+import { Slogan } from './Slogan';
 
 interface Props {
   slug: string;
@@ -213,7 +214,7 @@ export function SongSharePage({ slug, onJoin, currentUser, onSearch }: Props) {
           </button>
         )}
 
-        <p className="text-center text-[10px] text-purple-500/30 mt-6">shakemoi.fr</p>
+        <p className="text-center text-[10px] text-purple-500/30 mt-6">shakemoi.fr · <Slogan /></p>
       </motion.div>
     </div>
   );

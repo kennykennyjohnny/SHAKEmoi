@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { getCircleById, getCircleMembers, getCircleFeed, joinCircle } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
+import { Slogan } from './Slogan';
 
 interface Props {
   circleId: string;
@@ -273,7 +274,7 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
           </motion.div>
         )}
 
-        <p className="text-center text-[10px] text-purple-500/30 mt-8">shakemoi.fr</p>
+        <p className="text-center text-[10px] text-purple-500/30 mt-8">shakemoi.fr · <Slogan /></p>
       </motion.div>
     </div>
   );

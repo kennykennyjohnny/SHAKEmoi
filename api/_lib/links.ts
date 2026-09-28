@@ -8,6 +8,8 @@
 
 // Valeurs publiques du projet (même fallback que src/lib/supabase.ts : la clé
 // anon est publique par design et protégée par le RLS).
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../src/lib/brand.js';
+
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL || 'https://vbjmhtwrfboqziwibsut.supabase.co';
 const SUPABASE_ANON_KEY =
@@ -16,11 +18,10 @@ const SUPABASE_ANON_KEY =
 
 // Incrémenter quand le dessin des images change : WhatsApp & co gardent en
 // cache l'image d'une URL, changer `v` force un nouvel aperçu.
-export const OG_VERSION = '1';
+export const OG_VERSION = '2';
 
 export const SITE_NAME = 'SHAKEmoi';
-// Description par défaut. Provisoire tant que le nouveau slogan n'est pas choisi.
-export const DEFAULT_DESCRIPTION = 'Partage tes sons avec tes amis, quelle que soit leur plateforme.';
+export const DEFAULT_DESCRIPTION = SITE_DESCRIPTION;
 
 /**
  * Requête vers le site lui-même (index.html, polices, logos). Sur les
@@ -111,7 +112,7 @@ function songMeta(track: string, artist: string, cover: string | null, by: strin
   };
 }
 
-const HOME: LinkMeta = { title: SITE_NAME, description: DEFAULT_DESCRIPTION, card: { kind: 'home' } };
+const HOME: LinkMeta = { title: SITE_TITLE, description: DEFAULT_DESCRIPTION, card: { kind: 'home' } };
 
 const CONVERSATION: LinkMeta = {
   title: 'Rejoins la conversation sur SHAKEmoi',

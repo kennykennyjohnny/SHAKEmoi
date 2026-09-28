@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../../lib/supabase';
 import { getPlatformUrl } from '../../lib/odesli';
 import { Logo } from './Logo';
+import { Slogan } from './Slogan';
 
 interface Props {
   postId: string;
@@ -164,7 +165,7 @@ export function SharedPostView({ postId, onJoin }: Props) {
           </div>
         </div>
 
-        <p className="text-center text-[10px] text-purple-500/30 mt-6">shakemoi.fr</p>
+        <p className="text-center text-[10px] text-purple-500/30 mt-6">shakemoi.fr · <Slogan /></p>
       </motion.div>
     </div>
   );

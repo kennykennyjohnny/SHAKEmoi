@@ -5,6 +5,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { CardData } from './links.js';
+import { SLOGANS } from '../../src/lib/brand.js';
 
 /** Logos de la marque, en data URI (voir loadAssets). */
 export interface Assets { icon: string; logo: string }
@@ -264,28 +265,29 @@ function bubble(): El {
   );
 }
 
-function homeCard(a: Assets, tagline: string): El {
+function homeCard(a: Assets): El {
   return frame(
     a,
     h(
       'div',
-      { flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', gap: 36 },
-      img(a.icon, { width: 200, height: 200, borderRadius: 48, border: `2px solid ${C.stroke}` }),
-      img(a.logo, { width: 560, height: 86 }),
-      h('div', { fontSize: 34, fontWeight: 600, color: C.text2, textAlign: 'center' }, tagline),
+      { flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', gap: 26 },
+      img(a.icon, { width: 170, height: 170, borderRadius: 42, border: `2px solid ${C.stroke}` }),
+      img(a.logo, { width: 500, height: 77 }),
+      h('div', { fontFamily: 'Bricolage', fontSize: 58, marginTop: 10, color: C.text }, SLOGANS[0]),
+      h('div', { fontSize: 32, fontWeight: 600, color: C.neon }, SLOGANS[1]),
     ),
     { footer: false },
   );
 }
 
-export function renderCard(card: CardData, a: Assets, tagline: string): El {
+export function renderCard(card: CardData, a: Assets): El {
   switch (card.kind) {
     case 'song': return songCard(card, a);
     case 'profile': return profileCard(card, a);
     case 'circle': return circleCard(card, a);
     case 'invite': return inviteCard(card, a);
     case 'conversation': return centered(a, 'Rejoins la conversation', 'Ouvre SHAKEmoi pour lire les messages.', bubble());
-    default: return homeCard(a, tagline);
+    default: return homeCard(a);
   }
 }
 

@@ -11,7 +11,10 @@
 //
 // Les anciens formats (#/s/, #/circle/, ?song=, ?ref=) restent reconnus.
 
-export const PUBLIC_ORIGIN = 'https://shakemoi.fr';
+// Domaine principal sur Vercel : shakemoi.fr redirige (308) vers www. On
+// pointe directement sur www pour que les robots d'aperçu n'aient aucune
+// redirection à suivre.
+export const PUBLIC_ORIGIN = 'https://www.shakemoi.fr';
 
 export type RouteType = 'song' | 'post' | 'profile' | 'invite' | 'circle' | 'conversation';
 

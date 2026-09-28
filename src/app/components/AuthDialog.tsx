@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Mail, Lock, User as UserIcon, Loader2, AlertCircle, UserPlus, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
+import { Slogan } from './Slogan';
 
 interface AuthDialogProps {
   onComplete: (user: any) => void;
@@ -70,7 +71,6 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
             id: authData.user.id,
             username: formData.username,
             display_name: formData.displayName || formData.username,
-            email: formData.email,
             color: '#B4A7D6',
             feels_count: 0,
             feelings_count: 0
@@ -159,7 +159,7 @@ export function AuthDialog({ onComplete, referrer }: AuthDialogProps) {
                   <Logo size="lg" animated={true} showText={true} />
                 </motion.div>
                 <p className="text-purple-300/60 text-sm mt-1">
-                  {mode === 'login' ? 'Content de te revoir' : 'Partage tes sons préférés'}
+                  {mode === 'login' ? 'Content de te revoir' : <Slogan />}
                 </p>
               </>
             )}

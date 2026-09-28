@@ -18,6 +18,14 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
   const [initialMusicService] = useState<MusicPlatform>(
     currentUser?.musicService || currentUser?.preferred_platform || 'spotify'
   );
+  // L'email n'est plus copié dans users_profile (profil public) : on le lit
+  // dans la session, seul endroit où il est visible par son propriétaire.
+  const [email, setEmail] = useState<string | null>(null);
+  useEffect(() => {
+    import('../../lib/supabase').then(({ supabase }) =>
+      supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null))
+    );
+  }, []);
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
@@ -177,7 +185,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
               <div className="space-y-2 pt-2 border-t border-purple-800/30">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-purple-300/60">Email</span>
-                  <span className="text-sm text-white font-medium truncate max-w-[200px]">{currentUser?.email || '—'}</span>
+                  <span className="text-sm text-white font-medium truncate max-w-[200px]">{email || '—'}</span>
                 </div>
                 {currentUser?.bio && (
                   <div className="flex justify-between items-start">
