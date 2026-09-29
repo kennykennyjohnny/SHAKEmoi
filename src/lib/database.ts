@@ -1,6 +1,7 @@
 // SHAKEMOI - Database Functions (TypeScript)
 import { supabase } from './supabase';
 import { getOdesliLinks } from './odesli';
+import { MESSAGE_LIKE_TYPES, getNotifPrefs, isNotifTypeShown, notificationText } from './notify';
 
 // ==================== TYPES ====================
 
@@ -965,46 +966,35 @@ export async function getUserNotifications(userId: string) {
         post:posts!notifications_post_id_fkey(id, track_name, cover_url)
       `)
       .eq('user_id', userId)
+      // Les anciennes notifs « message / son / story / cercle » ne vont plus
+      // dans la cloche (A2) : la pastille Messages s'en charge.
+      .not('type', 'in', `(${MESSAGE_LIKE_TYPES.join(',')})`)
       .order('created_at', { ascending: false })
       .limit(50);
 
     if (error) throw error;
-    
-    // Transform to expected format
-    return (data || []).map((notif: any) => ({
-      id: notif.id,
-      type: notif.type,
-      actor_id: notif.from_user?.id || null,
-      actor_username: notif.from_user?.username || 'unknown',
-      actor_avatar: notif.from_user?.profile_album_cover_url,
-      post_id: notif.post?.id || null,
-      post_cover_url: notif.post?.cover_url,
-      post_track_name: notif.post?.track_name || null,
-      content: getNotificationMessage(notif.type),
-      created_at: notif.created_at,
-      is_read: notif.is_read
-    }));
+
+    const prefs = getNotifPrefs();
+    return (data || [])
+      .filter((notif: any) => isNotifTypeShown(notif.type, prefs))
+      .map((notif: any) => ({
+        id: notif.id,
+        type: notif.type,
+        actor_id: notif.from_user?.id || null,
+        actor_username: notif.from_user?.username || 'inconnu',
+        actor_avatar: notif.from_user?.profile_album_cover_url,
+        post_id: notif.post?.id || null,
+        post_cover_url: notif.post?.cover_url,
+        post_track_name: notif.post?.track_name || null,
+        circle_id: notif.circle_id || null,
+        comment_id: notif.comment_id || null,
+        content: notificationText(notif.type),
+        created_at: notif.created_at,
+        is_read: notif.is_read
+      }));
   } catch (error) {
     console.error('Error getting notifications:', error);
     return [];
-  }
-}
-
-function getNotificationMessage(type: string): string {
-  switch (type) {
-    case 'like': return 'a aimé ton shake';
-    case 'comment': return 'a commenté ton shake';
-    case 'reshake': return 'a reshaké ton post';
-    case 'follow': return 's\'est abonné(e) à toi';
-    case 'feel': return 't\'a ajouté en ami';
-    case 'circle_join': return 'a rejoint ton cercle';
-    case 'circle_post': return 'a posté dans ton cercle';
-    case 'circle_create': return 'Cercle créé !';
-    case 'song_share': return 't\'a envoyé un son';
-    case 'message': return 't\'a envoyé un message';
-    case 'story_like': return 'a aimé ton shake éphémère ❤️';
-    case 'story_comment': return 'a commenté ton shake éphémère 💭';
-    default: return 'a interagi avec toi';
   }
 }
 

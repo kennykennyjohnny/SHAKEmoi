@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 
 import { thumb, defaultAvatar } from '../../lib/media';
+import { showLocalNotification } from '../../lib/notify';
 type MusicPlatform = 'spotify' | 'apple_music' | 'deezer' | 'youtube_music' | 'tidal';
 
 interface SettingsDialogProps {
@@ -59,7 +60,8 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
 
   const togglePushNotifications = async () => {
     if (typeof Notification === 'undefined') {
-      alert('Les notifications ne sont pas supportées sur ce navigateur');
+      // iPhone : seulement dans l'appli installée sur l'écran d'accueil.
+      setPushUnsupported(true);
       return;
     }
 
@@ -81,11 +83,10 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
 
     setPushEnabled(true);
     localStorage.setItem('shakemoi_push_enabled', 'true');
-    new Notification('SHAKEmoi', {
-      body: 'Bienvenue sur SHAKEmoi ! Tu recevras tes notifications ici.',
-      icon: '/favicon.ico',
-    });
+    // Via le service worker : `new Notification()` plante sur Chrome Android (D4).
+    showLocalNotification('C\'est activé ! Tu verras tes notifications ici.', 'welcome');
   };
+  const [pushUnsupported, setPushUnsupported] = useState(false);
 
   const handleSave = async () => {
     try {
@@ -269,8 +270,8 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
                 <div className="flex items-center gap-2">
                   <BellRing className="w-4 h-4 text-purple-400" />
                   <div>
-                    <p className="text-sm text-white font-medium">Notifications push</p>
-                    <p className="text-xs text-purple-400/50">Recevoir les notifs même l'app fermée</p>
+                    <p className="text-sm text-white font-medium">Notifications sur ce téléphone</p>
+                    <p className="text-xs text-purple-400/50">Quand SHAKEmoi est ouvert ou en arrière-plan</p>
                   </div>
                 </div>
                 <button
@@ -289,6 +290,11 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
                   }`} />
                 </button>
               </div>
+              {pushUnsupported && (
+                <p className="text-xs text-purple-300/70 mt-2">
+                  Sur iPhone, installe d'abord SHAKEmoi sur l'écran d'accueil (Partager → « Sur l'écran d'accueil »), puis active-les depuis l'appli.
+                </p>
+              )}
               {notifPermission === 'denied' && (
                 <p className="text-xs text-pink-400 mt-2">
                   Les notifications sont bloquées. Va dans les paramètres de ton navigateur pour les réactiver.

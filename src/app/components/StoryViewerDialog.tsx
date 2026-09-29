@@ -111,46 +111,54 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
       setProgress(pct);
       if (pct >= 100) {
         clearInterval(intervalRef.current!);
+        intervalRef.current = null;
         navigateNext();
       }
     }, 50);
   };
 
   const pauseProgress = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    elapsedRef.current = Date.now() - startTimeRef.current;
+    // Le temps écoulé n'avance que si le minuteur tournait vraiment.
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      elapsedRef.current = Date.now() - startTimeRef.current;
+    }
   };
 
-  const resetAndStart = () => {
+  // E1 : le minuteur ne part qu'une fois la photo chargée (8 s max d'attente,
+  // pour ne jamais rester bloqué). Sans photo, il part tout de suite.
+  const [mediaReady, setMediaReady] = useState(!story?.image_url);
+  useEffect(() => {
+    setMediaReady(!story?.image_url);
+    if (!story?.image_url) return;
+    const t = setTimeout(() => setMediaReady(true), 8000);
+    return () => clearTimeout(t);
+  }, [story?.id]);
+
+  // E2 : appli masquée (autre onglet, écran verrouillé, autre appli) → pause.
+  const [appHidden, setAppHidden] = useState(typeof document !== 'undefined' && document.hidden);
+  useEffect(() => {
+    const onVis = () => setAppHidden(document.hidden);
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
+
+  // Nouvelle story : on repart de zéro.
+  useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = null;
     setProgress(0);
     elapsedRef.current = 0;
-    startTimeRef.current = Date.now();
-    intervalRef.current = setInterval(() => {
-      const elapsed = Date.now() - startTimeRef.current;
-      const pct = Math.min((elapsed / STORY_DURATION) * 100, 100);
-      setProgress(pct);
-      if (pct >= 100) {
-        clearInterval(intervalRef.current!);
-        navigateNext();
-      }
-    }, 50);
-  };
-
-  useEffect(() => {
-    if (!open || !story || showCommentInput) return;
-    resetAndStart();
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [story?.id, open]);
 
+  const blocked = isPaused || showCommentInput || showViewers || !mediaReady || appHidden;
   useEffect(() => {
     if (!open || !story) return;
-    if (isPaused || showCommentInput || showViewers) {
-      pauseProgress();
-    } else {
-      startProgress();
-    }
-  }, [isPaused, showCommentInput, showViewers]);
+    if (blocked) pauseProgress();
+    else startProgress();
+  }, [blocked, story?.id, open]);
+  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -212,6 +220,20 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   const [preview, setPreview] = useState(getPreviewState());
   useEffect(() => onPreviewChange(() => setPreview(getPreviewState())), []);
   const isSounding = preview.key === storyKey && preview.playing;
+
+  // E2 : le son se coupe aussi quand l'appli est masquée, et reprend au retour.
+  const resumeOnShowRef = useRef(false);
+  useEffect(() => {
+    if (!open || !storyKey) return;
+    const state = getPreviewState();
+    if (appHidden && state.key === storyKey && state.playing) {
+      resumeOnShowRef.current = true;
+      togglePreview(storyKey);
+    } else if (!appHidden && resumeOnShowRef.current) {
+      resumeOnShowRef.current = false;
+      if (getPreviewState().key === storyKey && !getPreviewState().playing) togglePreview(storyKey, storyPreviewUrl);
+    }
+  }, [appHidden]);
 
   const trackTitle: string | null = story?.track_name || fetchedTitle || null;
   const trackArtist: string | null = story?.artist || null;
@@ -395,7 +417,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
             {/* Photo : plein cadre, comme une story Instagram */}
             {story.image_url && (
               <div className="absolute inset-0 pointer-events-none">
-                <img loading="lazy" src={thumb(story.image_url, 1024)} alt="" className="w-full h-full object-cover" />
+                <img loading="lazy" src={thumb(story.image_url, 1024)} alt="" className="w-full h-full object-cover" onLoad={() => setMediaReady(true)} onError={() => setMediaReady(true)} />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent via-60% to-black/60" />
               </div>
             )}

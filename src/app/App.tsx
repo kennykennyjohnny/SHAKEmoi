@@ -31,6 +31,7 @@ import { parseRoute, type Route } from '../lib/links';
 import { Slogan } from './components/Slogan';
 
 import { defaultAvatar, thumb } from '../lib/media';
+import { isNotifTypeShown, notificationText, showLocalNotification } from '../lib/notify';
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'notifications';
 
 // Cercle à rejoindre après inscription (lien d'invitation ouvert sans compte).
@@ -164,24 +165,17 @@ export default function App() {
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'notifications',
         filter: `user_id=eq.${currentUser.id}`
-      }, (payload: any) => {
+      }, async (payload: any) => {
+        const type = payload.new?.type || '';
+        // Réglages « Notifications » respectés (D5), messages hors cloche (A2).
+        if (!isNotifTypeShown(type)) return;
         setUnreadNotifs(prev => prev + 1);
-        const pushEnabled = localStorage.getItem('shakemoi_push_enabled') === 'true';
-        if (pushEnabled && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          const type = payload.new?.type || '';
-          const msgMap: Record<string, string> = {
-            story_like: 'a aimé ton shake éphémère ❤️',
-            story_comment: 'a commenté ton shake éphémère 💭',
-            like: 'a aimé ton shake',
-            comment: 'a commenté ton shake',
-            follow: "s'est abonné(e) à toi",
-            reshake: 'a reshaké ton post',
-            message: "t'a envoyé un message",
-            song_share: "t'a envoyé un son",
-          };
-          const body = msgMap[type] || 'a interagi avec toi';
-          new Notification('SHAKEmoi', { body, icon: '/favicon.svg' });
-        }
+        let who = 'Quelqu\'un';
+        try {
+          const { data } = await supabase.from('users_profile').select('username').eq('id', payload.new?.from_user_id).maybeSingle();
+          if (data?.username) who = `@${data.username}`;
+        } catch {}
+        showLocalNotification(`${who} ${notificationText(type)}`, `notif-${type}`);
       })
       .subscribe();
 
@@ -197,7 +191,11 @@ export default function App() {
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'messages',
         filter: `receiver_id=eq.${currentUser.id}`
-      }, refreshUnreadMessages)
+      }, () => {
+        refreshUnreadMessages();
+        // Appli en arrière-plan : petite notif sur le téléphone.
+        if (document.hidden) showLocalNotification('Tu as un nouveau message', 'message');
+      })
       .subscribe();
     window.addEventListener('shakemoi:messages-read', refreshUnreadMessages);
 
@@ -425,7 +423,15 @@ export default function App() {
       case 'messages':
         return <MessagesView currentUser={currentUser} viewOptions={viewOptions} />;
       case 'notifications':
-        return <NotificationsView currentUser={currentUser} onNavigateToPost={(postId) => setNotifPostId(postId)} onNavigateToProfile={(userId) => setProfilePreview({ userId, username: '' })} />;
+        return (
+          <NotificationsView
+            currentUser={currentUser}
+            onNavigateToPost={(postId) => setNotifPostId(postId)}
+            onNavigateToProfile={(userId) => setProfilePreview({ userId, username: '' })}
+            onOpenConversation={(userId) => { setViewOptions({ initialTab: 'dms', openPartnerId: userId }); setCurrentView('messages'); }}
+            onOpenCircle={(circleId) => { setViewOptions({ initialTab: 'circles', openCircleId: circleId }); setCurrentView('messages'); }}
+          />
+        );
       case 'profile':
         return <ProfileView user={currentUser} onUpdateUser={setCurrentUser} />;
       default:

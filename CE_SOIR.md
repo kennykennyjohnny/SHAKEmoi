@@ -60,6 +60,16 @@ Trouvailles en plus :
 | C8 | ✅ | La liste des conversations se met à jour en direct quand un message arrive. |
 | C9 | ✅ | Touche un de tes messages → « Supprimer pour tous » (disparaît aussi chez l'autre en direct). |
 | A3 | ✅ | Pastille = nombre de **conversations** non lues, basée sur une date de dernière lecture en base (`conversation_reads`). Ouvrir une conversation la marque lue ; ouvrir l'onglet ne remet rien à zéro ; la pastille ne monte plus pendant qu'on lit. |
+| **LOT 4 — Notifications et stories** | | |
+| A2 | ✅ | (LOT 1) + les anciennes notifs de messages ne s'affichent plus dans la cloche. |
+| E3 | ✅ | (LOT 1) like de story : un seul message par story et par personne. |
+| D1 | ✅ | Like/commentaire/reshake/like de commentaire → le post. Abonné → le profil. Cercle rejoint/ajout → le cercle. Anciennes notifs de message/son/story → la conversation. |
+| D2 | ✅ | « a aimé ton commentaire », « t'a ajouté·e à un cercle », « s'est abonné·e à toi » (plus « t'a ajouté en ami »). |
+| D3 | ✅ | (LOT 1) |
+| D4 | 🟡 | Plus de plantage sur Chrome Android : la notif passe par le service worker ; toucher la notif ramène dans l'appli. Notif « nouveau message » quand l'appli est en arrière-plan. **Appli fermée : toujours rien** (vraies notifications push = backlog v2). Libellé du réglage corrigé (il promettait « même l'app fermée »). |
+| D5 | ✅ | Les réglages Likes / Commentaires / Reshakes / Abonnés filtrent la cloche, son compteur et les notifs téléphone. |
+| E1 | ✅ | Le minuteur d'une story attend que la photo soit chargée (8 s maximum). |
+| E2 | ✅ | Story en pause (défilement + son) quand l'appli est masquée, reprise au retour. |
 | G3 | 🟡 | « Modifier le profil » : pseudo mis en minuscules, vérifié (règle + doublon) avant d'enregistrer, et affiché seulement si la base accepte. Reste la contrainte en base (LOT 6). |
 
 ## Backlog v2 (hors périmètre ce soir)

@@ -1,7 +1,7 @@
 import { Heart, MessageCircle, UserPlus, UserCheck, UserMinus, Music, Repeat2, Loader2, Bell, Users, ExternalLink, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { getUserNotifications, followUser, unfollowUser, isFollowing } from '../../lib/database';
+import { getUserNotifications, followUser, unfollowUser, getFollowingIds } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
@@ -10,9 +10,11 @@ interface NotificationsViewProps {
   currentUser: any;
   onNavigateToPost?: (postId: string) => void;
   onNavigateToProfile?: (userId: string) => void;
+  onOpenConversation?: (userId: string) => void;
+  onOpenCircle?: (circleId: string | null) => void;
 }
 
-export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToProfile }: NotificationsViewProps) {
+export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToProfile, onOpenConversation, onOpenCircle }: NotificationsViewProps) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
@@ -35,11 +37,10 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
       await supabase.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false);
       
       // Check follow state for follow notifications (trigger creates 'feel' type)
-      const followNotifs = data.filter((n: any) => (n.type === 'follow' || n.type === 'feel') && n.actor_id);
+      // « Déjà suivi ? » en une requête (avant : une par notification).
+      const following = new Set(await getFollowingIds(currentUser.id));
       const states: Record<string, boolean> = {};
-      await Promise.all(followNotifs.map(async (n: any) => {
-        try { states[n.actor_id] = await isFollowing(n.actor_id); } catch { states[n.actor_id] = false; }
-      }));
+      data.forEach((n: any) => { if ((n.type === 'follow' || n.type === 'feel') && n.actor_id) states[n.actor_id] = following.has(n.actor_id); });
       setFollowingState(states);
     } catch (error) {
       console.error('Error loading notifications:', error);
@@ -94,11 +95,17 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
   const getIcon = (type: string) => {
     switch (type) {
       case 'like':
+      case 'comment_like':
         return <Heart className="w-3.5 h-3.5 fill-current text-pink-500" />;
       case 'comment':
         return <MessageCircle className="w-3.5 h-3.5 text-fuchsia-400" />;
       case 'follow':
+      case 'feel':
         return <UserPlus className="w-3.5 h-3.5 text-purple-400" />;
+      case 'circle_join':
+      case 'circle_add':
+      case 'circle_invite':
+        return <Users className="w-3.5 h-3.5 text-purple-300" />;
       case 'reshake':
         return <Repeat2 className="w-3.5 h-3.5 text-fuchsia-400" />;
       default:
@@ -151,14 +158,17 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
           const isFollowNotif = notif.type === 'follow' || notif.type === 'feel';
           const alreadyFollowing = followingState[notif.actor_id] || followedBack.has(notif.actor_id);
           const hasPost = !!notif.post_cover_url;
-          const canNavigate = (notif.type === 'like' || notif.type === 'comment' || notif.type === 'reshake') && notif.post_id;
+          // Chaque notification mène au bon endroit (D1).
+          const isPostNotif = ['like', 'comment', 'reshake', 'comment_like'].includes(notif.type) && !!notif.post_id;
+          const isCircleNotif = notif.type.startsWith('circle_');
+          const isMessageNotif = ['message', 'song_share', 'story_like', 'story_comment'].includes(notif.type);
+          const canNavigate = isPostNotif || isFollowNotif || isCircleNotif || isMessageNotif;
 
           const handleNotifClick = () => {
-            if (notif.type === 'follow' && onNavigateToProfile) {
-              onNavigateToProfile(notif.actor_id);
-            } else if (canNavigate && onNavigateToPost) {
-              onNavigateToPost(notif.post_id);
-            }
+            if (isPostNotif) onNavigateToPost?.(notif.post_id);
+            else if (isCircleNotif) onOpenCircle?.(notif.circle_id);
+            else if (isMessageNotif && notif.actor_id) onOpenConversation?.(notif.actor_id);
+            else if (notif.actor_id) onNavigateToProfile?.(notif.actor_id);
           };
 
           return (
@@ -168,7 +178,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.02 }}
               onClick={handleNotifClick}
-              className={`w-full bg-purple-950/25 hover:bg-purple-900/30 rounded-xl p-2.5 flex items-center gap-2.5 transition-colors border border-purple-800/15 ${!notif.is_read ? 'border-l-2 border-l-fuchsia-500' : ''} ${canNavigate || notif.type === 'follow' ? 'cursor-pointer' : ''}`}
+              className={`w-full bg-purple-950/25 hover:bg-purple-900/30 rounded-xl p-2.5 flex items-center gap-2.5 transition-colors border border-purple-800/15 ${!notif.is_read ? 'border-l-2 border-l-fuchsia-500' : ''} ${canNavigate ? 'cursor-pointer' : ''}`}
             >
               {/* Icon */}
               <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 border ${getIconBg(notif.type)}`}>

@@ -29,3 +29,14 @@ self.addEventListener('fetch', event => {
     fetch(event.request).catch(() => caches.match(OFFLINE_URL)),
   );
 });
+
+// Toucher une notification ramène dans l'appli (ou l'ouvre).
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      const client = list[0];
+      return client ? client.focus() : self.clients.openWindow('/');
+    }),
+  );
+});

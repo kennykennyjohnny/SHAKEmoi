@@ -28,7 +28,7 @@ interface MessagesViewProps {
 }
 
 export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewOptions }: MessagesViewProps) {
-  const { initialTab = 'dms' } = viewOptions || {};
+  const { initialTab = 'dms', openPartnerId = null, openCircleId = null } = viewOptions || {};
   const [tab, setTab] = useState<'dms' | 'circles'>(initialTab);
   const [inSubView, setInSubView] = useState(false);
   const [fabTrigger, setFabTrigger] = useState(0);
@@ -58,10 +58,10 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
       )}
 
       <div className={tab === 'dms' ? 'flex flex-col flex-1 min-h-0 overflow-hidden' : 'hidden'}>
-        <DmsPanel currentUser={currentUser} onSubViewActive={setInSubView} fabTrigger={fabTrigger} />
+        <DmsPanel currentUser={currentUser} onSubViewActive={setInSubView} fabTrigger={fabTrigger} openPartnerId={openPartnerId} />
       </div>
       <div className={tab === 'circles' ? 'flex flex-col flex-1 min-h-0 overflow-hidden' : 'hidden'}>
-        <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setInSubView} fabTrigger={fabTrigger} />
+        <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setInSubView} fabTrigger={fabTrigger} openCircleId={openCircleId} />
       </div>
 
       {/* FAB — bouton + fixe en bas à droite, au-dessus de la nav bar */}
@@ -149,7 +149,7 @@ function NewConvoSearch({ friends, onSelect, onClose }: { friends: any[]; onSele
 
 // ==================== DMs ====================
 
-function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: any; onSubViewActive?: (active: boolean) => void; fabTrigger?: number }) {
+function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: { currentUser: any; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openPartnerId?: string | null }) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeConversation, setActiveConversation] = useState<any>(null);
@@ -182,6 +182,13 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
   };
 
   useEffect(() => { loadConversations(); }, []);
+  // Ouverture directe d'une conversation (depuis une notification, D1).
+  useEffect(() => {
+    if (!openPartnerId) return;
+    supabase.from('users_profile').select('id, username, display_name, profile_album_cover_url')
+      .eq('id', openPartnerId).maybeSingle()
+      .then(({ data }) => { if (data) openConversation(data); });
+  }, [openPartnerId]);
   useEffect(() => {
     if (!messages.length) return;
     if (skipAutoScrollRef.current !== null) {
@@ -752,13 +759,20 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
 
 // ==================== Cercles ====================
 
-function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated, onSubViewActive, fabTrigger }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void; fabTrigger?: number }) {
+function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated, onSubViewActive, fabTrigger, openCircleId }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openCircleId?: string | null }) {
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedCircleId, setSelectedCircleId] = useState<string | null>(null);
 
   useEffect(() => { load(); }, []);
+  // Ouverture directe d'un cercle (depuis une notification, D1).
+  useEffect(() => {
+    if (openCircleId && circles.some(c => c.id === openCircleId)) {
+      setSelectedCircleId(openCircleId);
+      onSubViewActive?.(true);
+    }
+  }, [openCircleId, circles.length]);
   useEffect(() => {
     if (!fabTrigger) return;
     setShowCreate(true);
