@@ -67,6 +67,25 @@ export async function getOdesliLinks(
 }
 
 /**
+ * Extrait de 30 s à enregistrer avec un son (M1) : Spotify, sinon Deezer
+ * (adresse stable), sinon iTunes. `preview_source = 'none'` si rien trouvé.
+ * Même requête que getOdesliLinks (mise en commun par resolveLinks).
+ */
+export async function getSongPreview(
+  spotifyUrl: string,
+  meta?: { title?: string | null; artist?: string | null },
+  existing?: string | null,
+): Promise<{ preview_url: string | null; preview_source: string }> {
+  if (existing && !existing.includes('dzcdn.net')) {
+    return { preview_url: existing, preview_source: existing.includes('scdn.co') ? 'spotify' : existing.includes('/api/preview') ? 'deezer' : 'itunes' };
+  }
+  if (!spotifyUrl && !meta?.title) return { preview_url: null, preview_source: 'none' };
+  const r = await resolveLinks({ spotifyUrl, title: meta?.title, artist: meta?.artist });
+  const url = r?.preview && !r.preview.includes('dzcdn.net') ? r.preview : null;
+  return { preview_url: url, preview_source: url ? (r?.previewSource || 'itunes') : 'none' };
+}
+
+/**
  * Lien à ouvrir pour la plateforme demandée. Toujours en https (ouvre l'app
  * si elle est installée). Si on ne connaît pas le lien exact et qu'on a le
  * titre, on ouvre la recherche de la plateforme plutôt que rien.

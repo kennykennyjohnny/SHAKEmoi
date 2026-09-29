@@ -20,12 +20,15 @@ const SUPABASE_ANON_KEY =
 
 type Platform = 'spotify' | 'apple_music' | 'deezer' | 'youtube_music' | 'youtube';
 
+const PREVIEW_ORIGIN = 'https://www.shakemoi.fr';
+
 interface Resolved {
   title: string | null;
   artist: string | null;
   cover: string | null;
   isrc: string | null;
   preview: string | null;
+  previewSource: 'spotify' | 'deezer' | 'itunes' | null;
   links: Record<Platform, string | null>;
   exact: Record<Platform, boolean>;
 }
@@ -113,12 +116,12 @@ async function fromSpotify(id: string | null, title: string, artist: string) {
 async function fromDeezer(isrc: string | null, title: string, artist: string) {
   if (isrc) {
     const t = await getJson(`https://api.deezer.com/track/isrc:${encodeURIComponent(isrc)}`);
-    if (t?.id && !t.error) return { url: `https://www.deezer.com/track/${t.id}`, preview: t.preview || null };
+    if (t?.id && !t.error) return { id: String(t.id), url: `https://www.deezer.com/track/${t.id}`, preview: t.preview || null };
   }
   if (!title) return null;
   const res = await getJson(`https://api.deezer.com/search?q=${encodeURIComponent(`${title} ${artist}`)}&limit=10`);
   const t = pickBest<any>(res?.data ?? [], title, artist, d => d.title, d => d.artist?.name || '');
-  return t ? { url: `https://www.deezer.com/track/${t.id}`, preview: t.preview || null } : null;
+  return t ? { id: String(t.id), url: `https://www.deezer.com/track/${t.id}`, preview: t.preview || null } : null;
 }
 
 async function fromItunes(title: string, artist: string) {
@@ -166,12 +169,19 @@ export async function GET(req: Request) {
   const [deezer, itunes] = await Promise.all([fromDeezer(isrc, title, artist), fromItunes(title, artist)]);
   const search = searchLinks(title, artist);
 
+  // Extrait, dans l'ordre (M1) : Spotify, puis Deezer (adresse stable
+  // /api/preview, l'extrait Deezer signé expirant au bout d'une heure), puis iTunes.
+  const deezerPreview = deezer?.preview && deezer.id ? `${PREVIEW_ORIGIN}/api/preview?deezer=${deezer.id}` : null;
+  const preview = spotify?.preview ?? deezerPreview ?? itunes?.preview ?? null;
+  const previewSource = spotify?.preview ? 'spotify' : deezerPreview ? 'deezer' : itunes?.preview ? 'itunes' : null;
+
   const body: Resolved = {
     title: title || null,
     artist: artist || null,
     cover: spotify?.cover ?? itunes?.cover ?? null,
     isrc: isrc ?? null,
-    preview: spotify?.preview ?? itunes?.preview ?? deezer?.preview ?? null,
+    preview,
+    previewSource,
     links: {
       spotify: spotify?.url ?? search.spotify,
       apple_music: itunes?.url ?? search.apple_music,
@@ -188,16 +198,13 @@ export async function GET(req: Request) {
     },
   };
 
-  // Les liens d'un son ne bougent pas : une semaine en cache CDN. Sauf si
-  // l'extrait vient de Deezer : son URL est signée et expire au bout d'une heure.
-  const expiring = !!body.preview && !spotify?.preview && !itunes?.preview;
+  // Les liens d'un son ne bougent pas (l'extrait Deezer passe par une adresse
+  // stable) : une semaine en cache CDN.
   return new Response(JSON.stringify(body), {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'Access-Control-Allow-Origin': '*',
-      'Cache-Control': expiring
-        ? 'public, max-age=600, s-maxage=1200'
-        : 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000',
+      'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000',
     },
   });
 }

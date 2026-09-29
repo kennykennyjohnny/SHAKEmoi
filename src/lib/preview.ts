@@ -10,7 +10,8 @@
 import { resolveLinks } from './platforms';
 
 // v2 : les anciens « pas d'extrait » (null) sont réessayés avec la nouvelle source.
-const CACHE_KEY = 'shakemoi_preview_cache_v2';
+// v3 : chaîne Spotify → Deezer (adresse stable) → iTunes (M1).
+const CACHE_KEY = 'shakemoi_preview_cache_v3';
 
 function readCache(): Record<string, string | null> {
   try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}'); } catch { return {}; }
@@ -74,6 +75,14 @@ async function searchItunesPreview(
   }
 }
 
+/**
+ * Extrait de 30 s d'un son (M1), dans l'ordre :
+ *   1. l'extrait déjà enregistré (Spotify, Deezer stable ou iTunes) ;
+ *   2. la chaîne du serveur /api/links : Spotify → Deezer (par ISRC, sinon
+ *      titre + artiste vérifiés, adresse stable /api/preview) → iTunes ;
+ *   3. en secours, iTunes interrogé directement depuis le téléphone.
+ * null = aucun extrait nulle part : l'écran propose « Écouter sur Spotify ».
+ */
 export async function resolvePreviewUrl(
   trackName: string,
   artist: string,
@@ -82,36 +91,28 @@ export async function resolvePreviewUrl(
    *  la recherche par titre échoue (classique, titres longs) ou que le titre manque. */
   spotifyId?: string | null
 ): Promise<string | null> {
-  if (existing) return existing;
+  // Ancien extrait Deezer signé enregistré avant ce soir : il a expiré.
+  if (existing && !existing.includes('dzcdn.net')) return existing;
   if (!trackName && !spotifyId) return null;
-  const key = (trackName ? `${trackName}::${artist}` : `spotify::${spotifyId}`).toLowerCase();
+  const key = (spotifyId ? `spotify::${spotifyId}` : `${trackName}::${artist}`).toLowerCase();
   const cache = readCache();
-  if (key in cache && cache[key]) return cache[key];
+  if (cache[key]) return cache[key];
 
-  // Catalogue français d'abord (l'app est FR), puis international.
-  let url = trackName ? await searchItunesPreview(`${trackName} ${artist}`, trackName, artist) : null;
-  const cleaned = cleanTitle(trackName || '');
-  if (!url && trackName && cleaned && cleaned !== trackName) {
-    url = await searchItunesPreview(`${cleaned} ${artist}`, trackName, artist);
-  }
+  const resolved = await resolveLinks(
+    spotifyId ? { spotifyUrl: spotifyId, title: trackName || null, artist: artist || null } : { title: trackName, artist },
+  ).catch(() => null);
+  let url = resolved?.preview && !resolved.preview.includes('dzcdn.net') ? resolved.preview : null;
+
   if (!url && trackName) {
-    url = await searchItunesPreview(`${cleaned || trackName} ${artist}`, trackName, artist, 'US');
+    // Catalogue français d'abord (l'app est FR), puis international.
+    url = await searchItunesPreview(`${trackName} ${artist}`, trackName, artist);
+    const cleaned = cleanTitle(trackName);
+    if (!url && cleaned && cleaned !== trackName) url = await searchItunesPreview(`${cleaned} ${artist}`, trackName, artist);
+    if (!url) url = await searchItunesPreview(`${cleaned || trackName} ${artist}`, trackName, artist, 'US');
   }
 
-  // Dernier recours : l'extrait trouvé par /api/links (Spotify → ISRC →
-  // Deezer exact, ou iTunes avec les métadonnées exactes de Spotify).
-  if (!url) {
-    const resolved = await resolveLinks(
-      spotifyId ? { spotifyUrl: spotifyId } : { title: trackName, artist },
-    ).catch(() => null);
-    const fallback = resolved?.preview ?? null;
-    // Extrait Deezer = URL signée qui expire : utilisé, mais pas mis en cache.
-    if (fallback && fallback.includes('dzcdn.net')) return fallback;
-    url = fallback;
-  }
-
-  cache[key] = url;
-  writeCache(cache);
+  // Seules les trouvailles sont gardées : un échec est réessayé la fois suivante.
+  if (url) { cache[key] = url; writeCache(cache); }
   return url;
 }
 

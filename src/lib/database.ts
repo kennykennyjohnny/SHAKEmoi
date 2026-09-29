@@ -1,6 +1,6 @@
 // SHAKEMOI - Database Functions (TypeScript)
 import { supabase } from './supabase';
-import { getOdesliLinks } from './odesli';
+import { getOdesliLinks, getSongPreview } from './odesli';
 import { MESSAGE_LIKE_TYPES, getNotifPrefs, isNotifTypeShown, notificationText } from './notify';
 
 // ==================== TYPES ====================
@@ -235,8 +235,13 @@ export async function createPost(
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Fetch cross-platform links from Odesli
-    const odesliLinks = spotifyUrl || trackName ? await getOdesliLinks(spotifyUrl || '', { title: trackName, artist }) : null;
+    // Liens des plateformes + extrait (Spotify → Deezer → iTunes, M1), en une requête.
+    const [odesliLinks, preview] = spotifyUrl || trackName
+      ? await Promise.all([
+          getOdesliLinks(spotifyUrl || '', { title: trackName, artist }),
+          getSongPreview(spotifyUrl || '', { title: trackName, artist }, previewUrl),
+        ])
+      : [null, { preview_url: null, preview_source: null }];
 
     // Build embed URL from track ID
     const spotifyEmbedUrl = trackId
@@ -253,7 +258,8 @@ export async function createPost(
         artist: hasTrack ? artist : null,
         cover_url: hasTrack ? coverUrl : null,
         text: text || null,
-        preview_url: previewUrl || null,
+        preview_url: hasTrack ? preview.preview_url : null,
+        preview_source: hasTrack ? preview.preview_source : null,
         spotify_url: spotifyUrl || null,
         spotify_embed_url: spotifyEmbedUrl,
         track_id: trackId || null,
@@ -318,6 +324,7 @@ export async function reshakePost(originalPostId: string, comment?: string) {
         text: comment?.trim() || null,
         image_url: originalPost.image_url || null,
         preview_url: originalPost.preview_url,
+        preview_source: originalPost.preview_source ?? null,
         spotify_url: originalPost.spotify_url,
         spotify_embed_url: originalPost.spotify_embed_url,
         track_id: originalPost.track_id,
@@ -1260,10 +1267,14 @@ export async function sendMessage(receiverId: string, text?: string, track?: any
       messageData.spotify_url = track.spotify_url || track.spotifyUrl;
       messageData.spotify_embed_url = track.id ? `https://open.spotify.com/embed/track/${track.id}` : null;
 
-      // Fetch Odesli links if we have a spotify URL
+      // Liens des plateformes + extrait du son (M1).
       if (messageData.spotify_url || messageData.track_name) {
-        const odesliLinks = await getOdesliLinks(messageData.spotify_url || '', { title: messageData.track_name, artist: messageData.artist });
-        Object.assign(messageData, odesliLinks);
+        const meta = { title: messageData.track_name, artist: messageData.artist };
+        const [odesliLinks, preview] = await Promise.all([
+          getOdesliLinks(messageData.spotify_url || '', meta),
+          getSongPreview(messageData.spotify_url || '', meta, track.preview_url || track.previewUrl),
+        ]);
+        Object.assign(messageData, odesliLinks, preview);
       }
     }
 
@@ -1668,6 +1679,7 @@ export async function sendCircleMessage(circleId: string, text?: string, track?:
       msgData.track_id = track.id || track.track_id;
       msgData.spotify_url = track.spotify_url || track.spotifyUrl;
       msgData.spotify_embed_url = track.id ? `https://open.spotify.com/embed/track/${track.id}` : null;
+      Object.assign(msgData, await getSongPreview(msgData.spotify_url || msgData.track_id || '', { title: msgData.track_name, artist: msgData.artist }, track.preview_url || track.previewUrl));
     }
 
     const { data, error } = await supabase
@@ -1779,9 +1791,17 @@ export async function createStory(payload: {
       // null = fond "Auto" : la pochette floutée colore la story.
       theme_color: payload.themeColor ?? null,
       preview_url: track?.previewUrl || track?.preview_url || null,
+      preview_source: null as string | null,
       duration_days: payload.durationDays,
       expires_at: expiresAt.toISOString(),
     };
+
+    // Extrait du son de la story (Spotify → Deezer → iTunes, M1).
+    if (storyData.track_name || storyData.spotify_url) {
+      const p = await getSongPreview(storyData.spotify_url || storyData.track_id || '', { title: storyData.track_name, artist: storyData.artist }, storyData.preview_url);
+      storyData.preview_url = p.preview_url;
+      storyData.preview_source = p.preview_source;
+    }
 
     const { data, error } = await supabase
       .from('stories')

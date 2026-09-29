@@ -90,11 +90,15 @@ export interface ResolvedLinks {
   cover: string | null;
   isrc: string | null;
   preview: string | null;
+  /** D'où vient l'extrait (M1) : spotify, deezer (adresse stable /api/preview) ou itunes. */
+  previewSource?: 'spotify' | 'deezer' | 'itunes' | null;
   links: Record<'spotify' | 'apple_music' | 'deezer' | 'youtube_music' | 'youtube', string | null>;
   exact: Record<'spotify' | 'apple_music' | 'deezer' | 'youtube_music' | 'youtube', boolean>;
 }
 
-const CACHE_KEY = 'shakemoi_links_cache_v1';
+// v2 : les extraits Deezer passent par une adresse stable (M1) ; l'ancien
+// cache gardait « pas d'extrait » pour ces sons.
+const CACHE_KEY = 'shakemoi_links_cache_v2';
 const memory = new Map<string, Promise<ResolvedLinks | null>>();
 
 /**
@@ -107,8 +111,10 @@ export function resolveLinks(q: { title?: string | null; artist?: string | null;
   if (q.title) params.set('title', q.title);
   if (q.artist) params.set('artist', q.artist);
   if (q.isrc) params.set('isrc', q.isrc);
+  if (!params.toString()) return Promise.resolve(null);
+  // Nouvelle chaîne d'extraits (M1) : ignore les anciennes réponses en cache CDN.
+  params.set('v', '2');
   const key = params.toString();
-  if (!key) return Promise.resolve(null);
 
   const hit = memory.get(key);
   if (hit) return hit;
@@ -127,6 +133,7 @@ export function resolveLinks(q: { title?: string | null; artist?: string | null;
         const keys = Object.keys(cache);
         if (keys.length > 200) delete cache[keys[0]];
         // Extrait Deezer = URL signée qui expire : on ne le garde pas.
+        // Ancienne réponse encore en cache CDN : extrait Deezer signé (expire) → non gardé.
         cache[key] = data.preview?.includes('dzcdn.net') ? { ...data, preview: null } : data;
         localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
       } catch { /* pas grave */ }
