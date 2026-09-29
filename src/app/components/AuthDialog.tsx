@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';
 import { friendlyError } from '../../lib/errors';
+import { normalizeUsername, usernameError, escapeLike } from '../../lib/username';
 
 import { thumb, defaultAvatar } from '../../lib/media';
 interface AuthDialogProps {
@@ -15,9 +16,26 @@ interface AuthDialogProps {
 }
 
 export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+
+  // Profil du compte : créé par la base à l'inscription ; sinon (compte d'un
+  // essai raté) on le crée ici avec le pseudo choisi.
+  const ensureProfile = async (userId: string, username: string, displayName: string) => {
+    const { data: existing } = await supabase.from('users_profile').select('*').eq('id', userId).maybeSingle();
+    if (existing) return existing;
+    const { data: created, error: insertError } = await supabase
+      .from('users_profile')
+      .insert([{ id: userId, username, display_name: displayName.trim() || username, color: '#B4A7D6', feels_count: 0, feelings_count: 0 }])
+      .select('*')
+      .single();
+    if (insertError) {
+      throw new Error(insertError.code === '23505' ? 'Ce pseudo est déjà pris' : 'Erreur lors de la création du profil');
+    }
+    return created;
+  };
   const [referrerProfile, setReferrerProfile] = useState<any>(null);
 
   const [formData, setFormData] = useState({
@@ -34,8 +52,9 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
       supabase
         .from('users_profile')
         .select('id, username, display_name, profile_album_cover_url, bio')
-        .eq('username', referrer)
-        .single()
+        .ilike('username', escapeLike(referrer))
+        .limit(1)
+        .maybeSingle()
         .then(({ data }) => {
           if (data) setReferrerProfile(data);
         });
@@ -46,47 +65,57 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setInfo(null);
 
     try {
+      if (mode === 'forgot') {
+        // G1 : lien de réinitialisation envoyé par email ; au retour dans
+        // l'appli, une fenêtre « Nouveau mot de passe » s'ouvre (App).
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(formData.email.trim(), {
+          redirectTo: `${window.location.origin}/`,
+        });
+        if (resetError) throw resetError;
+        setInfo('C\'est parti : regarde tes emails (et les spams) pour choisir un nouveau mot de passe.');
+        return;
+      }
+
       if (mode === 'signup') {
-        const { data: existingUser } = await supabase
-          .from('users_profile')
-          .select('username')
-          .eq('username', formData.username)
-          .single();
+        // G2 : même règle partout (appli + base) ; minuscules automatiques.
+        const username = normalizeUsername(formData.username);
+        const ruleError = usernameError(username);
+        if (ruleError) throw new Error(ruleError);
+        const { data: free } = await supabase.rpc('username_available', { p_username: username });
+        if (free === false) throw new Error('Ce pseudo est déjà pris');
 
-        if (existingUser) {
-          throw new Error('Ce nom d\'utilisateur est déjà pris');
-        }
-
+        // G4 : le profil est créé par la base EN MÊME TEMPS que le compte
+        // (pseudo passé ici) : plus de compte coincé sans profil.
         const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password
+          email: formData.email.trim(),
+          password: formData.password,
+          options: { data: { username, display_name: formData.displayName.trim() || username } },
         });
 
-        if (authError) throw authError;
+        if (authError) {
+          // Compte déjà créé lors d'un essai raté : on tente de s'y connecter.
+          if (/already registered|already been registered/i.test(authError.message || '')) {
+            const { data: signIn, error: signInError } = await supabase.auth.signInWithPassword({
+              email: formData.email.trim(), password: formData.password,
+            });
+            if (signInError || !signIn.user) throw authError;
+            onComplete(await ensureProfile(signIn.user.id, username, formData.displayName));
+            return;
+          }
+          throw authError;
+        }
         if (!authData.user) throw new Error('Erreur lors de la création du compte');
+        if (!authData.session) {
+          // Confirmation par email activée : le compte attend la validation.
+          setInfo('Compte créé ! Confirme ton email (regarde aussi les spams), puis connecte-toi.');
+          setMode('login');
+          return;
+        }
 
-        const { error: profileError } = await supabase
-          .from('users_profile')
-          .insert([{
-            id: authData.user.id,
-            username: formData.username,
-            display_name: formData.displayName || formData.username,
-            color: '#B4A7D6',
-            feels_count: 0,
-            feelings_count: 0
-          }]);
-
-        if (profileError) throw new Error('Erreur lors de la création du profil');
-
-        const { data: profile } = await supabase
-          .from('users_profile')
-          .select('*')
-          .eq('id', authData.user.id)
-          .single();
-
-        onComplete(profile);
+        onComplete(await ensureProfile(authData.user.id, username, formData.displayName));
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
@@ -100,9 +129,11 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
           .from('users_profile')
           .select('*')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
 
-        onComplete(profile);
+        // Profil manquant (ancienne inscription ratée) : l'appli propose de
+        // choisir un pseudo au lieu de traiter la personne en visiteur (G4).
+        onComplete(profile || { id: data.user.id, __needsProfile: true });
       }
     } catch (err: any) {
       console.error('Auth error:', err);
@@ -187,6 +218,12 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
                 </motion.div>
               )}
             </AnimatePresence>
+            {info && (
+              <p className="bg-fuchsia-500/10 border border-fuchsia-500/25 rounded-lg p-3 text-sm text-fuchsia-100">{info}</p>
+            )}
+            {mode === 'forgot' && (
+              <p className="text-sm text-purple-200/80">Entre l'email de ton compte : on t'envoie un lien pour choisir un nouveau mot de passe.</p>
+            )}
 
             {mode === 'signup' && (
               <>
@@ -196,11 +233,15 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
                     type="text"
                     required
                     value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, username: normalizeUsername(e.target.value) })}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    maxLength={20}
                     className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-400/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
-                    placeholder="Nom d'utilisateur"
+                    placeholder="Pseudo (ex. kenny.shake)"
                   />
                 </div>
+                <p className="-mt-1 px-1 text-[11px] text-purple-300/50">3 à 20 caractères : lettres, chiffres, point, tiret.</p>
                 <div className="relative">
                   <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
                   <input
@@ -226,18 +267,32 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
               />
             </div>
 
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
-              <input
-                type="password"
-                required
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-400/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
-                placeholder="Mot de passe"
-                minLength={6}
-              />
-            </div>
+            {mode !== 'forgot' && (
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
+                <input
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-400/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                  placeholder="Mot de passe"
+                  minLength={6}
+                />
+              </div>
+            )}
+            {mode === 'login' && (
+              <div className="text-right -mt-1">
+                <button
+                  type="button"
+                  onClick={() => { setMode('forgot'); setError(null); setInfo(null); }}
+                  className="text-xs text-purple-300/70 hover:text-white underline-offset-2 hover:underline"
+                >
+                  Mot de passe oublié ?
+                </button>
+              </div>
+            )}
 
             <button
               type="submit"
@@ -245,9 +300,9 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
             >
               {loading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> {mode === 'login' ? 'Connexion...' : 'Création...'}</>
+                <><Loader2 className="w-4 h-4 animate-spin" /> {mode === 'login' ? 'Connexion...' : mode === 'forgot' ? 'Envoi...' : 'Création...'}</>
               ) : (
-                mode === 'login' ? 'Se connecter' : "S'inscrire"
+                mode === 'login' ? 'Se connecter' : mode === 'forgot' ? 'Recevoir le lien' : "S'inscrire"
               )}
             </button>
             {mode === 'signup' && (
@@ -261,11 +316,11 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
 
             <div className="text-center pt-3 border-t border-purple-800/20">
               <p className="text-purple-300/60 text-sm">
-                {mode === 'login' ? "Pas encore de compte ?" : "Déjà un compte ?"}
+                {mode === 'login' ? "Pas encore de compte ?" : mode === 'forgot' ? 'Tu t\'en souviens ?' : "Déjà un compte ?"}
                 {' '}
                 <button
                   type="button"
-                  onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(null); }}
+                  onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(null); setInfo(null); }}
                   className="text-purple-400 hover:text-purple-300 font-semibold transition-colors"
                 >
                   {mode === 'login' ? "S'inscrire" : "Se connecter"}

@@ -22,6 +22,11 @@ export function usernameError(username: string): string | null {
   return null;
 }
 
+/** Échappe % et _ (jokers SQL) pour une recherche exacte sans casse. */
+export function escapeLike(s: string): string {
+  return s.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
 /** Vrai si le pseudo est déjà pris par quelqu'un d'autre (sans distinction de casse). */
 export async function isUsernameTaken(username: string, exceptUserId?: string): Promise<boolean> {
   const { data, error } = await supabase

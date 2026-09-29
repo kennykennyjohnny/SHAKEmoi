@@ -80,7 +80,18 @@ Trouvailles en plus :
 | G5 | ✅ | Erreurs de connexion/inscription en français (« Email ou mot de passe incorrect », « Confirme d'abord ton email », etc.). |
 | G6 | ✅ | Premier lancement : le Shake de la semaine attend que « Compléter ton profil » soit fermé. |
 | F4 | ✅ | Like instantané (fil, détail d'un post, story) ; deux taps rapides ne se contredisent plus ; retour en arrière si le serveur refuse. |
-| G3 | 🟡 | « Modifier le profil » : pseudo mis en minuscules, vérifié (règle + doublon) avant d'enregistrer, et affiché seulement si la base accepte. Reste la contrainte en base (LOT 6). |
+| **LOT 6 — Comptes et contenus** | | |
+| G1 | ✅ | « Mot de passe oublié ? » sous le mot de passe → email avec lien → au retour, fenêtre « Nouveau mot de passe ». ⚠️ Vérifie dans Supabase > Authentication > URL Configuration que `https://www.shakemoi.fr` est bien l'URL du site. |
+| G2 | 🟡 | Règle appliquée dans l'appli (inscription + modification, minuscules auto) ET en base (déclencheur) pour les nouveaux pseudos et les changements. Les liens /u/ trouvent le profil sans tenir compte des majuscules. **Pseudos existants (27/30 avec majuscules) : script prêt, en attente de ton OK.** |
+| G3 | ✅ | Changement de pseudo vérifié (règle + doublon, en appli et en base), affiché seulement si la base accepte. Les anciens liens /u/ continuent de marcher tant que le pseudo existe (recherche sans casse). |
+| G4 | ✅ | Le profil est créé **par la base en même temps que le compte**. Si un compte existe sans profil (il y en a 1), la connexion propose « Plus qu'une étape : choisis ton pseudo » au lieu de traiter la personne en visiteur. Réinscription avec le même email : on se connecte et on termine. |
+| F1 | 🟡 | Un reshake par personne et par post, jamais le sien (bloqué en base). Le bouton est coloré quand c'est fait et un 2e appui annule. Sur son propre shake, il est grisé avec un message. **3 anciens reshakes interdits (1 doublon + 2 de son propre post) : script de nettoyage en attente de ton OK.** |
+| F2 | ✅ | Un reshake sans commentaire n'a plus de légende. Sur la carte, la légende affichée est celle de l'auteur d'origine, et le mot du reshakeur s'affiche à part, à son nom. |
+| F3 | ✅ | Compteur de reshakes recalculé par la base (et corrigé pour tous les posts existants). |
+| F5 | ✅ | Suppression d'un commentaire par son auteur ou par l'auteur du post (poubelle → « Supprimer / Annuler »). |
+| F6 | ✅ | Supprimer un post supprime sa photo (sauf si une story ou un autre post l'utilise encore). |
+| C9 | ✅ | (LOT 3) |
+| I9 | ✅ | Le fil charge 20 posts, puis les suivants automatiquement en approchant du bas (ou bouton « Voir les shakes plus anciens »). |
 
 ## Backlog v2 (hors périmètre ce soir)
 - J1 Bloquer / Signaler (personne, post, message) — exigé par les stores.
@@ -88,4 +99,6 @@ Trouvailles en plus :
 - G9 Connexion Google / Apple.
 
 ## En attente de ton OK
-(rien pour l'instant)
+1. `supabase/pending/1_pseudos_en_minuscules.sql` — met les 27 pseudos en minuscules (« Raph » → `raph`, l'autre « raph » vide → `raph2`) puis rend l'unicité sans casse obligatoire.
+2. `supabase/pending/2_reshakes_en_double.sql` — supprime 3 reshakes interdits (1 doublon + 2 reshakes de son propre post), puis pose la contrainte « 1 reshake par personne et par post ».
+3. `scripts/recompress-avatars.mjs` — recompresse une fois les photos de profil lourdes (jusqu'à 9,7 Mo → ~15 Ko), sans supprimer les originaux. Se lance d'abord en simulation.

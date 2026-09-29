@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, UserPlus, Search } from 'lucide-react';
 import { motion } from 'motion/react';
 import { supabase } from '../../lib/supabase';
+import { escapeLike } from '../../lib/username';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';
 
@@ -28,7 +29,8 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore }: Props
       const { data: p } = await supabase
         .from('users_profile')
         .select('id, username, display_name, bio, profile_album_cover_url')
-        .eq('username', username)
+        .ilike('username', escapeLike(username))
+        .limit(1)
         .maybeSingle();
       if (cancelled) return;
       setProfile(p ?? null);

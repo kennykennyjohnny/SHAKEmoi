@@ -467,6 +467,8 @@ interface Shake {
   timestamp: string;
   isLiked?: boolean;
   isReshaked?: boolean;
+  isOwn?: boolean;
+  reshakeComment?: string | null;
   reshakeFrom?: {
     id: string;
     username: string;
@@ -487,6 +489,7 @@ interface FeedViewProps {
 // Dernier fil affiché, gardé en mémoire le temps de la session : revenir sur
 // Accueil l'affiche instantanément pendant qu'on le rafraîchit (I4).
 let feedCache: { userId: string; shakes: Shake[]; stories: any[]; viewed: Record<string, boolean> } | null = null;
+const FEED_PAGE = 20;
 
 export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId = null, onSelectFeed, onCreateCircle, onShowEphemeralShake }: FeedViewProps) {
   const [shakes, setShakes] = useState<Shake[]>(() =>
@@ -605,12 +608,23 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     }
   };
 
-  const loadFeed = async () => {
+  // I9 : le fil se charge par pages de 20 ; « plus anciens » en bas.
+  const [hasMoreFeed, setHasMoreFeed] = useState(false);
+  const [loadingMoreFeed, setLoadingMoreFeed] = useState(false);
+  const loadingMoreRef = useRef(false);
+
+  const loadFeed = async (opts: { append?: boolean } = {}) => {
+    const append = opts?.append === true && !currentFeedId;
     // Retour sur Accueil : on réaffiche tout de suite le dernier fil connu,
     // puis on le rafraîchit en arrière-plan (I4).
-    const cached = !currentFeedId && feedCache && feedCache.userId === currentUser?.id ? feedCache : null;
+    const cached = !append && !currentFeedId && feedCache && feedCache.userId === currentUser?.id ? feedCache : null;
+    const oldest = append ? shakes[shakes.length - 1]?.timestamp : undefined;
+    if (append && (!oldest || loadingMoreRef.current)) return;
     try {
-      if (cached) {
+      if (append) {
+        loadingMoreRef.current = true;
+        setLoadingMoreFeed(true);
+      } else if (cached) {
         setShakes(cached.shakes);
         setStories(cached.stories);
         setStoryViewedMap(cached.viewed);
@@ -618,9 +632,10 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       } else {
         setLoading(true);
       }
-      setError(null);
-      if (!currentFeedId) loadStories();
-      let posts = currentFeedId ? await db.getCircleFeed(currentFeedId) : await db.getFeed();
+      if (!append) setError(null);
+      if (!currentFeedId && !append) loadStories();
+      let posts = currentFeedId ? await db.getCircleFeed(currentFeedId) : await db.getFeed(FEED_PAGE, oldest);
+      if (!currentFeedId) setHasMoreFeed(posts.length === FEED_PAGE);
 
       // If a reshake is present in the timeline, hide the duplicated original post.
       if (!currentFeedId) {
@@ -632,9 +647,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         posts = posts.filter((p: any) => p.is_reshake || !reshakedOriginalIds.has(p.id));
       }
 
-      // Batch check all likes in one query
+      // Likes et reshakes déjà faits : deux requêtes groupées, en parallèle.
       const postIds = posts.map((p: any) => (p.is_reshake && p.original_post_id ? p.original_post_id : p.id));
-      const likedMap = await db.hasLikedPosts(postIds);
+      const [likedMap, reshakedIds] = await Promise.all([
+        db.hasLikedPosts(postIds),
+        db.getMyReshakedIds(postIds),
+      ]);
 
       // Pre-fetch original posts for reshakes where the join failed
       const reshakesNeedingOriginal = posts.filter((p: any) => {
@@ -714,14 +732,20 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             tidal_url: post.tidal_url || null,
             odesli_page_url: post.odesli_page_url || null,
           },
-          caption: post.text,
-          imageUrl: post.image_url || null,
+          // F2 : sur un reshake, la carte est au nom de l'auteur d'origine : on
+          // montre SA légende. Le mot du reshakeur s'affiche à part, à son nom
+          // (les anciens reshakes avaient recopié la légende d'origine : ignorée).
+          caption: isReshake && originalPost ? (originalPost.text || null) : post.text,
+          reshakeComment: isReshake && post.text && post.text !== originalPost?.text ? post.text : null,
+          imageUrl: (isReshake && originalPost ? originalPost.image_url : post.image_url) || null,
           likes: displayStatsSource?.likes_count || 0,
           comments: displayStatsSource?.comments_count || 0,
           reshakes: displayStatsSource?.reshakes_count || 0,
           timestamp: post.created_at,
           isLiked,
-          isReshaked: false,
+          isReshaked: reshakedIds.has(sourcePostId),
+          // On ne reshake pas son propre shake (F1).
+          isOwn: (isReshake && originalUser ? originalUser.id : reshakerUser.id) === currentUser?.id,
           reshakeFrom: isReshake ? {
             id: reshakerUser.id || reshakerUser.username || '',
             username: reshakerUser.username || '',
@@ -731,6 +755,15 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       });
 
       const shakes = shakesRaw.filter(s => s !== null);
+
+      if (append) {
+        // Page suivante : ajoutée en bas, sans doublon.
+        setShakes(prev => {
+          const seen = new Set(prev.map(s => s.id));
+          return [...prev, ...shakes.filter(s => !seen.has(s.id))];
+        });
+        return;
+      }
 
       // Circle chat: reverse to show oldest first (like a conversation)
       setShakes(currentFeedId ? shakes.reverse() : shakes);
@@ -744,12 +777,29 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       }
     } catch (err: any) {
       console.error('Error loading feed:', err);
-      // Fil déjà affiché depuis le cache : on le garde plutôt qu'un écran d'erreur.
-      if (!cached) setError(friendlyError(err));
+      // Fil déjà affiché (cache ou pages déjà chargées) : on le garde.
+      if (!cached && !append) setError(friendlyError(err));
     } finally {
-      setLoading(false);
+      if (append) {
+        loadingMoreRef.current = false;
+        setLoadingMoreFeed(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
+
+  // Chargement automatique de la page suivante en approchant du bas.
+  const feedEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = feedEndRef.current;
+    if (!el || !hasMoreFeed || currentFeedId) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some(e => e.isIntersecting)) loadFeed({ append: true });
+    }, { rootMargin: '600px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMoreFeed, shakes.length, currentFeedId]);
 
   // F4 : le cœur change tout de suite (like « optimiste »). Le serveur suit
   // derrière, une requête à la fois par post : deux taps rapides ne se
@@ -792,18 +842,41 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   };
 
 
+  const [reshakeNotice, setReshakeNotice] = useState<string | null>(null);
   const confirmReshake = async (comment?: string) => {
     if (!reshakeDialogShake) return;
-    try {
-      const result = await db.reshakePost(reshakeDialogShake.sourcePostId, comment);
-      if (result.success) {
-        setShakes(shakes.map(shake =>
-          shake.id === reshakeDialogShake.id ? { ...shake, isReshaked: true, reshakes: shake.reshakes + 1 } : shake
-        ));
-        await loadFeed();
-      }
-    } catch (err) {
-      console.error('Error reshaking:', err);
+    const sourceId = reshakeDialogShake.sourcePostId;
+    const result = await db.reshakePost(sourceId, comment);
+    if (result.success) {
+      setShakes(prev => prev.map(shake =>
+        shake.sourcePostId === sourceId ? { ...shake, isReshaked: true, reshakes: shake.reshakes + 1 } : shake
+      ));
+      loadFeed();
+    } else {
+      setReshakeNotice(result.error || 'Le reshake n\'a pas marché. Réessaie.');
+      setTimeout(() => setReshakeNotice(null), 3000);
+    }
+  };
+
+  // F1 : le bouton reshake montre l'état et permet d'annuler.
+  const handleReshakeButton = async (shake: Shake) => {
+    if (shake.isOwn) {
+      setReshakeNotice('C\'est ton shake : partage-le plutôt avec le bouton Partager.');
+      setTimeout(() => setReshakeNotice(null), 3000);
+      return;
+    }
+    if (!shake.isReshaked) { setReshakeDialogShake(shake); return; }
+    const sourceId = shake.sourcePostId;
+    const before = shakes;
+    // Annulation : le compteur baisse, et mon reshake quitte le fil.
+    setShakes(prev => prev
+      .filter(s => !(s.sourcePostId === sourceId && s.reshakeFrom?.id === currentUser?.id))
+      .map(s => s.sourcePostId === sourceId ? { ...s, isReshaked: false, reshakes: Math.max(0, s.reshakes - 1) } : s));
+    const r = await db.unreshakePost(sourceId);
+    if (!r.success) {
+      setShakes(before);
+      setReshakeNotice('Impossible d\'annuler le reshake. Réessaie.');
+      setTimeout(() => setReshakeNotice(null), 3000);
     }
   };
 
@@ -1032,7 +1105,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         <div className="p-8">
           <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-6 text-center">
             <p className="text-pink-400 mb-4">{error}</p>
-            <button onClick={loadFeed} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors">
+            <button onClick={() => loadFeed()} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors">
               Réessayer
             </button>
           </div>
@@ -1276,6 +1349,11 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     </button>
                   </div>
                 )}
+                {shake.reshakeFrom && shake.reshakeComment && (
+                  <p className="px-4 pt-1 text-sm text-purple-100/90">
+                    <span className="text-fuchsia-300/80 font-medium">@{shake.reshakeFrom.username} :</span> {shake.reshakeComment}
+                  </p>
+                )}
 
                 {/* User Header */}
                 <div className="px-4 py-2 flex items-center gap-2">
@@ -1449,7 +1527,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     <span className="text-xs font-medium text-purple-300/70">{shake.comments}</span>
                   </button>
 
-                  <button onClick={() => setReshakeDialogShake(shake)} className="flex items-center gap-1.5 group active:scale-90 transition-transform">
+                  <button
+                    onClick={() => handleReshakeButton(shake)}
+                    aria-label={shake.isReshaked ? 'Annuler le reshake' : 'Reshaker'}
+                    aria-pressed={!!shake.isReshaked}
+                    className={`flex items-center gap-1.5 group active:scale-90 transition-transform ${shake.isOwn ? 'opacity-40' : ''}`}
+                  >
                     <Repeat2 className={`w-5 h-5 transition-all ${shake.isReshaked ? 'text-fuchsia-500' : 'text-purple-300/70 group-hover:text-fuchsia-500'}`} />
                     <span className={`text-xs font-medium ${shake.isReshaked ? 'text-fuchsia-500' : 'text-purple-300/70'}`}>{shake.reshakes}</span>
                   </button>
@@ -1466,6 +1549,23 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             );
           })
         )}
+        {/* I9 : pages suivantes du fil (chargement auto en approchant du bas). */}
+        {!currentFeedId && shakes.length > 0 && (
+          <div ref={feedEndRef} className="flex justify-center py-4">
+            {hasMoreFeed ? (
+              <button
+                onClick={() => loadFeed({ append: true })}
+                disabled={loadingMoreFeed}
+                className="px-4 py-2 rounded-full bg-violet-950/40 border border-purple-500/25 text-xs text-purple-200/80 hover:text-white disabled:opacity-60 flex items-center gap-2"
+              >
+                {loadingMoreFeed ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                {loadingMoreFeed ? 'Chargement…' : 'Voir les shakes plus anciens'}
+              </button>
+            ) : (
+              <p className="text-xs text-purple-300/40">Tu as tout vu 🎧</p>
+            )}
+          </div>
+        )}
         </motion.div>
         </AnimatePresence>
       </div>
@@ -1473,6 +1573,18 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       <AnimatePresence>
         {reshakeDialogShake && (
           <ReshakeDialog shake={reshakeDialogShake} onClose={() => setReshakeDialogShake(null)} onConfirm={confirmReshake} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {reshakeNotice && (
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="fixed left-1/2 -translate-x-1/2 bottom-24 lg:bottom-8 z-[60] max-w-[90vw] px-4 py-2 rounded-full bg-white text-[#1E1440] text-xs font-semibold shadow-xl text-center"
+          >
+            {reshakeNotice}
+          </motion.p>
         )}
       </AnimatePresence>
 
@@ -1507,6 +1619,11 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             onCommentAdded={() => {
               setShakes(shakes.map(s =>
                 s.sourcePostId === commentsPostId ? { ...s, comments: s.comments + 1 } : s
+              ));
+            }}
+            onCommentDeleted={() => {
+              setShakes(prev => prev.map(s =>
+                s.sourcePostId === commentsPostId ? { ...s, comments: Math.max(0, s.comments - 1) } : s
               ));
             }}
           />

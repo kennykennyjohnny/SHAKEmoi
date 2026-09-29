@@ -25,11 +25,13 @@ import { NotificationsView } from './components/NotificationsView';
 import { ProfilePreviewDialog } from './components/ProfilePreviewDialog';
 import { PostDetailModal } from './components/PostDetailModal';
 import { supabase } from '../lib/supabase';
+import { escapeLike } from '../lib/username';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount, getCurrentShakeWeekStart } from '../lib/database';
 import { useBackHandler } from '../lib/navigation';
 import { parseRoute, type Route } from '../lib/links';
 import { Slogan } from './components/Slogan';
 import { InstallAppButton } from './components/InstallAppButton';
+import { FinishProfileDialog, ResetPasswordDialog } from './components/AccountDialogs';
 
 import { defaultAvatar, thumb } from '../lib/media';
 import { isNotifTypeShown, notificationText, showLocalNotification } from '../lib/notify';
@@ -73,6 +75,17 @@ export default function App() {
     window.history.replaceState({}, document.title, '/');
     setRoute(null);
   };
+
+  // G4 : compte connecté mais sans profil (inscription interrompue).
+  const [needsProfileFor, setNeedsProfileFor] = useState<string | null>(null);
+  // G1 : retour du lien « mot de passe oublié ».
+  const [showResetPassword, setShowResetPassword] = useState(() => /type=recovery/.test(window.location.hash));
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setShowResetPassword(true);
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   // G6 : le Shake de la semaine passe après la présentation et le profil.
   const [sdjPending, setSdjPending] = useState(false);
@@ -121,6 +134,10 @@ export default function App() {
             if (needsOnboarding || needsProfile) setSdjPending(true);
             else { localStorage.setItem('shakemoi_sdj_shown', weekKey); setShowShakeDuJour(true); }
           }
+        } else {
+          // Connecté sans profil : on propose de choisir un pseudo (G4) au lieu
+          // de traiter la personne en visiteur.
+          setNeedsProfileFor(session.user.id);
         }
       }
       // Pas de session : on n'impose plus le mur d'inscription, le visiteur
@@ -151,7 +168,7 @@ export default function App() {
     if (route.type === 'profile' || route.type === 'invite') {
       const username = route.id;
       leaveRoute();
-      supabase.from('users_profile').select('id').eq('username', username).maybeSingle()
+      supabase.from('users_profile').select('id').ilike('username', escapeLike(username)).limit(1).maybeSingle()
         .then(({ data }) => { if (data?.id) setProfilePreview({ userId: data.id, username }); });
     }
   }, [route, currentUser, authReady]);
@@ -222,6 +239,11 @@ export default function App() {
   }, [currentUser]);
 
   const handleAuthComplete = async (user: any) => {
+    if (user?.__needsProfile) {
+      setShowAuth(false);
+      setNeedsProfileFor(user.id);
+      return;
+    }
     setCurrentUser(buildUserObject(user));
     setShowAuth(false);
     // Inscription lancée depuis une invitation de cercle : on y revient.
@@ -251,8 +273,9 @@ export default function App() {
         const { data: refProfile } = await supabase
           .from('users_profile')
           .select('id')
-          .eq('username', ref)
-          .single();
+          .ilike('username', escapeLike(ref))
+          .limit(1)
+          .maybeSingle();
         if (refProfile && refProfile.id !== user.id) {
           await followUser(refProfile.id);
         }
@@ -281,6 +304,12 @@ export default function App() {
 
   if (showPrivacy) {
     return <PrivacyPage onBack={() => { window.history.replaceState({}, document.title, '/'); setShowPrivacy(false); }} />;
+  }
+  if (showResetPassword) {
+    return <ResetPasswordDialog onDone={() => { setShowResetPassword(false); window.location.replace('/'); }} />;
+  }
+  if (needsProfileFor) {
+    return <FinishProfileDialog userId={needsProfileFor} onDone={(p) => { setNeedsProfileFor(null); handleAuthComplete(p); }} />;
   }
 
   // Profil partagé / invitation, pour un visiteur : la page de la personne

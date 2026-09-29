@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X, Send, Loader2, Music, Search, Play } from 'lucide-react';
+import { X, Send, Loader2, Music, Search, Play, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { getPostComments, addComment, getMusicReactions, addMusicReaction } from '../../lib/database';
+import { getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment, getPostOwnerId } from '../../lib/database';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
@@ -11,10 +11,11 @@ interface CommentsDialogProps {
   postId: string;
   onClose: () => void;
   onCommentAdded?: () => void;
+  onCommentDeleted?: () => void;
   currentUser?: any;
 }
 
-export function CommentsDialog({ postId, onClose, onCommentAdded, currentUser }: CommentsDialogProps) {
+export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDeleted, currentUser }: CommentsDialogProps) {
   const [comments, setComments] = useState<any[]>([]);
   const [musicReactions, setMusicReactions] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -45,6 +46,20 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, currentUser }:
     }, 400);
     return () => clearTimeout(t);
   }, [musicQuery]);
+
+  // F5 : supprimer son commentaire, ou n'importe lequel sous son propre post.
+  const [postOwnerId, setPostOwnerId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  useEffect(() => { getPostOwnerId(postId).then(setPostOwnerId); }, [postId]);
+  const canDelete = (c: any) => !!currentUser?.id && (c.user_id === currentUser.id || postOwnerId === currentUser.id);
+  const handleDelete = async (commentId: string) => {
+    setConfirmDeleteId(null);
+    const before = comments;
+    setComments(prev => prev.filter(c => c.id !== commentId));
+    const r = await deleteComment(commentId);
+    if (!r.success) setComments(before);
+    else onCommentDeleted?.();
+  };
 
   const loadComments = async () => {
     setLoading(true);
@@ -170,6 +185,18 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, currentUser }:
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm text-white">@{comment.user?.username || 'inconnu'}</span>
                           <span className="text-xs text-purple-500/50">{formatTime(comment.created_at)}</span>
+                          {canDelete(comment) && (
+                            confirmDeleteId === comment.id ? (
+                              <span className="ml-auto flex items-center gap-2 text-xs">
+                                <button onClick={() => handleDelete(comment.id)} className="font-semibold text-pink-400">Supprimer</button>
+                                <button onClick={() => setConfirmDeleteId(null)} className="text-purple-300/70">Annuler</button>
+                              </span>
+                            ) : (
+                              <button onClick={() => setConfirmDeleteId(comment.id)} aria-label="Supprimer le commentaire" className="ml-auto p-1 text-purple-400/50 hover:text-pink-400">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )
+                          )}
                         </div>
                         <p className="text-sm text-purple-200/80 mt-0.5">{comment.text}</p>
                       </div>

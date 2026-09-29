@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Heart, MessageCircle, Repeat2, ExternalLink, Play, Loader2, Send, Pause, Trash2, Share2, Music, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction } from '../../lib/database';
+import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 import { spotify } from '../../lib/spotify';
 import { postLink } from '../../lib/links';
@@ -331,6 +331,20 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
                       <div className="flex items-center gap-1.5">
                         <span className="font-semibold text-xs text-white">@{c.user?.username || 'inconnu'}</span>
                         <span className="text-[10px] text-purple-500/50">{formatTime(c.created_at)}</span>
+                        {currentUser?.id && (c.user_id === currentUser.id || isOwner) && (
+                          <button
+                            onClick={async () => {
+                              const before = comments;
+                              setComments(prev => prev.filter((x: any) => x.id !== c.id));
+                              const r = await deleteComment(c.id);
+                              if (!r.success) setComments(before);
+                            }}
+                            aria-label="Supprimer le commentaire"
+                            className="ml-auto p-1 text-purple-400/50 hover:text-pink-400"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                       <p className="text-sm text-purple-200/80">{c.text}</p>
                     </div>

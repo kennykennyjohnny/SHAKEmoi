@@ -94,7 +94,7 @@ async function userById(id: string | null | undefined) {
 
 async function userByUsername(username: string) {
   return one<{ id: string; username: string; display_name: string | null; profile_album_cover_url: string | null }>(
-    `users_profile?username=eq.${encodeURIComponent(username)}&select=id,username,display_name,profile_album_cover_url`
+    `users_profile?username=ilike.${encodeURIComponent(username.replace(/[\\%_]/g, (ch) => `\\${ch}`))}&select=id,username,display_name,profile_album_cover_url`
   );
 }
 

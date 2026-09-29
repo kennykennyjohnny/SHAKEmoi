@@ -753,6 +753,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
             onClose={() => setCommentsPostId(null)}
             currentUser={user}
             onCommentAdded={() => loadUserData()}
+            onCommentDeleted={() => loadUserData()}
           />
         )}
       </AnimatePresence>

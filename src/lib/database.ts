@@ -127,7 +127,7 @@ export async function getUserStats(userId: string) {
 
 // ==================== POSTS ====================
 
-export async function getFeed(limit = 20): Promise<Post[]> {
+export async function getFeed(limit = 20, before?: string): Promise<Post[]> {
   try {
     const user = await getCurrentUser();
     if (!user) return [];
@@ -136,7 +136,7 @@ export async function getFeed(limit = 20): Promise<Post[]> {
     // Include own posts + followed users' posts
     const feedUserIds = [...followingIds, user.id];
 
-    const { data: posts, error } = await supabase
+    let query = supabase
       .from('posts')
       .select(`
         *,
@@ -151,19 +151,12 @@ export async function getFeed(limit = 20): Promise<Post[]> {
       .is('circle_id', null)
       .order('created_at', { ascending: false })
       .limit(limit);
+    // Page suivante : les posts plus anciens que le dernier affiché (I9).
+    if (before) query = query.lt('created_at', before);
+
+    const { data: posts, error } = await query;
 
     if (error) {
-      // Retry without circle_id filter if column doesn't exist
-      if (error.message?.includes('circle_id') || error.code === '42703') {
-        const { data: fallback } = await supabase
-          .from('posts')
-          .select(`*, user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color), original_post:posts!original_post_id(*, user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color))`)
-          .in('user_id', feedUserIds)
-          .neq('is_private', true)
-          .order('created_at', { ascending: false })
-          .limit(limit);
-        if (fallback) return fallback;
-      }
       console.error('Error fetching feed:', error);
       throw error;
     }
@@ -313,7 +306,8 @@ export async function reshakePost(originalPostId: string, comment?: string) {
       ? originalPost.original_post_id
       : originalPostId;
 
-    // Create re-shake with optional comment — copy ALL fields including embed + Odesli links
+    // Reshake : copie du son et des liens. La légende reste celle du
+    // reshakeur (vide s'il n'a rien écrit), jamais celle de l'auteur (F2).
     const { data, error } = await supabase
       .from('posts')
       .insert([{
@@ -321,7 +315,8 @@ export async function reshakePost(originalPostId: string, comment?: string) {
         track_name: originalPost.track_name,
         artist: originalPost.artist,
         cover_url: originalPost.cover_url,
-        text: comment || originalPost.text,
+        text: comment?.trim() || null,
+        image_url: originalPost.image_url || null,
         preview_url: originalPost.preview_url,
         spotify_url: originalPost.spotify_url,
         spotify_embed_url: originalPost.spotify_embed_url,
@@ -343,14 +338,48 @@ export async function reshakePost(originalPostId: string, comment?: string) {
       .single();
 
     if (error) throw error;
-    
-    // Increment reshakes_count on original post
-    await supabase.rpc('increment_reshakes_count', { post_id: trueOriginalPostId });
-    
+    // Compteur recalculé en base (déclencheur, F3).
     return { success: true, data };
   } catch (error: any) {
     console.error('Error reshaking post:', error);
-    return { success: false, error: error.message };
+    const msg = String(error?.message || '');
+    return {
+      success: false,
+      error: msg.includes('reshake_own_post') ? 'On ne reshake pas son propre shake.'
+        : msg.includes('reshake_duplicate') ? 'Tu as déjà reshaké ce shake.'
+        : 'Le reshake n\'a pas marché. Réessaie.',
+    };
+  }
+}
+
+/** Annuler son reshake d'un post (F1). */
+export async function unreshakePost(originalPostId: string) {
+  const user = await getCurrentUser();
+  if (!user) return { success: false };
+  const { error } = await supabase
+    .from('posts')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('is_reshake', true)
+    .eq('original_post_id', originalPostId);
+  return { success: !error };
+}
+
+/** Parmi ces posts, ceux que j'ai déjà reshakés (une requête). */
+export async function getMyReshakedIds(postIds: string[]): Promise<Set<string>> {
+  try {
+    if (!postIds.length) return new Set();
+    const user = await getCurrentUser();
+    if (!user) return new Set();
+    const { data } = await supabase
+      .from('posts')
+      .select('original_post_id')
+      .eq('user_id', user.id)
+      .eq('is_reshake', true)
+      .in('original_post_id', [...new Set(postIds)]);
+    return new Set((data || []).map((p: any) => p.original_post_id));
+  } catch {
+    return new Set();
   }
 }
 
@@ -544,6 +573,17 @@ export async function getPostComments(postId: string) {
     console.error('Error getting comments:', error);
     return [];
   }
+}
+
+/** Supprimer un commentaire : le sien, ou n'importe lequel sous son post (F5). */
+export async function deleteComment(commentId: string) {
+  const { error } = await supabase.from('comments').delete().eq('id', commentId);
+  return { success: !error };
+}
+
+export async function getPostOwnerId(postId: string): Promise<string | null> {
+  const { data } = await supabase.from('posts').select('user_id').eq('id', postId).maybeSingle();
+  return data?.user_id ?? null;
 }
 
 export async function likeComment(commentId: string) {
@@ -865,7 +905,7 @@ export async function deletePost(postId: string) {
     // Verify post belongs to user
     const { data: post, error: fetchError } = await supabase
       .from('posts')
-      .select('user_id')
+      .select('user_id, image_url, is_reshake')
       .eq('id', postId)
       .single();
 
@@ -878,11 +918,32 @@ export async function deletePost(postId: string) {
       .eq('id', postId);
 
     if (error) throw error;
+
+    // F6 : sa photo part avec lui (si c'est bien la sienne et que ni une
+    // story ni un autre post ne l'utilise encore).
+    if (post.image_url && !post.is_reshake) {
+      removeOwnMedia(post.image_url, user.id).catch(() => {});
+    }
     return true;
   } catch (error) {
     console.error('Error deleting post:', error);
     throw error;
   }
+}
+
+const OWN_MEDIA = /\/storage\/v1\/object\/public\/(shake-media|story-media)\/(.+)$/;
+async function removeOwnMedia(imageUrl: string, userId: string) {
+  const m = imageUrl.split('?')[0].match(OWN_MEDIA);
+  if (!m) return;
+  const [, bucket, rawPath] = m;
+  const path = decodeURIComponent(rawPath);
+  if (!path.startsWith(`${userId}/`)) return;
+  const [{ count: inPosts }, { count: inStories }] = await Promise.all([
+    supabase.from('posts').select('id', { count: 'exact', head: true }).eq('image_url', imageUrl),
+    supabase.from('stories').select('id', { count: 'exact', head: true }).eq('image_url', imageUrl),
+  ]);
+  if ((inPosts || 0) > 0 || (inStories || 0) > 0) return;
+  await supabase.storage.from(bucket).remove([path]);
 }
 
 export async function updateUserProfile(userId: string, updates: Partial<UserProfile>) {
