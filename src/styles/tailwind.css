@@ -29,6 +29,22 @@
   }
 }
 
+/* M8 : sur ordinateur, le curseur de texte (et son clignotement) apparaissait
+   sur tout le texte de l'appli, comme si on pouvait écrire partout. Il est
+   réservé aux vrais champs ; le reste garde la flèche, les liens la main.
+   (:where = priorité nulle : les classes cursor-* des composants gagnent.) */
+:where(body, body *) {
+  cursor: default;
+  caret-color: transparent;
+}
+:where(a[href], button, [role="button"], label[for], select, summary) {
+  cursor: pointer;
+}
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]), textarea, [contenteditable="true"]) {
+  cursor: text;
+  caret-color: auto;
+}
+
 /* Micro-animations globales */
 @layer base {
   * {

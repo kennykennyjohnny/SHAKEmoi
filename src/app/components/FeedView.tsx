@@ -18,6 +18,7 @@ import { SongShareSheet } from './SongShareSheet';
 import { openExternal } from '../../lib/platforms';
 import { LikersSheet } from './LikersSheet';
 import { MediaImg, thumb, defaultAvatar, compressImage } from '../../lib/media';
+import { searchGifs, GIF_ERROR_TEXT } from '../../lib/gifs';
 import { friendlyError } from '../../lib/errors';
 
 function storyTimeRemaining(expiresAt: string): string {
@@ -239,6 +240,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
   const [showGifSearch, setShowGifSearch] = useState(false);
   const [gifQuery, setGifQuery] = useState('');
   const [gifResults, setGifResults] = useState<any[]>([]);
+  const [gifError, setGifError] = useState<string | null>(null);
   const [gifSearching, setGifSearching] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -250,9 +252,9 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
     const timer = setTimeout(async () => {
       setGifSearching(true);
       try {
-        const res = await fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(gifQuery)}&key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ&client_key=shakemoi&limit=20&media_filter=tinygif,gif`);
-        const data = await res.json();
-        setGifResults(data.results || []);
+        const r = await searchGifs(gifQuery);
+        setGifResults(r.gifs);
+        setGifError(r.error ? GIF_ERROR_TEXT[r.error] : null);
       } catch { setGifResults([]); }
       setGifSearching(false);
     }, 400);
@@ -265,9 +267,9 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
       (async () => {
         setGifSearching(true);
         try {
-          const res = await fetch(`https://tenor.googleapis.com/v2/featured?key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ&client_key=shakemoi&limit=20&media_filter=tinygif,gif`);
-          const data = await res.json();
-          setGifResults(data.results || []);
+          const r = await searchGifs('');
+        setGifResults(r.gifs);
+        setGifError(r.error ? GIF_ERROR_TEXT[r.error] : null);
         } catch {}
         setGifSearching(false);
       })();
@@ -328,9 +330,10 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
             <div className="flex-1 overflow-y-auto px-3 pb-3">
               {gifSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
               <div className="grid grid-cols-2 gap-2">
-                {gifResults.map((gif: any) => (
-                  <button key={gif.id} onClick={() => { handleChatSendGif?.(gif.media_formats?.gif?.url || gif.media_formats?.tinygif?.url); setShowGifSearch(false); setGifQuery(''); setGifResults([]); }} className="rounded-lg overflow-hidden hover:ring-2 hover:ring-purple-500 transition-all">
-                    <img src={gif.media_formats?.tinygif?.url || gif.media_formats?.gif?.url} alt="" className="w-full h-24 object-cover" loading="lazy" />
+                {gifError && <p className="col-span-full text-center text-xs text-purple-200/80 py-3 px-2">{gifError}</p>}
+                  {gifResults.map((gif: any) => (
+                  <button key={gif.id} onClick={() => { handleChatSendGif?.(gif.url); setShowGifSearch(false); setGifQuery(''); setGifResults([]); }} className="rounded-lg overflow-hidden hover:ring-2 hover:ring-purple-500 transition-all">
+                    <img src={gif.preview} alt="" className="w-full h-24 object-cover" loading="lazy" />
                   </button>
                 ))}
               </div>
@@ -540,8 +543,11 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   const [chatSearching, setChatSearching] = useState(false);
   const circleChatEndRef = useRef<HTMLDivElement>(null);
 
+  // M9 : un clic sur le logo recharge le fil et remonte tout en haut.
+  const feedScrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     loadFeed();
+    if (refreshFeed) feedScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [refreshFeed, currentFeedId]);
 
   // Auto-scroll to bottom in circle chat
@@ -1129,7 +1135,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   // Empty state is now rendered inline, not as early return
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4" style={currentFeedId ? { minHeight: '100%' } : undefined} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <div ref={feedScrollRef} className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4" style={currentFeedId ? { minHeight: '100%' } : undefined} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className={`p-4 space-y-6 ${currentFeedId ? 'flex-1 pb-40 lg:pb-24' : ''}`}>
         {/* Horizontal feed selector */}
         {(circles.length > 0 || !!onCreateCircle) && (

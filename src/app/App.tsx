@@ -6,6 +6,7 @@ import { SearchView } from './components/SearchView';
 import { ProfileView } from './components/ProfileView';
 import { UnifiedComposerDialog } from './components/UnifiedComposerDialog';
 import { TrendingBar } from './components/TrendingBar';
+import { DesktopInbox } from './components/DesktopInbox';
 import { OnboardingDialog } from './components/OnboardingDialog';
 import { ShareDialog } from './components/ShareDialog';
 import { AuthDialog } from './components/AuthDialog';
@@ -400,7 +401,10 @@ export default function App() {
       <div className="h-[100dvh] w-screen bg-[#1E1440] text-white overflow-hidden flex flex-col">
         <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/80 sticky top-0 z-40 flex-shrink-0">
           <div className="px-4 py-2 flex items-center justify-between gap-3">
-            <img src="/shakemoi-logo.png" alt="SHAKEmoi" className="h-6 min-w-0 flex-shrink object-contain object-left" draggable={false} />
+            {/* M9 : le logo ramène à l'accueil. */}
+            <a href="/" aria-label="Accueil SHAKEmoi" className="min-w-0 flex-shrink">
+              <img src="/shakemoi-logo.png" alt="SHAKEmoi" className="h-6 min-w-0 object-contain object-left" draggable={false} />
+            </a>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowAuth(true)}
@@ -418,7 +422,7 @@ export default function App() {
           </div>
         </header>
 
-        <InstallAppButton variant="banner" className="flex-shrink-0 lg:hidden" />
+        <InstallAppButton variant="banner" className="flex-shrink-0" />
 
         <div className="px-4 pt-4 flex-shrink-0 text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">
@@ -511,9 +515,14 @@ export default function App() {
 
   return (
     <div className="h-[100dvh] w-screen bg-[#1E1440] text-white overflow-hidden flex">
-      {/* Sidebar gauche - Trending */}
-      <aside className="hidden xl:block w-80 border-r border-violet-900/30 overflow-y-auto">
-        <TrendingBar />
+      {/* Colonne gauche (grand écran) : Messages et Groupes (M7) */}
+      <aside className="hidden xl:block w-80 border-r border-violet-900/30 overflow-hidden">
+        <DesktopInbox
+          currentUser={currentUser}
+          activePartnerId={currentView === 'messages' ? viewOptions?.openPartnerId : null}
+          onOpenConversation={(partner) => { setViewOptions({ initialTab: 'dms', openPartnerId: partner.id }); setCurrentView('messages'); }}
+          onOpenCircle={(circleId) => { setViewOptions({ initialTab: 'circles', openCircleId: circleId }); setCurrentView('messages'); }}
+        />
       </aside>
 
       {/* Main Content */}
@@ -521,7 +530,8 @@ export default function App() {
         {/* Header */}
         <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/80 sticky top-0 z-40">
           <div className="px-4 py-2 flex items-center justify-between">
-            <button onClick={() => { setCurrentView('feed'); }} className="focus:outline-none">
+            {/* M9 : le logo ramène à l'accueil et recharge le fil (retour en haut). */}
+            <button onClick={() => { setCurrentView('feed'); setRefreshFeed(p => p + 1); }} aria-label="Accueil" className="focus:outline-none">
               <img src="/shakemoi-logo.png" alt="SHAKEmoi" className="h-6 object-contain" draggable={false} />
             </button>
 
@@ -563,7 +573,7 @@ export default function App() {
         </header>
 
         {/* A5 : proposer d'installer l'appli, en haut de l'accueil */}
-        {currentView === 'feed' && <InstallAppButton variant="banner" className="flex-shrink-0 lg:hidden" />}
+        {currentView === 'feed' && <InstallAppButton variant="banner" className="flex-shrink-0" />}
 
         {/* Content */}
         <main className="flex-1 overflow-hidden flex flex-col min-h-0">
@@ -629,7 +639,7 @@ export default function App() {
           ]).map(({ view, icon: Icon, label }) => (
             <button
               key={view}
-              onClick={() => { if (view === 'messages') { setViewOptions({}); } setCurrentView(view); }}
+              onClick={() => { if (view === 'messages') { setViewOptions({}); } if (view === 'feed') setRefreshFeed(p => p + 1); setCurrentView(view); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors relative ${
                 currentView === view ? 'bg-purple-500/10 text-purple-400' : 'text-purple-300/60 hover:bg-violet-900/25'
               }`}
@@ -656,10 +666,10 @@ export default function App() {
         </nav>
 
         {currentUser && (
-          <div className="mt-auto pt-4 border-t border-purple-500/25">
+          <div className="pt-3 mt-3 border-t border-purple-500/25">
             <button
               onClick={() => setCurrentView('profile')}
-              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-violet-900/25 transition-colors"
+              className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-violet-900/25 transition-colors"
             >
               <img loading="lazy" src={thumb(currentUser.avatar)} alt="" className="w-10 h-10 rounded-full object-cover" />
               <div className="flex-1 min-w-0 text-left">
@@ -669,6 +679,11 @@ export default function App() {
             </button>
           </div>
         )}
+
+        {/* M7 : le TOP, à droite sous le menu. */}
+        <div className="pt-3 mt-3 border-t border-purple-500/25">
+          <TrendingBar limit={8} onSeeAll={() => setCurrentView('top')} />
+        </div>
       </aside>
 
       {/* Dialogs */}

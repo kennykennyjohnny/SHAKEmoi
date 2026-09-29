@@ -17,6 +17,7 @@ import { circleLink } from '../../lib/links';
 import { openExternal } from '../../lib/platforms';
 import { SongCover } from './SongCover';
 import { MediaImg, thumb, defaultAvatar, compressImage, extFor } from '../../lib/media';
+import { searchGifs, GIF_ERROR_TEXT } from '../../lib/gifs';
 import { friendlyError } from '../../lib/errors';
 import { formatListTime, formatDayLabel, isSameDay } from '../../lib/dates';
 
@@ -30,6 +31,9 @@ interface MessagesViewProps {
 export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewOptions }: MessagesViewProps) {
   const { initialTab = 'dms', openPartnerId = null, openCircleId = null } = viewOptions || {};
   const [tab, setTab] = useState<'dms' | 'circles'>(initialTab);
+  // Ouverture depuis la colonne de gauche (ordinateur) ou une notif alors
+  // qu'on est déjà dans Messages : on suit l'onglet demandé.
+  useEffect(() => { setTab(initialTab); }, [viewOptions]);
   const [inSubView, setInSubView] = useState(false);
   const [fabTrigger, setFabTrigger] = useState(0);
 
@@ -164,6 +168,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
   const [showGifSearch, setShowGifSearch] = useState(false);
   const [gifQuery, setGifQuery] = useState('');
   const [gifResults, setGifResults] = useState<any[]>([]);
+  const [gifError, setGifError] = useState<string | null>(null);
   const [gifSearching, setGifSearching] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -453,9 +458,9 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
       (async () => {
         setGifSearching(true);
         try {
-          const res = await fetch(`https://tenor.googleapis.com/v2/featured?key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ&client_key=shakemoi&limit=20&media_filter=tinygif,gif`);
-          const data = await res.json();
-          setGifResults(data.results || []);
+          const r = await searchGifs('');
+        setGifResults(r.gifs);
+        setGifError(r.error ? GIF_ERROR_TEXT[r.error] : null);
         } catch { setGifResults([]); }
         setGifSearching(false);
       })();
@@ -464,9 +469,9 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
     const timer = setTimeout(async () => {
       setGifSearching(true);
       try {
-        const res = await fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(gifQuery)}&key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ&client_key=shakemoi&limit=20&media_filter=tinygif,gif`);
-        const data = await res.json();
-        setGifResults(data.results || []);
+        const r = await searchGifs(gifQuery);
+        setGifResults(r.gifs);
+        setGifError(r.error ? GIF_ERROR_TEXT[r.error] : null);
       } catch { setGifResults([]); }
       setGifSearching(false);
     }, 400);
@@ -637,9 +642,10 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
               <div className="flex-1 overflow-y-auto px-3 pb-3">
                 {gifSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
                 <div className="grid grid-cols-2 gap-2">
+                  {gifError && <p className="col-span-full text-center text-xs text-purple-200/80 py-3 px-2">{gifError}</p>}
                   {gifResults.map((gif: any) => (
-                    <button key={gif.id} onClick={() => handleSendGif(gif.media_formats?.gif?.url || gif.media_formats?.tinygif?.url)} className="rounded-lg overflow-hidden hover:ring-2 hover:ring-purple-500 transition-all">
-                      <img src={gif.media_formats?.tinygif?.url || gif.media_formats?.gif?.url} alt="" className="w-full h-24 object-cover" loading="lazy" />
+                    <button key={gif.id} onClick={() => handleSendGif(gif.url)} className="rounded-lg overflow-hidden hover:ring-2 hover:ring-purple-500 transition-all">
+                      <img src={gif.preview} alt="" className="w-full h-24 object-cover" loading="lazy" />
                     </button>
                   ))}
                 </div>
@@ -1074,6 +1080,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const [showGifSearch, setShowGifSearch] = useState(false);
   const [gifQuery, setGifQuery] = useState('');
   const [gifResults, setGifResults] = useState<any[]>([]);
+  const [gifError, setGifError] = useState<string | null>(null);
   const [gifSearching, setGifSearching] = useState(false);
   // Likes system
   const [likedMessages, setLikedMessages] = useState<Record<string, boolean>>({});
@@ -1146,9 +1153,9 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
     const t = setTimeout(async () => {
       setGifSearching(true);
       try {
-        const res = await fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(gifQuery)}&key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ&client_key=shakemoi&limit=20&media_filter=tinygif,gif`);
-        const data = await res.json();
-        setGifResults(data.results || []);
+        const r = await searchGifs(gifQuery);
+        setGifResults(r.gifs);
+        setGifError(r.error ? GIF_ERROR_TEXT[r.error] : null);
       } catch { setGifResults([]); }
       setGifSearching(false);
     }, 400);
@@ -1584,9 +1591,10 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
                 <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 text-purple-500 animate-spin" /></div>
               ) : (
                 <div className="grid grid-cols-2 gap-1.5">
+                  {gifError && <p className="col-span-full text-center text-xs text-purple-200/80 py-3 px-2">{gifError}</p>}
                   {gifResults.map((g: any) => (
-                    <button key={g.id} onClick={() => sendChatGif(g.media_formats.tinygif.url)} className="relative group overflow-hidden rounded-lg">
-                      <img loading="lazy" src={g.media_formats.tinygif.url} alt="" className="w-full aspect-square object-cover" />
+                    <button key={g.id} onClick={() => sendChatGif(g.url)} className="relative group overflow-hidden rounded-lg">
+                      <img loading="lazy" src={g.preview} alt="" className="w-full aspect-square object-cover" />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                         <Send className="w-4 h-4 text-white" />
                       </div>
