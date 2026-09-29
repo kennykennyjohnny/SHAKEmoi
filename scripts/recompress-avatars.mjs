@@ -1,4 +1,4 @@
-// ⚠️ EN ATTENTE DE L'OK DE KENNY — NE PAS LANCER SANS VALIDATION.
+// ✅ OK de Kenny (29/09/2026). Simulation faite : 5 avatars, 13,7 Mo → 42 Ko.
 //
 // I1 : recompresse une fois les photos de profil déjà en ligne (jusqu'à 9,7 Mo)
 // en JPEG 256 px (~15 Ko), et fait pointer les profils vers la nouvelle image.
