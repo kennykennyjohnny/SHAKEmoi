@@ -77,27 +77,33 @@ async function searchItunesPreview(
 export async function resolvePreviewUrl(
   trackName: string,
   artist: string,
-  existing?: string | null
+  existing?: string | null,
+  /** Id (ou lien) Spotify : retrouve l'extrait exact (via l'ISRC) même quand
+   *  la recherche par titre échoue (classique, titres longs) ou que le titre manque. */
+  spotifyId?: string | null
 ): Promise<string | null> {
   if (existing) return existing;
-  if (!trackName) return null;
-  const key = `${trackName}::${artist}`.toLowerCase();
+  if (!trackName && !spotifyId) return null;
+  const key = (trackName ? `${trackName}::${artist}` : `spotify::${spotifyId}`).toLowerCase();
   const cache = readCache();
-  if (key in cache) return cache[key];
+  if (key in cache && cache[key]) return cache[key];
 
   // Catalogue français d'abord (l'app est FR), puis international.
-  let url = await searchItunesPreview(`${trackName} ${artist}`, trackName, artist);
-  const cleaned = cleanTitle(trackName);
-  if (!url && cleaned && cleaned !== trackName) {
+  let url = trackName ? await searchItunesPreview(`${trackName} ${artist}`, trackName, artist) : null;
+  const cleaned = cleanTitle(trackName || '');
+  if (!url && trackName && cleaned && cleaned !== trackName) {
     url = await searchItunesPreview(`${cleaned} ${artist}`, trackName, artist);
   }
-  if (!url) {
+  if (!url && trackName) {
     url = await searchItunesPreview(`${cleaned || trackName} ${artist}`, trackName, artist, 'US');
   }
 
-  // Dernier recours : l'extrait Spotify ou Deezer trouvé par /api/links.
+  // Dernier recours : l'extrait trouvé par /api/links (Spotify → ISRC →
+  // Deezer exact, ou iTunes avec les métadonnées exactes de Spotify).
   if (!url) {
-    const resolved = await resolveLinks({ title: trackName, artist }).catch(() => null);
+    const resolved = await resolveLinks(
+      spotifyId ? { spotifyUrl: spotifyId } : { title: trackName, artist },
+    ).catch(() => null);
     const fallback = resolved?.preview ?? null;
     // Extrait Deezer = URL signée qui expire : utilisé, mais pas mis en cache.
     if (fallback && fallback.includes('dzcdn.net')) return fallback;

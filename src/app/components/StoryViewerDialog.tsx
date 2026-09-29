@@ -1,10 +1,11 @@
 import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Play, Pause, ExternalLink, Pin, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
-import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers, markStoryAsViewed } from '../../lib/database';
+import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers, getStoryLikes, markStoryAsViewed } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { resolvePreviewUrl, playPreview, stopPreview, togglePreview, onPreviewChange, getPreviewState, getSpotifyTrackTitle, isSessionUnmuted, setMuted } from '../../lib/preview';
 import { useBackHandler } from '../../lib/navigation';
+import { StoryBackdrop } from './StoryBackdrop';
 import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
 
@@ -47,6 +48,10 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showViewers, setShowViewers] = useState(false);
+  // Panneau du propriétaire : qui a vu / qui a liké.
+  const [panelMode, setPanelMode] = useState<'views' | 'likes'>('views');
+  const [likers, setLikers] = useState<any[] | null>(null);
+  const [sentNotice, setSentNotice] = useState(false);
   const [viewers, setViewers] = useState<any[]>([]);
   const [loadingViewers, setLoadingViewers] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -163,6 +168,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     setLikeCount(story.likes_count || 0);
     setShowViewers(false);
     setViewers([]);
+    setLikers(null);
     hasLikedStory(story.id).then(setIsLiked);
     markStoryAsViewed(story.id);
   }, [story?.id]);
@@ -189,16 +195,17 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     // Le titre peut arriver après coup (oEmbed Spotify) : on attend de
     // l'avoir, sinon impossible de retrouver l'extrait.
     const title = story.track_name || fetchedTitle;
-    if (!title) return;
+    // L'id Spotify suffit : pas besoin d'attendre le titre (anciennes stories).
+    if (!title && !story.track_id) return;
     let cancelled = false;
-    resolvePreviewUrl(title, story.artist || '', (story as any).preview_url).then(url => {
+    resolvePreviewUrl(title || '', title ? story.artist || '' : '', (story as any).preview_url, story.track_id).then(url => {
       if (cancelled || !url) return;
       setStoryPreviewUrl(url);
       // Son actif par défaut ; coupé seulement si on l'a coupé soi-même.
       playPreview(`story-${story.id}`, url, { muted: !isSessionUnmuted() });
     });
     return () => { cancelled = true; stopPreview(); };
-  }, [story?.id, open, fetchedTitle]);
+  }, [story?.id, open]);
 
   // État réel du son pour afficher le bon bouton play/pause sur la pochette.
   const [preview, setPreview] = useState(getPreviewState());
@@ -241,7 +248,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   // Tap sur la pochette : lance / met en pause, et réactive le son s'il était
   // coupé. Synchrone quand l'extrait est connu (iOS exige un geste direct).
   const toggleStorySound = async () => {
-    if (!trackTitle) return;
+    if (!trackTitle && !story?.track_id) return;
     const state = getPreviewState();
     if (state.key === storyKey && state.muted) {
       setMuted(false);
@@ -249,7 +256,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
       return;
     }
     if (storyPreviewUrl) { togglePreview(storyKey, storyPreviewUrl); return; }
-    const url = await resolvePreviewUrl(trackTitle, trackArtist || '', (story as any).preview_url);
+    const url = await resolvePreviewUrl(trackTitle || '', trackArtist || '', (story as any).preview_url, story?.track_id);
     if (url) { setStoryPreviewUrl(url); playPreview(storyKey, url); }
   };
 
@@ -261,10 +268,23 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     setLoadingViewers(false);
   };
 
+  const loadLikers = () => {
+    if (!story) return;
+    getStoryLikes(story.id).then(list => setLikers(list.map((l: any) => ({ ...l.user, liked_at: l.created_at }))));
+  };
+
   const toggleViewers = () => {
-    const next = !showViewers;
+    const next = !(showViewers && panelMode === 'views');
+    setPanelMode('views');
     setShowViewers(next);
     if (next && viewers.length === 0) loadViewers();
+    if (next && likers === null) loadLikers();
+  };
+
+  const openLikers = () => {
+    setPanelMode('likes');
+    setShowViewers(true);
+    if (likers === null) loadLikers();
   };
 
   const toggleLike = async () => {
@@ -287,7 +307,14 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     setIsSubmitting(true);
     const result = await commentOnStory(story.id, commentText.trim());
     setIsSubmitting(false);
-    if (result.success) { setCommentText(''); setShowCommentInput(false); }
+    if (result.success) {
+      setCommentText('');
+      setShowCommentInput(false);
+      setSentNotice(true);
+      setTimeout(() => setSentNotice(false), 2200);
+    } else {
+      alert("Ta réponse n'a pas pu être envoyée. Réessaie.");
+    }
   };
 
   const handleDelete = async () => {
@@ -309,13 +336,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   const avatarSrc = user?.profile_album_cover_url || user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'S'}&background=2A1852&color=FFEFD5`;
   const timeRemaining = story.expires_at ? getTimeRemaining(story.expires_at) : null;
 
-  // Fond : la pochette floutée donne sa couleur à la story (chaque son a son
-  // ambiance), avec un dégradé de marque par-dessus pour garder le texte lisible.
-  const artwork = story.image_url ? null : story.cover_url || null;
   const hasTrack = !!(trackTitle || story.track_id);
-  const bgStyle: React.CSSProperties = story.theme_color
-    ? { background: story.theme_color }
-    : { background: 'linear-gradient(160deg, #2A1852 0%, #1E1440 55%, #150B31 100%)' };
 
   return (
     <AnimatePresence>
@@ -353,8 +374,10 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.96, opacity: 0 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="relative w-full max-w-[390px] flex flex-col overflow-hidden rounded-2xl shadow-2xl"
-            style={{ ...bgStyle, height: 'min(88dvh, 692px)' }}
+            className="relative flex flex-col overflow-hidden rounded-2xl shadow-2xl bg-[#0A0614]"
+            // Exactement 9:16, comme l'aperçu du composeur : la photo publiée
+            // s'affiche en entier, sans recadrage surprise.
+            style={{ width: 'min(390px, 100vw, calc(88dvh * 9 / 16))', aspectRatio: '9 / 16' }}
             onClick={(e) => e.stopPropagation()}
             onPointerDown={() => { setIsPaused(true); }}
             onPointerUp={() => { setIsPaused(false); }}
@@ -372,17 +395,12 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
             {story.image_url && (
               <div className="absolute inset-0 pointer-events-none">
                 <img src={story.image_url} alt="" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/75" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent via-60% to-black/60" />
               </div>
             )}
 
-            {/* Pochette floutée : la story prend la couleur du son */}
-            {artwork && (
-              <div className="absolute inset-0 pointer-events-none">
-                <img src={artwork} alt="" className="w-full h-full object-cover opacity-40 blur-2xl scale-125" />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/75" />
-              </div>
-            )}
+            {/* Story sans photo : fond aux couleurs de la pochette (ou thème choisi) */}
+            {!story.image_url && <StoryBackdrop theme={story.theme_color} cover={story.cover_url} />}
 
             {/* Poignée de fermeture (affordance du glisser) */}
             <div className="absolute top-1.5 left-1/2 -translate-x-1/2 z-30 w-10 h-1 rounded-full bg-white/25" />
@@ -543,12 +561,12 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                       type="button"
                       onClick={(e) => { e.stopPropagation(); toggleStorySound(); }}
                       aria-label={isSounding ? 'Mettre en pause' : 'Écouter'}
-                      className="relative z-20 block w-36 h-36 mx-auto mb-4 group focus:outline-none"
+                      className="relative z-20 block w-52 max-w-[60vw] aspect-square mx-auto mb-5 group focus:outline-none"
                     >
                       <img
                         src={story.cover_url}
                         alt={trackTitle || ''}
-                        className={`w-36 h-36 rounded-2xl object-cover shadow-2xl ring-4 transition-all ${isSounding ? 'ring-fuchsia-500/40' : 'ring-white/10'}`}
+                        className={`w-full h-full rounded-2xl object-cover shadow-[0_24px_60px_rgba(0,0,0,0.55)] ring-1 transition-all ${isSounding ? 'ring-white/30' : 'ring-white/10'}`}
                       />
                       {trackTitle && (
                         <span className={`absolute inset-0 flex items-center justify-center rounded-2xl transition-opacity ${
@@ -619,18 +637,49 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-                    <div className="flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-white/60" />
-                      <span className="text-sm font-bold text-white">
-                        Vues {viewers.length > 0 ? `(${viewers.length})` : ''}
-                      </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={toggleViewers}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold ${panelMode === 'views' ? 'bg-white/15 text-white' : 'text-white/50'}`}
+                      >
+                        <Eye className="w-4 h-4" /> Vues {viewers.length > 0 ? `(${viewers.length})` : ''}
+                      </button>
+                      <button
+                        onClick={openLikers}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold ${panelMode === 'likes' ? 'bg-white/15 text-white' : 'text-white/50'}`}
+                      >
+                        <Heart className="w-4 h-4" /> Likes {likers && likers.length > 0 ? `(${likers.length})` : ''}
+                      </button>
                     </div>
                     <button onClick={() => setShowViewers(false)} className="p-1 text-white/50 hover:text-white">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                   <div className="overflow-y-auto flex-1 py-2">
-                    {loadingViewers ? (
+                    {panelMode === 'likes' ? (
+                      likers === null ? (
+                        <div className="flex justify-center py-6">
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        </div>
+                      ) : likers.length === 0 ? (
+                        <p className="text-center text-sm text-white/40 py-6">Pas encore de like sur cette story</p>
+                      ) : (
+                        likers.map((u: any) => (
+                          <div key={u.id} className="flex items-center gap-3 px-4 py-2.5">
+                            <img
+                              src={u.profile_album_cover_url || `https://ui-avatars.com/api/?name=${u.username || 'U'}&background=2A1852&color=FFEFD5`}
+                              className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                              alt=""
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-white truncate">{u.display_name || u.username}</p>
+                              <p className="text-xs text-white/40 truncate">@{u.username}</p>
+                            </div>
+                            <Heart className="w-4 h-4 text-red-400 fill-red-400 flex-shrink-0" />
+                          </div>
+                        ))
+                      )
+                    ) : loadingViewers ? (
                       <div className="flex justify-center py-6">
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       </div>
@@ -648,6 +697,9 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                             <p className="text-sm font-semibold text-white truncate">{viewer.display_name || viewer.username}</p>
                             <p className="text-xs text-white/40 truncate">@{viewer.username}</p>
                           </div>
+                          {likers?.some((l: any) => l.id === viewer.id) && (
+                            <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 flex-shrink-0" />
+                          )}
                           {viewer.viewed_at && (
                             <span className="text-[10px] text-white/30 flex-shrink-0">
                               {new Date(viewer.viewed_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
@@ -664,6 +716,18 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
             {/* Bottom actions */}
             <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-5">
               <AnimatePresence>
+                {sentNotice && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="mb-3 mx-auto w-fit px-3 py-1.5 rounded-full bg-white/90 text-[#1E1440] text-xs font-bold"
+                  >
+                    Envoyé en message privé ✓
+                  </motion.p>
+                )}
+              </AnimatePresence>
+              <AnimatePresence>
                 {showCommentInput && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -677,7 +741,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                       type="text"
                       value={commentText}
                       onChange={e => setCommentText(e.target.value)}
-                      placeholder="Commenter..."
+                      placeholder="Répondre en message privé…"
                       className="flex-1 px-4 py-2.5 bg-white/15 backdrop-blur-md border border-white/20 rounded-full text-sm text-white placeholder-white/50 focus:outline-none focus:border-white/50"
                       onKeyDown={e => {
                         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleComment(); }
@@ -721,15 +785,22 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                     ))}
                   </AnimatePresence>
                 </div>
-                {likeCount > 0 && (
+                {likeCount > 0 && (isOwner ? (
+                  <button
+                    onClick={openLikers}
+                    title="Voir qui a liké"
+                    className="text-xs text-white/90 font-semibold -ml-1 underline underline-offset-2 decoration-dotted px-1 py-1"
+                  >{likeCount}</button>
+                ) : (
                   <span className="text-xs text-white/70 font-semibold -ml-1">{likeCount}</span>
-                )}
-                <button
+                ))}
+                {/* On ne répond pas à sa propre story : la réponse part en DM à l'auteur. */}
+                {!isOwner && <button
                   onClick={() => setShowCommentInput(!showCommentInput)}
                   className="p-2.5 rounded-full bg-black/30 text-white/80 hover:bg-white/10 backdrop-blur-sm transition-all"
                 >
                   <MessageCircle className="w-5 h-5" />
-                </button>
+                </button>}
               </div>
             </div>
           </motion.div>

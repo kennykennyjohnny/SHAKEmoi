@@ -1200,7 +1200,8 @@ export async function getMessages(partnerId: string, limit = 50): Promise<any[]>
       .from('messages')
       .select(`
         *,
-        sender:users_profile!messages_sender_id_fkey(id, username, display_name, profile_album_cover_url)
+        sender:users_profile!messages_sender_id_fkey(id, username, display_name, profile_album_cover_url),
+        story:stories!messages_story_id_fkey(id, image_url, cover_url, track_name, artist)
       `)
       .or(`and(sender_id.eq.${user.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${user.id})`)
       .order('created_at', { ascending: true })
@@ -1280,14 +1281,17 @@ export async function sendMessage(receiverId: string, text?: string, track?: any
 
     if (error) throw error;
 
-    // Create notification
-    await supabase
-      .from('notifications')
-      .insert([{
-        user_id: receiverId,
-        from_user_id: user.id,
-        type: track ? 'song_share' : 'message',
-      }]);
+    // Notification (sauf réaction à une story : likeStory / commentOnStory
+    // créent déjà la leur, plus parlante).
+    if (!storyId) {
+      await supabase
+        .from('notifications')
+        .insert([{
+          user_id: receiverId,
+          from_user_id: user.id,
+          type: track ? 'song_share' : 'message',
+        }]);
+    }
 
     return { success: true, data };
   } catch (error: any) {
@@ -2348,7 +2352,7 @@ export async function likeStory(storyId: string, emoji = '❤️') {
         .single();
       if (story && story.user_id !== user.id) {
         // Send message linked to story (UI will show as "liked your story" with preview)
-        await sendMessage(story.user_id, null, undefined, undefined, storyId);
+        await sendMessage(story.user_id, undefined, undefined, undefined, storyId);
         
         // Also add notification
         await supabase.from('notifications').insert([{
@@ -2457,22 +2461,8 @@ export async function commentOnStory(storyId: string, commentText: string) {
 
     const storyAuthorId = story.user_id;
 
-    // Get story info for message context
-    const { data: storyData } = await supabase
-      .from('stories')
-      .select('track_name, artist, text')
-      .eq('id', storyId)
-      .single();
-
-    // Build comment message with context
-    const storyContext = storyData?.track_name 
-      ? `${storyData.track_name} by ${storyData.artist}`
-      : storyData?.text || 'votre shake ephemere';
-    
-    const fullMessage = `💭 Commentaire sur ${storyContext}:\n${commentText}`;
-
-    // Send as private message to story author with story_id for preview
-    const result = await sendMessage(storyAuthorId, fullMessage, undefined, undefined, storyId);
+    // Message privé lié à la story (aperçu de la story dans le DM).
+    const result = await sendMessage(storyAuthorId, commentText, undefined, undefined, storyId);
 
     if (!result.success) {
       throw new Error(result.error);

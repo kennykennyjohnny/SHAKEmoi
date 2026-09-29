@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { X, Search, Music2, Sparkles, Loader2, Image as ImageIcon, Clock } from 'lucide-react';
+import { X, Search, Music2, Sparkles, Loader2, Image as ImageIcon, Clock, ZoomIn, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPost, createStory } from '../../lib/database';
 import { spotify } from '../../lib/spotify';
 import { supabase } from '../../lib/supabase';
+import { STORY_THEMES, getCoverPalette, themeCss, autoBackgroundCss, type StoryTheme, type Palette } from '../../lib/storyTheme';
+import { StoryComposerPreview, composeStoryImage, defaultTransform, type PhotoTransform } from './StoryComposerPreview';
+import { useCoverPalette } from './StoryBackdrop';
 
 interface UnifiedComposerDialogProps {
   open: boolean;
@@ -13,16 +16,6 @@ interface UnifiedComposerDialogProps {
   initialComposerType?: 'shake' | 'story';
 }
 
-// null = "Auto" : le fond reprend la pochette floutée (rendu le plus réussi).
-const THEMES: (string | null)[] = [
-  null,
-  '#2A1852', // violet profond
-  '#3A1F6E', // violet
-  '#4A1B4E', // prune
-  '#7B2CBF', // violet vif
-  '#E91E80', // rose marque
-  '#150B31', // nuit
-];
 
 type ComposerType = 'shake' | 'story';
 
@@ -45,7 +38,11 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
 
   // Story-only state
   const [durationDays, setDurationDays] = useState<1 | 7 | 30>(1);
-  const [themeColor, setThemeColor] = useState(THEMES[0]);
+  const [storyTheme, setStoryTheme] = useState<StoryTheme>(STORY_THEMES[0]);
+  // Cadrage de la photo dans la story (voir StoryComposerPreview).
+  const [photoTransform, setPhotoTransform] = useState<PhotoTransform>({ x: 0, y: 0, s: 0.88 });
+  const [photoSize, setPhotoSize] = useState<{ w: number; h: number } | null>(null);
+  const coverPalette = useCoverPalette(selectedTrack?.coverUrl);
 
   // Reset all states when dialog opens or closes
   useEffect(() => {
@@ -67,7 +64,8 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
     setPhotoFile(null);
     setPhotoPreview(null);
     setDurationDays(1);
-    setThemeColor(THEMES[0]);
+    setStoryTheme(STORY_THEMES[0]);
+    setPhotoSize(null);
     setComposerType('shake');
     setIsCreating(false);
   };
@@ -117,11 +115,19 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
     }
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
+    setPhotoSize(null); // le cadrage par défaut est calculé au chargement de l'image
   };
 
-  const uploadPhotoIfNeeded = async (): Promise<string | null> => {
-    if (!photoFile || !currentUser?.id) return null;
-    const ext = photoFile.name.split('.').pop() || 'jpg';
+  const onPhotoSize = (w: number, h: number) => {
+    if (photoSize?.w === w && photoSize?.h === h) return;
+    setPhotoSize({ w, h });
+    setPhotoTransform(defaultTransform(w, h));
+  };
+
+  const uploadPhotoIfNeeded = async (composed?: Blob): Promise<string | null> => {
+    if ((!photoFile && !composed) || !currentUser?.id) return null;
+    const ext = composed ? 'jpg' : photoFile!.name.split('.').pop() || 'jpg';
+    const body = composed ?? photoFile!;
     const fileName = `${currentUser.id}/${Date.now()}.${ext}`;
     const bucketCandidates = composerType === 'story'
       ? ['story-media', 'shake-media']
@@ -131,7 +137,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
     for (const bucketName of bucketCandidates) {
       const { error } = await supabase.storage
         .from(bucketName)
-        .upload(fileName, photoFile, { cacheControl: '3600', upsert: false });
+        .upload(fileName, body, { cacheControl: '3600', upsert: false, contentType: composed ? 'image/jpeg' : undefined });
       if (!error) {
         const { data } = supabase.storage.from(bucketName).getPublicUrl(fileName);
         return data.publicUrl;
@@ -187,12 +193,24 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
     }
     setIsCreating(true);
     try {
-      const imageUrl = await uploadPhotoIfNeeded();
+      // Story photo : on publie exactement l'aperçu (fond + photo cadrée).
+      let composed: Blob | undefined;
+      if (photoPreview) {
+        const palette: Palette | null = storyTheme.stops ? null : await getCoverPalette(selectedTrack?.coverUrl);
+        composed = await composeStoryImage({
+          photo: photoPreview,
+          theme: storyTheme,
+          palette,
+          cover: selectedTrack?.coverUrl || null,
+          transform: photoTransform,
+        });
+      }
+      const imageUrl = await uploadPhotoIfNeeded(composed);
       const result = await createStory({
         imageUrl,
         track: selectedTrack,
         text: caption,
-        themeColor,
+        themeColor: themeCss(storyTheme),
         durationDays,
         publishAsShake: false,
       });
@@ -273,26 +291,59 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
 
             {/* Content */}
             <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4">
-              {/* For STORY: Photo is required-ish */}
+              {/* Story : aperçu fidèle (format 9:16) + cadrage de la photo */}
               {composerType === 'story' && (
-                <div className="bg-purple-950/40 rounded-lg p-3 border border-purple-700/30">
-                  <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-900/25 border border-purple-700/30 cursor-pointer text-sm mb-2">
-                    <ImageIcon className="w-4 h-4 text-purple-300/70" />
-                    {photoPreview ? 'Changer la photo' : 'Ajouter une photo'}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handlePhotoSelect}
+                <div className="space-y-3">
+                  <div className="mx-auto w-[min(260px,64vw)]">
+                    <StoryComposerPreview
+                      theme={storyTheme}
+                      cover={selectedTrack?.coverUrl || null}
+                      track={selectedTrack ? { title: selectedTrack.title, artist: selectedTrack.artist } : null}
+                      photo={photoPreview}
+                      text={caption}
+                      transform={photoTransform}
+                      onTransform={setPhotoTransform}
+                      onPhotoSize={onPhotoSize}
                     />
-                  </label>
-                  {photoPreview && (
-                    <img
-                      src={photoPreview}
-                      alt="preview"
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                  )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-900/25 border border-purple-700/30 cursor-pointer text-sm flex-shrink-0">
+                      <ImageIcon className="w-4 h-4 text-purple-300/70" />
+                      {photoPreview ? 'Changer' : 'Ajouter une photo'}
+                      <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
+                    </label>
+                    {photoPreview && (
+                      <>
+                        <ZoomIn className="w-4 h-4 text-purple-300/70 flex-shrink-0" />
+                        <input
+                          type="range"
+                          min={0.2}
+                          max={3}
+                          step={0.01}
+                          value={photoTransform.s}
+                          onChange={e => setPhotoTransform(t => ({ ...t, s: Number(e.target.value) }))}
+                          className="flex-1 min-w-0 accent-fuchsia-500"
+                          aria-label="Taille de la photo"
+                        />
+                        <button
+                          onClick={() => photoSize && setPhotoTransform(defaultTransform(photoSize.w, photoSize.h))}
+                          className="p-2 rounded-lg bg-purple-900/25 border border-purple-700/30 flex-shrink-0"
+                          title="Recentrer"
+                          aria-label="Recentrer la photo"
+                        >
+                          <RotateCcw className="w-4 h-4 text-purple-300/70" />
+                        </button>
+                        <button
+                          onClick={() => { setPhotoFile(null); setPhotoPreview(null); setPhotoSize(null); }}
+                          className="p-2 rounded-lg bg-purple-900/25 border border-purple-700/30 flex-shrink-0"
+                          title="Retirer la photo"
+                          aria-label="Retirer la photo"
+                        >
+                          <X className="w-4 h-4 text-purple-300/70" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -467,36 +518,28 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                     </div>
                   </div>
 
-                  {/* Theme color selector */}
+                  {/* Fond de la story */}
                   <div>
-                    <label className="text-xs text-purple-300/70 font-medium">
-                      Couleur de fond
-                    </label>
-                    <div className="flex gap-2 mt-2 flex-wrap">
-                      {THEMES.map((color) => {
-                        const selected = themeColor === color;
+                    <label className="text-xs text-purple-300/70 font-medium">Fond</label>
+                    <div className="flex gap-2 mt-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                      {STORY_THEMES.map(theme => {
+                        const selected = storyTheme.id === theme.id;
                         return (
                           <button
-                            key={color ?? 'auto'}
-                            onClick={() => setThemeColor(color)}
-                            title={color ? undefined : 'Auto — couleurs de la pochette'}
-                            style={color ? { backgroundColor: color } : undefined}
-                            className={`w-11 h-11 rounded-lg border-2 transition-all flex items-center justify-center ${
-                              color ? '' : 'bg-gradient-to-br from-fuchsia-500 via-purple-600 to-amber-400'
-                            } ${
-                              selected
-                                ? 'border-white shadow-lg shadow-white/20 scale-105'
-                                : 'border-purple-600/30 hover:border-purple-400/60'
-                            }`}
+                            key={theme.id}
+                            onClick={() => setStoryTheme(theme)}
+                            className="flex flex-col items-center gap-1 flex-shrink-0"
                           >
-                            {!color && <span className="text-[9px] font-bold text-white drop-shadow">AUTO</span>}
+                            <span
+                              className={`w-11 h-16 rounded-lg border-2 transition-all ${selected ? 'border-white scale-105 shadow-lg shadow-white/20' : 'border-white/10'}`}
+                              style={{ background: themeCss(theme) ?? autoBackgroundCss(coverPalette) }}
+                            />
+                            <span className={`text-[10px] ${selected ? 'text-white font-semibold' : 'text-purple-300/60'}`}>{theme.label}</span>
                           </button>
                         );
                       })}
                     </div>
-                    <p className="text-[11px] text-purple-300/50 mt-1.5">
-                      « Auto » reprend les couleurs de la pochette.
-                    </p>
+                    <p className="text-[11px] text-purple-300/50 mt-1">« Auto » reprend les couleurs de la pochette.</p>
                   </div>
                 </>
               )}

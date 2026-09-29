@@ -16,6 +16,7 @@ import { MessagesView } from './components/MessagesView';
 import { TopFriendsView } from './components/TopFriendsView';
 import { SongLanding } from './components/SongLanding';
 import { PrivacyPage } from './components/PrivacyPage';
+import { ProfileLanding } from './components/ProfileLanding';
 import { takePendingAction, pendingActionReason } from '../lib/pendingAction';
 
 import { CircleInviteView } from './components/CircleInviteView';
@@ -53,6 +54,8 @@ export default function App() {
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [notifPostId, setNotifPostId] = useState<string | null>(null);
   const [referrer, setReferrer] = useState<string | null>(null);
+  // Session vérifiée (connecté ou non) : évite de traiter un membre en visiteur.
+  const [authReady, setAuthReady] = useState(false);
   // Lien d'arrivée (/s, /p, /u, /i, /c, /m ou ancien format), voir lib/links.
   const [route, setRoute] = useState<Route | null>(() =>
     parseRoute(window.location.pathname, window.location.search, window.location.hash)
@@ -82,17 +85,8 @@ export default function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Invitation (/i/<pseudo>, ancien ?ref=) : on retient le parrain pour
-      // l'abonnement automatique à l'inscription, puis on atterrit sur l'accueil.
-      const ref = route?.type === 'invite' ? route.id : null;
-      if (ref) {
-        localStorage.setItem('shakemoi_referrer', ref);
-        setReferrer(ref);
-        leaveRoute();
-      } else {
-        const storedRef = localStorage.getItem('shakemoi_referrer');
-        if (storedRef) setReferrer(storedRef);
-      }
+      const storedRef = localStorage.getItem('shakemoi_referrer');
+      if (storedRef) setReferrer(storedRef);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -115,18 +109,22 @@ export default function App() {
       }
       // Pas de session : on n'impose plus le mur d'inscription, le visiteur
       // atterrit sur la recherche/partage de son (voir plus bas). Un lien de
-      // profil vaut alors invitation : il suivra cette personne à l'inscription.
-      else if (route?.type === 'profile') {
+      // profil ou d'invitation affiche la page de la personne (ProfileLanding),
+      // qui devient son parrain : il la suivra à l'inscription.
+      else if (route?.type === 'profile' || route?.type === 'invite') {
         localStorage.setItem('shakemoi_referrer', route.id);
         setReferrer(route.id);
       }
+      setAuthReady(true);
     };
     checkAuth();
   }, []);
 
   // Liens qui ouvrent quelque chose DANS l'app une fois connecté.
   useEffect(() => {
-    if (!route) return;
+    // On attend de savoir si la personne est connectée : sinon un membre
+    // connecté serait traité comme un visiteur le temps de charger sa session.
+    if (!route || !authReady) return;
     if (route.type === 'conversation') {
       leaveRoute();
       if (currentUser) { setViewOptions({ initialTab: 'dms' }); setCurrentView('messages'); }
@@ -134,13 +132,13 @@ export default function App() {
       return;
     }
     if (!currentUser) return;
-    if (route.type === 'profile') {
+    if (route.type === 'profile' || route.type === 'invite') {
       const username = route.id;
       leaveRoute();
       supabase.from('users_profile').select('id').eq('username', username).maybeSingle()
         .then(({ data }) => { if (data?.id) setProfilePreview({ userId: data.id, username }); });
     }
-  }, [route, currentUser]);
+  }, [route, currentUser, authReady]);
 
   // Notifications: realtime + initial load
   useEffect(() => {
@@ -263,6 +261,26 @@ export default function App() {
 
   if (showPrivacy) {
     return <PrivacyPage onBack={() => { window.history.replaceState({}, document.title, '/'); setShowPrivacy(false); }} />;
+  }
+
+  // Profil partagé / invitation, pour un visiteur : la page de la personne
+  // s'affiche tout de suite (plus besoin de cliquer sur « S'inscrire »).
+  if ((route?.type === 'profile' || route?.type === 'invite') && !currentUser) {
+    if (!authReady) {
+      return (
+        <div className="min-h-[100dvh] bg-[#1E1440] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-purple-500/40 border-t-purple-400 rounded-full animate-spin" />
+        </div>
+      );
+    }
+    return (
+      <ProfileLanding
+        username={route.id}
+        onSignUp={() => { leaveRoute(); setShowAuth(true); }}
+        onLogin={() => { leaveRoute(); setShowAuth(true); }}
+        onExplore={leaveRoute}
+      />
+    );
   }
 
   // Invitation dans un cercle.
@@ -493,8 +511,9 @@ export default function App() {
               <button
                 key={view}
                 onClick={() => {
+                  // L'onglet Messages s'ouvre toujours sur les messages privés.
+                  if (view === 'messages') { setViewOptions({}); setUnreadMessages(0); }
                   setCurrentView(view);
-                  if (view === 'messages') setUnreadMessages(0);
                 }}
                 className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all active:scale-90 relative ${
                   currentView === view ? 'text-fuchsia-400 bg-fuchsia-500/15 shadow-lg shadow-fuchsia-500/10' : 'text-purple-300/60 hover:text-purple-200'
@@ -523,7 +542,7 @@ export default function App() {
           ]).map(({ view, icon: Icon, label }) => (
             <button
               key={view}
-              onClick={() => { setCurrentView(view); if (view === 'messages') setUnreadMessages(0); }}
+              onClick={() => { if (view === 'messages') { setViewOptions({}); setUnreadMessages(0); } setCurrentView(view); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors relative ${
                 currentView === view ? 'bg-purple-500/10 text-purple-400' : 'text-purple-300/60 hover:bg-violet-900/25'
               }`}

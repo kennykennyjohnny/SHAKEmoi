@@ -24,7 +24,7 @@ interface MessagesViewProps {
 }
 
 export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewOptions }: MessagesViewProps) {
-  const { initialTab = 'circles' } = viewOptions || {};
+  const { initialTab = 'dms' } = viewOptions || {};
   const [tab, setTab] = useState<'dms' | 'circles'>(initialTab);
   const [inSubView, setInSubView] = useState(false);
   const [fabTrigger, setFabTrigger] = useState(0);
@@ -401,16 +401,31 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
             return (
               <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] rounded-2xl overflow-hidden ${isMine ? 'bg-purple-600/30 border border-purple-500/30' : 'bg-violet-950/25 border border-purple-500/25'}`}>
-                  {/* Story interaction preview */}
-                  {isStoryInteraction && !msg.text && (
-                    <div className="px-3 py-2.5 text-center text-sm font-medium text-purple-100">
-                      ❤️ liked your story
-                    </div>
-                  )}
-                  {isStoryInteraction && msg.text?.startsWith('💭') && (
-                    <div className="px-3 py-2 text-sm">
-                      <p className="font-medium text-purple-200 mb-1">💭 commented on your story</p>
-                      <p className="text-purple-100/80">{msg.text.replace('💭 Commentaire sur ', '').split(':\n')[1] || msg.text}</p>
+                  {/* Réaction à une story : aperçu de la story + like ou réponse */}
+                  {isStoryInteraction && (
+                    <div className="flex gap-2.5 p-2 pr-3 items-start">
+                      {(msg.story?.image_url || msg.story?.cover_url) ? (
+                        <img
+                          src={msg.story.image_url || msg.story.cover_url}
+                          alt=""
+                          className="w-11 h-[4.5rem] rounded-lg object-cover flex-shrink-0 ring-1 ring-white/10"
+                        />
+                      ) : (
+                        <div className="w-11 h-[4.5rem] rounded-lg bg-gradient-to-br from-purple-700 to-pink-700 flex-shrink-0" />
+                      )}
+                      <div className="min-w-0 text-sm">
+                        <p className="text-[11px] font-semibold text-purple-300/80 mb-0.5">
+                          {msg.text
+                            ? (isMine ? 'Tu as répondu à sa story' : 'A répondu à ta story')
+                            : (isMine ? 'Tu as aimé sa story' : 'A aimé ta story')}
+                        </p>
+                        {msg.text
+                          ? <p className="text-purple-50 break-words">{msg.text.startsWith('💭') ? (msg.text.split(':\n')[1] || msg.text) : msg.text}</p>
+                          : <p className="text-lg leading-none">❤️</p>}
+                        {msg.story?.track_name && (
+                          <p className="text-[10px] text-purple-300/60 mt-1 truncate">🎵 {msg.story.track_name}</p>
+                        )}
+                      </div>
                     </div>
                   )}
                   {msg.text && !msg.story_id && <p className="px-3 py-2 text-sm">{msg.text}</p>}
@@ -566,7 +581,13 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
                   {c.partner?.display_name || c.partner?.username}
                 </p>
                 <p className={`text-xs truncate ${c.unreadCount > 0 ? 'text-purple-200/80 font-medium' : 'text-purple-300/60'}`}>
-                  {c.lastMessage?.track_name ? `🎵 ${c.lastMessage.track_name}` : c.lastMessage?.text || '…'}
+                  {c.lastMessage?.track_name
+                    ? `🎵 ${c.lastMessage.track_name}`
+                    : c.lastMessage?.story_id
+                      ? (c.lastMessage.text ? `Story : ${c.lastMessage.text}` : '❤️ a aimé une story')
+                      : c.lastMessage?.image_url && !c.lastMessage?.text
+                        ? '📷 Photo'
+                        : c.lastMessage?.text || '…'}
                 </p>
               </div>
               <span className="text-[10px] text-purple-300/50 flex-shrink-0">
