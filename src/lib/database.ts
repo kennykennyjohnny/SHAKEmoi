@@ -1031,7 +1031,8 @@ export async function getUserNotifications(userId: string) {
       .select(`
         *,
         from_user:users_profile!notifications_from_user_id_fkey(id, username, profile_album_cover_url),
-        post:posts!notifications_post_id_fkey(id, track_name, cover_url)
+        post:posts!notifications_post_id_fkey(id, track_name, cover_url),
+        story:stories!notifications_story_id_fkey(id, image_url, cover_url, expires_at, is_pinned)
       `)
       .eq('user_id', userId)
       // Les anciennes notifs « message / son / story / cercle » ne vont plus
@@ -1045,6 +1046,8 @@ export async function getUserNotifications(userId: string) {
     const prefs = getNotifPrefs();
     return (data || [])
       .filter((notif: any) => isNotifTypeShown(notif.type, prefs))
+      // Anciens likes de story (avant le regroupement, sans story liée) : masqués.
+      .filter((notif: any) => notif.type !== 'story_like' || !!notif.story_id)
       .map((notif: any) => ({
         id: notif.id,
         type: notif.type,
@@ -1056,7 +1059,12 @@ export async function getUserNotifications(userId: string) {
         post_track_name: notif.post?.track_name || null,
         circle_id: notif.circle_id || null,
         comment_id: notif.comment_id || null,
-        content: notificationText(notif.type),
+        story_id: notif.story_id || null,
+        story: notif.story || null,
+        // M10 : « Léa et 4 autres ont aimé ta story ».
+        content: notif.type === 'story_like' && (notif.actor_ids?.length || 0) > 1
+          ? `et ${notif.actor_ids.length - 1} autre${notif.actor_ids.length > 2 ? 's' : ''} ont aimé ta story`
+          : notificationText(notif.type),
         created_at: notif.created_at,
         is_read: notif.is_read
       }));
@@ -1880,6 +1888,12 @@ export async function getUserActiveStories(userId: string): Promise<Story[]> {
     console.error('Error getting user stories:', error);
     return [];
   }
+}
+
+/** Une story (avec son auteur), pour l'ouvrir depuis une notification (M10). */
+export async function getStoryById(storyId: string): Promise<Story | null> {
+  const { data } = await supabase.from('stories').select(STORY_WITH_USER).eq('id', storyId).maybeSingle();
+  return (data as any) || null;
 }
 
 /** Stories épinglées sur le profil (« À la une »), de la plus ancienne à la plus récente. */

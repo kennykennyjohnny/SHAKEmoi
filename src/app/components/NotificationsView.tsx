@@ -12,9 +12,10 @@ interface NotificationsViewProps {
   onNavigateToProfile?: (userId: string) => void;
   onOpenConversation?: (userId: string) => void;
   onOpenCircle?: (circleId: string | null) => void;
+  onOpenStory?: (storyId: string) => void;
 }
 
-export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToProfile, onOpenConversation, onOpenCircle }: NotificationsViewProps) {
+export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToProfile, onOpenConversation, onOpenCircle, onOpenStory }: NotificationsViewProps) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
@@ -96,6 +97,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
     switch (type) {
       case 'like':
       case 'comment_like':
+      case 'story_like':
         return <Heart className="w-3.5 h-3.5 fill-current text-pink-500" />;
       case 'comment':
         return <MessageCircle className="w-3.5 h-3.5 text-fuchsia-400" />;
@@ -157,15 +159,18 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
         {notifications.map((notif, index) => {
           const isFollowNotif = notif.type === 'follow' || notif.type === 'feel';
           const alreadyFollowing = followingState[notif.actor_id] || followedBack.has(notif.actor_id);
-          const hasPost = !!notif.post_cover_url;
+          const thumbUrl = notif.post_cover_url || notif.story?.image_url || notif.story?.cover_url || null;
+          const hasPost = !!thumbUrl;
           // Chaque notification mène au bon endroit (D1).
           const isPostNotif = ['like', 'comment', 'reshake', 'comment_like'].includes(notif.type) && !!notif.post_id;
           const isCircleNotif = notif.type.startsWith('circle_');
-          const isMessageNotif = ['message', 'song_share', 'story_like', 'story_comment'].includes(notif.type);
-          const canNavigate = isPostNotif || isFollowNotif || isCircleNotif || isMessageNotif;
+          const isStoryLike = notif.type === 'story_like' && !!notif.story_id;
+          const isMessageNotif = ['message', 'song_share', 'story_comment'].includes(notif.type) || (notif.type === 'story_like' && !notif.story_id);
+          const canNavigate = isPostNotif || isFollowNotif || isCircleNotif || isMessageNotif || isStoryLike;
 
           const handleNotifClick = () => {
-            if (isPostNotif) onNavigateToPost?.(notif.post_id);
+            if (isStoryLike) onOpenStory?.(notif.story_id);
+            else if (isPostNotif) onNavigateToPost?.(notif.post_id);
             else if (isCircleNotif) onOpenCircle?.(notif.circle_id);
             else if (isMessageNotif && notif.actor_id) onOpenConversation?.(notif.actor_id);
             else if (notif.actor_id) onNavigateToProfile?.(notif.actor_id);
@@ -235,7 +240,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
               {hasPost && (
                 <div className="flex-shrink-0">
                   <img loading="lazy"
-                    src={notif.post_cover_url}
+                    src={thumb(thumbUrl, 128)}
                     alt="Track"
                     className="w-10 h-10 rounded-lg object-cover ring-1 ring-purple-700/20"
                   />

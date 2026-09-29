@@ -4,7 +4,8 @@
 // La cloche = le social. Tout ce qui passe par les messages (message, son
 // envoyé, like/réponse de story, message de cercle) n'y apparaît plus (A2) :
 // seule la pastille Messages s'allume.
-export const MESSAGE_LIKE_TYPES = ['message', 'song_share', 'story_like', 'story_comment', 'circle_post'];
+// Exception M10 : les likes de story vont aussi dans la cloche, groupés par story.
+export const MESSAGE_LIKE_TYPES = ['message', 'song_share', 'story_comment', 'circle_post'];
 
 export function notificationText(type: string): string {
   switch (type) {
@@ -19,7 +20,7 @@ export function notificationText(type: string): string {
     case 'circle_invite': return 't\'a invité·e dans un cercle';
     case 'message': return 't\'a envoyé un message';
     case 'song_share': return 't\'a envoyé un son';
-    case 'story_like': return 'a aimé ton shake éphémère';
+    case 'story_like': return 'a aimé ta story';
     case 'story_comment': return 'a répondu à ton shake éphémère';
     default: return 'a interagi avec toi';
   }
@@ -28,7 +29,7 @@ export function notificationText(type: string): string {
 // Réglages « Notifications » des paramètres (enregistrés sur l'appareil).
 type Prefs = { likes: boolean; comments: boolean; reshakes: boolean; follows: boolean };
 const PREF_OF_TYPE: Record<string, keyof Prefs> = {
-  like: 'likes', comment_like: 'likes',
+  like: 'likes', comment_like: 'likes', story_like: 'likes',
   comment: 'comments',
   reshake: 'reshakes',
   follow: 'follows', feel: 'follows',

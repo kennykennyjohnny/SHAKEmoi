@@ -1,4 +1,4 @@
-import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Play, Pause, ExternalLink, Pin, Volume2, VolumeX } from 'lucide-react';
+import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Hourglass, Play, Pause, ExternalLink, Pin, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers, getStoryLikes, markStoryAsViewed } from '../../lib/database';
@@ -18,6 +18,8 @@ interface StoryViewerDialogProps {
   stories?: any[];
   onNavigate?: (story: any) => void;
   onGroupEnd?: () => void;
+  /** Ouvrir directement la liste des likes (story expirée ouverte depuis une notif, M10). */
+  initialPanel?: 'likes';
 }
 
 // Durée d'affichage d'une story. Trop court à 5s : on laisse le temps de lire,
@@ -28,18 +30,19 @@ const STORY_DURATION_MUSIC = 15000;
 // Profils déjà chargés (auteurs des stories), pour ne pas les redemander.
 const ownerCache = new Map<string, any>();
 
-function getTimeRemaining(expiresAt: string): string {
-  const diff = new Date(expiresAt).getTime() - Date.now();
-  if (diff <= 0) return 'Expiré';
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m`;
-  const hours = Math.floor(diff / 3600000);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(diff / 86400000);
-  return `${days}j`;
+/** M3 : temps restant en direct, « JJ:HH:MM:SS » (ou « HH:MM:SS » sous un jour). */
+function formatCountdown(expiresAt: string, now: number): string | null {
+  const diff = Math.floor((new Date(expiresAt).getTime() - now) / 1000);
+  if (diff <= 0) return null;
+  const d = Math.floor(diff / 86400);
+  const h = Math.floor((diff % 86400) / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  const p = (n: number) => String(n).padStart(2, '0');
+  return d > 0 ? `${p(d)}:${p(h)}:${p(m)}:${p(s)}` : `${p(h)}:${p(m)}:${p(s)}`;
 }
 
-export function StoryViewerDialog({ open, story, onClose, currentUser, stories, onNavigate, onGroupEnd }: StoryViewerDialogProps) {
+export function StoryViewerDialog({ open, story, onClose, currentUser, stories, onNavigate, onGroupEnd, initialPanel }: StoryViewerDialogProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [showCommentInput, setShowCommentInput] = useState(false);
@@ -179,7 +182,8 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     setViewers([]);
     setLikers(null);
     hasLikedStory(story.id).then(setIsLiked);
-    markStoryAsViewed(story.id);
+    // Une vue = une autre personne que la propriétaire (M4).
+    if (currentUser?.id !== story.user_id) markStoryAsViewed(story.id); // la base refuse aussi la vue par la propriétaire
   }, [story?.id]);
 
   // Le son de la story démarre dès son ouverture (extrait 30s, résolu via
@@ -288,9 +292,26 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     if (!story || loadingViewers) return;
     setLoadingViewers(true);
     const data = await getStoryViewers(story.id);
-    setViewers(data);
+    // Une vue = une autre personne : jamais la propriétaire (M4).
+    setViewers(data.filter((v: any) => v.id && v.id !== story.user_id));
     setLoadingViewers(false);
   };
+
+  // M3 : le compte à rebours avance chaque seconde.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!open) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [open]);
+
+  // M4 : nombre de vues affiché à la propriétaire (en bas à droite).
+  const [viewCount, setViewCount] = useState<number | null>(null);
+  useEffect(() => {
+    setViewCount(null);
+    if (!open || !story || !isOwner) return;
+    supabase.rpc('story_view_count', { p_story_id: story.id }).then(({ data }) => setViewCount(Number(data) || 0));
+  }, [story?.id, open, isOwner]);
 
   const loadLikers = () => {
     if (!story) return;
@@ -310,6 +331,11 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     setShowViewers(true);
     if (likers === null) loadLikers();
   };
+
+  // M10 : story expirée ouverte depuis la cloche → directement la liste des likes.
+  useEffect(() => {
+    if (open && initialPanel === 'likes') openLikers();
+  }, [open, initialPanel, story?.id]);
 
   // Like optimiste (F4) : cœur et animation tout de suite, annulés si refus.
   const likeBusyRef = useRef(false);
@@ -364,7 +390,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
 
   const user = owner;
   const avatarSrc = thumb(user?.profile_album_cover_url) || thumb(user?.avatar) || defaultAvatar(user?.username || 'S');
-  const timeRemaining = story.expires_at ? getTimeRemaining(story.expires_at) : null;
+  const timeRemaining = story.expires_at ? formatCountdown(story.expires_at, now) : null;
 
   const hasTrack = !!(trackTitle || story.track_id);
 
@@ -463,13 +489,19 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                   </p>
                   <div className="flex items-center gap-1.5">
                     {user?.username && <p className="text-[10px] text-white/60 truncate">@{user.username}</p>}
-                    {timeRemaining && (
-                      <span className="text-[10px] text-white/40">· {timeRemaining}</span>
-                    )}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
+                {/* M3 : temps restant, en direct. */}
+                {timeRemaining && (
+                  <span
+                    title="Temps restant avant que la story disparaisse"
+                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-black/35 backdrop-blur-sm text-[11px] font-semibold text-white tabular-nums"
+                  >
+                    <Hourglass className="w-3 h-3" /> {timeRemaining}
+                  </span>
+                )}
                 {/* Son : coupé au départ (comme Insta), activé d'un tap.
                     Le choix vaut pour les stories suivantes. */}
                 {trackTitle && (
@@ -493,12 +525,6 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                       className={`flex-shrink-0 p-2 rounded-full transition-colors ${pinned ? 'bg-fuchsia-500/30 text-fuchsia-300' : 'bg-black/30 text-white/70 hover:text-white hover:bg-white/10'}`}
                     >
                       <Pin className={`w-4 h-4 ${pinned ? 'fill-current' : ''}`} />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleViewers(); }}
-                      className={`flex-shrink-0 p-2 rounded-full transition-colors ${showViewers ? 'bg-white/20 text-white' : 'bg-black/30 text-white/70 hover:text-white hover:bg-white/10'}`}
-                    >
-                      <Eye className="w-4 h-4" />
                     </button>
                     <button
                       onClick={handleDelete}
@@ -832,6 +858,16 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                 >
                   <MessageCircle className="w-5 h-5" />
                 </button>}
+                {/* M4 : vues, en bas à droite, visibles par la propriétaire seulement. */}
+                {isOwner && (
+                  <button
+                    onClick={toggleViewers}
+                    aria-label="Voir qui a vu ta story"
+                    className={`ml-auto flex items-center gap-1.5 px-3 py-2 rounded-full backdrop-blur-sm text-sm font-semibold transition-colors ${showViewers ? 'bg-white/25 text-white' : 'bg-black/35 text-white/90 hover:bg-white/15'}`}
+                  >
+                    <Eye className="w-4 h-4" /> {viewCount ?? '…'}
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>

@@ -23,9 +23,10 @@ import { CircleInviteView } from './components/CircleInviteView';
 import { NotificationsView } from './components/NotificationsView';
 import { ProfilePreviewDialog } from './components/ProfilePreviewDialog';
 import { PostDetailModal } from './components/PostDetailModal';
+import { StoryViewerDialog } from './components/StoryViewerDialog';
 import { supabase } from '../lib/supabase';
 import { escapeLike } from '../lib/username';
-import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount, getCurrentShakeWeekStart } from '../lib/database';
+import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount, getCurrentShakeWeekStart, getStoryById } from '../lib/database';
 import { useBackHandler } from '../lib/navigation';
 import { parseRoute, type Route } from '../lib/links';
 import { Slogan } from './components/Slogan';
@@ -57,6 +58,7 @@ export default function App() {
   const [viewOptions, setViewOptions] = useState<any>({});
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [notifPostId, setNotifPostId] = useState<string | null>(null);
+  const [notifStory, setNotifStory] = useState<{ story: any; likes: boolean } | null>(null);
   const [referrer, setReferrer] = useState<string | null>(null);
   // Session vérifiée (connecté ou non) : évite de traiter un membre en visiteur.
   const [authReady, setAuthReady] = useState(false);
@@ -206,6 +208,19 @@ export default function App() {
           if (data?.username) who = `@${data.username}`;
         } catch {}
         showLocalNotification(`${who} ${notificationText(type)}`, `notif-${type}`);
+      })
+      // M10 : un like de story déjà notifié remet sa notif en haut et non lue
+      // (mise à jour, pas une nouvelle ligne) : on recompte.
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'notifications',
+        filter: `user_id=eq.${currentUser.id}`
+      }, (payload: any) => {
+        getUserNotifications(currentUser.id)
+          .then((n: any[]) => setUnreadNotifs(n.filter(x => !x.is_read).length))
+          .catch(() => {});
+        if (payload.new?.type === 'story_like' && payload.new?.is_read === false) {
+          showLocalNotification('Nouveau like sur ta story', 'notif-story_like');
+        }
       })
       .subscribe();
 
@@ -474,6 +489,13 @@ export default function App() {
             onNavigateToProfile={(userId) => setProfilePreview({ userId, username: '' })}
             onOpenConversation={(userId) => { setViewOptions({ initialTab: 'dms', openPartnerId: userId }); setCurrentView('messages'); }}
             onOpenCircle={(circleId) => { setViewOptions({ initialTab: 'circles', openCircleId: circleId }); setCurrentView('messages'); }}
+            onOpenStory={async (storyId) => {
+              // M10 : ouvre la story ; expirée (et pas épinglée) → la liste des likes.
+              const s = await getStoryById(storyId);
+              if (!s) return;
+              const expired = new Date(s.expires_at).getTime() < Date.now() && !(s as any).is_pinned;
+              setNotifStory({ story: s, likes: expired });
+            }}
           />
         );
       case 'profile':
@@ -702,6 +724,18 @@ export default function App() {
           />
         )}
       </AnimatePresence>
+      {/* Story ouverte depuis une notification (M10) */}
+      {notifStory && (
+        <StoryViewerDialog
+          open={!!notifStory}
+          story={notifStory.story}
+          stories={[notifStory.story]}
+          currentUser={currentUser}
+          initialPanel={notifStory.likes ? 'likes' : undefined}
+          onClose={() => setNotifStory(null)}
+          onGroupEnd={() => setNotifStory(null)}
+        />
+      )}
       {/* Post Detail Modal from Notifications */}
       <AnimatePresence>
         {notifPostId && (
