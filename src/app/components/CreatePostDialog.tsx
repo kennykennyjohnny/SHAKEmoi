@@ -69,7 +69,7 @@ export function CreatePostDialog({ currentUser, onClose }: CreatePostDialogProps
           <div className="flex-1 overflow-y-auto p-6">
             {/* User Info */}
             <div className="flex items-center gap-3 mb-6">
-              <img
+              <img loading="lazy"
                 src={currentUser?.avatar}
                 alt={currentUser?.displayName}
                 className="w-12 h-12 rounded-full object-cover ring-2 ring-purple-500/20"
@@ -92,7 +92,7 @@ export function CreatePostDialog({ currentUser, onClose }: CreatePostDialogProps
             {/* Selected Track */}
             {selectedTrack ? (
               <div className="mb-6 bg-gradient-to-br from-purple-900/40 to-pink-900/40 rounded-xl p-4 flex gap-4 items-center backdrop-blur-sm border border-purple-500/20">
-                <img
+                <img loading="lazy"
                   src={selectedTrack.coverUrl}
                   alt={selectedTrack.title}
                   className="w-20 h-20 rounded-lg object-cover"
@@ -136,7 +136,7 @@ export function CreatePostDialog({ currentUser, onClose }: CreatePostDialogProps
                       onClick={() => setSelectedTrack(track)}
                       className="w-full p-3 bg-purple-950/40 hover:bg-purple-800/40 rounded-lg flex items-center gap-3 transition-colors text-left"
                     >
-                      <img
+                      <img loading="lazy"
                         src={track.coverUrl}
                         alt={track.title}
                         className="w-12 h-12 rounded object-cover"

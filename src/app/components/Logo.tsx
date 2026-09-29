@@ -24,9 +24,9 @@ export function Logo({ size = 'md', animated = true, showText = true }: LogoProp
       transition={{ type: 'spring', duration: 0.5 }}
     >
       {showText ? (
-        <img src="/shakemoi-logo.png" alt="SHAKEmoi" className={`${wordmark} object-contain`} draggable={false} />
+        <img loading="lazy" src="/shakemoi-logo.png" alt="SHAKEmoi" className={`${wordmark} object-contain`} draggable={false} />
       ) : (
-        <img src="/shakemoi-favicon.png" alt="S" className={`${icon} object-contain`} draggable={false} />
+        <img loading="lazy" src="/shakemoi-favicon.png" alt="S" className={`${icon} object-contain`} draggable={false} />
       )}
     </motion.div>
   );

@@ -11,6 +11,9 @@ export interface UserProfile {
   color: string;
   profile_color?: string;
   profile_album_cover_url?: string;
+  display_name?: string | null;
+  bio?: string | null;
+  preferred_platform?: string | null;
   feels_count: number;
   feelings_count: number;
 }
@@ -55,16 +58,32 @@ export interface Story {
 
 // ==================== USER ====================
 
+// Session lue sur le téléphone (getSession) au lieu d'un aller-retour serveur
+// à chaque action (getUser) : en 4G ça économise ~300 ms par appel (I5).
+// La sécurité ne change pas : la base vérifie le jeton à chaque requête.
 export async function getCurrentUser() {
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    return user;
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.user ?? null;
   } catch (error) {
     console.error('Error getting current user:', error);
     return null;
   }
 }
+
+// Liste des comptes suivis, gardée 30 s (le fil, les stories et le TOP la
+// demandaient chacun de leur côté).
+let followingCache: { userId: string; ids: string[]; at: number } | null = null;
+export async function getFollowingIds(userId: string): Promise<string[]> {
+  if (followingCache && followingCache.userId === userId && Date.now() - followingCache.at < 30_000) {
+    return followingCache.ids;
+  }
+  const { data } = await supabase.from('follows').select('following_id').eq('follower_id', userId);
+  const ids = (data || []).map((f: any) => f.following_id);
+  followingCache = { userId, ids, at: Date.now() };
+  return ids;
+}
+export function invalidateFollowingCache() { followingCache = null; }
 
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
   try {
@@ -112,13 +131,7 @@ export async function getFeed(limit = 20): Promise<Post[]> {
     const user = await getCurrentUser();
     if (!user) return [];
 
-    // Get IDs of users I'm following
-    const { data: follows } = await supabase
-      .from('follows')
-      .select('following_id')
-      .eq('follower_id', user.id);
-
-    const followingIds = follows ? follows.map(f => f.following_id) : [];
+    const followingIds = await getFollowingIds(user.id);
     // Include own posts + followed users' posts
     const feedUserIds = [...followingIds, user.id];
 
@@ -161,8 +174,9 @@ export async function getFeed(limit = 20): Promise<Post[]> {
       reshakes_count: post.reshakes_count || 0,
     }));
   } catch (error) {
+    // L'écran du fil affiche l'erreur et « Réessayer » (I7) au lieu d'un fil vide.
     console.error('Error getting feed:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -622,6 +636,7 @@ export async function followUser(targetUserId: string) {
       }]);
 
     if (error) throw error;
+    invalidateFollowingCache();
 
     return { success: true };
   } catch (error: any) {
@@ -642,6 +657,7 @@ export async function unfollowUser(targetUserId: string) {
       .eq('following_id', targetUserId);
 
     if (error) throw error;
+    invalidateFollowingCache();
 
     return { success: true };
   } catch (error: any) {
@@ -729,10 +745,16 @@ export async function removeFollower(followerId: string) {
 
 export async function searchUsers(query: string) {
   try {
+    // Pseudo OU nom affiché (G8). % et _ sont des jokers en SQL : on les
+    // échappe ; virgules et parenthèses cassent le filtre : on les retire.
+    const q = query.trim().replace(/^@/, '');
+    if (!q) return [];
+    const safe = q.replace(/[\\%_]/g, (c) => `\\${c}`).replace(/[,()"]/g, ' ');
     const { data, error } = await supabase
       .from('users_profile')
-      .select('*')
-      .ilike('username', `%${query}%`)
+      .select('id, username, display_name, profile_album_cover_url, profile_color, color, bio, feels_count')
+      .or(`username.ilike.%${safe}%,display_name.ilike.%${safe}%`)
+      .order('feels_count', { ascending: false })
       .limit(20);
 
     if (error) throw error;
@@ -1288,13 +1310,7 @@ export async function getFriendsTrending(days = 7, limit = 20): Promise<any[]> {
     const user = await getCurrentUser();
     if (!user) return [];
 
-    // Get friend IDs
-    const { data: follows } = await supabase
-      .from('follows')
-      .select('following_id')
-      .eq('follower_id', user.id);
-
-    const friendIds = follows ? [...follows.map(f => f.following_id), user.id] : [user.id];
+    const friendIds = [...(await getFollowingIds(user.id)), user.id];
 
     // Get posts from friends in the last N days
     const since = new Date();
@@ -1763,13 +1779,7 @@ export async function getFeedStories(): Promise<Story[]> {
     const user = await getCurrentUser();
     if (!user) return [];
 
-    const { data: follows } = await supabase
-      .from('follows')
-      .select('following_id')
-      .eq('follower_id', user.id);
-
-    const followingIds = follows ? follows.map((f: any) => f.following_id) : [];
-    const ids = [user.id, ...followingIds];
+    const ids = [user.id, ...(await getFollowingIds(user.id))];
 
     const { data, error } = await supabase
       .from('stories')
@@ -1852,6 +1862,23 @@ export async function setStoryPinned(storyId: string, pinned: boolean): Promise<
   const { error } = await supabase.from('stories').update({ is_pinned: pinned }).eq('id', storyId);
   if (error) console.error('Erreur épinglage story:', error);
   return !error;
+}
+
+/** Stories déjà vues parmi une liste, en une seule requête (au lieu d'une par story). */
+export async function getViewedStoryIds(storyIds: string[]): Promise<Set<string>> {
+  try {
+    if (!storyIds.length) return new Set();
+    const user = await getCurrentUser();
+    if (!user) return new Set();
+    const { data } = await supabase
+      .from('story_views')
+      .select('story_id')
+      .eq('viewer_id', user.id)
+      .in('story_id', storyIds);
+    return new Set((data || []).map((v: any) => v.story_id));
+  } catch {
+    return new Set();
+  }
 }
 
 export async function hasViewedStory(storyId: string): Promise<boolean> {

@@ -5,6 +5,7 @@ import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCo
 import { supabase } from '../../lib/supabase';
 import { StoryViewerDialog } from './StoryViewerDialog';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 interface ProfilePreviewDialogProps {
   userId: string;
   username: string;
@@ -135,7 +136,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
   }
 
   const displayName = profile.display_name || profile.username;
-  const avatar = profile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${profile.username}&background=2A1852&color=FFEFD5`;
+  const avatar = thumb(profile.profile_album_cover_url) || defaultAvatar(profile.username);
 
   const currentPosts = activeTab === 'shakes' ? shakes : reshakes;
   const expandedPostRaw = expandedPostId ? currentPosts.find(p => p.id === expandedPostId) : null;
@@ -166,7 +167,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
         {/* Profile Info - No cover photo, compact */}
         <div className="px-4 pt-4 pb-4">
           <div className="flex items-center gap-3 mb-3">
-            <img
+            <img loading="lazy"
               src={avatar}
               alt={displayName}
               className="w-16 h-16 rounded-full object-cover ring-2 ring-purple-500"
@@ -241,8 +242,8 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
                   >
                     <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
                       <div className="w-full h-full rounded-full bg-[#1D0F3D] p-[2px]">
-                        <img
-                          src={story.cover_url || story.image_url || avatar}
+                        <img loading="lazy"
+                          src={story.cover_url || thumb(story.image_url, 256) || avatar}
                           className="w-full h-full rounded-full object-cover"
                           alt=""
                         />
@@ -259,7 +260,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
                   >
                     <div className="w-14 h-14 rounded-full p-[2px] bg-purple-700/50">
                       <div className="w-full h-full rounded-full bg-[#1D0F3D] p-[2px]">
-                        <img src={story.image_url || story.cover_url || avatar} className="w-full h-full rounded-full object-cover" alt="" />
+                        <img loading="lazy" src={thumb(story.image_url, 256) || story.cover_url || avatar} className="w-full h-full rounded-full object-cover" alt="" />
                       </div>
                     </div>
                     <p className="text-[10px] text-purple-300/60 mt-1 truncate">{story.track_name || 'À la une'}</p>
@@ -307,7 +308,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
                         expandedPostId === post.id ? 'ring-2 ring-purple-500 scale-[0.95]' : ''
                       }`}
                     >
-                      <img src={displayCover} alt={displayTrackName} className="w-full h-full object-cover" />
+                      <img loading="lazy" src={displayCover} alt={displayTrackName} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
                         <Play className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                       </div>
@@ -343,7 +344,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
                         </p>
                       )}
                       <div className="flex items-center gap-2 mb-2">
-                        <img src={expandedPost.cover_url} alt="" className="w-10 h-10 rounded-md object-cover" />
+                        <img loading="lazy" src={expandedPost.cover_url} alt="" className="w-10 h-10 rounded-md object-cover" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-white truncate">{expandedPost.track_name}</p>
                           <p className="text-xs text-purple-300/60 truncate">{expandedPost.artist}</p>

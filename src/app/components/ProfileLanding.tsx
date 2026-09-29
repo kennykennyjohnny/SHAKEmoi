@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 // SHAKEMOI - Arrivée d'un visiteur sur un profil partagé (/u/<pseudo> ou
 // l'invitation /i/<pseudo>) : on voit tout de suite qui invite, ses derniers
 // sons, et on peut créer son compte pour l'ajouter en ami d'un geste.
@@ -52,13 +53,13 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore }: Props
   );
 
   const name = profile?.display_name || profile?.username || username;
-  const avatar = profile?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=2A1852&color=FFEFD5`;
+  const avatar = thumb(profile?.profile_album_cover_url) || defaultAvatar(encodeURIComponent(username));
 
   return (
     <div className="min-h-[100dvh] bg-[#1E1440] text-white relative overflow-x-hidden">
       {profile?.profile_album_cover_url && (
         <div className="fixed inset-0 pointer-events-none">
-          <img src={profile.profile_album_cover_url} alt="" className="w-full h-full object-cover opacity-20 blur-3xl scale-110" />
+          <img loading="lazy" src={profile.profile_album_cover_url} alt="" className="w-full h-full object-cover opacity-20 blur-3xl scale-110" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1E1440]/60 via-[#1E1440]/70 to-[#1E1440]" />
         </div>
       )}
@@ -78,7 +79,7 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore }: Props
         {profile ? (
           <>
             <div className="mt-6 mx-auto w-28 h-28 rounded-full p-[3px] bg-gradient-to-br from-purple-500 to-pink-500">
-              <img src={avatar} alt="" className="w-full h-full rounded-full object-cover border-4 border-[#1E1440]" />
+              <img loading="lazy" src={avatar} alt="" className="w-full h-full rounded-full object-cover border-4 border-[#1E1440]" />
             </div>
             <h1 className="mt-4 text-2xl font-bold">{name}</h1>
             <p className="text-sm text-fuchsia-300">@{profile.username}</p>
@@ -111,7 +112,7 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore }: Props
                 <div className="grid grid-cols-3 gap-1.5">
                   {recent.map(p => (
                     <div key={p.id} className="relative aspect-square rounded-xl overflow-hidden bg-purple-900/40">
-                      <img src={p.cover_url} alt="" className="w-full h-full object-cover" />
+                      <img loading="lazy" src={p.cover_url} alt="" className="w-full h-full object-cover" />
                       <span className="absolute inset-x-0 bottom-0 p-1.5 pt-5 bg-gradient-to-t from-black/80 to-transparent text-[10px] font-semibold truncate">
                         {p.track_name}
                       </span>

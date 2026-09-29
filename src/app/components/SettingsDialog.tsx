@@ -2,6 +2,7 @@ import { X, Music2, Check, LogOut, User, Bell, Info, BellRing, Shield, Trash2, C
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 type MusicPlatform = 'spotify' | 'apple_music' | 'deezer' | 'youtube_music' | 'tidal';
 
 interface SettingsDialogProps {
@@ -167,7 +168,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
     { id: 'tidal', name: 'Tidal', icon: '🌊', color: 'from-cyan-600 to-cyan-500' },
   ];
 
-  const avatar = currentUser?.avatar || currentUser?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${currentUser?.username}&background=2A1852&color=FFEFD5`;
+  const avatar = thumb(currentUser?.avatar) || thumb(currentUser?.profile_album_cover_url) || defaultAvatar(currentUser?.username);
   const displayName = currentUser?.displayName || currentUser?.display_name || currentUser?.username;
 
   return (
@@ -196,7 +197,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
             </div>
             <div className="bg-purple-950/40 rounded-xl p-4">
               <div className="flex items-center gap-3 mb-3">
-                <img
+                <img loading="lazy"
                   src={avatar}
                   alt={displayName}
                   className="w-14 h-14 rounded-full object-cover ring-2 ring-purple-500"

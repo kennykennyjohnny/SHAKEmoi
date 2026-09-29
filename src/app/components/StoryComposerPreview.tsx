@@ -122,7 +122,7 @@ export function StoryComposerPreview({ theme, cover, track, photo, text, transfo
 
       {photo ? (
         <>
-          <img
+          <img loading="lazy"
             src={photo}
             alt=""
             draggable={false}
@@ -141,7 +141,7 @@ export function StoryComposerPreview({ theme, cover, track, photo, text, transfo
       ) : track ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ padding: 20 * k }}>
           {cover && (
-            <img src={cover} alt="" className="aspect-square object-cover shadow-[0_24px_60px_rgba(0,0,0,0.55)]"
+            <img loading="lazy" src={cover} alt="" className="aspect-square object-cover shadow-[0_24px_60px_rgba(0,0,0,0.55)]"
               style={{ width: '53%', borderRadius: 16 * k, marginBottom: 20 * k }} />
           )}
           <p className="font-bold text-white text-center leading-tight drop-shadow-lg" style={{ fontSize: 24 * k }}>{track.title}</p>
@@ -160,7 +160,7 @@ export function StoryComposerPreview({ theme, cover, track, photo, text, transfo
           {photo && track && (
             <div className="w-full flex items-center bg-black/50 backdrop-blur-md border border-white/15" style={{ gap: 12 * k, padding: 8 * k, borderRadius: 16 * k }}>
               {cover
-                ? <img src={cover} alt="" className="object-cover flex-shrink-0" style={{ width: 56 * k, height: 56 * k, borderRadius: 12 * k }} />
+                ? <img loading="lazy" src={cover} alt="" className="object-cover flex-shrink-0" style={{ width: 56 * k, height: 56 * k, borderRadius: 12 * k }} />
                 : <span className="flex-shrink-0 bg-gradient-to-br from-purple-600 to-pink-600" style={{ width: 56 * k, height: 56 * k, borderRadius: 12 * k }} />}
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-white truncate" style={{ fontSize: 14 * k }}>{track.title}</p>

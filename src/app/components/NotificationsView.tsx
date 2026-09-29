@@ -5,6 +5,7 @@ import { getUserNotifications, followUser, unfollowUser, isFollowing } from '../
 import { supabase } from '../../lib/supabase';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 interface NotificationsViewProps {
   currentUser: any;
   onNavigateToPost?: (postId: string) => void;
@@ -179,8 +180,8 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
                 onClick={(e) => { e.stopPropagation(); setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username }); }}
                 className="flex-shrink-0"
               >
-                <img
-                  src={notif.actor_avatar || `https://ui-avatars.com/api/?name=${notif.actor_username}&background=2A1852&color=FFEFD5`}
+                <img loading="lazy"
+                  src={thumb(notif.actor_avatar) || defaultAvatar(notif.actor_username)}
                   alt={notif.actor_username}
                   className="w-9 h-9 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-fuchsia-500 transition-all"
                 />
@@ -223,7 +224,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
               {/* Track Cover if available */}
               {hasPost && (
                 <div className="flex-shrink-0">
-                  <img
+                  <img loading="lazy"
                     src={notif.post_cover_url}
                     alt="Track"
                     className="w-10 h-10 rounded-lg object-cover ring-1 ring-purple-700/20"

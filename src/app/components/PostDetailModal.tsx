@@ -9,6 +9,7 @@ import { SongShareSheet } from './SongShareSheet';
 import { openExternal } from '../../lib/platforms';
 import { LikersSheet } from './LikersSheet';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 interface PostDetailModalProps {
   postId: string;
   currentUser: any;
@@ -158,7 +159,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
   const embedUrl = trackId ? `https://open.spotify.com/embed/track/${trackId}?theme=0` : null;
   const coverUrl = post?.cover_url || post?.track_cover_url;
   const userName = post?.user?.display_name || post?.user?.username || '';
-  const avatar = post?.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${post?.user?.username || 'U'}&background=2A1852&color=FFEFD5`;
+  const avatar = thumb(post?.user?.profile_album_cover_url) || defaultAvatar(post?.user?.username || 'U');
   const isOwner = currentUser?.id === post?.user_id || currentUser?.id === post?.user?.id;
 
   if (loading) return (
@@ -192,7 +193,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center gap-3 flex-shrink-0">
-          <img src={avatar} alt="" className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-700/30" />
+          <img loading="lazy" src={avatar} alt="" className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-700/30" />
           <div className="flex-1 min-w-0">
             <p className="font-bold text-sm text-white truncate">{userName}</p>
             <p className="text-xs text-purple-300/60">@{post.user?.username}</p>
@@ -222,7 +223,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
           {/* Cover */}
           {coverUrl && (
             <div className="relative cursor-pointer" onClick={() => setShowEmbed(!showEmbed)}>
-              <img src={coverUrl} alt="" className="w-full aspect-square object-cover" />
+              <img loading="lazy" src={coverUrl} alt="" className="w-full aspect-square object-cover" />
               <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
                 {showEmbed ? (
                   <Pause className="w-12 h-12 text-white fill-white drop-shadow-lg" />
@@ -321,7 +322,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
               ) : (
                 comments.map((c: any) => (
                   <div key={c.id} className="flex gap-2.5">
-                    <img src={c.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${c.user?.username || 'U'}&background=2A1852&color=FFEFD5`} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                    <img loading="lazy" src={thumb(c.user?.profile_album_cover_url) || defaultAvatar(c.user?.username || 'U')} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="font-semibold text-xs text-white">@{c.user?.username || 'inconnu'}</span>
@@ -341,12 +342,12 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
                 return (
                   <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <img src={r.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${r.user?.username}&background=2A1852&color=FFEFD5`} className="w-6 h-6 rounded-full" alt="" />
+                      <img loading="lazy" src={thumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full" alt="" />
                       <span className="text-xs font-medium">@{r.user?.username}</span>
                       {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}
                     </div>
                     <div className="flex gap-2 items-center cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : r.id)}>
-                      <img src={r.cover_url} className="w-10 h-10 rounded-md object-cover" alt="" />
+                      <img loading="lazy" src={r.cover_url} className="w-10 h-10 rounded-md object-cover" alt="" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{r.track_name}</p>
                         <p className="text-xs text-purple-300/60 truncate">{r.artist}</p>
@@ -379,7 +380,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
                     {musicSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
                     {musicResults.slice(0, 5).map(t => (
                       <button key={t.id} onClick={() => setSelectedTrack(t)} className="w-full flex items-center gap-2 p-2 hover:bg-purple-900/30 rounded-lg mt-1">
-                        <img src={t.cover} className="w-9 h-9 rounded-md object-cover" alt="" />
+                        <img loading="lazy" src={t.cover} className="w-9 h-9 rounded-md object-cover" alt="" />
                         <div className="flex-1 text-left min-w-0">
                           <p className="text-sm font-medium truncate">{t.name}</p>
                           <p className="text-xs text-purple-300/60 truncate">{t.artist}</p>
@@ -390,7 +391,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
                 ) : (
                   <div className="space-y-2">
                     <div className="flex gap-2 items-center bg-purple-950/40 rounded-lg p-2 border border-pink-500/30">
-                      <img src={selectedTrack.cover} className="w-10 h-10 rounded-md object-cover" alt="" />
+                      <img loading="lazy" src={selectedTrack.cover} className="w-10 h-10 rounded-md object-cover" alt="" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{selectedTrack.name}</p>
                         <p className="text-xs text-purple-300/60 truncate">{selectedTrack.artist}</p>
@@ -417,12 +418,14 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
               onChange={(e) => setNewComment(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
               placeholder="Écrire un commentaire..."
-              className="flex-1 bg-purple-950/40 border border-purple-800/30 rounded-full px-4 py-2 text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors"
+              enterKeyHint="send"
+              className="flex-1 min-w-0 bg-purple-950/40 border border-purple-800/30 rounded-full px-4 py-2 text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors"
             />
             <button
               onClick={handleSendComment}
               disabled={!newComment.trim() || sending}
-              className="p-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 disabled:opacity-30 rounded-full transition-all"
+              aria-label="Envoyer le commentaire"
+              className="flex-shrink-0 p-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 disabled:opacity-30 rounded-full transition-all"
             >
               {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </button>

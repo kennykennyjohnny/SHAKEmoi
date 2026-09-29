@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 interface AuthDialogProps {
   onComplete: (user: any) => void;
   referrer?: string | null;
@@ -135,8 +136,8 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
                   transition={{ delay: 0.1, type: 'spring' }}
                   className="mb-3 flex flex-col items-center"
                 >
-                  <img
-                    src={referrerProfile.profile_album_cover_url || `https://ui-avatars.com/api/?name=${referrerProfile.username}&background=2A1852&color=FFEFD5`}
+                  <img loading="lazy"
+                    src={thumb(referrerProfile.profile_album_cover_url) || defaultAvatar(referrerProfile.username)}
                     alt={referrerProfile.username}
                     className="w-16 h-16 rounded-full object-cover ring-2 ring-fuchsia-500 mb-2"
                   />

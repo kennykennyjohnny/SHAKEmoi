@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getUserNotifications } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 interface Props { userId: string; unreadCount: number; onRead: () => void; }
 
 export function NotificationsDropdown({ userId, unreadCount, onRead }: Props) {
@@ -76,8 +77,8 @@ export function NotificationsDropdown({ userId, unreadCount, onRead }: Props) {
               ) : notifs.length > 0 ? (
                 notifs.slice(0, 20).map(n => (
                   <div key={n.id} className={`px-4 py-2.5 flex items-center gap-3 border-b border-purple-800/10 ${!n.is_read ? 'bg-purple-500/5' : ''}`}>
-                    <img
-                      src={n.actor_avatar || `https://ui-avatars.com/api/?name=${n.actor_username}&background=2A1852&color=FFEFD5`}
+                    <img loading="lazy"
+                      src={thumb(n.actor_avatar) || defaultAvatar(n.actor_username)}
                       className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
                       alt=""
                     />
@@ -89,7 +90,7 @@ export function NotificationsDropdown({ userId, unreadCount, onRead }: Props) {
                       <span className="text-[10px] text-purple-300/60">{formatTime(n.created_at)}</span>
                     </div>
                     {n.post_cover_url && (
-                      <img src={n.post_cover_url} className="w-8 h-8 rounded-md flex-shrink-0 object-cover" alt="" />
+                      <img loading="lazy" src={n.post_cover_url} className="w-8 h-8 rounded-md flex-shrink-0 object-cover" alt="" />
                     )}
                   </div>
                 ))

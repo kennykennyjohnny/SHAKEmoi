@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { createPost, createStory } from '../../lib/database';
 import { spotify } from '../../lib/spotify';
 import { supabase } from '../../lib/supabase';
+import { compressImage, extFor } from '../../lib/media';
 import { STORY_THEMES, getCoverPalette, themeCss, autoBackgroundCss, type StoryTheme, type Palette } from '../../lib/storyTheme';
 import { StoryComposerPreview, composeStoryImage, defaultTransform, type PhotoTransform } from './StoryComposerPreview';
 import { useCoverPalette } from './StoryBackdrop';
@@ -126,8 +127,9 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
 
   const uploadPhotoIfNeeded = async (composed?: Blob): Promise<string | null> => {
     if ((!photoFile && !composed) || !currentUser?.id) return null;
-    const ext = composed ? 'jpg' : photoFile!.name.split('.').pop() || 'jpg';
-    const body = composed ?? photoFile!;
+    // Photo compressée dans le navigateur (1280 px max, ~200 Ko au lieu de 10 Mo).
+    const body = composed ?? await compressImage(photoFile!, 1280, 0.8);
+    const ext = composed ? 'jpg' : extFor(body, photoFile!.name);
     const fileName = `${currentUser.id}/${Date.now()}.${ext}`;
     const bucketCandidates = composerType === 'story'
       ? ['story-media', 'shake-media']
@@ -137,7 +139,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
     for (const bucketName of bucketCandidates) {
       const { error } = await supabase.storage
         .from(bucketName)
-        .upload(fileName, body, { cacheControl: '3600', upsert: false, contentType: composed ? 'image/jpeg' : undefined });
+        .upload(fileName, body, { cacheControl: '31536000', upsert: false, contentType: composed ? 'image/jpeg' : (body.type || undefined) });
       if (!error) {
         const { data } = supabase.storage.from(bucketName).getPublicUrl(fileName);
         return data.publicUrl;
@@ -351,7 +353,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
               {selectedTrack ? (
                 <div>
                   <div className="bg-gradient-to-br from-purple-900/40 to-pink-900/40 rounded-xl p-3 flex gap-3 items-center border border-purple-500/20 mb-3">
-                    <img
+                    <img loading="lazy"
                       src={selectedTrack.coverUrl}
                       alt={selectedTrack.title}
                       className="w-16 h-16 rounded object-cover"
@@ -386,7 +388,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                     </label>
                   )}
                   {photoPreview && composerType === 'shake' && (
-                    <img
+                    <img loading="lazy"
                       src={photoPreview}
                       alt="preview"
                       className="w-full h-44 object-cover rounded-xl mb-3"
@@ -409,7 +411,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                     </label>
                   )}
                   {photoPreview && composerType === 'shake' && (
-                    <img
+                    <img loading="lazy"
                       src={photoPreview}
                       alt="preview"
                       className="mt-2 w-full h-44 object-cover rounded-xl"
@@ -456,7 +458,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                             onClick={() => setSelectedTrack(track)}
                             className="w-full p-2 bg-purple-950/40 hover:bg-purple-800/40 rounded-lg flex items-center gap-3 transition-colors text-left"
                           >
-                            <img
+                            <img loading="lazy"
                               src={track.coverUrl}
                               alt={track.title}
                               className="w-12 h-12 rounded object-cover"

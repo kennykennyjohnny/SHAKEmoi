@@ -271,7 +271,7 @@ export function TrendingBar() {
 
                         {/* Cover */}
                         <div className="relative flex-shrink-0">
-                          <img
+                          <img loading="lazy"
                             src={item.track.coverUrl}
                             alt={item.track.title}
                             className={`w-12 h-12 rounded-lg object-cover ${index === 0 ? 'ring-2 ring-yellow-500/40' : ''}`}

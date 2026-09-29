@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 interface Props {
   circleId: string;
   currentUser: any | null;
@@ -167,7 +168,7 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
                     initial={{ scale: 0, x: -20 }}
                     animate={{ scale: 1, x: 0 }}
                     transition={{ delay: 0.3 + i * 0.1 }}
-                    src={m.profile_album_cover_url || `https://ui-avatars.com/api/?name=${m.username}&background=2A1852&color=FFEFD5`}
+                    src={thumb(m.profile_album_cover_url) || defaultAvatar(m.username)}
                     className="w-10 h-10 rounded-full object-cover border-2 border-[#1E1440]"
                     alt={m.username}
                   />
@@ -208,7 +209,7 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
                     transition={{ delay: 0.4 + i * 0.1 }}
                     className="flex items-center gap-2.5"
                   >
-                    <img src={t.cover_url} className="w-8 h-8 rounded object-cover" alt="" />
+                    <img loading="lazy" src={t.cover_url} className="w-8 h-8 rounded object-cover" alt="" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-white/80 truncate">{t.track_name}</p>
                       <p className="text-[10px] text-purple-300/60 truncate">{t.artist}</p>

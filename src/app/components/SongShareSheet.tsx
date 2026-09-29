@@ -153,7 +153,7 @@ export function SongShareSheet({ song, by, link, onClose }: Props) {
           {/* En-tête : le son partagé */}
           <div className="flex items-center gap-3 p-4 border-b border-purple-500/15">
             {song.cover
-              ? <img src={song.cover} alt="" className="w-12 h-12 rounded-lg object-cover" />
+              ? <img loading="lazy" src={song.cover} alt="" className="w-12 h-12 rounded-lg object-cover" />
               : <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600" />}
             <div className="flex-1 min-w-0">
               <p className="font-bold truncate">{song.title}</p>
@@ -173,13 +173,13 @@ export function SongShareSheet({ song, by, link, onClose }: Props) {
                   <canvas ref={canvasRef} className={`w-full h-full ${video === 'recording' ? 'block' : 'hidden'}`} />
                   {video === 'ready' && result && (
                     result.isImage
-                      ? <img src={result.objectUrl} alt="" className="w-full h-full object-cover" />
+                      ? <img loading="lazy" src={result.objectUrl} alt="" className="w-full h-full object-cover" />
                       : <video src={result.objectUrl} className="w-full h-full object-cover" autoPlay loop muted playsInline />
                   )}
                   {(video === 'idle' || video === 'error') && (
                     <div className="absolute inset-0 flex items-center justify-center">
                       {song.cover
-                        ? <img src={song.cover} alt="" className="w-16 h-16 rounded-lg object-cover opacity-80" />
+                        ? <img loading="lazy" src={song.cover} alt="" className="w-16 h-16 rounded-lg object-cover opacity-80" />
                         : <Clapperboard className="w-8 h-8 text-purple-300/60" />}
                     </div>
                   )}

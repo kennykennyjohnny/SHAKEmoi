@@ -151,7 +151,7 @@ export function PlayerBar({ track, onClose, musicService = 'spotify' }: PlayerBa
         <div className="flex items-center gap-3">
           {/* Track info */}
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <img
+            <img loading="lazy"
               src={track.coverUrl || track.cover_url || track.thumbnail}
               alt={track.title || track.track_name}
               className="w-12 h-12 rounded-lg object-cover"

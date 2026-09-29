@@ -22,7 +22,7 @@ export function StoryBackdrop({ theme, cover }: { theme: string | null | undefin
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ background: storyBackgroundCss(theme, palette) }}>
       {cover && (
-        <img
+        <img loading="lazy"
           src={cover}
           alt=""
           className={`absolute inset-0 w-full h-full object-cover scale-150 blur-3xl saturate-150 ${isAuto ? 'opacity-40' : 'opacity-15 mix-blend-overlay'}`}

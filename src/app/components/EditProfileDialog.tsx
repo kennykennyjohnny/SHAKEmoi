@@ -2,6 +2,9 @@ import { X, User, Mail, AtSign, MessageSquare, Upload, Loader2, Camera } from 'l
 import { motion } from 'motion/react';
 import { useState, useRef } from 'react';
 import { updateUserProfile } from '../../lib/database';
+import { supabase } from '../../lib/supabase';
+import { compressImage, extFor, thumb, defaultAvatar } from '../../lib/media';
+import { normalizeUsername, usernameError, isUsernameTaken } from '../../lib/username';
 
 interface EditProfileDialogProps {
   currentUser: any;
@@ -11,11 +14,13 @@ interface EditProfileDialogProps {
 
 export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditProfileDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     displayName: currentUser.displayName || '',
     username: currentUser.username || '',
     bio: currentUser.bio || '',
-    avatar: currentUser.avatar || ''
+    // La vraie photo enregistrée (pas l'avatar par défaut généré à l'affichage).
+    avatar: currentUser.profile_album_cover_url || ''
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -25,73 +30,71 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
 
     try {
       setLoading(true);
-      
-      // Upload to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      setError(null);
+      // Photo de profil : 256 px suffisent (affichée en 28 à 96 px).
+      const small = await compressImage(file, 256, 0.82);
+      const filePath = `avatars/${currentUser.id}-${Date.now()}.${extFor(small, file.name)}`;
 
-      const { supabase } = await import('../../lib/supabase');
-      
-      // Upload file
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
+        .upload(filePath, small, { cacheControl: '31536000', upsert: false, contentType: small.type || undefined });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
       setFormData({ ...formData, avatar: publicUrl });
-      setLoading(false);
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      alert('Erreur lors du téléchargement de la photo');
+    } catch (err) {
+      console.error('Error uploading file:', err);
+      setError('La photo n\'a pas pu être envoyée. Vérifie ta connexion et réessaie.');
+    } finally {
       setLoading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setError(null);
 
+    // Pseudo : même règle qu'à l'inscription, et pas déjà pris (G3).
+    const username = normalizeUsername(formData.username);
+    const ruleError = usernameError(username);
+    if (ruleError) { setError(ruleError); return; }
+
+    setLoading(true);
     try {
-      // Update profile in Supabase
+      if (username !== currentUser.username && await isUsernameTaken(username, currentUser.id)) {
+        setError('Ce pseudo est déjà pris.');
+        return;
+      }
+
       await updateUserProfile(currentUser.id, {
-        username: formData.username,
+        username,
         display_name: formData.displayName,
         bio: formData.bio,
-        profile_album_cover_url: formData.avatar,
+        profile_album_cover_url: formData.avatar || null,
       } as any);
-      
-      // Create updated user object
+
+      // On n'affiche le nouveau profil qu'une fois accepté par la base.
       const updatedUser = {
         ...currentUser,
-        username: formData.username,
+        username,
         display_name: formData.displayName,
         displayName: formData.displayName,
         bio: formData.bio,
-        avatar: formData.avatar,
-        profile_album_cover_url: formData.avatar,
+        avatar: formData.avatar || defaultAvatar(username),
+        profile_album_cover_url: formData.avatar || null,
       };
-      
-      // Update localStorage
-      localStorage.setItem('shakemoi_user', JSON.stringify(updatedUser));
-      
-      if (onUpdateUser) {
-        onUpdateUser(updatedUser);
-      }
-      
+
+      onUpdateUser?.(updatedUser);
       onClose();
-    } catch (error) {
-      console.error('Failed to update profile:', error);
-      alert('Erreur lors de la mise à jour du profil');
+    } catch (err: any) {
+      console.error('Failed to update profile:', err);
+      setError(err?.code === '23505'
+        ? 'Ce pseudo est déjà pris.'
+        : 'Le profil n\'a pas pu être enregistré. Réessaie.');
     } finally {
       setLoading(false);
     }
@@ -125,8 +128,8 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
               Photo de profil
             </label>
             <div className="flex items-center gap-4">
-              <img
-                src={formData.avatar}
+              <img loading="lazy"
+                src={thumb(formData.avatar) || defaultAvatar(formData.username)}
                 alt="Avatar"
                 className="w-20 h-20 rounded-full object-cover ring-2 ring-purple-500"
               />
@@ -149,14 +152,14 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
                   {loading ? 'Téléchargement...' : 'Choisir une photo'}
                 </button>
                 <p className="text-xs text-purple-400/50">
-                  📸 Télécharge depuis ton téléphone (sauvegardé sur Supabase)
+                  📸 Choisis une photo de ton téléphone
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   {[
-                    'https://api.dicebear.com/7.x/avataaars/svg?seed=' + currentUser.username,
-                    'https://api.dicebear.com/7.x/bottts/svg?seed=' + currentUser.username,
-                    'https://api.dicebear.com/7.x/lorelei/svg?seed=' + currentUser.username,
-                    'https://api.dicebear.com/7.x/micah/svg?seed=' + currentUser.username
+                    'https://api.dicebear.com/7.x/avataaars/svg?seed=' + currentUser.id,
+                    'https://api.dicebear.com/7.x/bottts/svg?seed=' + currentUser.id,
+                    'https://api.dicebear.com/7.x/lorelei/svg?seed=' + currentUser.id,
+                    'https://api.dicebear.com/7.x/micah/svg?seed=' + currentUser.id
                   ].map((url, i) => (
                     <button
                       key={i}
@@ -164,7 +167,7 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
                       onClick={() => setFormData({ ...formData, avatar: url })}
                       className="w-10 h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-purple-500 transition-all"
                     >
-                      <img src={url} alt={`Avatar ${i + 1}`} className="w-full h-full object-cover" />
+                      <img loading="lazy" src={url} alt={`Avatar ${i + 1}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -201,7 +204,10 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
                 type="text"
                 required
                 value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, username: normalizeUsername(e.target.value) })}
+                autoCapitalize="none"
+                autoCorrect="off"
+                maxLength={20}
                 className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="username"
               />
@@ -228,6 +234,10 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
               {formData.bio.length}/160
             </p>
           </div>
+
+          {error && (
+            <p className="text-sm text-pink-400 bg-pink-500/10 border border-pink-500/20 rounded-lg px-3 py-2">{error}</p>
+          )}
 
           {/* Submit buttons */}
           <div className="flex gap-2 pt-2">

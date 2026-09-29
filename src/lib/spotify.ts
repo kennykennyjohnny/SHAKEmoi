@@ -67,7 +67,7 @@ class SpotifyAPI {
         artist: track.artists[0].name,
         artists: track.artists.map((a: any) => a.name).join(', '),
         album: track.album.name,
-        cover: track.album.images[0]?.url || 'https://via.placeholder.com/300x300?text=No+Cover',
+        cover: track.album.images[1]?.url || track.album.images[0]?.url || '',
         coverMedium: track.album.images[1]?.url,
         coverSmall: track.album.images[2]?.url,
         preview_url: track.preview_url,
@@ -93,7 +93,7 @@ class SpotifyAPI {
         artist: track.artists[0].name,
         artists: track.artists.map((a: any) => a.name).join(', '),
         album: track.album.name,
-        cover: track.album.images[0]?.url || 'https://via.placeholder.com/300x300?text=No+Cover',
+        cover: track.album.images[1]?.url || track.album.images[0]?.url || '',
         preview_url: track.preview_url,
         spotify_url: track.external_urls.spotify
       }));
@@ -116,7 +116,7 @@ class SpotifyAPI {
         artist: track.artists[0].name,
         artists: track.artists.map((a: any) => a.name).join(', '),
         album: track.album.name,
-        cover: track.album.images[0]?.url || 'https://via.placeholder.com/300x300?text=No+Cover',
+        cover: track.album.images[1]?.url || track.album.images[0]?.url || '',
         preview_url: track.preview_url,
         spotify_url: track.external_urls.spotify
       }));
@@ -140,7 +140,7 @@ class SpotifyAPI {
         artist: track.artists[0].name,
         artists: track.artists.map((a: any) => a.name).join(', '),
         album: track.album.name,
-        cover: track.album.images[1]?.url || track.album.images[0]?.url || 'https://via.placeholder.com/300x300?text=No+Cover',
+        cover: track.album.images[1]?.url || track.album.images[0]?.url || '',
         preview_url: track.preview_url,
         spotify_url: track.external_urls.spotify
       }));
@@ -204,7 +204,7 @@ class SpotifyAPI {
         artist: album.artists[0].name,
         artists: album.artists.map((a: any) => a.name).join(', '),
         images: album.images,
-        cover: album.images[0]?.url || 'https://via.placeholder.com/300x300?text=No+Cover',
+        cover: album.images[1]?.url || album.images[0]?.url || '',
         coverMedium: album.images[1]?.url,
         coverSmall: album.images[2]?.url,
         release_date: album.release_date,

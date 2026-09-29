@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Search as SearchIcon, Play, Pause, User, Music, Loader2, Sparkles, UserPlus, UserCheck, Send, Share2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
-import { searchUsers, createPost, searchCircles, joinCircle, joinCircleByCode, followUser, unfollowUser, isFollowing } from '../../lib/database';
+import { searchUsers, createPost, searchCircles, joinCircle, followUser, unfollowUser, getFollowingIds } from '../../lib/database';
 import { resolvePreviewUrl, playPreview, togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
 import { createSongShare } from '../../lib/shares';
 import { SongShareSheet } from './SongShareSheet';
@@ -10,6 +10,7 @@ import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
 import { setPendingAction, type PendingAction } from '../../lib/pendingAction';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 interface SearchViewProps {
   currentUser?: any;
   onRefreshFeed?: () => void;
@@ -63,11 +64,18 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
     return () => clearTimeout(timer);
   }, [searchQuery, activeTab]);
 
+  // Numéro de la dernière recherche lancée : une réponse plus ancienne qui
+  // arrive en retard n'écrase plus les résultats de la frappe actuelle (I6).
+  const searchSeq = useRef(0);
+
   const performSearch = async () => {
+    const seq = ++searchSeq.current;
+    const isStale = () => seq !== searchSeq.current;
     setLoading(true);
     try {
       if (activeTab === 'tracks') {
         const tracks = await spotify.searchTracks(searchQuery);
+        if (isStale()) return;
         setTrackResults(tracks.map((t: any) => ({
           id: t.id,
           title: t.name,
@@ -79,24 +87,27 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
           spotifyUrl: t.spotify_url,
         })));
       } else if (activeTab === 'users') {
-        const users = await searchUsers(searchQuery);
+        // Résultats + « déjà suivi ? » en parallèle, en 2 requêtes au total
+        // (avant : 2 requêtes PAR résultat, jusqu'à 40).
+        const [users, followingIds] = await Promise.all([
+          searchUsers(searchQuery),
+          currentUser?.id ? getFollowingIds(currentUser.id) : Promise.resolve([] as string[]),
+        ]);
+        if (isStale()) return;
         setUserResults(users);
-        // Check follow state for each user
+        const following = new Set(followingIds);
         const states: Record<string, boolean> = {};
-        await Promise.all(users.map(async (u: any) => {
-          if (u.id !== currentUser?.id) {
-            try { states[u.id] = await isFollowing(u.id); } catch { states[u.id] = false; }
-          }
-        }));
+        users.forEach((u: any) => { if (u.id !== currentUser?.id) states[u.id] = following.has(u.id); });
         setFollowingMap(prev => ({ ...prev, ...states }));
       } else {
         const circles = await searchCircles(searchQuery);
+        if (isStale()) return;
         setCircleResults(circles);
       }
     } catch (error) {
       console.error('Search error:', error);
     } finally {
-      setLoading(false);
+      if (!isStale()) setLoading(false);
     }
   };
 
@@ -291,7 +302,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                         aria-label={isSounding ? 'Mettre en pause' : 'Écouter un extrait'}
                         onClick={() => toggleTrackPreview(track)}
                       >
-                        <img src={track.coverUrl} alt={track.title} className={`w-12 h-12 rounded-lg object-cover transition-all ${isSounding ? 'ring-2 ring-purple-500/60' : ''}`} />
+                        <img loading="lazy" src={track.coverUrl} alt={track.title} className={`w-12 h-12 rounded-lg object-cover transition-all ${isSounding ? 'ring-2 ring-purple-500/60' : ''}`} />
                         <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
                           isSounding ? 'bg-black/45 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
                         }`}>
@@ -377,7 +388,8 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                             value={shakeCaption}
                             onChange={(e) => setShakeCaption(e.target.value)}
                             placeholder="Un commentaire ? (optionnel)"
-                            className="flex-1 px-3 py-2 bg-violet-950/25 border border-purple-700/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500"
+                            enterKeyHint="send"
+                            className="flex-1 min-w-0 px-3 py-2 bg-violet-950/25 border border-purple-700/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleShake(track);
                               if (e.key === 'Escape') { setShowCaptionFor(null); setShakeCaption(''); }
@@ -387,7 +399,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                           <button
                             onClick={() => handleShake(track)}
                             disabled={shakingTrackId === track.id}
-                            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-bold hover:opacity-90 disabled:opacity-50 flex items-center gap-1"
+                            className="flex-shrink-0 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xs font-bold hover:opacity-90 disabled:opacity-50 flex items-center gap-1"
                           >
                             {shakingTrackId === track.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Sparkles className="w-3.5 h-3.5" /> Shake !</>}
                           </button>
@@ -420,8 +432,8 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                 className="w-full bg-violet-950/20 hover:bg-violet-950/25 rounded-xl p-3 flex items-center gap-3 transition-colors border border-purple-500/25"
               >
                 <button onClick={() => setProfilePreview({ userId: user.id, username: user.username })} className="flex-shrink-0">
-                  <img
-                    src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=2A1852&color=FFEFD5`}
+                  <img loading="lazy"
+                    src={thumb(user.profile_album_cover_url) || defaultAvatar(user.username)}
                     alt={user.username}
                     className="w-12 h-12 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-fuchsia-500 transition-all"
                   />

@@ -9,6 +9,7 @@ import { StoryBackdrop } from './StoryBackdrop';
 import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 interface StoryViewerDialogProps {
   open: boolean;
   story: any | null;
@@ -333,7 +334,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   if (!story) return null;
 
   const user = owner;
-  const avatarSrc = user?.profile_album_cover_url || user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'S'}&background=2A1852&color=FFEFD5`;
+  const avatarSrc = thumb(user?.profile_album_cover_url) || thumb(user?.avatar) || defaultAvatar(user?.username || 'S');
   const timeRemaining = story.expires_at ? getTimeRemaining(story.expires_at) : null;
 
   const hasTrack = !!(trackTitle || story.track_id);
@@ -394,7 +395,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
             {/* Photo : plein cadre, comme une story Instagram */}
             {story.image_url && (
               <div className="absolute inset-0 pointer-events-none">
-                <img src={story.image_url} alt="" className="w-full h-full object-cover" />
+                <img loading="lazy" src={thumb(story.image_url, 1024)} alt="" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent via-60% to-black/60" />
               </div>
             )}
@@ -422,7 +423,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
             {/* Header */}
             <div className="absolute top-7 left-0 right-0 px-3 py-2 z-20 flex items-center justify-between">
               <div className="flex items-center gap-2.5 min-w-0">
-                <img
+                <img loading="lazy"
                   src={avatarSrc}
                   className="w-8 h-8 rounded-full object-cover ring-2 ring-white/40 flex-shrink-0"
                   alt=""
@@ -446,7 +447,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                   <button
                     onClick={(e) => { e.stopPropagation(); setMuted(!preview.muted); }}
                     title={preview.muted ? 'Activer le son' : 'Couper le son'}
-                    className={`p-2 rounded-full transition-colors ${
+                    className={`flex-shrink-0 p-2 rounded-full transition-colors ${
                       preview.muted
                         ? 'bg-white/90 text-[#1E1440]'
                         : 'bg-black/30 text-white/80 hover:bg-white/10'
@@ -460,13 +461,13 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                     <button
                       onClick={(e) => { e.stopPropagation(); togglePin(); }}
                       title={pinned ? 'Ne plus épingler sur mon profil' : 'Épingler à vie sur mon profil'}
-                      className={`p-2 rounded-full transition-colors ${pinned ? 'bg-fuchsia-500/30 text-fuchsia-300' : 'bg-black/30 text-white/70 hover:text-white hover:bg-white/10'}`}
+                      className={`flex-shrink-0 p-2 rounded-full transition-colors ${pinned ? 'bg-fuchsia-500/30 text-fuchsia-300' : 'bg-black/30 text-white/70 hover:text-white hover:bg-white/10'}`}
                     >
                       <Pin className={`w-4 h-4 ${pinned ? 'fill-current' : ''}`} />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleViewers(); }}
-                      className={`p-2 rounded-full transition-colors ${showViewers ? 'bg-white/20 text-white' : 'bg-black/30 text-white/70 hover:text-white hover:bg-white/10'}`}
+                      className={`flex-shrink-0 p-2 rounded-full transition-colors ${showViewers ? 'bg-white/20 text-white' : 'bg-black/30 text-white/70 hover:text-white hover:bg-white/10'}`}
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -519,7 +520,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                         className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0"
                       >
                         {story.cover_url
-                          ? <img src={story.cover_url} alt="" className="w-full h-full object-cover" />
+                          ? <img loading="lazy" src={story.cover_url} alt="" className="w-full h-full object-cover" />
                           : <span className="block w-full h-full bg-gradient-to-br from-purple-600 to-pink-600" />}
                         <span className="absolute inset-0 flex items-center justify-center bg-black/35">
                           {isSounding
@@ -563,7 +564,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                       aria-label={isSounding ? 'Mettre en pause' : 'Écouter'}
                       className="relative z-20 block w-52 max-w-[60vw] aspect-square mx-auto mb-5 group focus:outline-none"
                     >
-                      <img
+                      <img loading="lazy"
                         src={story.cover_url}
                         alt={trackTitle || ''}
                         className={`w-full h-full rounded-2xl object-cover shadow-[0_24px_60px_rgba(0,0,0,0.55)] ring-1 transition-all ${isSounding ? 'ring-white/30' : 'ring-white/10'}`}
@@ -666,8 +667,8 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                       ) : (
                         likers.map((u: any) => (
                           <div key={u.id} className="flex items-center gap-3 px-4 py-2.5">
-                            <img
-                              src={u.profile_album_cover_url || `https://ui-avatars.com/api/?name=${u.username || 'U'}&background=2A1852&color=FFEFD5`}
+                            <img loading="lazy"
+                              src={thumb(u.profile_album_cover_url) || defaultAvatar(u.username || 'U')}
                               className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                               alt=""
                             />
@@ -688,8 +689,8 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                     ) : (
                       viewers.map((viewer: any) => (
                         <div key={viewer.id} className="flex items-center gap-3 px-4 py-2.5">
-                          <img
-                            src={viewer.profile_album_cover_url || `https://ui-avatars.com/api/?name=${viewer.username || 'U'}&background=2A1852&color=FFEFD5`}
+                          <img loading="lazy"
+                            src={thumb(viewer.profile_album_cover_url) || defaultAvatar(viewer.username || 'U')}
                             className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                             alt=""
                           />
@@ -742,7 +743,8 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                       value={commentText}
                       onChange={e => setCommentText(e.target.value)}
                       placeholder="Répondre en message privé…"
-                      className="flex-1 px-4 py-2.5 bg-white/15 backdrop-blur-md border border-white/20 rounded-full text-sm text-white placeholder-white/50 focus:outline-none focus:border-white/50"
+                      enterKeyHint="send"
+                      className="flex-1 min-w-0 px-4 py-2.5 bg-white/15 backdrop-blur-md border border-white/20 rounded-full text-sm text-white placeholder-white/50 focus:outline-none focus:border-white/50"
                       onKeyDown={e => {
                         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleComment(); }
                         if (e.key === 'Escape') setShowCommentInput(false);

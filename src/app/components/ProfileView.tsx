@@ -15,6 +15,7 @@ import { SongShareSheet } from './SongShareSheet';
 import { openExternal } from '../../lib/platforms';
 import { LikersSheet } from './LikersSheet';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 interface ProfileViewProps {
   user: any;
   onUpdateUser?: (updatedUser: any) => void;
@@ -295,11 +296,11 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           <motion.img
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            src={user.avatar || user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=2A1852&color=FFEFD5`}
+            src={thumb(user.avatar) || thumb(user.profile_album_cover_url) || defaultAvatar(user.username || user.displayName)}
             alt={user.displayName || user.username}
             className="w-20 h-20 rounded-full object-cover ring-2 ring-purple-500 shadow-lg shadow-purple-500/20 flex-shrink-0"
             onError={(e) => {
-              e.currentTarget.src = `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=2A1852&color=FFEFD5`;
+              e.currentTarget.src = defaultAvatar(user.username || user.displayName);
             }}
           />
 
@@ -341,8 +342,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
               <button key={story.id} onClick={() => { setStoryList(activeStories); setSelectedStory(story); }} className="flex-shrink-0 flex flex-col items-center gap-1 w-16">
                 <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
                   <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
-                    <img
-                      src={story.image_url || story.cover_url || user.avatar || `https://ui-avatars.com/api/?name=${user.username || user.displayName}&background=2A1852&color=FFEFD5`}
+                    <img loading="lazy"
+                      src={thumb(story.image_url, 256) || story.cover_url || thumb(user.avatar) || defaultAvatar(user.username || user.displayName)}
                       className="w-full h-full rounded-full object-cover"
                       alt={story.track_name || ''}
                     />
@@ -355,8 +356,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
               <button key={story.id} onClick={() => { setStoryList(pinnedStories); setSelectedStory(story); }} className="flex-shrink-0 flex flex-col items-center gap-1 w-16">
                 <div className="relative w-16 h-16 rounded-full p-[2px] bg-purple-700/50">
                   <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
-                    <img
-                      src={story.image_url || story.cover_url || user.avatar}
+                    <img loading="lazy"
+                      src={thumb(story.image_url, 256) || story.cover_url || user.avatar}
                       className="w-full h-full rounded-full object-cover"
                       alt={story.track_name || ''}
                     />
@@ -460,7 +461,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                         }}
                         className={`relative aspect-square rounded-lg overflow-hidden group transition-all w-full hover:opacity-90 ${detailPostId === shake.id ? 'ring-2 ring-fuchsia-500 opacity-100' : ''}`}
                       >
-                        <img
+                        <img loading="lazy"
                           src={shake.track.coverUrl}
                           alt={shake.track.title}
                           className="w-full h-full object-cover"
@@ -521,7 +522,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           onClick={() => setShowDetailEmbed(!showDetailEmbed)}
                         >
                           <div className="relative flex-shrink-0">
-                            <img src={detailShake.track.coverUrl} alt="" className={`w-11 h-11 rounded-lg object-cover transition-all ${showDetailEmbed ? 'ring-2 ring-purple-500/50' : ''}`} />
+                            <img loading="lazy" src={detailShake.track.coverUrl} alt="" className={`w-11 h-11 rounded-lg object-cover transition-all ${showDetailEmbed ? 'ring-2 ring-purple-500/50' : ''}`} />
                             <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
                               showDetailEmbed ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
                             }`}>
@@ -702,8 +703,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                         onClick={() => { setShowFollowersList(null); setProfilePreview({ userId: person.id, username: person.username }); }}
                         className="flex items-center gap-3 flex-1 min-w-0 text-left"
                       >
-                        <img
-                          src={person.profile_album_cover_url || `https://ui-avatars.com/api/?name=${person.username}&background=2A1852&color=FFEFD5`}
+                        <img loading="lazy"
+                          src={thumb(person.profile_album_cover_url) || defaultAvatar(person.username)}
                           alt={person.username}
                           className="w-10 h-10 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-purple-500 transition-all"
                         />
@@ -816,8 +817,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
               {/* Profile card preview */}
               <div className="p-5">
                 <div className="bg-gradient-to-br from-fuchsia-600/20 via-purple-900/30 to-pink-600/20 rounded-2xl p-5 text-center border border-fuchsia-500/20 mb-5">
-                  <img
-                    src={user.avatar || user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=2A1852&color=FFEFD5`}
+                  <img loading="lazy"
+                    src={thumb(user.avatar) || thumb(user.profile_album_cover_url) || defaultAvatar(user.username)}
                     className="w-20 h-20 rounded-full object-cover mx-auto ring-3 ring-fuchsia-500/40 mb-3"
                     alt=""
                   />

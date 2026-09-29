@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Camera, Loader2, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { compressImage, extFor } from '../../lib/media';
 
 interface CompleteProfileDialogProps {
   user: any;
@@ -27,11 +28,13 @@ export function CompleteProfileDialog({ user, onComplete }: CompleteProfileDialo
       let avatarUrl = user.profile_album_cover_url || null;
 
       if (avatarFile) {
-        const ext = avatarFile.name.split('.').pop();
-        const path = `${user.id}/avatar.${ext}`;
+        // Photo de profil compressée (256 px) ; nom unique pour ne pas
+        // resservir l'ancienne photo depuis les caches.
+        const small = await compressImage(avatarFile, 256, 0.82);
+        const path = `${user.id}/avatar-${Date.now()}.${extFor(small, avatarFile.name)}`;
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(path, avatarFile, { upsert: true });
+          .upload(path, small, { cacheControl: '31536000', upsert: false, contentType: small.type || undefined });
 
         if (!uploadError) {
           const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
@@ -84,7 +87,7 @@ export function CompleteProfileDialog({ user, onComplete }: CompleteProfileDialo
           {/* Avatar */}
           <label className="mx-auto w-20 h-20 rounded-full bg-purple-950/60 border-2 border-dashed border-purple-500/40 flex items-center justify-center cursor-pointer overflow-hidden mb-4 block hover:border-purple-500 transition-colors">
             {avatarPreview ? (
-              <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+              <img loading="lazy" src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               <Camera className="w-6 h-6 text-purple-400/50" />
             )}

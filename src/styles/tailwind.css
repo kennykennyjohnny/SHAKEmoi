@@ -3,6 +3,17 @@
 
 @import 'tw-animate-css';
 
+/* A1 : sous 16 px, l'iPhone zoome tout seul quand on touche un champ, et le
+   bouton Envoyer sort de l'écran. Sur téléphone et tablette, tous les champs
+   passent à 16 px (prime sur les text-sm des composants). */
+@media (max-width: 1023px), (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 /* Micro-animations globales */
 @layer base {
   * {

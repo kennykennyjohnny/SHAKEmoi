@@ -30,6 +30,7 @@ import { useBackHandler } from '../lib/navigation';
 import { parseRoute, type Route } from '../lib/links';
 import { Slogan } from './components/Slogan';
 
+import { defaultAvatar, thumb } from '../lib/media';
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'notifications';
 
 // Cercle à rejoindre après inscription (lien d'invitation ouvert sans compte).
@@ -77,7 +78,7 @@ export default function App() {
 
   const buildUserObject = (profile: any) => ({
     ...profile,
-    avatar: profile.profile_album_cover_url || profile.avatar || `https://ui-avatars.com/api/?name=${profile.username}&background=2A1852&color=FFEFD5`,
+    avatar: profile.profile_album_cover_url || profile.avatar || defaultAvatar(profile.username),
     displayName: profile.display_name || profile.displayName || profile.username,
     bio: profile.bio || '',
     musicService: profile.preferred_platform || profile.musicService || 'spotify',
@@ -574,7 +575,7 @@ export default function App() {
               onClick={() => setCurrentView('profile')}
               className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-violet-900/25 transition-colors"
             >
-              <img src={currentUser.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
+              <img loading="lazy" src={thumb(currentUser.avatar)} alt="" className="w-10 h-10 rounded-full object-cover" />
               <div className="flex-1 min-w-0 text-left">
                 <p className="font-semibold text-sm truncate">{currentUser.displayName}</p>
                 <p className="text-xs text-purple-300/60 truncate">@{currentUser.username}</p>

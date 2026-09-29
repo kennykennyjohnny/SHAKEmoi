@@ -209,7 +209,7 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
     <div className="min-h-[100dvh] bg-[#1E1440] text-white relative overflow-x-hidden">
       {data.cover && (
         <div className="fixed inset-0 pointer-events-none">
-          <img src={data.cover} className="w-full h-full object-cover opacity-20 blur-3xl scale-110" alt="" />
+          <img loading="lazy" src={data.cover} className="w-full h-full object-cover opacity-20 blur-3xl scale-110" alt="" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1E1440]/70 via-[#1E1440]/60 to-[#1E1440]" />
         </div>
       )}
@@ -219,7 +219,7 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
         <Logo size="sm" animated={false} showText={true} />
         {currentUser ? (
           <button onClick={onOpenApp} className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold hover:bg-white/15 transition-colors">
-            <img src={currentUser.avatar} alt="" className="w-6 h-6 rounded-full object-cover" />
+            <img loading="lazy" src={currentUser.avatar} alt="" className="w-6 h-6 rounded-full object-cover" />
             Mon compte
           </button>
         ) : (
@@ -239,7 +239,7 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
           {sharer ? (
             <>
               {sharer.avatar
-                ? <img src={sharer.avatar} alt="" className="w-7 h-7 rounded-full object-cover ring-2 ring-fuchsia-500/40" />
+                ? <img loading="lazy" src={sharer.avatar} alt="" className="w-7 h-7 rounded-full object-cover ring-2 ring-fuchsia-500/40" />
                 : <span className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-xs font-bold">{sharer.username[0]?.toUpperCase()}</span>}
               <span className="text-purple-100/90">
                 {isMe ? 'Tu as partagé ce son' : <><b className="text-white">{sharerName}</b> t'a partagé ce son</>}
@@ -261,7 +261,7 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
           className="relative block w-64 max-w-[75vw] aspect-square mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-fuchsia-500/20 group disabled:cursor-default"
         >
           {data.cover
-            ? <img src={data.cover} className="w-full h-full object-cover" alt="" />
+            ? <img loading="lazy" src={data.cover} className="w-full h-full object-cover" alt="" />
             : <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600" />}
           <span className={`absolute inset-0 bg-black/30 flex items-center justify-center transition-opacity ${playing ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'} ${previewChecked && !previewUrl ? 'hidden' : ''}`}>
             {!previewChecked

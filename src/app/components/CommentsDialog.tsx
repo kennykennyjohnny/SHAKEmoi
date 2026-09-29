@@ -6,6 +6,7 @@ import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 interface CommentsDialogProps {
   postId: string;
   onClose: () => void;
@@ -120,7 +121,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, currentUser }:
         animate={{ y: 0 }}
         exit={{ y: 100 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-[#1D0F3D] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80dvh] flex flex-col border border-purple-500/30 mb-[4.5rem] sm:mb-0"
+        className="bg-[#1D0F3D] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80dvh] flex flex-col border border-purple-500/30"
       >
         {/* Header with tabs */}
         <div className="border-b border-purple-800/20">
@@ -159,8 +160,8 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, currentUser }:
               ) : (
                 comments.map((comment: any) => (
                   <div key={comment.id} className="flex gap-3">
-                    <img
-                      src={comment.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${comment.user?.username || 'U'}&background=2A1852&color=FFEFD5`}
+                    <img loading="lazy"
+                      src={thumb(comment.user?.profile_album_cover_url) || defaultAvatar(comment.user?.username || 'U')}
                       alt=""
                       className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-purple-700/30"
                     />
@@ -186,12 +187,14 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, currentUser }:
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Écrire un commentaire..."
-                className="flex-1 bg-purple-950/40 border border-purple-800/30 rounded-full px-4 py-2 text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors"
+                enterKeyHint="send"
+                className="flex-1 min-w-0 bg-purple-950/40 border border-purple-800/30 rounded-full px-4 py-2 text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors"
               />
               <button
                 onClick={handleSend}
                 disabled={!newComment.trim() || sending}
-                className="p-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 disabled:opacity-30 rounded-full transition-all"
+                aria-label="Envoyer le commentaire"
+                className="flex-shrink-0 p-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 disabled:opacity-30 rounded-full transition-all"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </button>
@@ -207,12 +210,12 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, currentUser }:
                 return (
                   <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <img src={r.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${r.user?.username}&background=2A1852&color=FFEFD5`} className="w-6 h-6 rounded-full" alt="" />
+                      <img loading="lazy" src={thumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full" alt="" />
                       <span className="text-xs font-medium">@{r.user?.username}</span>
                       {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}
                     </div>
                     <div className="flex gap-2 items-center cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : r.id)}>
-                      <img src={r.cover_url} className="w-10 h-10 rounded-md object-cover" alt="" />
+                      <img loading="lazy" src={r.cover_url} className="w-10 h-10 rounded-md object-cover" alt="" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{r.track_name}</p>
                         <p className="text-xs text-purple-300/60 truncate">{r.artist}</p>
@@ -248,7 +251,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, currentUser }:
                     {musicSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
                     {musicResults.slice(0, 5).map(t => (
                       <button key={t.id} onClick={() => setSelectedTrack(t)} className="w-full flex items-center gap-2 p-2 hover:bg-purple-900/30 rounded-lg mt-1">
-                        <img src={t.cover} className="w-9 h-9 rounded-md object-cover" alt="" />
+                        <img loading="lazy" src={t.cover} className="w-9 h-9 rounded-md object-cover" alt="" />
                         <div className="flex-1 text-left min-w-0">
                           <p className="text-sm font-medium truncate">{t.name}</p>
                           <p className="text-xs text-purple-300/60 truncate">{t.artist}</p>
@@ -259,7 +262,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, currentUser }:
                 ) : (
                   <div className="space-y-2">
                     <div className="flex gap-2 items-center bg-purple-950/40 rounded-lg p-2 border border-pink-500/30">
-                      <img src={selectedTrack.cover} className="w-10 h-10 rounded-md object-cover" alt="" />
+                      <img loading="lazy" src={selectedTrack.cover} className="w-10 h-10 rounded-md object-cover" alt="" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{selectedTrack.name}</p>
                         <p className="text-xs text-purple-300/60 truncate">{selectedTrack.artist}</p>

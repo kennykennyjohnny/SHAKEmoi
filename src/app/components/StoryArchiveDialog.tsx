@@ -95,7 +95,7 @@ export function StoryArchiveDialog({ currentUser, onClose, onChanged }: Props) {
                         <div key={s.id} className="relative aspect-[9/16] rounded-xl overflow-hidden bg-[#2A1852] group">
                           <button onClick={() => setViewing(s)} className="absolute inset-0 w-full h-full" aria-label="Voir la story">
                             {visual
-                              ? <img src={visual} alt="" className={`w-full h-full object-cover ${expired ? 'opacity-80' : ''}`} />
+                              ? <img loading="lazy" src={visual} alt="" className={`w-full h-full object-cover ${expired ? 'opacity-80' : ''}`} />
                               : <span className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-700 to-pink-700"><Music2 className="w-8 h-8 text-white/70" /></span>}
                             <span className="absolute inset-x-0 bottom-0 p-1.5 pt-6 bg-gradient-to-t from-black/80 to-transparent text-left">
                               <span className="block text-[10px] font-bold truncate">{s.track_name || 'Story'}</span>

@@ -183,7 +183,7 @@ export function CreateShakeDialog({ currentUser, onClose, circleId }: CreateShak
             {selectedTrack ? (
               <div className="mb-4">
                 <div className="bg-gradient-to-br from-purple-900/40 to-pink-900/40 rounded-xl p-3 flex gap-3 items-center border border-purple-500/20">
-                  <img
+                  <img loading="lazy"
                     src={selectedTrack.coverUrl}
                     alt={selectedTrack.title}
                     className="w-16 h-16 rounded object-cover"
@@ -215,7 +215,7 @@ export function CreateShakeDialog({ currentUser, onClose, circleId }: CreateShak
                   Ajouter une photo
                   <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
                 </label>
-                {photoPreview && <img src={photoPreview} alt="preview" className="mt-2 w-full h-44 object-cover rounded-xl" />}
+                {photoPreview && <img loading="lazy" src={photoPreview} alt="preview" className="mt-2 w-full h-44 object-cover rounded-xl" />}
               </div>
             ) : (
               <>
@@ -225,7 +225,7 @@ export function CreateShakeDialog({ currentUser, onClose, circleId }: CreateShak
                     Ajouter une photo
                     <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
                   </label>
-                  {photoPreview && <img src={photoPreview} alt="preview" className="mt-2 w-full h-44 object-cover rounded-xl" />}
+                  {photoPreview && <img loading="lazy" src={photoPreview} alt="preview" className="mt-2 w-full h-44 object-cover rounded-xl" />}
                 </div>
 
                 {/* Search */}
@@ -258,7 +258,7 @@ export function CreateShakeDialog({ currentUser, onClose, circleId }: CreateShak
                           onClick={() => setSelectedTrack(track)}
                           className="w-full p-2 bg-purple-950/40 hover:bg-purple-800/40 rounded-lg flex items-center gap-3 transition-colors text-left"
                         >
-                          <img
+                          <img loading="lazy"
                             src={track.coverUrl}
                             alt={track.title}
                             className="w-12 h-12 rounded object-cover"

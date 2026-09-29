@@ -6,6 +6,7 @@ import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 interface Props {
   postId: string;
   currentUser: any;
@@ -77,12 +78,12 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
               return (
                 <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <img src={r.user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${r.user?.username}&background=2A1852&color=FFEFD5`} className="w-6 h-6 rounded-full" alt="" />
+                    <img loading="lazy" src={thumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full" alt="" />
                     <span className="text-xs font-medium">@{r.user?.username}</span>
                     {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}
                   </div>
                   <div className="flex gap-2 items-center cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : r.id)}>
-                    <img src={r.cover_url} className="w-10 h-10 rounded-md object-cover" alt="" />
+                    <img loading="lazy" src={r.cover_url} className="w-10 h-10 rounded-md object-cover" alt="" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate">{r.track_name}</p>
                       <p className="text-xs text-purple-300/60 truncate">{r.artist}</p>
@@ -115,7 +116,7 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
                 {searching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
                 {results.slice(0, 5).map(t => (
                   <button key={t.id} onClick={() => setSelectedTrack(t)} className="w-full flex items-center gap-2 p-2 hover:bg-purple-900/30 rounded-lg mt-1">
-                    <img src={t.cover} className="w-9 h-9 rounded-md object-cover" alt="" />
+                    <img loading="lazy" src={t.cover} className="w-9 h-9 rounded-md object-cover" alt="" />
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-sm font-medium truncate">{t.name}</p>
                       <p className="text-xs text-purple-300/60 truncate">{t.artist}</p>
@@ -126,7 +127,7 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
             ) : (
               <div className="space-y-2">
                 <div className="flex gap-2 items-center bg-purple-950/40 rounded-lg p-2 border border-pink-500/30">
-                  <img src={selectedTrack.cover} className="w-10 h-10 rounded-md object-cover" alt="" />
+                  <img loading="lazy" src={selectedTrack.cover} className="w-10 h-10 rounded-md object-cover" alt="" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{selectedTrack.name}</p>
                     <p className="text-xs text-purple-300/60 truncate">{selectedTrack.artist}</p>

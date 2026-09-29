@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { searchUsers, sendSongNotification } from '../../lib/database';
 
+import { thumb, defaultAvatar } from '../../lib/media';
 interface SendSongDialogProps {
   track: any;
   onClose: () => void;
@@ -80,7 +81,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
         {/* Track Preview */}
         <div className="p-4 border-b border-purple-800/20">
           <div className="flex gap-3 bg-purple-950/40 rounded-lg p-3">
-            <img
+            <img loading="lazy"
               src={track.coverUrl || track.thumbnail}
               alt={track.title}
               className="w-14 h-14 rounded-md object-cover"
@@ -127,8 +128,8 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
                       : 'bg-purple-950/40 hover:bg-purple-800/40 border-2 border-transparent'
                   }`}
                 >
-                  <img
-                    src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=2A1852&color=FFEFD5`}
+                  <img loading="lazy"
+                    src={thumb(user.profile_album_cover_url) || defaultAvatar(user.username)}
                     alt={user.username}
                     className="w-10 h-10 rounded-full object-cover"
                   />

@@ -131,7 +131,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
                         className="relative flex-shrink-0 cursor-pointer group"
                         onClick={() => setActiveEmbedId(isEmbedOpen ? null : track.id)}
                       >
-                        <img src={track.coverUrl} alt={track.title} className="w-12 h-12 rounded-lg object-cover" />
+                        <img loading="lazy" src={track.coverUrl} alt={track.title} className="w-12 h-12 rounded-lg object-cover" />
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity">
                           <Play className="w-5 h-5 text-white fill-white" />
                         </div>
@@ -177,7 +177,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
             <div className="space-y-3">
               <div className="bg-purple-950/40 rounded-xl border border-yellow-500/30 p-3">
                 <div className="flex gap-3">
-                  <img src={selectedTrack.coverUrl} alt="" className="w-16 h-16 rounded-lg object-cover" />
+                  <img loading="lazy" src={selectedTrack.coverUrl} alt="" className="w-16 h-16 rounded-lg object-cover" />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">{selectedTrack.title}</p>
                     <p className="text-xs text-purple-300/60 truncate">{selectedTrack.artist}</p>

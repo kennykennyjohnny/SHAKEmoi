@@ -15,7 +15,7 @@ import { getPlatformUrl } from '../../lib/odesli';
 import { useBackHandler } from '../../lib/navigation';
 import { circleLink } from '../../lib/links';
 import { openExternal } from '../../lib/platforms';
-import { MediaImg } from '../../lib/media';
+import { MediaImg, thumb, defaultAvatar, compressImage } from '../../lib/media';
 
 interface MessagesViewProps {
   currentUser: any;
@@ -129,7 +129,7 @@ function NewConvoSearch({ friends, onSelect, onClose }: { friends: any[]; onSele
         <div className="space-y-0.5 max-h-52 overflow-y-auto">
           {results.map((f: any) => (
             <button key={f.id} onClick={() => onSelect(f)} className="w-full flex items-center gap-2.5 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
-              <img src={f.profile_album_cover_url || `https://ui-avatars.com/api/?name=${f.username}&background=2A1852&color=FFEFD5`} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+              <img loading="lazy" src={thumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
               <div className="text-left min-w-0">
                 <p className="text-sm font-medium truncate">{f.display_name || f.username}</p>
                 <p className="text-xs text-purple-300/60">@{f.username}</p>
@@ -313,7 +313,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
       const fileName = `dm/${currentUser.id}/${activeConversation.id}/${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('circle-media')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+        .upload(fileName, await compressImage(file, 1280), { cacheControl: '3600', upsert: false });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('circle-media').getPublicUrl(fileName);
       const r = await sendMessage(activeConversation.id, undefined, undefined, publicUrl);
@@ -385,7 +385,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
           <button onClick={() => { setActiveConversation(null); onSubViewActive?.(false); }} className="p-1 hover:bg-violet-900/25 rounded-full">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <img src={activeConversation.profile_album_cover_url || `https://ui-avatars.com/api/?name=${activeConversation.username}&background=2A1852&color=FFEFD5`} className="w-9 h-9 rounded-full object-cover" alt="" />
+          <img loading="lazy" src={thumb(activeConversation.profile_album_cover_url) || defaultAvatar(activeConversation.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm">{activeConversation.display_name || activeConversation.username}</p>
             <p className="text-xs text-purple-300/70">@{activeConversation.username}</p>
@@ -406,7 +406,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
                   {isStoryInteraction && (
                     <div className="flex gap-2.5 p-2 pr-3 items-start">
                       {(msg.story?.image_url || msg.story?.cover_url) ? (
-                        <img
+                        <img loading="lazy"
                           src={msg.story.image_url || msg.story.cover_url}
                           alt=""
                           className="w-11 h-[4.5rem] rounded-lg object-cover flex-shrink-0 ring-1 ring-white/10"
@@ -439,7 +439,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
                     <div className="p-2">
                       <div className="flex gap-2 items-center cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : msg.id)}>
                         <div className="relative flex-shrink-0">
-                          <img src={msg.cover_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                          <img loading="lazy" src={msg.cover_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity">
                             <Play className="w-4 h-4 text-white fill-white" />
                           </div>
@@ -482,7 +482,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
                 </div>
                 {trackResults.map((t: any) => (
                   <button key={t.id} onClick={() => handleSend(t)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
-                    <img src={t.cover} alt="" className="w-10 h-10 rounded-md object-cover" />
+                    <img loading="lazy" src={t.cover} alt="" className="w-10 h-10 rounded-md object-cover" />
                     <div className="flex-1 text-left min-w-0"><p className="text-sm font-medium truncate">{t.name}</p><p className="text-xs text-purple-200/70 truncate">{t.artist}</p></div>
                     <Send className="w-4 h-4 text-purple-400" />
                   </button>
@@ -514,7 +514,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="p-3 border-t border-purple-500/25 bg-[#1E1440] flex-shrink-0">
               <div className="flex items-end gap-3">
                 <div className="relative inline-block">
-                  <img src={photoPreview} alt="Aperçu" className="max-h-40 rounded-lg object-cover" />
+                  <img loading="lazy" src={photoPreview} alt="Aperçu" className="max-h-40 rounded-lg object-cover" />
                   <button onClick={() => { setPhotoFile(null); if (photoPreview) URL.revokeObjectURL(photoPreview); setPhotoPreview(null); }} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                     <X className="w-3 h-3 text-white" />
                   </button>
@@ -529,18 +529,18 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
 
         <div className="flex-shrink-0 bg-[#1E1440] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] pb-[4.5rem] lg:pb-0">
           <div className="px-3 py-2 flex items-center gap-2">
-                <button onClick={() => { setShowTrackSearch(!showTrackSearch); setShowGifSearch(false); }} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
+                <button onClick={() => { setShowTrackSearch(!showTrackSearch); setShowGifSearch(false); }} className={`flex-shrink-0 p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
                   <Music className="w-5 h-5" />
                 </button>
-                <button onClick={() => { setShowGifSearch(!showGifSearch); setShowTrackSearch(false); }} className={`p-2 rounded-full transition-colors ${showGifSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
+                <button onClick={() => { setShowGifSearch(!showGifSearch); setShowTrackSearch(false); }} className={`flex-shrink-0 p-2 rounded-full transition-colors ${showGifSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
                   <Smile className="w-5 h-5" />
                 </button>
-                <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full hover:bg-purple-900/40 text-purple-400 transition-colors">
+                <button onClick={() => fileInputRef.current?.click()} className="flex-shrink-0 p-2 rounded-full hover:bg-purple-900/40 text-purple-400 transition-colors">
                   <Camera className="w-5 h-5" />
                 </button>
-                <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoSelect} />
-                <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Envoie un message..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onFocus={() => setTimeout(() => scrollToBottom(true), 300)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
-                <button onClick={() => handleSend()} disabled={sending || !newMessage.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
+                <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Envoie un message..." enterKeyHint="send" className="flex-1 min-w-0 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onFocus={() => setTimeout(() => scrollToBottom(true), 300)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
+                <button onClick={() => handleSend()} disabled={sending || !newMessage.trim()} aria-label="Envoyer" className="flex-shrink-0 p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
                   {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                 </button>
               </div>
@@ -566,8 +566,8 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
           {conversations.map((c) => (
             <button key={c.partnerId} onClick={() => openConversation(c.partner)} className="w-full flex items-center gap-3 px-3 py-3 hover:bg-violet-950/25 rounded-xl transition-colors">
               <div className="relative flex-shrink-0">
-                <img
-                  src={c.partner?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${c.partner?.username}&background=2A1852&color=FFEFD5`}
+                <img loading="lazy"
+                  src={thumb(c.partner?.profile_album_cover_url) || defaultAvatar(c.partner?.username)}
                   className="w-12 h-12 rounded-full object-cover ring-1 ring-purple-700/30"
                   alt=""
                 />
@@ -823,7 +823,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
             <div className="flex flex-wrap gap-2 p-3 bg-violet-950/15 rounded-xl border border-purple-500/20">
               {selectedFriends.map(f => (
                 <span key={f.id} className="flex items-center gap-1 bg-purple-600/20 border border-purple-500/30 rounded-full px-2.5 py-1 text-xs">
-                  <img src={f.profile_album_cover_url || `https://ui-avatars.com/api/?name=${f.username}&background=2A1852&color=FFEFD5`} className="w-4 h-4 rounded-full" alt="" />
+                  <img loading="lazy" src={thumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-4 h-4 rounded-full" alt="" />
                   @{f.username}
                   <button onClick={() => toggleFriend(f)} className="text-purple-300/60 hover:text-pink-400 ml-0.5"><X className="w-3 h-3" /></button>
                 </span>
@@ -841,7 +841,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
               const selected = !!selectedFriends.find(x => x.id === f.id);
               return (
                 <button key={f.id} onClick={() => toggleFriend(f)} className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all ${selected ? 'bg-purple-600/20 border border-purple-500/30' : 'hover:bg-violet-900/25 border border-transparent'}`}>
-                  <img src={f.profile_album_cover_url || `https://ui-avatars.com/api/?name=${f.username}&background=2A1852&color=FFEFD5`} className="w-9 h-9 rounded-full object-cover" alt="" />
+                  <img loading="lazy" src={thumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
                   <div className="flex-1 text-left min-w-0">
                     <p className="text-sm font-medium">{f.display_name || f.username}</p>
                     <p className="text-xs text-purple-300/60">@{f.username}</p>
@@ -1023,7 +1023,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       const fileName = `circle-${circle.id}/${Date.now()}-${photoFile.name}`;
       const { error: uploadError } = await supabase.storage
         .from('circle-media')
-        .upload(fileName, photoFile, { cacheControl: '3600', upsert: false });
+        .upload(fileName, await compressImage(photoFile, 1280), { cacheControl: '3600', upsert: false });
       
       if (uploadError) throw uploadError;
       
@@ -1170,7 +1170,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       const fileName = `${currentUser.id}/circle-${circle.id}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+        .upload(fileName, await compressImage(file, 256), { cacheControl: '31536000', upsert: false });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
       await updateCirclePhoto(circle.id, publicUrl);
@@ -1214,10 +1214,10 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
           <p className="font-semibold text-sm">{circle.name}</p>
           <p className="text-xs text-purple-300/60">{members.length} membre{members.length > 1 ? 's' : ''}</p>
         </div>
-        <button onClick={copyLink} className={`p-2 rounded-full transition-colors ${copied ? 'text-fuchsia-400' : 'text-purple-300/60 hover:text-white hover:bg-violet-900/25'}`} title="Copier le lien d'invitation">
+        <button onClick={copyLink} className={`flex-shrink-0 p-2 rounded-full transition-colors ${copied ? 'text-fuchsia-400' : 'text-purple-300/60 hover:text-white hover:bg-violet-900/25'}`} title="Copier le lien d'invitation">
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
         </button>
-        <button onClick={() => setShowSettings(!showSettings)} className={`p-2 rounded-full transition-colors ${showSettings ? 'bg-violet-900/40 text-white' : 'text-purple-300/60 hover:text-white hover:bg-violet-900/25'}`}>
+        <button onClick={() => setShowSettings(!showSettings)} className={`flex-shrink-0 p-2 rounded-full transition-colors ${showSettings ? 'bg-violet-900/40 text-white' : 'text-purple-300/60 hover:text-white hover:bg-violet-900/25'}`}>
           <Settings className="w-4 h-4" />
         </button>
       </div>
@@ -1261,7 +1261,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
               <div className="flex flex-wrap gap-2">
                 {members.map(m => (
                   <span key={m.id} className="flex items-center gap-1 bg-violet-950/30 rounded-full px-2.5 py-1 text-xs border border-purple-500/20">
-                    <img src={m.profile_album_cover_url || `https://ui-avatars.com/api/?name=${m.username}&background=2A1852&color=FFEFD5`} className="w-4 h-4 rounded-full" alt="" />
+                    <img loading="lazy" src={thumb(m.profile_album_cover_url) || defaultAvatar(m.username)} className="w-4 h-4 rounded-full" alt="" />
                     @{m.username}
                     {m.id !== currentUser?.id && <button onClick={() => removeMember(m.id)} className="text-purple-300/60 hover:text-pink-400 ml-0.5"><X className="w-3 h-3" /></button>}
                   </span>
@@ -1273,7 +1273,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
               </div>
               {searchRes.filter(u => !members.find((m: any) => m.id === u.id)).slice(0, 4).map(u => (
                 <button key={u.id} onClick={() => addMember(u.id)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg text-sm">
-                  <img src={u.profile_album_cover_url || `https://ui-avatars.com/api/?name=${u.username}&background=2A1852&color=FFEFD5`} className="w-6 h-6 rounded-full" alt="" />
+                  <img loading="lazy" src={thumb(u.profile_album_cover_url) || defaultAvatar(u.username)} className="w-6 h-6 rounded-full" alt="" />
                   @{u.username}
                   <span className="ml-auto text-purple-400 text-xs">+ Ajouter</span>
                 </button>
@@ -1301,7 +1301,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
           return (
             <div key={msg.id} className={`rounded-xl border transition-all overflow-hidden group ${isOpen ? 'bg-violet-950/30 border-purple-600/30' : 'bg-violet-950/15 border-purple-500/20'}`}>
               <div className="p-2.5 flex items-center gap-2">
-                <img src={user?.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user?.username}&background=2A1852&color=FFEFD5`} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                <img loading="lazy" src={thumb(user?.profile_album_cover_url) || defaultAvatar(user?.username)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
                 <span className="text-xs font-medium text-purple-200/80">@{user?.username}</span>
                 <span className="text-xs text-purple-300/60 ml-auto">{formatTs(msg.created_at)}</span>
               </div>
@@ -1322,7 +1322,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
                 <div className="px-2.5 pb-2">
                   <div className="flex gap-2 items-center cursor-pointer group/track" onClick={() => setActiveEmbedId(isOpen ? null : msg.id)}>
                     <div className="relative flex-shrink-0">
-                      <img src={msg.cover_url} alt="" className="w-11 h-11 rounded-lg object-cover" />
+                      <img loading="lazy" src={msg.cover_url} alt="" className="w-11 h-11 rounded-lg object-cover" />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/track:opacity-100 flex items-center justify-center rounded-lg transition-opacity">
                         <Play className="w-4 h-4 text-white fill-white" />
                       </div>
@@ -1373,7 +1373,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
                 >
                   {likersData.map((liker: any) => (
                     <div key={liker.id} className="flex items-center gap-1.5 text-xs">
-                      <img src={liker.profile_album_cover_url || `https://ui-avatars.com/api/?name=${liker.username}&background=2A1852&color=FFEFD5`} className="w-4 h-4 rounded-full object-cover" alt="" />
+                      <img loading="lazy" src={thumb(liker.profile_album_cover_url) || defaultAvatar(liker.username)} className="w-4 h-4 rounded-full object-cover" alt="" />
                       <span className="text-purple-300">{liker.username}</span>
                       <span className="text-purple-400 ml-auto">{liker.emoji}</span>
                     </div>
@@ -1396,7 +1396,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       {photoPreview && (
         <div className="px-3 py-2 border-t border-purple-500/25 bg-violet-950/15 flex items-end gap-2 flex-shrink-0">
           <div className="relative">
-            <img src={photoPreview} alt="" className="h-20 w-20 rounded-lg object-cover" />
+            <img loading="lazy" src={photoPreview} alt="" className="h-20 w-20 rounded-lg object-cover" />
             <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600">
               <X className="w-3 h-3 text-white" />
             </button>
@@ -1405,7 +1405,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
             <p className="text-xs text-purple-300/60">Photo prête à envoyer</p>
             <input type="text" value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Ajouter une légende..." className="w-full px-2 py-1 bg-violet-950/20 border border-purple-500/30 rounded-lg text-xs text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
           </div>
-          <button onClick={sendChatPhoto} disabled={chatSending} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50">
+          <button onClick={sendChatPhoto} disabled={chatSending} aria-label="Envoyer" className="flex-shrink-0 p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50">
             <Send className="w-4 h-4" />
           </button>
         </div>
@@ -1422,7 +1422,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
               </div>
               {trackResults.map((t: any) => (
                 <button key={t.id} onClick={() => sendChatTrack(t)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
-                  <img src={t.cover} alt="" className="w-9 h-9 rounded-md object-cover" />
+                  <img loading="lazy" src={t.cover} alt="" className="w-9 h-9 rounded-md object-cover" />
                   <div className="flex-1 text-left min-w-0"><p className="text-sm font-medium truncate">{t.name}</p><p className="text-xs text-purple-200/70 truncate">{t.artist}</p></div>
                   <Send className="w-4 h-4 text-purple-400" />
                 </button>
@@ -1447,7 +1447,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
                 <div className="grid grid-cols-2 gap-1.5">
                   {gifResults.map((g: any) => (
                     <button key={g.id} onClick={() => sendChatGif(g.media_formats.tinygif.url)} className="relative group overflow-hidden rounded-lg">
-                      <img src={g.media_formats.tinygif.url} alt="" className="w-full aspect-square object-cover" />
+                      <img loading="lazy" src={g.media_formats.tinygif.url} alt="" className="w-full aspect-square object-cover" />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                         <Send className="w-4 h-4 text-white" />
                       </div>
@@ -1462,22 +1462,22 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
 
       {/* Chat bar */}
       <div className="px-3 py-2.5 pb-[calc(0.625rem+4.5rem)] lg:pb-2.5 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0 bg-[#1E1440]/95 backdrop-blur-lg">
-        <button onClick={() => setShowTrackSearch(!showTrackSearch)} className={`p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`} title="Partager un son">
+        <button onClick={() => setShowTrackSearch(!showTrackSearch)} className={`flex-shrink-0 p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`} title="Partager un son">
           <Music className="w-5 h-5" />
         </button>
         
-        <button onClick={() => setShowGifSearch(!showGifSearch)} className={`p-2 rounded-full transition-colors ${showGifSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`} title="Envoyer un GIF">
+        <button onClick={() => setShowGifSearch(!showGifSearch)} className={`flex-shrink-0 p-2 rounded-full transition-colors ${showGifSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`} title="Envoyer un GIF">
           <Smile className="w-5 h-5" />
         </button>
         
-        <button onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors text-purple-300/60" title="Envoyer une photo">
+        <button onClick={() => fileInputRef.current?.click()} className="flex-shrink-0 p-2 hover:bg-violet-900/25 rounded-full transition-colors text-purple-300/60" title="Envoyer une photo">
           <Camera className="w-5 h-5" />
         </button>
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
         
-        <input type="text" value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Message au cercle..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (photoFile) sendChatPhoto(); else sendChatText(); } }} />
+        <input type="text" value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Message au cercle..." enterKeyHint="send" className="flex-1 min-w-0 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (photoFile) sendChatPhoto(); else sendChatText(); } }} />
         
-        <button onClick={photoFile ? sendChatPhoto : sendChatText} disabled={chatSending || (!chatText.trim() && !photoFile)} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
+        <button onClick={photoFile ? sendChatPhoto : sendChatText} disabled={chatSending || (!chatText.trim() && !photoFile)} aria-label="Envoyer" className="flex-shrink-0 p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
           {chatSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
         </button>
       </div>

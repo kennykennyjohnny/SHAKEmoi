@@ -316,7 +316,7 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
                       <div className="p-3 flex items-center gap-3">
                         <span className="text-sm font-bold text-purple-300/60 w-6 text-center flex-shrink-0">{realIndex + 1}</span>
                         <div className="relative flex-shrink-0 cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : `list-${realIndex}`)}>
-                          <img src={track.cover_url} alt={track.track_name} className={`w-12 h-12 rounded-lg object-cover ${isOpen ? 'ring-2 ring-purple-500/50' : ''}`} />
+                          <img loading="lazy" src={track.cover_url} alt={track.track_name} className={`w-12 h-12 rounded-lg object-cover ${isOpen ? 'ring-2 ring-purple-500/50' : ''}`} />
                           <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${isOpen ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'}`}>
                             {isOpen ? (
                               <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
@@ -430,7 +430,7 @@ function PodiumCard({ track, rank, barHeight, onPlay, onOpen, isOpen, crown }: {
         className="relative group flex-shrink-0 mb-0"
         title={track.track_name}
       >
-        <img
+        <img loading="lazy"
           src={track.cover_url}
           alt={track.track_name}
           className={`${imgSize} rounded-xl object-cover shadow-lg transition-transform group-hover:scale-105 ${isOpen ? `ring-2 ${rankBorderColor} scale-105` : ''}`}

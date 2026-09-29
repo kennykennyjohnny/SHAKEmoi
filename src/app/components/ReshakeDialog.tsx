@@ -58,7 +58,7 @@ export function ReshakeDialog({ shake, onClose, onConfirm }: ReshakeDialogProps)
           {/* Original Shake Preview */}
           <div className="mb-4 p-3 bg-purple-950/40 rounded-lg border border-purple-800/30">
             <div className="flex gap-3">
-              <img
+              <img loading="lazy"
                 src={shake.track.coverUrl}
                 alt={shake.track.title}
                 className="w-14 h-14 rounded-md object-cover"

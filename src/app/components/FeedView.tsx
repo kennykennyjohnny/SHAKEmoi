@@ -17,7 +17,8 @@ import { circleLink, postLink } from '../../lib/links';
 import { SongShareSheet } from './SongShareSheet';
 import { openExternal } from '../../lib/platforms';
 import { LikersSheet } from './LikersSheet';
-import { MediaImg } from '../../lib/media';
+import { MediaImg, thumb, defaultAvatar, compressImage } from '../../lib/media';
+import { friendlyError } from '../../lib/errors';
 
 function storyTimeRemaining(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -201,7 +202,7 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
                       if (!user) return null;
                       return (
                         <div key={m.user_id} className="flex items-center gap-2">
-                          <img src={user.profile_album_cover_url || `https://ui-avatars.com/api/?name=${user.username}&background=2A1852&color=FFEFD5`} alt="" className="w-7 h-7 rounded-full object-cover" />
+                          <img loading="lazy" src={thumb(user.profile_album_cover_url) || defaultAvatar(user.username)} alt="" className="w-7 h-7 rounded-full object-cover" />
                           <span className="text-sm text-white flex-1 truncate">{user.display_name || user.username}</span>
                           <span className="text-[10px] text-purple-300/60">@{user.username}</span>
                         </div>
@@ -308,7 +309,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
               {chatSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
               {chatTrackResults.map((track: any) => (
                 <button key={track.id} onClick={() => handleChatSendTrack(track)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
-                  <img src={track.cover} alt="" className="w-10 h-10 rounded-md object-cover" />
+                  <img loading="lazy" src={track.cover} alt="" className="w-10 h-10 rounded-md object-cover" />
                   <div className="flex-1 text-left min-w-0"><p className="text-sm font-medium truncate">{track.name}</p><p className="text-xs text-purple-200/70 truncate">{track.artist}</p></div>
                   <Send className="w-4 h-4 text-purple-400" />
                 </button>
@@ -340,7 +341,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="p-3 border-b border-purple-500/25 bg-[#1E1440]">
             <div className="flex items-end gap-3">
               <div className="relative inline-block">
-                <img src={photoPreview} alt="Aperçu" className="max-h-40 rounded-lg object-cover" />
+                <img loading="lazy" src={photoPreview} alt="Aperçu" className="max-h-40 rounded-lg object-cover" />
                 <button onClick={cancelPhoto} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                   <X className="w-3 h-3 text-white" />
                 </button>
@@ -353,18 +354,18 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
         )}
       </AnimatePresence>
       <div className="px-3 py-2 flex items-center gap-2">
-        <button onClick={() => { setShowChatTrackSearch(!showChatTrackSearch); setShowGifSearch(false); }} className={`p-2 rounded-full transition-colors ${showChatTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
+        <button onClick={() => { setShowChatTrackSearch(!showChatTrackSearch); setShowGifSearch(false); }} className={`flex-shrink-0 p-2 rounded-full transition-colors ${showChatTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
           <Music className="w-5 h-5" />
         </button>
-        <button onClick={() => { setShowGifSearch(!showGifSearch); setShowChatTrackSearch(false); }} className={`p-2 rounded-full transition-colors ${showGifSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
+        <button onClick={() => { setShowGifSearch(!showGifSearch); setShowChatTrackSearch(false); }} className={`flex-shrink-0 p-2 rounded-full transition-colors ${showGifSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`}>
           <Smile className="w-5 h-5" />
         </button>
-        <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full hover:bg-violet-900/25 text-purple-300/60 transition-colors">
+        <button onClick={() => fileInputRef.current?.click()} className="flex-shrink-0 p-2 rounded-full hover:bg-violet-900/25 text-purple-300/60 transition-colors">
           <Camera className="w-5 h-5" />
         </button>
-        <input ref={(el) => { fileInputRef.current = el; }} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoSelect} />
-        <input type="text" value={chatText} onChange={(e: any) => setChatText(e.target.value)} placeholder="Message au cercle..." className="flex-1 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={(e: any) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSendText(); } }} />
-        <button onClick={handleChatSendText} disabled={chatSending || !chatText.trim()} className="p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
+        <input ref={(el) => { fileInputRef.current = el; }} type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
+        <input type="text" value={chatText} onChange={(e: any) => setChatText(e.target.value)} placeholder="Message au cercle..." enterKeyHint="send" className="flex-1 min-w-0 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" onKeyDown={(e: any) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSendText(); } }} />
+        <button onClick={handleChatSendText} disabled={chatSending || !chatText.trim()} aria-label="Envoyer" className="flex-shrink-0 p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors">
           {chatSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
         </button>
       </div>
@@ -483,14 +484,24 @@ interface FeedViewProps {
   onShowEphemeralShake?: () => void;
 }
 
+// Dernier fil affiché, gardé en mémoire le temps de la session : revenir sur
+// Accueil l'affiche instantanément pendant qu'on le rafraîchit (I4).
+let feedCache: { userId: string; shakes: Shake[]; stories: any[]; viewed: Record<string, boolean> } | null = null;
+
 export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId = null, onSelectFeed, onCreateCircle, onShowEphemeralShake }: FeedViewProps) {
-  const [shakes, setShakes] = useState<Shake[]>([]);
+  const [shakes, setShakes] = useState<Shake[]>(() =>
+    !currentFeedId && feedCache && feedCache.userId === currentUser?.id ? feedCache.shakes : []
+  );
+  // Likes, suppressions… : le cache suit ce qui est à l'écran.
+  useEffect(() => {
+    if (!currentFeedId && feedCache && feedCache.userId === currentUser?.id) feedCache = { ...feedCache, shakes };
+  }, [shakes]);
   const [shareShakeId, setShareShakeId] = useState<string | null>(null);
-  const [stories, setStories] = useState<any[]>([]);
+  const [stories, setStories] = useState<any[]>(() => (feedCache && feedCache.userId === currentUser?.id ? feedCache.stories : []));
   const [activeStoryGroup, setActiveStoryGroup] = useState<any[]>([]);
-  const [storyViewedMap, setStoryViewedMap] = useState<Record<string, boolean>>({});
+  const [storyViewedMap, setStoryViewedMap] = useState<Record<string, boolean>>(() => (feedCache && feedCache.userId === currentUser?.id ? feedCache.viewed : {}));
   const [activeStory, setActiveStory] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(feedCache && feedCache.userId === currentUser?.id && !currentFeedId));
   const [error, setError] = useState<string | null>(null);
   const [reshakeDialogShake, setReshakeDialogShake] = useState<Shake | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
@@ -578,10 +589,37 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   const activeCircle = circles.find(c => c.id === currentFeedId);
 
-  const loadFeed = async () => {
+  // Stories chargées à part : le fil ne les attend plus pour s'afficher (I3).
+  const loadStories = async () => {
     try {
-      setLoading(true);
+      const feedStories = await db.getFeedStories();
+      setStories(feedStories);
+      const viewed = await db.getViewedStoryIds(feedStories.map((st: any) => st.id));
+      const map = Object.fromEntries(feedStories.map((st: any) => [st.id, viewed.has(st.id)]));
+      setStoryViewedMap(map);
+      if (feedCache && feedCache.userId === currentUser?.id) {
+        feedCache = { ...feedCache, stories: feedStories, viewed: map };
+      }
+    } catch (err) {
+      console.error('Error loading stories:', err);
+    }
+  };
+
+  const loadFeed = async () => {
+    // Retour sur Accueil : on réaffiche tout de suite le dernier fil connu,
+    // puis on le rafraîchit en arrière-plan (I4).
+    const cached = !currentFeedId && feedCache && feedCache.userId === currentUser?.id ? feedCache : null;
+    try {
+      if (cached) {
+        setShakes(cached.shakes);
+        setStories(cached.stories);
+        setStoryViewedMap(cached.viewed);
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
       setError(null);
+      if (!currentFeedId) loadStories();
       let posts = currentFeedId ? await db.getCircleFeed(currentFeedId) : await db.getFeed();
 
       // If a reshake is present in the timeline, hide the duplicated original post.
@@ -650,12 +688,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             id: originalUser.id || '',
             username: originalUser.username || '',
             displayName: originalUser.display_name || originalUser.username || '',
-            avatar: originalUser.profile_album_cover_url || `https://ui-avatars.com/api/?name=${originalUser.username}&background=2A1852&color=FFEFD5`
+            avatar: thumb(originalUser.profile_album_cover_url) || defaultAvatar(originalUser.username)
           } : {
             id: reshakerUser.id || '',
             username: reshakerUser.username || '',
             displayName: reshakerUser.display_name || reshakerUser.username || '',
-            avatar: reshakerUser.profile_album_cover_url || `https://ui-avatars.com/api/?name=${reshakerUser.username}&background=2A1852&color=FFEFD5`
+            avatar: thumb(reshakerUser.profile_album_cover_url) || defaultAvatar(reshakerUser.username)
           },
           track: {
             id: displayTrack?.track_id || trackId || post.id,
@@ -696,19 +734,18 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
       // Circle chat: reverse to show oldest first (like a conversation)
       setShakes(currentFeedId ? shakes.reverse() : shakes);
-
-      if (!currentFeedId) {
-        const feedStories = await db.getFeedStories();
-        setStories(feedStories);
-
-        const viewedEntries = await Promise.all(
-          feedStories.map(async (st: any) => [st.id, await db.hasViewedStory(st.id)] as const)
-        );
-        setStoryViewedMap(Object.fromEntries(viewedEntries));
+      if (!currentFeedId && currentUser?.id) {
+        feedCache = {
+          userId: currentUser.id,
+          shakes,
+          stories: feedCache?.userId === currentUser.id ? feedCache.stories : [],
+          viewed: feedCache?.userId === currentUser.id ? feedCache.viewed : {},
+        };
       }
     } catch (err: any) {
       console.error('Error loading feed:', err);
-      setError(err.message || 'Failed to load feed');
+      // Fil déjà affiché depuis le cache : on le garde plutôt qu'un écran d'erreur.
+      if (!cached) setError(friendlyError(err));
     } finally {
       setLoading(false);
     }
@@ -902,7 +939,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       const fileName = `circle-${currentFeedId}/${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('circle-media')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+        .upload(fileName, await compressImage(file, 1280), { cacheControl: '3600', upsert: false });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('circle-media').getPublicUrl(fileName);
       await db.createPost('', '', '', '', null, null, null, false, currentFeedId, publicUrl);
@@ -1023,8 +1060,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   >
                     {hasOwn && <StoryWaveRing />}
                     <div className={`w-[62px] h-[62px] rounded-full overflow-hidden relative z-10 ${!hasOwn ? 'ring-2 ring-purple-800/50' : ''}`}>
-                      <img
-                        src={currentUser?.avatar || `https://ui-avatars.com/api/?name=${currentUser?.username || 'M'}&background=2A1852&color=FFEFD5`}
+                      <img loading="lazy"
+                        src={thumb(currentUser?.avatar) || defaultAvatar(currentUser?.username || 'M')}
                         className="w-full h-full object-cover"
                         alt=""
                       />
@@ -1068,7 +1105,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   const user = firstStory.user;
                   const allViewed = group.every((s: any) => !!storyViewedMap[s.id]);
                   const count = group.length;
-                  const avatarSrc = user?.profile_album_cover_url || user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=2A1852&color=FFEFD5`;
+                  const avatarSrc = thumb(user?.profile_album_cover_url) || thumb(user?.avatar) || defaultAvatar(user?.username || 'U');
                   return (
                     <button
                       key={user?.id || firstStory.user_id}
@@ -1078,7 +1115,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                       <div className="relative">
                         <StoryWaveRing viewed={allViewed} />
                         <div className="w-[62px] h-[62px] rounded-full overflow-hidden relative z-10">
-                          <img
+                          <img loading="lazy"
                             src={avatarSrc}
                             className="w-full h-full object-cover"
                             alt={user?.username || ''}
@@ -1131,7 +1168,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 transition={{ delay: index * 0.03 }}
                 className={`flex gap-2.5 ${isMe ? 'flex-row-reverse' : ''}`}
               >
-                <img
+                <img loading="lazy"
                   src={shake.user.avatar}
                   alt={shake.user.displayName}
                   className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-purple-700/30 mt-1"
@@ -1156,7 +1193,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   )}
                   {shake.track.title && (
                   <div className={`${shake.caption || shake.imageUrl ? 'mt-2' : ''} flex items-center gap-2.5 p-2 bg-black/20 rounded-xl`}>
-                    <img
+                    <img loading="lazy"
                       src={shake.track.coverUrl}
                       alt={shake.track.title}
                       className="w-11 h-11 rounded-lg object-cover"
@@ -1224,7 +1261,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 {/* User Header */}
                 <div className="px-4 py-2 flex items-center gap-2">
                   <button onClick={() => setProfilePreview({ userId: shake.user.id || shake.user.username, username: shake.user.username })}>
-                    <img
+                    <img loading="lazy"
                       src={shake.user.avatar}
                       alt={shake.user.displayName}
                       className="w-9 h-9 rounded-full object-cover hover:ring-2 hover:ring-purple-500 transition-all"
@@ -1328,7 +1365,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                       aria-label={isSounding ? 'Mettre en pause' : 'Écouter un extrait'}
                       className="relative flex-shrink-0 rounded-lg focus:outline-none"
                     >
-                      <img
+                      <img loading="lazy"
                         src={shake.track.coverUrl}
                         alt={shake.track.title}
                         className={`w-11 h-11 rounded-lg object-cover transition-all ${isSounding ? 'ring-2 ring-purple-500/60' : ''}`}
