@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Search, Play, Sparkles, Loader2, X, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
-import { createPost, createShakeDuJour, hasShakeToday } from '../../lib/database';
-import { getOdesliLinks } from '../../lib/odesli';
+import { createPost, createShakeDuJour } from '../../lib/database';
+
 
 interface ShakeDuJourDialogProps {
   onComplete: () => void;

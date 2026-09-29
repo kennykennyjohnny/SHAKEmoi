@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Flame, Play, Loader2, Heart, MoreHorizontal, Send, ExternalLink, MessageCircle, Crown, Medal, Award, Music, Sparkles, Zap, Moon, Sun, Coffee, PartyPopper } from 'lucide-react';
+import { Flame, Play, Heart, MoreHorizontal, Send, ExternalLink, MessageCircle, Crown, Medal, Award, Music, Sparkles, Zap, Moon, Sun, Coffee, PartyPopper } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getTopPosts } from '../../lib/database';
 import { SendSongDialog } from './SendSongDialog';

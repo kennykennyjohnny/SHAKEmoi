@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search as SearchIcon, Play, Pause, User, Music, Loader2, Sparkles, UserPlus, UserCheck, Send, Share2, X } from 'lucide-react';
+import { Search as SearchIcon, Play, Pause, User, Music, Loader2, Sparkles, UserPlus, UserCheck, Send, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
 import { searchUsers, createPost, searchCircles, joinCircle, followUser, unfollowUser, getFollowingIds } from '../../lib/database';

@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, UserPlus, UserCheck, UserMinus, Music, Repeat2, Loader2, Bell, Users, ExternalLink, RefreshCw } from 'lucide-react';
+import { Heart, MessageCircle, UserPlus, UserCheck, Music, Repeat2, Loader2, Bell, Users, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { getUserNotifications, followUser, unfollowUser, getFollowingIds } from '../../lib/database';

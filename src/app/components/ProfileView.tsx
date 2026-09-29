@@ -1,4 +1,4 @@
-import { Archive, Pin, Users, Music, Heart, Settings, Play, Pause, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, ExternalLink, UserMinus, Share2, Copy, Check, Instagram, Send, ArrowLeft } from 'lucide-react';
+import { Archive, Pin, Music, Heart, Settings, Play, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, ExternalLink, UserMinus, Share2, Copy, Check, Send, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useRef } from 'react';
 import { SettingsDialog } from './SettingsDialog';

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Heart, MessageCircle, Repeat2, ExternalLink, Play, Loader2, Send, Pause, Trash2, Share2, Music, Search } from 'lucide-react';
+import { X, Heart, MessageCircle, ExternalLink, Play, Loader2, Send, Pause, Trash2, Share2, Music, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';

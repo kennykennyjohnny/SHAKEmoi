@@ -93,6 +93,13 @@ Trouvailles en plus :
 | C9 | ✅ | (LOT 3) |
 | I9 | ✅ | Le fil charge 20 posts, puis les suivants automatiquement en approchant du bas (ou bouton « Voir les shakes plus anciens »). |
 
+| **LOT 7 — S'il reste du temps** | | |
+| L1 | ✅ | Déploiement GitHub Pages supprimé (workflow, CNAME, 404.html, script de copie) et site Pages désactivé : il revendiquait encore shakemoi.fr (certificat en erreur). Vercel seul. |
+| L3 | ✅ | README réécrit. 16 vieux .md + 26 vieux .sql rangés dans `docs/archive/`. Dossier `backup-v1-before-react` retiré (reste dans l'historique git). |
+| L4 | ✅ | Retirés : MUI, Emotion, react-dnd, react-slick, react-popper, masonry. 10 fichiers de composants morts supprimés. |
+| L2 | 🟡 | Erreurs de types : ~50 → 10 (script `npm run typecheck` ajouté). Reste 10 petites (variables inutilisées, 1 type). Pas encore de vérification automatique (CI). |
+| H6, H5, B9, G7, K2, K3, I8 | ⏭️ | Pas eu le temps ce soir. |
+
 ## Backlog v2 (hors périmètre ce soir)
 - J1 Bloquer / Signaler (personne, post, message) — exigé par les stores.
 - D4 / D6 vraies notifications push (appli fermée) — nécessite Web Push + service worker + clés VAPID.

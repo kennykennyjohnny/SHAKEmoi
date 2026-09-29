@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Copy, Check, Share2, Sparkles, Heart, Music2 } from 'lucide-react';
+import { X, Copy, Check, Share2, Sparkles, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getAppStats } from '../../lib/database';
 import { inviteLink } from '../../lib/links';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mail, Lock, User as UserIcon, Loader2, AlertCircle, UserPlus, Sparkles } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, Loader2, AlertCircle, UserPlus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';

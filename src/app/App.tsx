@@ -20,7 +20,6 @@ import { ProfileLanding } from './components/ProfileLanding';
 import { takePendingAction, pendingActionReason } from '../lib/pendingAction';
 
 import { CircleInviteView } from './components/CircleInviteView';
-import { NotificationsDropdown } from './components/NotificationsDropdown';
 import { NotificationsView } from './components/NotificationsView';
 import { ProfilePreviewDialog } from './components/ProfilePreviewDialog';
 import { PostDetailModal } from './components/PostDetailModal';
