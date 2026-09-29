@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Heart, MessageCircle, Repeat2, ExternalLink, Play, Loader2, Send, Pause, Trash2, Share2, Music, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction } from '../../lib/database';
@@ -89,16 +89,20 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
     } catch {}
   };
 
+  // Like optimiste (F4) : affiché tout de suite, annulé si le serveur refuse.
+  const likeBusyRef = useRef(false);
   const toggleLike = async () => {
-    if (isLiked) {
-      await unlikePost(postId);
-      setIsLiked(false);
-      setLikeCount(c => c - 1);
-    } else {
-      await likePost(postId);
-      setIsLiked(true);
-      setLikeCount(c => c + 1);
+    if (likeBusyRef.current) return;
+    likeBusyRef.current = true;
+    const next = !isLiked;
+    setIsLiked(next);
+    setLikeCount(c => Math.max(0, c + (next ? 1 : -1)));
+    const r = next ? await likePost(postId) : await unlikePost(postId);
+    if (!r.success) {
+      setIsLiked(!next);
+      setLikeCount(c => Math.max(0, c + (next ? -1 : 1)));
     }
+    likeBusyRef.current = false;
   };
 
   const handleSendComment = async () => {

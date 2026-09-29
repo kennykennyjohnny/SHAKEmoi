@@ -112,7 +112,7 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
       >
         {/* Branding */}
         <div className="flex justify-center mb-6">
-          <Logo size="sm" animated={true} showText={true} />
+          <Logo size="sm" animated={true} showText={true} href="/" />
         </div>
 
         {/* Recent track covers mosaic */}

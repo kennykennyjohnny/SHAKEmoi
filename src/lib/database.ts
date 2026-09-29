@@ -1001,7 +1001,7 @@ export async function getUserNotifications(userId: string) {
 // ==================== SHAKE DU JOUR ====================
 
 // Shake de la semaine — 1 morceau obligatoire par semaine (reset mardi 9h)
-function getCurrentShakeWeekStart(): string {
+export function getCurrentShakeWeekStart(): string {
   const now = new Date();
   // Find the most recent Tuesday 9:00 UTC
   const day = now.getUTCDay(); // 0=Sun, 2=Tue

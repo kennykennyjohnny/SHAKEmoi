@@ -25,7 +25,7 @@ export function PrivacyPage({ onBack }: { onBack: () => void }) {
           <button onClick={onBack} className="p-2 -ml-2 rounded-full hover:bg-white/10" aria-label="Retour">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <Logo size="sm" animated={false} showText={true} />
+          <Logo size="sm" animated={false} showText={true} href="/" />
         </div>
       </header>
 

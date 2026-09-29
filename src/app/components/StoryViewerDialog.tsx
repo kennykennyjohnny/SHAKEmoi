@@ -310,19 +310,25 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     if (likers === null) loadLikers();
   };
 
+  // Like optimiste (F4) : cœur et animation tout de suite, annulés si refus.
+  const likeBusyRef = useRef(false);
   const toggleLike = async () => {
-    if (!story) return;
-    if (isLiked) {
-      await unlikeStory(story.id);
-      setLikeCount(Math.max(0, likeCount - 1));
-    } else {
-      await likeStory(story.id);
-      setLikeCount(likeCount + 1);
+    if (!story || likeBusyRef.current) return;
+    likeBusyRef.current = true;
+    const next = !isLiked;
+    setIsLiked(next);
+    setLikeCount(c => Math.max(0, c + (next ? 1 : -1)));
+    if (next) {
       const id = Math.random().toString();
       setLikeAnimations(prev => [...prev, { id, x: Math.random() * 40 - 20, y: Math.random() * 40 - 20 }]);
       setTimeout(() => setLikeAnimations(prev => prev.filter(a => a.id !== id)), 800);
     }
-    setIsLiked(!isLiked);
+    const r = next ? await likeStory(story.id) : await unlikeStory(story.id);
+    if (!r.success) {
+      setIsLiked(!next);
+      setLikeCount(c => Math.max(0, c + (next ? -1 : 1)));
+    }
+    likeBusyRef.current = false;
   };
 
   const handleComment = async () => {

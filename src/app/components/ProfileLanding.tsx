@@ -65,7 +65,7 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore }: Props
       )}
 
       <header className="relative z-10 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 max-w-md mx-auto">
-        <Logo size="sm" animated={false} showText={true} />
+        <Logo size="sm" animated={false} showText={true} href="/" />
         <button onClick={onLogin} className="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap text-purple-100/90 hover:bg-white/10">
           Se connecter
         </button>

@@ -751,25 +751,44 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     }
   };
 
-  const toggleLike = async (shakeId: string) => {
+  // F4 : le cœur change tout de suite (like « optimiste »). Le serveur suit
+  // derrière, une requête à la fois par post : deux taps rapides ne se
+  // contredisent plus. En cas d'échec, le cœur revient à l'état réel.
+  const likeWanted = useRef<Record<string, boolean>>({});
+  const likeBusy = useRef<Record<string, boolean>>({});
+  const syncLike = async (postId: string, serverState: boolean) => {
+    likeBusy.current[postId] = true;
+    let current = serverState;
     try {
-      const shake = shakes.find(s => s.id === shakeId);
-      if (!shake) return;
-
-      if (shake.isLiked) {
-          await db.unlikePost(shake.sourcePostId);
-        setShakes(shakes.map(s =>
-          s.id === shakeId ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) } : s
-        ));
-      } else {
-          await db.likePost(shake.sourcePostId);
-        setShakes(shakes.map(s =>
-          s.id === shakeId ? { ...s, isLiked: true, likes: s.likes + 1 } : s
-        ));
+      while (likeWanted.current[postId] !== current) {
+        const want = likeWanted.current[postId];
+        const r = want ? await db.likePost(postId) : await db.unlikePost(postId);
+        if (!r.success) throw new Error(r.error || 'like failed');
+        current = want;
       }
     } catch (err) {
       console.error('Error toggling like:', err);
+      likeWanted.current[postId] = current;
+      setShakes(prev => prev.map(s =>
+        s.sourcePostId === postId && s.isLiked !== current
+          ? { ...s, isLiked: current, likes: Math.max(0, s.likes + (current ? 1 : -1)) }
+          : s
+      ));
+    } finally {
+      likeBusy.current[postId] = false;
     }
+  };
+
+  const toggleLike = (shakeId: string) => {
+    const shake = shakes.find(s => s.id === shakeId);
+    if (!shake) return;
+    const postId = shake.sourcePostId;
+    const next = !shake.isLiked;
+    likeWanted.current[postId] = next;
+    setShakes(prev => prev.map(s =>
+      s.sourcePostId === postId ? { ...s, isLiked: next, likes: Math.max(0, s.likes + (next ? 1 : -1)) } : s
+    ));
+    if (!likeBusy.current[postId]) syncLike(postId, !!shake.isLiked);
   };
 
 

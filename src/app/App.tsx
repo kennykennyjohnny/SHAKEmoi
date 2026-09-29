@@ -25,10 +25,11 @@ import { NotificationsView } from './components/NotificationsView';
 import { ProfilePreviewDialog } from './components/ProfilePreviewDialog';
 import { PostDetailModal } from './components/PostDetailModal';
 import { supabase } from '../lib/supabase';
-import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount } from '../lib/database';
+import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount, getCurrentShakeWeekStart } from '../lib/database';
 import { useBackHandler } from '../lib/navigation';
 import { parseRoute, type Route } from '../lib/links';
 import { Slogan } from './components/Slogan';
+import { InstallAppButton } from './components/InstallAppButton';
 
 import { defaultAvatar, thumb } from '../lib/media';
 import { isNotifTypeShown, notificationText, showLocalNotification } from '../lib/notify';
@@ -73,6 +74,15 @@ export default function App() {
     setRoute(null);
   };
 
+  // G6 : le Shake de la semaine passe après la présentation et le profil.
+  const [sdjPending, setSdjPending] = useState(false);
+  useEffect(() => {
+    if (!sdjPending || showOnboarding || showCompleteProfile) return;
+    setSdjPending(false);
+    localStorage.setItem('shakemoi_sdj_shown', getCurrentShakeWeekStart());
+    setShowShakeDuJour(true);
+  }, [sdjPending, showOnboarding, showCompleteProfile]);
+
   // Retour système : depuis un autre onglet, on revient au feed avant de
   // pouvoir quitter le site (les vues empilées se ferment en premier).
   useBackHandler(currentView !== 'feed', () => setCurrentView('feed'));
@@ -95,17 +105,21 @@ export default function App() {
         const profile = await getUserProfile(session.user.id);
         if (profile) {
           setCurrentUser(buildUserObject(profile));
-          if (!localStorage.getItem('shakemoi_onboarding')) setShowOnboarding(true);
+          const needsOnboarding = !localStorage.getItem('shakemoi_onboarding');
+          if (needsOnboarding) setShowOnboarding(true);
           const profileCompleted = localStorage.getItem('shakemoi_profile_completed');
-          if (!profileCompleted && (!profile.display_name || !profile.profile_album_cover_url)) setShowCompleteProfile(true);
-          const postedToday = await hasShakeToday();
-          setHasPostedToday(postedToday);
-          // Le Shake du jour ne s'ouvre qu'une fois par jour : sinon la popup
-          // revient à chaque rechargement, ce qui est vite pénible.
-          const todayKey = new Date().toISOString().slice(0, 10);
-          if (!postedToday && localStorage.getItem('shakemoi_sdj_shown') !== todayKey) {
-            localStorage.setItem('shakemoi_sdj_shown', todayKey);
-            setShowShakeDuJour(true);
+          const needsProfile = !profileCompleted && (!profile.display_name || !profile.profile_album_cover_url);
+          if (needsProfile) setShowCompleteProfile(true);
+          const postedThisWeek = await hasShakeToday();
+          setHasPostedToday(postedThisWeek);
+          // Shake de la semaine : la popup s'ouvre une fois par SEMAINE (remise à
+          // zéro le mardi à 9 h UTC), comme la règle, plus chaque jour (K1).
+          const weekKey = getCurrentShakeWeekStart();
+          if (!postedThisWeek && localStorage.getItem('shakemoi_sdj_shown') !== weekKey) {
+            // G6 : jamais par-dessus la présentation ou « Compléter ton profil » :
+            // elle attend que ces fenêtres soient fermées.
+            if (needsOnboarding || needsProfile) setSdjPending(true);
+            else { localStorage.setItem('shakemoi_sdj_shown', weekKey); setShowShakeDuJour(true); }
           }
         }
       }
@@ -361,6 +375,8 @@ export default function App() {
           </div>
         </header>
 
+        <InstallAppButton variant="banner" className="flex-shrink-0 lg:hidden" />
+
         <div className="px-4 pt-4 flex-shrink-0 text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">
             <Slogan />
@@ -446,7 +462,7 @@ export default function App() {
   return (
     <div className="h-[100dvh] w-screen bg-[#1E1440] text-white overflow-hidden flex">
       {/* Sidebar gauche - Trending */}
-      <aside className="hidden lg:block w-80 border-r border-violet-900/30 overflow-y-auto">
+      <aside className="hidden xl:block w-80 border-r border-violet-900/30 overflow-y-auto">
         <TrendingBar />
       </aside>
 
@@ -495,6 +511,9 @@ export default function App() {
             </div>
           </div>
         </header>
+
+        {/* A5 : proposer d'installer l'appli, en haut de l'accueil */}
+        {currentView === 'feed' && <InstallAppButton variant="banner" className="flex-shrink-0 lg:hidden" />}
 
         {/* Content */}
         <main className="flex-1 overflow-hidden flex flex-col min-h-0">
@@ -546,11 +565,13 @@ export default function App() {
       </div>
 
       {/* Sidebar droite - Desktop */}
-      <aside className="hidden xl:block w-64 border-l border-violet-900/30 p-4 overflow-y-auto">
+      <aside className="hidden lg:block w-64 border-l border-violet-900/30 p-4 overflow-y-auto">
         <nav className="space-y-2">
           {([
-              { view: 'feed' as View, icon: Home, label: 'Accueil' },
+            { view: 'feed' as View, icon: Home, label: 'Accueil' },
             { view: 'top' as View, icon: TrendingUp, label: 'TOP' },
+            // H3 : la Recherche manquait sur ordinateur.
+            { view: 'search' as View, icon: Search, label: 'Recherche' },
             { view: 'messages' as View, icon: MessageCircle, label: 'Messages' },
             { view: 'profile' as View, icon: User, label: 'Profil' },
           ]).map(({ view, icon: Icon, label }) => (
@@ -577,7 +598,7 @@ export default function App() {
               className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-yellow-400 hover:bg-yellow-500/10 transition-colors animate-pulse"
             >
               <Sun className="w-5 h-5" />
-              <span className="font-medium">Shake du jour</span>
+              <span className="font-medium">Shake de la semaine</span>
             </button>
           )}
         </nav>

@@ -70,6 +70,16 @@ Trouvailles en plus :
 | D5 | ✅ | Les réglages Likes / Commentaires / Reshakes / Abonnés filtrent la cloche, son compteur et les notifs téléphone. |
 | E1 | ✅ | Le minuteur d'une story attend que la photo soit chargée (8 s maximum). |
 | E2 | ✅ | Story en pause (défilement + son) quand l'appli est masquée, reprise au retour. |
+| **LOT 5 — Petits gains visibles** | | |
+| A4 | ✅ | Logo cliquable (retour à shakemoi.fr) sur la page d'un son/post partagé, profil partagé, invitation de cercle, confidentialité. |
+| A5 | ✅ | Bandeau « SHAKEmoi sur ton écran d'accueil · Télécharger l'app » en haut de l'accueil (membres et visiteurs). Android : fenêtre d'installation directe. iPhone : mode d'emploi en 3 étapes. Caché si l'appli est installée ; « × » le masque 14 jours. |
+| H2 | ✅ | Entre 1024 et 1280 px : le menu de droite s'affiche (la colonne Tendances n'apparaît qu'à partir de 1280 px). |
+| H3 | ✅ | « Recherche » ajoutée au menu ordinateur. |
+| H4 | ✅ | Sur écran tactile, les boutons lecture des pochettes sont toujours visibles (14 endroits, une règle CSS). |
+| K1 | ✅ | « Shake de la semaine » partout ; la popup revient une fois par semaine (mardi 11 h Paris), plus chaque jour. |
+| G5 | ✅ | Erreurs de connexion/inscription en français (« Email ou mot de passe incorrect », « Confirme d'abord ton email », etc.). |
+| G6 | ✅ | Premier lancement : le Shake de la semaine attend que « Compléter ton profil » soit fermé. |
+| F4 | ✅ | Like instantané (fil, détail d'un post, story) ; deux taps rapides ne se contredisent plus ; retour en arrière si le serveur refuse. |
 | G3 | 🟡 | « Modifier le profil » : pseudo mis en minuscules, vérifié (règle + doublon) avant d'enregistrer, et affiché seulement si la base accepte. Reste la contrainte en base (LOT 6). |
 
 ## Backlog v2 (hors périmètre ce soir)

@@ -194,7 +194,7 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
 
   if (!data) return (
     <div className="min-h-[100dvh] bg-[#1E1440] text-white flex flex-col items-center justify-center gap-4 text-center p-6">
-      <Logo size="sm" animated={false} showText={true} />
+      <Logo size="sm" animated={false} showText={true} href="/" />
       <p className="text-purple-300/70">Ce son n'existe plus ou le lien est invalide.</p>
       <button onClick={currentUser ? onOpenApp : onSignUp} className="px-6 py-3 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-xl font-bold text-sm">
         {currentUser ? 'Accéder à mon compte' : 'Découvrir SHAKEmoi'}
@@ -216,7 +216,7 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
 
       {/* En-tête : logo + accès au compte / connexion */}
       <header className="relative z-10 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 max-w-md mx-auto">
-        <Logo size="sm" animated={false} showText={true} />
+        <Logo size="sm" animated={false} showText={true} href="/" />
         {currentUser ? (
           <button onClick={onOpenApp} className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold hover:bg-white/15 transition-colors">
             <img loading="lazy" src={currentUser.avatar} alt="" className="w-6 h-6 rounded-full object-cover" />

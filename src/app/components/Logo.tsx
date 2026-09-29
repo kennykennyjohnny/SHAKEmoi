@@ -5,9 +5,11 @@ interface LogoProps {
   animated?: boolean;
   showText?: boolean;
   variant?: 1 | 2 | 3 | 4 | 5;
+  /** Logo cliquable (pages publiques : ramène sur shakemoi.fr). */
+  href?: string;
 }
 
-export function Logo({ size = 'md', animated = true, showText = true }: LogoProps) {
+export function Logo({ size = 'md', animated = true, showText = true, href }: LogoProps) {
   const sizes = {
     sm: { icon: 'h-8', wordmark: 'h-6' },
     md: { icon: 'h-12', wordmark: 'h-8' },
@@ -16,6 +18,12 @@ export function Logo({ size = 'md', animated = true, showText = true }: LogoProp
 
   const { icon, wordmark } = sizes[size];
 
+  const image = showText ? (
+    <img src="/shakemoi-logo.png" alt="SHAKEmoi" className={`${wordmark} object-contain`} draggable={false} />
+  ) : (
+    <img src="/shakemoi-favicon.png" alt="S" className={`${icon} object-contain`} draggable={false} />
+  );
+
   return (
     <motion.div
       className="flex items-center gap-2"
@@ -23,11 +31,11 @@ export function Logo({ size = 'md', animated = true, showText = true }: LogoProp
       animate={animated ? { opacity: 1, scale: 1 } : undefined}
       transition={{ type: 'spring', duration: 0.5 }}
     >
-      {showText ? (
-        <img loading="lazy" src="/shakemoi-logo.png" alt="SHAKEmoi" className={`${wordmark} object-contain`} draggable={false} />
-      ) : (
-        <img loading="lazy" src="/shakemoi-favicon.png" alt="S" className={`${icon} object-contain`} draggable={false} />
-      )}
+      {href ? (
+        <a href={href} aria-label="Accueil SHAKEmoi" className="flex items-center rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400">
+          {image}
+        </a>
+      ) : image}
     </motion.div>
   );
 }

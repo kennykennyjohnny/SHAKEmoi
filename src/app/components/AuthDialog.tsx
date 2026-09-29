@@ -4,6 +4,7 @@ import { Mail, Lock, User as UserIcon, Loader2, AlertCircle, UserPlus, Sparkles 
 import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';
+import { friendlyError } from '../../lib/errors';
 
 import { thumb, defaultAvatar } from '../../lib/media';
 interface AuthDialogProps {
@@ -105,7 +106,8 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
       }
     } catch (err: any) {
       console.error('Auth error:', err);
-      setError(err.message || 'Une erreur est survenue');
+      // Messages de Supabase en anglais → français (G5).
+      setError(friendlyError(err, 'Une erreur est survenue. Réessaie.'));
     } finally {
       setLoading(false);
     }

@@ -92,7 +92,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
         {/* Prompt */}
         <div className="px-4 py-3 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-b border-purple-800/20">
           <p className="text-sm text-yellow-200/90 font-medium">Quel son définit ta semaine ?</p>
-          <p className="text-xs text-purple-300/60 mt-1">Poste ton Shake pour débloquer le feed et participer au mini-jeu cercle. Mardi 9h pour tout le monde !</p>
+          <p className="text-xs text-purple-300/60 mt-1">Poste ton Shake pour débloquer le feed et participer au mini-jeu cercle. Un nouveau chaque mardi à 11 h (heure de Paris) !</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -202,7 +202,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
                 type="text"
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="Pourquoi ce son aujourd'hui ? (optionnel)"
+                placeholder="Pourquoi ce son cette semaine ? (optionnel)"
                 className="w-full px-3 py-2.5 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-yellow-500"
                 maxLength={280}
               />
