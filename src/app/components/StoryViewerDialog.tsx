@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers, getStoryLikes, markStoryAsViewed } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
-import { resolvePreviewUrl, playPreview, stopPreview, togglePreview, onPreviewChange, getPreviewState, getSpotifyTrackTitle, isSessionUnmuted, setMuted } from '../../lib/preview';
+import { resolvePreviewUrl, playPreview, stopPreview, togglePreview, onPreviewChange, getPreviewState, getSpotifyTrackTitle, setMuted } from '../../lib/preview';
 import { useBackHandler } from '../../lib/navigation';
 import { StoryBackdrop } from './StoryBackdrop';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -207,11 +207,11 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     // L'id Spotify suffit : pas besoin d'attendre le titre (anciennes stories).
     if (!title && !story.track_id) return;
     let cancelled = false;
+    // M2 : l'extrait est préparé mais ne démarre jamais tout seul :
+    // on touche la pochette pour l'écouter (même règle partout).
     resolvePreviewUrl(title || '', title ? story.artist || '' : '', (story as any).preview_url, story.track_id).then(url => {
       if (cancelled || !url) return;
       setStoryPreviewUrl(url);
-      // Son actif par défaut ; coupé seulement si on l'a coupé soi-même.
-      playPreview(`story-${story.id}`, url, { muted: !isSessionUnmuted() });
     });
     return () => { cancelled = true; stopPreview(); };
   }, [story?.id, open]);
@@ -281,6 +281,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     if (storyPreviewUrl) { togglePreview(storyKey, storyPreviewUrl); return; }
     const url = await resolvePreviewUrl(trackTitle || '', trackArtist || '', (story as any).preview_url, story?.track_id);
     if (url) { setStoryPreviewUrl(url); playPreview(storyKey, url); }
+    else openInApp(); // aucun extrait nulle part : on l'écoute sur la plateforme (M1)
   };
 
   const loadViewers = async () => {

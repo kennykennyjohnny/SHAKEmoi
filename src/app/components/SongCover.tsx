@@ -1,0 +1,105 @@
+// Pochette jouable (M2) : LA seule façon d'afficher un son dans l'appli.
+// - bouton lecture toujours visible (aussi sur téléphone) ;
+// - un clic lance / met en pause l'extrait dans notre lecteur (jamais d'embed
+//   Spotify, jamais de lecture automatique) ;
+// - un seul son à la fois dans toute l'appli (lecteur global de lib/preview) ;
+// - pas d'extrait nulle part (M1) : petit bouton « Écouter sur Spotify ».
+import { useEffect, useState } from 'react';
+import { Play, Pause, Loader2, ExternalLink } from 'lucide-react';
+import { resolvePreviewUrl, togglePreview, playPreview, getPreviewState, onPreviewChange } from '../../lib/preview';
+import { openExternal } from '../../lib/platforms';
+import { thumb } from '../../lib/media';
+
+export interface SongCoverProps {
+  /** Identifiant unique de ce son à l'écran (id du post, du message…). */
+  songKey: string;
+  title?: string | null;
+  artist?: string | null;
+  cover?: string | null;
+  previewUrl?: string | null;
+  /** Id ou lien Spotify : retrouve l'extrait exact (ISRC) et sert de secours. */
+  spotifyId?: string | null;
+  spotifyUrl?: string | null;
+  /** Taille de la pochette (classes Tailwind), ex. « w-12 h-12 ». */
+  className?: string;
+  rounded?: string;
+  /** Taille de l'icône lecture. */
+  iconSize?: 'sm' | 'md' | 'lg';
+}
+
+function usePreviewState() {
+  const [state, setState] = useState(getPreviewState());
+  useEffect(() => onPreviewChange(() => setState(getPreviewState())), []);
+  return state;
+}
+
+export function SongCover({
+  songKey, title, artist, cover, previewUrl, spotifyId, spotifyUrl,
+  className = 'w-12 h-12', rounded = 'rounded-lg', iconSize = 'md',
+}: SongCoverProps) {
+  const state = usePreviewState();
+  const [loading, setLoading] = useState(false);
+  const [noPreview, setNoPreview] = useState(false);
+  const isCurrent = state.key === songKey;
+  const isPlaying = isCurrent && state.playing;
+  const trackId = spotifyId || spotifyUrl?.match(/track[/:]([A-Za-z0-9]{22})/)?.[1] || null;
+  const icon = iconSize === 'sm' ? 'w-3.5 h-3.5' : iconSize === 'lg' ? 'w-7 h-7' : 'w-5 h-5';
+
+  const onClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (isCurrent) { togglePreview(songKey); return; }
+    setLoading(true);
+    const url = await resolvePreviewUrl(title || '', artist || '', previewUrl, trackId).catch(() => null);
+    setLoading(false);
+    if (url) { setNoPreview(false); playPreview(songKey, url); }
+    else setNoPreview(true);
+  };
+
+  const openSpotify = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const q = encodeURIComponent(`${title || ''} ${artist || ''}`.trim());
+    openExternal(trackId ? `https://open.spotify.com/track/${trackId}` : `https://open.spotify.com/search/${q}`);
+  };
+
+  return (
+    <div className={`relative flex-shrink-0 ${className}`}>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={isPlaying ? `Mettre en pause ${title || 'le son'}` : `Écouter ${title || 'le son'}`}
+        className={`group relative block w-full h-full overflow-hidden ${rounded} bg-violet-950/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400`}
+      >
+        {cover ? (
+          <img loading="lazy" src={thumb(cover, 320)} alt="" className={`w-full h-full object-cover ${isPlaying ? 'scale-[1.03]' : ''} transition-transform`} />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-purple-700 to-pink-700" />
+        )}
+        {/* Toujours visible : sur téléphone il n'y a pas de survol (H4). */}
+        <span className={`absolute inset-0 flex items-center justify-center transition-colors ${isPlaying ? 'bg-black/35' : 'bg-black/25 group-hover:bg-black/40'}`}>
+          <span className="rounded-full bg-black/45 p-1.5 backdrop-blur-[2px]">
+            {loading ? <Loader2 className={`${icon} text-white animate-spin`} />
+              : isPlaying ? <Pause className={`${icon} text-white fill-white`} />
+              : <Play className={`${icon} text-white fill-white translate-x-[1px]`} />}
+          </span>
+        </span>
+        {isPlaying && (
+          <span className="absolute bottom-1 left-1 right-1 flex items-end justify-center gap-[2px] h-2.5">
+            {[0, 1, 2, 3].map(i => (
+              <span key={i} className="w-[3px] bg-white/90 rounded-full animate-pulse" style={{ height: `${40 + ((i * 23) % 60)}%`, animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </span>
+        )}
+      </button>
+      {noPreview && (
+        <button
+          type="button"
+          onClick={openSpotify}
+          className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 whitespace-nowrap flex items-center gap-1 px-2 py-1 rounded-full bg-white text-[#1E1440] text-[10px] font-bold shadow-lg"
+        >
+          <ExternalLink className="w-3 h-3" /> Écouter sur Spotify
+        </button>
+      )}
+    </div>
+  );
+}

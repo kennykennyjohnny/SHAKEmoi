@@ -5,6 +5,7 @@ import { spotify } from '../../lib/spotify';
 import { searchUsers, createPost, searchCircles, joinCircle, followUser, unfollowUser, getFollowingIds } from '../../lib/database';
 import { resolvePreviewUrl, playPreview, togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
 import { createSongShare } from '../../lib/shares';
+import { openExternal } from '../../lib/platforms';
 import { SongShareSheet } from './SongShareSheet';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
@@ -45,7 +46,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
   const [showCaptionFor, setShowCaptionFor] = useState<string | null>(null);
   const [shakedIds, setShakedIds] = useState<Set<string>>(new Set());
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
-  const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
+  const [activeEmbedId] = useState<string | null>(null);
   const [sendSongTrack, setSendSongTrack] = useState<any>(null);
   const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
   const [followLoading, setFollowLoading] = useState<string | null>(null);
@@ -159,9 +160,6 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
     }
   };
 
-  const toggleEmbed = (id: string) => {
-    setActiveEmbedId(activeEmbedId === id ? null : id);
-  };
 
   // Extrait 30s : même comportement que le feed et les stories (pas d'embed).
   const [preview, setPreview] = useState(getPreviewState());
@@ -171,8 +169,10 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
   const toggleTrackPreview = async (track: any) => {
     const key = `search-${track.id}`;
     if (getPreviewState().key === key) { togglePreview(key); return; }
-    const url = await resolvePreviewUrl(track.title, track.artist || track.artists || '', track.previewUrl);
+    // Id Spotify → extrait exact (Deezer par ISRC) ; sans extrait : Spotify (M1).
+    const url = await resolvePreviewUrl(track.title, track.artist || track.artists || '', track.previewUrl, track.id);
     if (url) playPreview(key, url);
+    else openExternal(track.spotifyUrl || `https://open.spotify.com/track/${track.id}`);
   };
 
   // Partage : on crée un vrai lien vers la page du son (marche sans compte)

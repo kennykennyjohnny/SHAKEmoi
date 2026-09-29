@@ -16,6 +16,7 @@ import { openExternal } from '../../lib/platforms';
 import { LikersSheet } from './LikersSheet';
 
 import { thumb, defaultAvatar } from '../../lib/media';
+import { SongCover } from './SongCover';
 interface ProfileViewProps {
   user: any;
   onUpdateUser?: (updatedUser: any) => void;
@@ -35,7 +36,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
   const [sendSongTrack, setSendSongTrack] = useState<any>(null);
   const [detailPostId, setDetailPostId] = useState<string | null>(null);
-  const [showDetailEmbed, setShowDetailEmbed] = useState(false);
+  const [, setShowDetailEmbed] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
   const [showFollowersList, setShowFollowersList] = useState<'followers' | 'following' | null>(null);
   const [followersList, setFollowersList] = useState<any[]>([]);
@@ -176,7 +177,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
     );
   }
 
-  const handleSaveSettings = (settings: { musicService: 'spotify' | 'apple' }) => {
+  const handleSaveSettings = (settings: { musicService: string }) => {
     const updatedUser = { ...user, ...settings };
     if (onUpdateUser) {
       onUpdateUser(updatedUser);
@@ -484,7 +485,6 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                       const detailShake = currentShakes.find(s => s.id === detailPostId);
                       if (!detailShake) return null;
                       const trackId = detailShake.track.id || (detailShake.track.spotifyUrl?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
-                      const embedUrl = detailShake.track.spotifyEmbedUrl || (trackId ? `https://open.spotify.com/embed/track/${trackId}?theme=0` : null);
                       return (
                         <div className="col-span-3" ref={detailRef}>
                           <AnimatePresence>
@@ -513,43 +513,18 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
                       {/* Track Card - compact like feed */}
                       <div className="px-4 pt-3">
-                        <div
-                          className={`rounded-xl px-3 py-2 flex gap-2.5 items-center group cursor-pointer transition-all border ${
-                            showDetailEmbed
-                              ? 'bg-purple-800/20 border-purple-600/30'
-                              : 'bg-purple-900/20 border-purple-800/10 hover:bg-purple-900/30'
-                          }`}
-                          onClick={() => setShowDetailEmbed(!showDetailEmbed)}
-                        >
-                          <div className="relative flex-shrink-0">
-                            <img loading="lazy" src={detailShake.track.coverUrl} alt="" className={`w-11 h-11 rounded-lg object-cover transition-all ${showDetailEmbed ? 'ring-2 ring-purple-500/50' : ''}`} />
-                            <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
-                              showDetailEmbed ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
-                            }`}>
-                              {showDetailEmbed ? (
-                                <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
-                                  <div className="flex items-center gap-0.5">
-                                    <span className="w-0.5 h-2.5 bg-white rounded-full animate-pulse" />
-                                    <span className="w-0.5 h-3 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
-                                    <span className="w-0.5 h-2 bg-white rounded-full animate-pulse [animation-delay:0.3s]" />
-                                  </div>
-                                </div>
-                              ) : (
-                                <Play className="w-5 h-5 text-white fill-white" />
-                              )}
-                            </div>
-                          </div>
+                        {/* M2 : pochette jouable, même lecteur que le fil. */}
+                        <div className="rounded-xl px-3 py-2 flex gap-2.5 items-center border bg-purple-900/20 border-purple-800/10">
+                          <SongCover
+                            songKey={`profile-${detailShake.id}`}
+                            title={detailShake.track.title} artist={detailShake.track.artist} cover={detailShake.track.coverUrl}
+                            previewUrl={(detailShake.track as any).previewUrl} spotifyId={trackId} spotifyUrl={detailShake.track.spotifyUrl}
+                            className="w-11 h-11" iconSize="sm"
+                          />
                           <div className="flex-1 min-w-0 flex flex-col justify-center">
                             <h3 className="font-bold text-sm truncate">{detailShake.track.title}</h3>
                             <p className="text-xs text-purple-200/70 truncate">{detailShake.track.artist}</p>
                           </div>
-                          {!showDetailEmbed && (
-                            <div className="flex items-center">
-                              <div className="w-7 h-7 bg-[#FFEFD5] rounded-full flex items-center justify-center shadow-sm shadow-[#FFEFD5]/20 group-hover:scale-105 transition-transform">
-                                <Play className="w-3.5 h-3.5 text-[#1E1440] fill-[#1E1440] ml-0.5" />
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </div>
 
@@ -560,14 +535,6 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                         </div>
                       )}
 
-                      {/* Embed */}
-                      <AnimatePresence>
-                        {showDetailEmbed && embedUrl && (
-                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden px-4 pt-2">
-                            <iframe src={embedUrl} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
 
                       {/* Action bar */}
                       <div className="px-4 py-3 flex items-center gap-3 flex-wrap">

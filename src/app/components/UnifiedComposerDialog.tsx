@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { X, Search, Music2, Sparkles, Loader2, Image as ImageIcon, Clock, ZoomIn, RotateCcw } from 'lucide-react';
+import { X, Search, Sparkles, Loader2, Image as ImageIcon, Clock, ZoomIn, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPost, createStory } from '../../lib/database';
 import { spotify } from '../../lib/spotify';
 import { supabase } from '../../lib/supabase';
 import { compressImage, extFor } from '../../lib/media';
+import { SongCover } from './SongCover';
+import { stopPreview } from '../../lib/preview';
 import { STORY_THEMES, getCoverPalette, themeCss, autoBackgroundCss, type StoryTheme, type Palette } from '../../lib/storyTheme';
 import { StoryComposerPreview, composeStoryImage, defaultTransform, type PhotoTransform } from './StoryComposerPreview';
 import { useCoverPalette } from './StoryBackdrop';
@@ -70,6 +72,9 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
     setComposerType('shake');
     setIsCreating(false);
   };
+
+  // L'aperçu écouté pendant la création s'arrête quand on ferme.
+  useEffect(() => { if (!open) stopPreview(); return () => stopPreview(); }, [open]);
 
   // Debounce search
   useEffect(() => {
@@ -353,10 +358,12 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
               {selectedTrack ? (
                 <div>
                   <div className="bg-gradient-to-br from-purple-900/40 to-pink-900/40 rounded-xl p-3 flex gap-3 items-center border border-purple-500/20 mb-3">
-                    <img loading="lazy"
-                      src={selectedTrack.coverUrl}
-                      alt={selectedTrack.title}
-                      className="w-16 h-16 rounded object-cover"
+                    {/* M2 : écouter l'aperçu de ce qu'on va publier. */}
+                    <SongCover
+                      songKey={`compose-${selectedTrack.id}`}
+                      title={selectedTrack.title} artist={selectedTrack.artist} cover={selectedTrack.coverUrl}
+                      previewUrl={selectedTrack.previewUrl} spotifyId={selectedTrack.id} spotifyUrl={selectedTrack.spotifyUri}
+                      className="w-16 h-16" rounded="rounded"
                     />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-white truncate">
@@ -453,26 +460,29 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                         </p>
                       ) : (
                         searchResults.map((track) => (
-                          <button
+                          <div
                             key={track.id}
-                            onClick={() => setSelectedTrack(track)}
                             className="w-full p-2 bg-purple-950/40 hover:bg-purple-800/40 rounded-lg flex items-center gap-3 transition-colors text-left"
                           >
-                            <img loading="lazy"
-                              src={track.coverUrl}
-                              alt={track.title}
-                              className="w-12 h-12 rounded object-cover"
+                            {/* Pochette = écouter ; le reste de la ligne = choisir. */}
+                            <SongCover
+                              songKey={`compose-${track.id}`}
+                              title={track.title} artist={track.artist} cover={track.coverUrl}
+                              previewUrl={track.previewUrl} spotifyId={track.id} spotifyUrl={track.spotifyUri}
+                              className="w-12 h-12" rounded="rounded"
                             />
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-sm text-white truncate">
-                                {track.title}
-                              </h4>
-                              <p className="text-xs text-purple-300/60 truncate">
-                                {track.artist}
-                              </p>
-                            </div>
-                            <Music2 className="w-4 h-4 text-purple-400" />
-                          </button>
+                            <button onClick={() => setSelectedTrack(track)} className="flex-1 min-w-0 flex items-center gap-3 text-left">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-sm text-white truncate">
+                                  {track.title}
+                                </h4>
+                                <p className="text-xs text-purple-300/60 truncate">
+                                  {track.artist}
+                                </p>
+                              </div>
+                              <span className="flex-shrink-0 px-2.5 py-1 rounded-full bg-purple-600/40 text-[11px] font-semibold">Choisir</span>
+                            </button>
+                          </div>
                         ))
                       )}
                     </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Search, Play, Sparkles, Loader2, X, Sun } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { SongCover } from './SongCover';
+import { Search, Sparkles, Loader2, X, Sun } from 'lucide-react';
+import { motion } from 'motion/react';
 import { spotify } from '../../lib/spotify';
 import { createPost, createShakeDuJour } from '../../lib/database';
 
@@ -17,7 +18,6 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
   const [posting, setPosting] = useState(false);
   const [caption, setCaption] = useState('');
   const [selectedTrack, setSelectedTrack] = useState<any>(null);
-  const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
   const [publishToProfile, setPublishToProfile] = useState(false);
 
   useEffect(() => {
@@ -118,7 +118,6 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
               )}
 
               {results.map((track) => {
-                const isEmbedOpen = activeEmbedId === track.id;
                 return (
                   <motion.div
                     key={track.id}
@@ -127,15 +126,12 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
                     className="rounded-xl border border-purple-800/20 bg-purple-950/20 overflow-hidden"
                   >
                     <div className="p-2.5 flex items-center gap-3">
-                      <div
-                        className="relative flex-shrink-0 cursor-pointer group"
-                        onClick={() => setActiveEmbedId(isEmbedOpen ? null : track.id)}
-                      >
-                        <img loading="lazy" src={track.coverUrl} alt={track.title} className="w-12 h-12 rounded-lg object-cover" />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity">
-                          <Play className="w-5 h-5 text-white fill-white" />
-                        </div>
-                      </div>
+                      <SongCover
+                        songKey={`sdj-${track.id}`}
+                        title={track.title} artist={track.artist} cover={track.coverUrl}
+                        previewUrl={track.previewUrl} spotifyId={track.id} spotifyUrl={track.spotifyUrl}
+                        className="w-12 h-12"
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{track.title}</p>
                         <p className="text-xs text-purple-300/60 truncate">{track.artists || track.artist}</p>
@@ -147,25 +143,6 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
                         Choisir
                       </button>
                     </div>
-                    <AnimatePresence>
-                      {isEmbedOpen && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="px-2.5 pb-2.5">
-                            <iframe
-                              src={`https://open.spotify.com/embed/track/${track.id}?theme=0`}
-                              width="100%" height="152" frameBorder="0"
-                              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                              loading="lazy" className="rounded-xl"
-                            />
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </motion.div>
                 );
               })}
@@ -177,7 +154,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
             <div className="space-y-3">
               <div className="bg-purple-950/40 rounded-xl border border-yellow-500/30 p-3">
                 <div className="flex gap-3">
-                  <img loading="lazy" src={selectedTrack.coverUrl} alt="" className="w-16 h-16 rounded-lg object-cover" />
+                  <SongCover songKey={`sdj-${selectedTrack.id}`} title={selectedTrack.title} artist={selectedTrack.artist} cover={selectedTrack.coverUrl} previewUrl={selectedTrack.previewUrl} spotifyId={selectedTrack.id} spotifyUrl={selectedTrack.spotifyUrl} className="w-16 h-16" />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">{selectedTrack.title}</p>
                     <p className="text-xs text-purple-300/60 truncate">{selectedTrack.artist}</p>
@@ -190,13 +167,6 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
                   </button>
                 </div>
               </div>
-
-              <iframe
-                src={`https://open.spotify.com/embed/track/${selectedTrack.id}?theme=0`}
-                width="100%" height="152" frameBorder="0"
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy" className="rounded-xl"
-              />
 
               <input
                 type="text"

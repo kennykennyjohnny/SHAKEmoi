@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Heart, MessageCircle, ExternalLink, Play, Loader2, Send, Pause, Trash2, Share2, Music, Search } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { X, Heart, MessageCircle, ExternalLink, Loader2, Send, Trash2, Share2, Music, Search } from 'lucide-react';
+import { motion } from 'motion/react';
 import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 import { spotify } from '../../lib/spotify';
@@ -10,6 +10,7 @@ import { openExternal } from '../../lib/platforms';
 import { LikersSheet } from './LikersSheet';
 
 import { thumb, defaultAvatar } from '../../lib/media';
+import { SongCover } from './SongCover';
 interface PostDetailModalProps {
   postId: string;
   currentUser: any;
@@ -24,7 +25,6 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-  const [showEmbed, setShowEmbed] = useState(false);
 
   // Comments & music reactions
   const [tab, setTab] = useState<'comments' | 'music'>('comments');
@@ -41,7 +41,6 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
   const [selectedTrack, setSelectedTrack] = useState<any>(null);
   const [musicComment, setMusicComment] = useState('');
   const [musicSending, setMusicSending] = useState(false);
-  const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
 
   useEffect(() => {
     loadPost();
@@ -160,7 +159,6 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
   };
 
   const trackId = post?.track_id || (post?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
-  const embedUrl = trackId ? `https://open.spotify.com/embed/track/${trackId}?theme=0` : null;
   const coverUrl = post?.cover_url || post?.track_cover_url;
   const userName = post?.user?.display_name || post?.user?.username || '';
   const avatar = thumb(post?.user?.profile_album_cover_url) || defaultAvatar(post?.user?.username || 'U');
@@ -226,16 +224,13 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
         <div className="flex-1 overflow-y-auto">
           {/* Cover */}
           {coverUrl && (
-            <div className="relative cursor-pointer" onClick={() => setShowEmbed(!showEmbed)}>
-              <img loading="lazy" src={coverUrl} alt="" className="w-full aspect-square object-cover" />
-              <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
-                {showEmbed ? (
-                  <Pause className="w-12 h-12 text-white fill-white drop-shadow-lg" />
-                ) : (
-                  <Play className="w-12 h-12 text-white fill-white drop-shadow-lg" />
-                )}
-              </div>
-            </div>
+            // M2 : la grande pochette lance l'extrait dans notre lecteur.
+            <SongCover
+              songKey={`post-${post.id}`}
+              title={post.track_name} artist={post.artist} cover={coverUrl}
+              previewUrl={post.preview_url} spotifyId={trackId} spotifyUrl={post.spotify_url}
+              className="w-full aspect-square" rounded="rounded-none" iconSize="lg"
+            />
           )}
 
           {/* Track info */}
@@ -251,14 +246,6 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
             </div>
           )}
 
-          {/* Embed */}
-          <AnimatePresence>
-            {showEmbed && embedUrl && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden px-4 pt-2">
-                <iframe src={embedUrl} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Action bar */}
           <div className="px-4 py-3 flex items-center gap-5">
@@ -354,36 +341,25 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
             </div>
           ) : (
             <div className="px-4 pb-3 space-y-3">
-              {musicReactions.map(r => {
-                const rEmbedUrl = r.track_id ? `https://open.spotify.com/embed/track/${r.track_id}` : null;
-                const isOpen = activeEmbedId === r.id;
-                return (
+              {musicReactions.map(r => (
                   <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <img loading="lazy" src={thumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full" alt="" />
                       <span className="text-xs font-medium">@{r.user?.username}</span>
                       {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}
                     </div>
-                    <div className="flex gap-2 items-center cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : r.id)}>
-                      <img loading="lazy" src={r.cover_url} className="w-10 h-10 rounded-md object-cover" alt="" />
+                    <div className="flex gap-2 items-center">
+                      <SongCover songKey={`reaction-${r.id}`} title={r.track_name} artist={r.artist} cover={r.cover_url} previewUrl={r.preview_url} spotifyId={r.track_id} spotifyUrl={r.spotify_url} className="w-10 h-10" rounded="rounded-md" iconSize="sm" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{r.track_name}</p>
                         <p className="text-xs text-purple-300/60 truncate">{r.artist}</p>
                       </div>
-                      <button onClick={e => { e.stopPropagation(); openReactionInApp(r); }} className="p-1.5 rounded-full bg-purple-600/10 hover:bg-purple-600/20">
-                        <Play className="w-3.5 h-3.5 text-purple-400" />
+                      <button onClick={e => { e.stopPropagation(); openReactionInApp(r); }} aria-label="Ouvrir dans mon appli de musique" className="p-1.5 rounded-full bg-purple-600/10 hover:bg-purple-600/20">
+                        <ExternalLink className="w-3.5 h-3.5 text-purple-400" />
                       </button>
                     </div>
-                    <AnimatePresence>
-                      {isOpen && rEmbedUrl && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mt-2">
-                          <iframe src={`${rEmbedUrl}?theme=0`} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
-                );
-              })}
+              ))}
               {musicReactions.length === 0 && <p className="text-center text-purple-400/50 py-4 text-sm">Aucune réaction musicale</p>}
 
               {/* Add music reaction */}

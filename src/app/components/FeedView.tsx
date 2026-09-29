@@ -768,11 +768,13 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       // Circle chat: reverse to show oldest first (like a conversation)
       setShakes(currentFeedId ? shakes.reverse() : shakes);
       if (!currentFeedId && currentUser?.id) {
+        const prev: typeof feedCache = feedCache;
+        const same = !!prev && prev.userId === currentUser.id;
         feedCache = {
           userId: currentUser.id,
           shakes,
-          stories: feedCache?.userId === currentUser.id ? feedCache.stories : [],
-          viewed: feedCache?.userId === currentUser.id ? feedCache.viewed : {},
+          stories: same && prev ? prev.stories : [],
+          viewed: same && prev ? prev.viewed : {},
         };
       }
     } catch (err: any) {
@@ -930,9 +932,19 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     if (getPreviewState().key === shake.id) { togglePreview(shake.id); return; }
     activePlayerIdRef.current = shake.id;
     setActivePlayerId(shake.id);
-    const url = await resolvePreviewUrl(shake.track.title, shake.track.artist, shake.track.previewUrl);
-    if (url && activePlayerIdRef.current === shake.id) playPreview(shake.id, url);
+    // Id Spotify : extrait exact via l'ISRC (Deezer), même si le titre diffère (M1).
+    const spotifyRef = shake.track.spotifyUri || (/^[A-Za-z0-9]{22}$/.test(shake.track.id) ? shake.track.id : null);
+    const url = await resolvePreviewUrl(shake.track.title, shake.track.artist, shake.track.previewUrl, spotifyRef);
+    if (activePlayerIdRef.current !== shake.id) return;
+    if (url) playPreview(shake.id, url);
+    else {
+      // Aucun extrait nulle part : proposition propre d'écouter sur Spotify.
+      setReshakeNotice(null);
+      setNoPreviewShake(shake);
+      setTimeout(() => setNoPreviewShake(s => (s?.id === shake.id ? null : s)), 5000);
+    }
   };
+  const [noPreviewShake, setNoPreviewShake] = useState<Shake | null>(null);
 
   const handlePlayTrack = (shake: Shake) => { handleTogglePreview(shake); };
 
@@ -1573,6 +1585,28 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       <AnimatePresence>
         {reshakeDialogShake && (
           <ReshakeDialog shake={reshakeDialogShake} onClose={() => setReshakeDialogShake(null)} onConfirm={confirmReshake} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {noPreviewShake && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="fixed left-1/2 -translate-x-1/2 bottom-24 lg:bottom-8 z-[60] max-w-[92vw] flex items-center gap-2 pl-4 pr-1.5 py-1.5 rounded-full bg-white text-[#1E1440] text-xs font-semibold shadow-xl"
+          >
+            <span className="truncate">Pas d'extrait pour ce son</span>
+            <button
+              onClick={() => {
+                const s = noPreviewShake;
+                openExternal(s.track.spotifyUri || `https://open.spotify.com/search/${encodeURIComponent(`${s.track.title} ${s.track.artist}`)}`);
+                setNoPreviewShake(null);
+              }}
+              className="flex-shrink-0 px-3 py-1.5 rounded-full bg-[#1DB954] text-white font-bold"
+            >
+              Écouter sur Spotify
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
       <AnimatePresence>

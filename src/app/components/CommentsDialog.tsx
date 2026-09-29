@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X, Send, Loader2, Music, Search, Play, Trash2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { X, Send, Loader2, Music, Search, Trash2, ExternalLink } from 'lucide-react';
+import { SongCover } from './SongCover';
+import { motion } from 'motion/react';
 import { getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment, getPostOwnerId } from '../../lib/database';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -30,7 +31,6 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
   const [selectedTrack, setSelectedTrack] = useState<any>(null);
   const [musicComment, setMusicComment] = useState('');
   const [musicSending, setMusicSending] = useState(false);
-  const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
 
   useEffect(() => {
     loadComments();
@@ -231,36 +231,25 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
           <>
             {/* Music reactions list */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {musicReactions.map(r => {
-                const embedUrl = r.track_id ? `https://open.spotify.com/embed/track/${r.track_id}` : null;
-                const isOpen = activeEmbedId === r.id;
-                return (
+              {musicReactions.map(r => (
                   <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <img loading="lazy" src={thumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full" alt="" />
                       <span className="text-xs font-medium">@{r.user?.username}</span>
                       {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}
                     </div>
-                    <div className="flex gap-2 items-center cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : r.id)}>
-                      <img loading="lazy" src={r.cover_url} className="w-10 h-10 rounded-md object-cover" alt="" />
+                    <div className="flex gap-2 items-center">
+                      <SongCover songKey={`reaction-${r.id}`} title={r.track_name} artist={r.artist} cover={r.cover_url} previewUrl={r.preview_url} spotifyId={r.track_id} spotifyUrl={r.spotify_url} className="w-10 h-10" rounded="rounded-md" iconSize="sm" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{r.track_name}</p>
                         <p className="text-xs text-purple-300/60 truncate">{r.artist}</p>
                       </div>
-                      <button onClick={e => { e.stopPropagation(); openInApp(r); }} className="p-1.5 rounded-full bg-purple-600/10 hover:bg-purple-600/20">
-                        <Play className="w-3.5 h-3.5 text-purple-400" />
+                      <button onClick={e => { e.stopPropagation(); openInApp(r); }} aria-label="Ouvrir dans mon appli de musique" className="p-1.5 rounded-full bg-purple-600/10 hover:bg-purple-600/20">
+                        <ExternalLink className="w-3.5 h-3.5 text-purple-400" />
                       </button>
                     </div>
-                    <AnimatePresence>
-                      {isOpen && embedUrl && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mt-2">
-                          <iframe src={`${embedUrl}?theme=0`} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
-                );
-              })}
+              ))}
 
               {musicReactions.length === 0 && (
                 <p className="text-center text-purple-400/50 py-4">Aucune réaction musicale</p>

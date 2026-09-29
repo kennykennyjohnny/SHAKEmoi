@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Send, Search, Music, Play, Loader2, ExternalLink, Users, Plus, Copy, Check, X, Settings, LogOut, Camera, Smile, Heart, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, Search, Music, Loader2, ExternalLink, Users, Plus, Copy, Check, X, Settings, LogOut, Camera, Smile, Heart, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   getConversations, getMessages, sendMessage, getUserFollowing,
   getMessageById, markConversationRead, deleteMessage, MESSAGES_PAGE,
   createCircle, getUserCircles, getCircleMessages, getCircleMembers,
   searchUsers, addCircleMember, removeCircleMember, getCurrentUser,
-  sendCircleMessage, hasLikedPosts, likeCircleMessage, unlikeCircleMessage,
-  hasLikedCircleMessage, getCircleMessageLikes, hasLikedCircleMessages,
+  sendCircleMessage, likeCircleMessage, unlikeCircleMessage, getCircleMessageLikes, hasLikedCircleMessages,
   updateCirclePhoto
 } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
@@ -16,6 +15,7 @@ import { getPlatformUrl } from '../../lib/odesli';
 import { useBackHandler } from '../../lib/navigation';
 import { circleLink } from '../../lib/links';
 import { openExternal } from '../../lib/platforms';
+import { SongCover } from './SongCover';
 import { MediaImg, thumb, defaultAvatar, compressImage, extFor } from '../../lib/media';
 import { friendlyError } from '../../lib/errors';
 import { formatListTime, formatDayLabel, isSameDay } from '../../lib/dates';
@@ -155,13 +155,12 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
   const [activeConversation, setActiveConversation] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [sending, setSending] = useState(false);
+  const [sending] = useState(false);
   const [showTrackSearch, setShowTrackSearch] = useState(false);
   const [trackQuery, setTrackQuery] = useState('');
   const [trackResults, setTrackResults] = useState<any[]>([]);
   const [showNewConvo, setShowNewConvo] = useState(false);
   const [friends, setFriends] = useState<any[]>([]);
-  const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
   const [showGifSearch, setShowGifSearch] = useState(false);
   const [gifQuery, setGifQuery] = useState('');
   const [gifResults, setGifResults] = useState<any[]>([]);
@@ -510,8 +509,6 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
             const isMine = msg.sender_id === currentUser?.id;
             const isTrack = !!msg.track_name;
             const isStoryInteraction = !!msg.story_id;
-            const isOpen = activeEmbedId === msg.id;
-            const embedUrl = msg.track_id ? `https://open.spotify.com/embed/track/${msg.track_id}` : null;
             // Séparateur quand le jour change (C5).
             const prev = messages[idx - 1];
             const newDay = !prev || !isSameDay(prev.created_at, msg.created_at);
@@ -562,31 +559,26 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
                   )}
                   {isTrack && (
                     <div className="p-2">
-                      <div className="flex gap-2 items-center cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : msg.id)}>
-                        <div className="relative flex-shrink-0">
-                          <img loading="lazy" src={msg.cover_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-lg transition-opacity">
-                            <Play className="w-4 h-4 text-white fill-white" />
-                          </div>
-                        </div>
+                      {/* M2 : pochette jouable, jamais d'embed Spotify. */}
+                      <div className="flex gap-2 items-center">
+                        <SongCover
+                          songKey={`dm-${msg.id}`}
+                          title={msg.track_name} artist={msg.artist} cover={msg.cover_url}
+                          previewUrl={msg.preview_url} spotifyId={msg.track_id} spotifyUrl={msg.spotify_url}
+                          className="w-12 h-12"
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold truncate">{msg.track_name}</p>
                           <p className="text-xs text-purple-200/70 truncate">{msg.artist}</p>
                         </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); const url = getPlatformUrl({ spotify_url: msg.spotify_url, apple_music_url: msg.apple_music_url, deezer_url: msg.deezer_url, youtube_url: msg.youtube_url, youtube_music_url: msg.youtube_music_url, tidal_url: msg.tidal_url, odesli_page_url: msg.odesli_page_url }, currentUser?.musicService || 'spotify', { title: msg.track_name, artist: msg.artist }); if (url) openExternal(url); }}
+                          aria-label="Ouvrir dans mon appli de musique"
+                          className="flex-shrink-0 p-2 rounded-full bg-purple-600/20 hover:bg-purple-600/30"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                      <AnimatePresence>
-                        {isOpen && embedUrl && (
-                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mt-2">
-                            <iframe src={`${embedUrl}?theme=0`} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
-                            <button
-                              onClick={(e) => { e.stopPropagation(); const url = getPlatformUrl({ spotify_url: msg.spotify_url, apple_music_url: msg.apple_music_url, deezer_url: msg.deezer_url, youtube_url: msg.youtube_url, youtube_music_url: msg.youtube_music_url, tidal_url: msg.tidal_url, odesli_page_url: msg.odesli_page_url }, currentUser?.musicService || 'spotify', { title: msg.track_name, artist: msg.artist }); if (url) openExternal(url); }}
-                              className="w-full mt-1 py-1.5 flex items-center justify-center gap-1.5 bg-purple-600/20 rounded-lg text-xs font-medium hover:bg-purple-600/30 transition-colors"
-                            >
-                              <ExternalLink className="w-3 h-3" /> Ouvrir dans mon app
-                            </button>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
                     </div>
                   )}
                   <p className={`px-3 pb-1.5 text-[10px] ${isMine ? 'text-purple-300/60 text-right' : 'text-purple-400/50'}`}>
@@ -759,7 +751,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
 
 // ==================== Cercles ====================
 
-function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated, onSubViewActive, fabTrigger, openCircleId }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openCircleId?: string | null }) {
+function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigger, openCircleId }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openCircleId?: string | null }) {
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -1076,7 +1068,6 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const [showTrackSearch, setShowTrackSearch] = useState(false);
   const [trackQuery, setTrackQuery] = useState('');
   const [trackResults, setTrackResults] = useState<any[]>([]);
-  const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
   // Photo/GIF support in circles
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -1448,8 +1439,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
           <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /></div>
         ) : posts.length > 0 ? [...posts].reverse().map((msg: any) => {
           const trackId = msg.track_id || msg.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] || null;
-          const embedUrl = msg.spotify_embed_url || (trackId ? `https://open.spotify.com/embed/track/${trackId}` : null);
-          const isOpen = activeEmbedId === msg.id;
+          const isOpen = false;
           const user = msg.user;
           const isLiked = likedMessages[msg.id];
           const likersData = messageLikers[msg.id] || [];
@@ -1476,26 +1466,19 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
               {/* Track message */}
               {msg.track_name && (
                 <div className="px-2.5 pb-2">
-                  <div className="flex gap-2 items-center cursor-pointer group/track" onClick={() => setActiveEmbedId(isOpen ? null : msg.id)}>
-                    <div className="relative flex-shrink-0">
-                      <img loading="lazy" src={msg.cover_url} alt="" className="w-11 h-11 rounded-lg object-cover" />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/track:opacity-100 flex items-center justify-center rounded-lg transition-opacity">
-                        <Play className="w-4 h-4 text-white fill-white" />
-                      </div>
-                    </div>
+                  <div className="flex gap-2 items-center">
+                    <SongCover
+                      songKey={`circle-${msg.id}`}
+                      title={msg.track_name} artist={msg.artist} cover={msg.cover_url}
+                      previewUrl={msg.preview_url} spotifyId={trackId} spotifyUrl={msg.spotify_url}
+                      className="w-11 h-11" iconSize="sm"
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate">{msg.track_name}</p>
                       <p className="text-xs text-purple-200/60 truncate">{msg.artist}</p>
                       {msg.text && <p className="text-xs text-purple-300/60 truncate mt-0.5 italic">"{msg.text}"</p>}
                     </div>
                   </div>
-                  <AnimatePresence>
-                    {isOpen && embedUrl && (
-                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mt-2">
-                        <iframe src={`${embedUrl}?theme=0`} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </div>
               )}
               

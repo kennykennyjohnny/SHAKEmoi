@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, Play, Users, Loader2, ExternalLink, Music, Crown, Repeat2, BarChart3, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { SongCover } from './SongCover';
+import { TrendingUp, Users, Loader2, ExternalLink, Music, Crown, Repeat2, BarChart3, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getFriendsTrending, getCurrentUser, getUserFollowing, createPost } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -273,24 +274,6 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
                 ) : <div className="w-[100px]" />}
               </div>
 
-              {/* Embed Spotify pour le podium sélectionné */}
-              <AnimatePresence>
-                {(['pod-0', 'pod-1', 'pod-2'] as const).map(podId => {
-                  if (activeEmbedId !== podId) return null;
-                  const idx = podId === 'pod-0' ? 0 : podId === 'pod-1' ? 1 : 2;
-                  const t = top3[idx];
-                  const trackId = t?.track_id || t?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1];
-                  const embedUrl = trackId ? `https://open.spotify.com/embed/track/${trackId}` : null;
-                  if (!embedUrl) return null;
-                  return (
-                    <motion.div key={podId} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                      <div className="px-3 pb-3 pt-2">
-                        <iframe src={`${embedUrl}?theme=0`} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
             </div>
           )}
 
@@ -302,8 +285,7 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
                 {rest.map((track, index) => {
                   const realIndex = index + 3;
                   const trackId = track.track_id || (track.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
-                  const embedUrl = trackId ? `https://open.spotify.com/embed/track/${trackId}` : null;
-                  const isOpen = activeEmbedId === `list-${realIndex}`;
+                  const isOpen = false;
 
                   return (
                     <motion.div
@@ -315,20 +297,12 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
                     >
                       <div className="p-3 flex items-center gap-3">
                         <span className="text-sm font-bold text-purple-300/60 w-6 text-center flex-shrink-0">{realIndex + 1}</span>
-                        <div className="relative flex-shrink-0 cursor-pointer group" onClick={() => setActiveEmbedId(isOpen ? null : `list-${realIndex}`)}>
-                          <img loading="lazy" src={track.cover_url} alt={track.track_name} className={`w-12 h-12 rounded-lg object-cover ${isOpen ? 'ring-2 ring-purple-500/50' : ''}`} />
-                          <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${isOpen ? 'bg-black/40 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'}`}>
-                            {isOpen ? (
-                              <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
-                                <div className="flex items-center gap-0.5">
-                                  <span className="w-0.5 h-2.5 bg-white rounded-full animate-pulse" />
-                                  <span className="w-0.5 h-3.5 bg-white rounded-full animate-pulse [animation-delay:0.15s]" />
-                                  <span className="w-0.5 h-2 bg-white rounded-full animate-pulse [animation-delay:0.3s]" />
-                                </div>
-                              </div>
-                            ) : <Play className="w-4 h-4 text-white fill-white" />}
-                          </div>
-                        </div>
+                        <SongCover
+                          songKey={`top-${track.track_id || track.track_name}`}
+                          title={track.track_name} artist={track.artist} cover={track.cover_url}
+                          previewUrl={track.latest_post?.preview_url} spotifyId={trackId} spotifyUrl={track.spotify_url}
+                          className="w-12 h-12" iconSize="sm"
+                        />
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-sm text-white truncate">{track.track_name}</h3>
                           <p className="text-xs text-purple-200/60 truncate">{track.artist}</p>
@@ -364,15 +338,6 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
                           </button>
                         )}
                       </div>
-                      <AnimatePresence>
-                        {isOpen && embedUrl && (
-                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                            <div className="px-3 pb-3">
-                              <iframe src={`${embedUrl}?theme=0`} width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" className="rounded-xl" />
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
                     </motion.div>
                   );
                 })}
@@ -393,7 +358,7 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
   );
 }
 
-function PodiumCard({ track, rank, barHeight, onPlay, onOpen, isOpen, crown }: {
+function PodiumCard({ track, rank, barHeight, crown }: {
   track: any;
   rank: number;
   barHeight: number;
@@ -424,32 +389,18 @@ function PodiumCard({ track, rank, barHeight, onPlay, onOpen, isOpen, crown }: {
         <div className="h-6 mb-1.5" />
       )}
 
-      {/* Album art */}
-      <button
-        onClick={onPlay}
-        className="relative group flex-shrink-0 mb-0"
-        title={track.track_name}
-      >
-        <img loading="lazy"
-          src={track.cover_url}
-          alt={track.track_name}
-          className={`${imgSize} rounded-xl object-cover shadow-lg transition-transform group-hover:scale-105 ${isOpen ? `ring-2 ${rankBorderColor} scale-105` : ''}`}
+      {/* Album art : pochette jouable (M2) */}
+      <div className="relative flex-shrink-0 mb-0" title={track.track_name}>
+        <SongCover
+          songKey={`top-${track.track_id || track.track_name}`}
+          title={track.track_name} artist={track.artist} cover={track.cover_url}
+          previewUrl={track.latest_post?.preview_url} spotifyId={track.track_id} spotifyUrl={track.spotify_url}
+          className={`${imgSize} shadow-lg`} rounded="rounded-xl"
         />
-        <div className={`absolute inset-0 rounded-xl flex items-center justify-center transition-opacity ${isOpen ? 'bg-black/40 opacity-100' : 'opacity-0 group-hover:opacity-100 bg-black/40'}`}>
-          {isOpen ? (
-            <div className="flex items-end gap-[2px] h-5">
-              <span className="w-[3px] bg-white rounded-full animate-pulse" style={{ height: '10px' }} />
-              <span className="w-[3px] bg-white rounded-full animate-pulse" style={{ height: '18px', animationDelay: '0.15s' }} />
-              <span className="w-[3px] bg-white rounded-full animate-pulse" style={{ height: '12px', animationDelay: '0.3s' }} />
-            </div>
-          ) : (
-            <Play className="w-5 h-5 text-white fill-white" />
-          )}
-        </div>
-        <div className={`absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-br ${rankBadgeBg} flex items-center justify-center text-white text-[10px] font-bold shadow-md border border-[#1E1440]`}>
+        <div className={`absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-br ${rankBadgeBg} flex items-center justify-center text-white text-[10px] font-bold shadow-md border border-[#1E1440] pointer-events-none`}>
           {rank}
         </div>
-      </button>
+      </div>
 
       {/* Barre de podium — hauteur variable */}
       <div

@@ -97,8 +97,16 @@ Trouvailles en plus :
 | L1 | ✅ | Déploiement GitHub Pages supprimé (workflow, CNAME, 404.html, script de copie) et site Pages désactivé : il revendiquait encore shakemoi.fr (certificat en erreur). Vercel seul. |
 | L3 | ✅ | README réécrit. 16 vieux .md + 26 vieux .sql rangés dans `docs/archive/`. Dossier `backup-v1-before-react` retiré (reste dans l'historique git). |
 | L4 | ✅ | Retirés : MUI, Emotion, react-dnd, react-slick, react-popper, masonry. 10 fichiers de composants morts supprimés. |
-| L2 | 🟡 | Erreurs de types : ~50 → 10 (script `npm run typecheck` ajouté). Reste 10 petites (variables inutilisées, 1 type). Pas encore de vérification automatique (CI). |
+| L2 | ✅ | 0 erreur de types (`npm run typecheck`) et vérification automatique à chaque push (voir section M). |
 | H6, H5, B9, G7, K2, K3, I8 | ⏭️ | Pas eu le temps ce soir. |
+
+## Section M — problèmes vus en testant
+
+| # | Statut | Explication |
+|---|---|---|
+| M1 | ✅ | **Cause de « MONACO »** : Spotify ne fournit plus d'extrait (0 sur 83 sons) et iTunes ne connaît pas ce titre ; seul Deezer l'a, mais son adresse d'extrait expire au bout d'1 h, donc l'appli gardait « pas d'extrait » en mémoire sur le téléphone → son muet pour toujours. **Correctif** : chaîne Spotify → Deezer (par ISRC, sinon titre + artiste) → iTunes → bouton « Écouter sur Spotify » ; adresse Deezer **stable** `/api/preview?deezer=<id>` qui va chercher un extrait frais à chaque lecture ; source enregistrée en base (`preview_url`, `preview_source`) ; nouveaux posts, stories, messages et cercles passent par la même chaîne. **Bilan du contrôle** (`scripts/check-previews.mjs`) : 83 sons distincts → 79 via Deezer, 2 via iTunes, 0 via Spotify, 2 sans aucun extrait (« Ailleurs » de Krakow, « RESTE-LÀ » de Tiakola). En base : 116 sons sur 125 lisibles (98 posts, 16 stories, 8 messages, 3 messages de cercle), les 9 autres = ces 2 titres. |
+| M2 | ✅ | Composant unique `SongCover` (pochette + bouton lecture toujours visible, un seul son à la fois, secours « Écouter sur Spotify »). **Plus aucun embed Spotify** : remplacé dans Messages (privés + cercles), TOP (podium + liste), profil, aperçu de profil, détail d'un post, réactions musicales (×3), Shake de la semaine, colonne TOP ordinateur (l'onglet « Moods », fait de playlists Spotify, est retiré). Création d'un Shake ou d'une story : on écoute l'aperçu en touchant la pochette avant de publier. **Plus aucune lecture automatique** : page d'un son partagé et stories comprises (avant, le son partait tout seul). |
+| L2 | ✅ | (fini au passage) 0 erreur de types ; vérification automatique à chaque push (`.github/workflows/check.yml` : types + compilation). |
 
 ## Backlog v2 (hors périmètre ce soir)
 - J1 Bloquer / Signaler (personne, post, message) — exigé par les stores.

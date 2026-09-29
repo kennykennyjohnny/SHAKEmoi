@@ -1,0 +1,24 @@
+# Vérification automatique (L2) : à chaque push et pull request, on compile
+# l'appli et on contrôle les types. Vercel déploie de son côté ; ce contrôle
+# signale un problème (croix rouge sur GitHub) avant qu'on le découvre en ligne.
+name: Vérifications
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Contrôle des types
+        run: npm run typecheck
+      - name: Compilation
+        run: npm run build

@@ -3,7 +3,7 @@ import { Play, Pause, Loader2, Search, Share2, UserPlus, Check, ArrowRight, Head
 import { motion } from 'motion/react';
 import { supabase } from '../../lib/supabase';
 import { getSharedSong, incrementShareViews, getPreferredPlatform, setPreferredPlatform } from '../../lib/shares';
-import { resolvePreviewUrl, playPreview, togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
+import { resolvePreviewUrl, togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
 import {
   LISTEN_PLATFORMS, mergeLinks, normalizePlatform, platformUrl, resolveLinks,
   type PlatformKey, type StoredLinks,
@@ -121,18 +121,16 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
 
       // Liens exacts manquants + extrait, résolus en arrière-plan. Les boutons
       // marchent déjà : en attendant, ils ouvrent la recherche de la plateforme.
-      const [resolved, itunesPreview] = await Promise.all([
+      const [resolved, preview] = await Promise.all([
         resolveLinks({ title: d.title, artist: d.artist, spotifyUrl: d.links.spotify_url, isrc: d.isrc }),
-        d.preview ? Promise.resolve(null) : resolvePreviewUrl(d.title, d.artist).catch(() => null),
+        resolvePreviewUrl(d.title, d.artist, d.preview, d.links.spotify_url).catch(() => null),
       ]);
       if (cancelled) return;
       setLinks(l => mergeLinks(l, resolved));
-      const p = d.preview || itunesPreview || resolved?.preview || null;
-      setPreviewUrl(p);
+      setPreviewUrl(preview);
       setPreviewChecked(true);
-      // Lecture auto tentée (souvent refusée sans interaction : le bouton play
-      // reste affiché et le clic sur la pochette lance l'extrait).
-      if (p) playPreview(previewKey, p);
+      // M2 : jamais de lecture automatique, pour personne. Le son démarre au
+      // clic sur la pochette.
     })();
     return () => { cancelled = true; };
   }, [sourceKey]);

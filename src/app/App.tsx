@@ -576,6 +576,8 @@ export default function App() {
                   if (view === 'messages') { setViewOptions({}); }
                   setCurrentView(view);
                 }}
+                aria-label={label}
+                aria-current={currentView === view ? 'page' : undefined}
                 className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all active:scale-90 relative ${
                   currentView === view ? 'text-fuchsia-400 bg-fuchsia-500/15 shadow-lg shadow-fuchsia-500/10' : 'text-purple-300/60 hover:text-purple-200'
                 }`}

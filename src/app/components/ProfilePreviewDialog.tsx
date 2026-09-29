@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { StoryViewerDialog } from './StoryViewerDialog';
 
 import { thumb, defaultAvatar } from '../../lib/media';
+import { SongCover } from './SongCover';
 interface ProfilePreviewDialogProps {
   userId: string;
   username: string;
@@ -144,7 +145,6 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
   const expandedOriginal = expandedPostRaw?.is_reshake ? (Array.isArray(expandedPostRaw.original_post) ? expandedPostRaw.original_post[0] : expandedPostRaw.original_post) : null;
   const expandedPost = expandedOriginal || expandedPostRaw;
   const expandedTrackId = expandedPost?.track_id || (expandedPost?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
-  const expandedEmbedUrl = expandedTrackId ? `https://open.spotify.com/embed/track/${expandedTrackId}?theme=0&utm_source=generator` : null;
 
   return (
     <>
@@ -344,7 +344,13 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
                         </p>
                       )}
                       <div className="flex items-center gap-2 mb-2">
-                        <img loading="lazy" src={expandedPost.cover_url} alt="" className="w-10 h-10 rounded-md object-cover" />
+                        {/* M2 : pochette jouable, jamais d'embed Spotify. */}
+                        <SongCover
+                          songKey={`preview-${expandedPost.id}`}
+                          title={expandedPost.track_name} artist={expandedPost.artist} cover={expandedPost.cover_url}
+                          previewUrl={expandedPost.preview_url} spotifyId={expandedTrackId} spotifyUrl={expandedPost.spotify_url}
+                          className="w-14 h-14" rounded="rounded-md"
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-white truncate">{expandedPost.track_name}</p>
                           <p className="text-xs text-purple-300/60 truncate">{expandedPost.artist}</p>
@@ -356,18 +362,6 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
                       </div>
                       {expandedPost.text && (
                         <p className="text-xs text-purple-200/70 mb-2">{expandedPost.text}</p>
-                      )}
-                      {expandedEmbedUrl && (
-                        <iframe
-                          src={expandedEmbedUrl}
-                          width="100%"
-                          height="152"
-                          frameBorder="0"
-                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                          loading="lazy"
-                          className="rounded-xl"
-                          title={`${expandedPost.track_name} - ${expandedPost.artist}`}
-                        />
                       )}
                     </div>
                   </motion.div>
