@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Send, Loader2, Music, Search, Trash2, ExternalLink } from 'lucide-react';
 import { SongCover } from './SongCover';
 import { motion } from 'motion/react';
-import { getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment, getPostOwnerId } from '../../lib/database';
+import { getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment, getPostOwnerId, deleteMusicReaction } from '../../lib/database';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
@@ -100,9 +100,21 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
     setMusicSending(true);
     try {
       const r = await addMusicReaction(postId, track, musicComment);
-      if (r.success) { setSelectedTrack(null); setMusicComment(''); setMusicQuery(''); setMusicResults([]); await loadMusicReactions(); }
+      if (r.success) {
+        setSelectedTrack(null); setMusicComment(''); setMusicQuery(''); setMusicResults([]);
+        await loadMusicReactions();
+        onCommentAdded?.(); // une réponse en musique compte comme un commentaire (O3)
+      }
     } catch {}
     setMusicSending(false);
+  };
+
+  const handleDeleteMusic = async (id: string) => {
+    const before = musicReactions;
+    setMusicReactions(prev => prev.filter(r => r.id !== id));
+    const r = await deleteMusicReaction(id);
+    if (!r.success) setMusicReactions(before);
+    else onCommentDeleted?.();
   };
 
   const openInApp = (r: any) => {
@@ -247,6 +259,11 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
                       <button onClick={e => { e.stopPropagation(); openInApp(r); }} aria-label="Ouvrir dans mon appli de musique" className="p-1.5 rounded-full bg-purple-600/10 hover:bg-purple-600/20">
                         <ExternalLink className="w-3.5 h-3.5 text-purple-400" />
                       </button>
+                      {canDelete(r) && (
+                        <button onClick={() => handleDeleteMusic(r.id)} aria-label="Supprimer la réponse en musique" className="p-1.5 rounded-full text-purple-400/50 hover:text-pink-400">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
               ))}

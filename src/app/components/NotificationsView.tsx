@@ -162,7 +162,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
           const thumbUrl = notif.post_cover_url || notif.story?.image_url || notif.story?.cover_url || null;
           const hasPost = !!thumbUrl;
           // Chaque notification mène au bon endroit (D1).
-          const isPostNotif = ['like', 'comment', 'reshake', 'comment_like'].includes(notif.type) && !!notif.post_id;
+          const isPostNotif = ['like', 'comment', 'reshake', 'comment_like', 'music_reaction'].includes(notif.type) && !!notif.post_id;
           const isCircleNotif = notif.type.startsWith('circle_');
           const isStoryLike = notif.type === 'story_like' && !!notif.story_id;
           const isMessageNotif = ['message', 'song_share', 'story_comment'].includes(notif.type) || (notif.type === 'story_like' && !notif.story_id);

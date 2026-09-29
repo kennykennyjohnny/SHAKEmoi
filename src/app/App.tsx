@@ -26,7 +26,7 @@ import { ProfilePreviewDialog } from './components/ProfilePreviewDialog';
 import { PostDetailModal } from './components/PostDetailModal';
 import { StoryViewerDialog } from './components/StoryViewerDialog';
 import { supabase } from '../lib/supabase';
-import { escapeLike } from '../lib/username';
+import { resolveUserId } from '../lib/username';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount, getCurrentShakeWeekStart, getStoryById } from '../lib/database';
 import { useBackHandler } from '../lib/navigation';
 import { parseRoute, type Route } from '../lib/links';
@@ -170,8 +170,7 @@ export default function App() {
     if (route.type === 'profile' || route.type === 'invite') {
       const username = route.id;
       leaveRoute();
-      supabase.from('users_profile').select('id').ilike('username', escapeLike(username)).limit(1).maybeSingle()
-        .then(({ data }) => { if (data?.id) setProfilePreview({ userId: data.id, username }); });
+      resolveUserId(username).then((id) => { if (id) setProfilePreview({ userId: id, username }); });
     }
   }, [route, currentUser, authReady]);
 
@@ -285,14 +284,9 @@ export default function App() {
     const ref = localStorage.getItem('shakemoi_referrer');
     if (ref) {
       try {
-        const { data: refProfile } = await supabase
-          .from('users_profile')
-          .select('id')
-          .ilike('username', escapeLike(ref))
-          .limit(1)
-          .maybeSingle();
-        if (refProfile && refProfile.id !== user.id) {
-          await followUser(refProfile.id);
+        const refId = await resolveUserId(ref);
+        if (refId && refId !== user.id) {
+          await followUser(refId);
         }
       } catch (err) {
         console.error('Auto-follow referrer error:', err);

@@ -22,6 +22,16 @@ export function usernameError(username: string): string | null {
   return null;
 }
 
+/**
+ * Id du profil d'un lien /u/<pseudo> : pseudo actuel sans tenir compte des
+ * majuscules, ou ancien pseudo (redirection après un changement).
+ */
+export async function resolveUserId(username: string): Promise<string | null> {
+  const { data } = await supabase.rpc('resolve_username', { p_username: username });
+  const row = Array.isArray(data) ? data[0] : data;
+  return row?.id ?? null;
+}
+
 /** Échappe % et _ (jokers SQL) pour une recherche exacte sans casse. */
 export function escapeLike(s: string): string {
   return s.replace(/[\\%_]/g, (c) => `\\${c}`);

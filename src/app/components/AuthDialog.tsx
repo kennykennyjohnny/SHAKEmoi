@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';
 import { friendlyError } from '../../lib/errors';
-import { normalizeUsername, usernameError, escapeLike } from '../../lib/username';
+import { normalizeUsername, usernameError, resolveUserId } from '../../lib/username';
 
 import { thumb, defaultAvatar } from '../../lib/media';
 interface AuthDialogProps {
@@ -49,15 +49,15 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
   useEffect(() => {
     if (referrer) {
       setMode('signup');
-      supabase
-        .from('users_profile')
-        .select('id, username, display_name, profile_album_cover_url, bio')
-        .ilike('username', escapeLike(referrer))
-        .limit(1)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data) setReferrerProfile(data);
-        });
+      resolveUserId(referrer).then(async (id) => {
+        if (!id) return;
+        const { data } = await supabase
+          .from('users_profile')
+          .select('id, username, display_name, profile_album_cover_url, bio')
+          .eq('id', id)
+          .maybeSingle();
+        if (data) setReferrerProfile(data);
+      });
     }
   }, [referrer]);
 

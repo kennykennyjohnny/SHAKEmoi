@@ -1322,10 +1322,14 @@ export async function addMusicReaction(postId: string, track: any, text?: string
       text: text || null,
     };
 
-    // Fetch Odesli links
+    // Liens des plateformes + extrait (M1). Compteur et notif : en base (O3).
     if (reactionData.spotify_url || reactionData.track_name) {
-      const odesliLinks = await getOdesliLinks(reactionData.spotify_url || '', { title: reactionData.track_name, artist: reactionData.artist });
-      Object.assign(reactionData, odesliLinks);
+      const meta = { title: reactionData.track_name, artist: reactionData.artist };
+      const [odesliLinks, preview] = await Promise.all([
+        getOdesliLinks(reactionData.spotify_url || '', meta),
+        getSongPreview(reactionData.spotify_url || '', meta, track.preview_url || track.previewUrl),
+      ]);
+      Object.assign(reactionData, odesliLinks, preview);
     }
 
     const { data, error } = await supabase
@@ -1340,6 +1344,12 @@ export async function addMusicReaction(postId: string, track: any, text?: string
     console.error('Error adding music reaction:', error);
     return { success: false, error: error.message };
   }
+}
+
+/** Supprimer une réponse en musique : la sienne, ou sous son propre post (O3). */
+export async function deleteMusicReaction(id: string) {
+  const { error } = await supabase.from('music_reactions').delete().eq('id', id);
+  return { success: !error };
 }
 
 export async function getMusicReactions(postId: string): Promise<any[]> {

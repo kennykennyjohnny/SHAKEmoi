@@ -92,9 +92,15 @@ async function userById(id: string | null | undefined) {
   );
 }
 
+// Pseudo d'un lien /u/… : sans tenir compte des majuscules, et les anciens
+// pseudos redirigent vers le profil actuel (fonction resolve_username).
 async function userByUsername(username: string) {
+  const hit = await one<{ id: string; username: string }>(
+    `rpc/resolve_username?p_username=${encodeURIComponent(username)}`
+  );
+  if (!hit?.id) return null;
   return one<{ id: string; username: string; display_name: string | null; profile_album_cover_url: string | null }>(
-    `users_profile?username=ilike.${encodeURIComponent(username.replace(/[\\%_]/g, (ch) => `\\${ch}`))}&select=id,username,display_name,profile_album_cover_url`
+    `users_profile?id=eq.${hit.id}&select=id,username,display_name,profile_album_cover_url`
   );
 }
 

@@ -12,6 +12,7 @@ export function notificationText(type: string): string {
     case 'like': return 'a aimé ton shake';
     case 'comment': return 'a commenté ton shake';
     case 'comment_like': return 'a aimé ton commentaire';
+    case 'music_reaction': return 'a répondu en musique à ton shake';
     case 'reshake': return 'a reshaké ton shake';
     case 'follow':
     case 'feel': return 's\'est abonné·e à toi';
@@ -30,7 +31,7 @@ export function notificationText(type: string): string {
 type Prefs = { likes: boolean; comments: boolean; reshakes: boolean; follows: boolean };
 const PREF_OF_TYPE: Record<string, keyof Prefs> = {
   like: 'likes', comment_like: 'likes', story_like: 'likes',
-  comment: 'comments',
+  comment: 'comments', music_reaction: 'comments',
   reshake: 'reshakes',
   follow: 'follows', feel: 'follows',
 };
