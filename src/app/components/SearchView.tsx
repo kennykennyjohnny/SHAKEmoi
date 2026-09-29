@@ -483,6 +483,9 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                 </div>
                 {joinedCircleIds.has(circle.id) ? (
                   <span className="text-xs text-fuchsia-400 font-semibold px-3">Rejoint !</span>
+                ) : circle.is_member !== false ? (
+                  // Cercle déjà à soi (la base ne montre que ceux dont on est membre).
+                  <span className="text-xs text-purple-300/70 font-semibold px-3">Membre ✓</span>
                 ) : (
                   <button
                     onClick={async () => {
@@ -500,6 +503,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
             <div className="text-center py-8">
               <Sparkles className="w-10 h-10 text-purple-600 mx-auto mb-2" />
               <p className="text-purple-200/70 text-sm">Aucun cercle trouvé pour "{searchQuery}"</p>
+              <p className="text-purple-300/50 text-xs mt-1">Pour rejoindre un cercle, tape son code d'invitation exact.</p>
             </div>
           )}
         </div>

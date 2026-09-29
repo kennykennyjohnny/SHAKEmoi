@@ -68,8 +68,6 @@ export async function getCurrentUser() {
 
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
   try {
-    console.log('🔍 Getting profile for user:', userId);
-
     const { data, error } = await supabase
       .from('users_profile')
       .select('*')
@@ -81,13 +79,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
       return null;
     }
 
-    if (data) {
-      console.log('✅ Profile found:', data.username);
-      return data;
-    }
-
-    console.log('❌ No profile found for user:', userId);
-    return null;
+    return data || null;
 
   } catch (error) {
     console.error('💥 Error in getUserProfile:', error);
@@ -206,6 +198,8 @@ export async function getUserPosts(userId: string, limit = 50): Promise<Post[]> 
       `)
       .eq('user_id', userId)
       .neq('is_private', true)
+      // Les posts de cercle restent dans leur cercle, jamais sur le profil (B4).
+      .is('circle_id', null)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -277,23 +271,7 @@ export async function createPost(
       .single();
 
     if (error) throw error;
-    
-    // Notify circle members if posted in a circle
-    if (circleId && data) {
-      try {
-        const { data: members } = await supabase
-          .from('circle_members')
-          .select('user_id')
-          .eq('circle_id', circleId)
-          .neq('user_id', user.id);
-        if (members) {
-          await supabase.from('notifications').insert(
-            members.map((m: any) => ({ user_id: m.user_id, from_user_id: user.id, type: 'circle_post', post_id: data.id }))
-          );
-        }
-      } catch {}
-    }
-    
+
     return { success: true, data };
   } catch (error: any) {
     console.error('Error creating post:', error);
@@ -368,33 +346,18 @@ export async function likePost(postId: string) {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    console.log('👍 Liking post:', postId);
-
-    // 1. Insert like
-    const { data: likeData, error: likeError } = await supabase
+    // Le compteur est recalculé en base (déclencheur) : rien d'autre à faire.
+    const { error: likeError } = await supabase
       .from('likes')
       .insert([{
         post_id: postId,
         user_id: user.id
-      }])
-      .select();
+      }]);
 
-    if (likeError) {
+    // Déjà liké (double tap) : ce n'est pas une erreur.
+    if (likeError && likeError.code !== '23505') {
       console.error('❌ Error inserting like:', likeError);
       throw likeError;
-    }
-
-    console.log('✅ Like inserted:', likeData);
-
-    // 2. Increment likes_count via RPC
-    const { data: rpcData, error: rpcError } = await supabase.rpc('increment_likes', {
-      post_id: postId
-    });
-
-    if (rpcError) {
-      console.error('⚠️ Warning: RPC increment failed:', rpcError);
-    } else {
-      console.log('✅ Likes count incremented');
     }
 
     return { success: true };
@@ -409,32 +372,15 @@ export async function unlikePost(postId: string) {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    console.log('👎 Unliking post:', postId);
-
-    // 1. Delete like
-    const { data: deleteData, error: deleteError } = await supabase
+    const { error: deleteError } = await supabase
       .from('likes')
       .delete()
       .eq('post_id', postId)
-      .eq('user_id', user.id)
-      .select();
+      .eq('user_id', user.id);
 
     if (deleteError) {
       console.error('❌ Error deleting like:', deleteError);
       throw deleteError;
-    }
-
-    console.log('✅ Like deleted:', deleteData);
-
-    // 2. Decrement likes_count via RPC
-    const { data: rpcData, error: rpcError } = await supabase.rpc('decrement_likes', {
-      post_id: postId
-    });
-
-    if (rpcError) {
-      console.error('⚠️ Warning: RPC decrement failed:', rpcError);
-    } else {
-      console.log('✅ Likes count decremented');
     }
 
     return { success: true };
@@ -593,21 +539,7 @@ export async function likeComment(commentId: string) {
       .from('comment_likes')
       .insert([{ comment_id: commentId, user_id: user.id }]);
     if (error && !String(error.message || '').toLowerCase().includes('duplicate')) throw error;
-
-    // Notify comment author (best-effort, don't fail the like)
-    try {
-      const { data: c } = await supabase.from('comments').select('user_id, post_id').eq('id', commentId).single();
-      if (c && c.user_id !== user.id) {
-        await supabase.from('notifications').insert([{
-          user_id: c.user_id,
-          from_user_id: user.id,
-          type: 'comment_like',
-          post_id: c.post_id,
-          comment_id: commentId,
-        }]);
-      }
-    } catch {}
-
+    // Notification à l'auteur du commentaire : créée en base (déclencheur).
     return { success: true };
   } catch (error: any) {
     console.error('Error liking comment:', error);
@@ -989,6 +921,7 @@ export async function getUserReshakes(userId: string) {
       `)
       .eq('user_id', userId)
       .eq('is_reshake', true)
+      .is('circle_id', null)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -1281,18 +1214,8 @@ export async function sendMessage(receiverId: string, text?: string, track?: any
 
     if (error) throw error;
 
-    // Notification (sauf réaction à une story : likeStory / commentOnStory
-    // créent déjà la leur, plus parlante).
-    if (!storyId) {
-      await supabase
-        .from('notifications')
-        .insert([{
-          user_id: receiverId,
-          from_user_id: user.id,
-          type: track ? 'song_share' : 'message',
-        }]);
-    }
-
+    // Pas de notification dans la cloche : un message allume seulement la
+    // pastille Messages (A2).
     return { success: true, data };
   } catch (error: any) {
     console.error('Error sending message:', error);
@@ -1518,13 +1441,6 @@ export async function createCircle(name: string): Promise<any> {
       // Don't throw — the circle was created, member insert can fail due to RLS
     }
 
-    // Send notification (circle created)
-    try {
-      await supabase.from('notifications').insert([{
-        user_id: user.id, from_user_id: user.id, type: 'circle_create'
-      }]);
-    } catch {}
-
     return { success: true, data: { ...data, invite_code: data.invite_code || inviteCode } };
   } catch (error: any) {
     console.error('Error creating circle:', error);
@@ -1707,22 +1623,7 @@ export async function sendCircleMessage(circleId: string, text?: string, track?:
 
     if (error) throw error;
 
-    // Notify circle members
-    if (data) {
-      try {
-        const { data: members } = await supabase
-          .from('circle_members')
-          .select('user_id')
-          .eq('circle_id', circleId)
-          .neq('user_id', user.id);
-        if (members && members.length > 0) {
-          await supabase.from('notifications').insert(
-            members.map((m: any) => ({ user_id: m.user_id, from_user_id: user.id, type: 'circle_post' }))
-          );
-        }
-      } catch {}
-    }
-
+    // Pas de notification « a posté dans ton cercle » : c'est une messagerie (A2).
     return { success: true, data };
   } catch (error: any) {
     console.error('Error sending circle message:', error);
@@ -1735,45 +1636,20 @@ export async function getCircleFeed(circleId: string, limit = 50) {
   return getCircleMessages(circleId, limit);
 }
 
+/** Cercle trouvé par son code d'invitation exact (fonction sécurisée en base). */
+export async function findCircleByCode(code: string): Promise<any | null> {
+  const { data, error } = await supabase.rpc('find_circle_by_code', { p_code: code.trim() });
+  if (error) return null;
+  return (Array.isArray(data) ? data[0] : data) || null;
+}
+
 export async function joinCircleByCode(inviteCode: string): Promise<any> {
   try {
-    const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
-
-    // Find circle by invite code
-    const { data: circle, error: circleError } = await supabase
-      .from('circles')
-      .select('id, name, created_by')
-      .eq('invite_code', inviteCode.toUpperCase())
-      .maybeSingle();
-
-    if (circleError) throw circleError;
-    if (!circle) throw new Error('Cercle non trouvé');
-
-    // Check if already member
-    const { data: existing } = await supabase
-      .from('circle_members')
-      .select('*')
-      .eq('circle_id', circle.id)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (existing) throw new Error('Déjà membre de ce cercle');
-
-    // Add as member
-    const { error: memberError } = await supabase
-      .from('circle_members')
-      .insert([{ circle_id: circle.id, user_id: user.id }]);
-
-    if (memberError) throw memberError;
-
-    // Notify circle creator
-    try {
-      await supabase.from('notifications').insert([{
-        user_id: circle.created_by, from_user_id: user.id, type: 'circle_join'
-      }]);
-    } catch {}
-
+    const circle = await findCircleByCode(inviteCode);
+    if (!circle) throw new Error('Cercle introuvable');
+    if (circle.is_member) throw new Error('Tu es déjà membre de ce cercle');
+    const r = await joinCircle(circle.id);
+    if (!r.success) throw new Error(r.error);
     return { success: true, data: circle };
   } catch (error: any) {
     console.error('Error joining circle by code:', error);
@@ -1781,16 +1657,21 @@ export async function joinCircleByCode(inviteCode: string): Promise<any> {
   }
 }
 
+/**
+ * Recherche de cercles : ses propres cercles par nom (la base ne montre que
+ * ceux dont on est membre) + un cercle dont on tape le code exact.
+ */
 export async function searchCircles(query: string): Promise<any[]> {
   try {
-    const { data, error } = await supabase
-      .from('circles')
-      .select('*')
-      .or(`name.ilike.%${query}%,invite_code.ilike.%${query}%`)
-      .limit(20);
-
-    if (error) throw error;
-    return data || [];
+    const q = query.trim();
+    const safe = q.replace(/[%_,()]/g, ' ');
+    const [{ data }, byCode] = await Promise.all([
+      supabase.from('circles').select('*').ilike('name', `%${safe}%`).limit(20),
+      /^[A-Za-z0-9]{4,10}$/.test(q) ? findCircleByCode(q) : Promise.resolve(null),
+    ]);
+    const list = data || [];
+    if (byCode && !list.some((c: any) => c.id === byCode.id)) list.unshift({ ...byCode, invite_code: q.toUpperCase() });
+    return list;
   } catch (error) {
     console.error('Error searching circles:', error);
     return [];
@@ -1799,32 +1680,12 @@ export async function searchCircles(query: string): Promise<any[]> {
 
 export async function joinCircle(circleId: string) {
   try {
-    const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
-    
-    // Check not already member
-    const { data: existing } = await supabase
-      .from('circle_members')
-      .select('id')
-      .eq('circle_id', circleId)
-      .eq('user_id', user.id)
-      .maybeSingle();
-    if (existing) return { success: true };
-    
-    const { error } = await supabase.from('circle_members').insert([{ circle_id: circleId, user_id: user.id }]);
+    const { error } = await supabase.rpc('join_circle', { p_circle_id: circleId });
     if (error) throw error;
-    
-    // Notify circle creator
-    try {
-      const { data: circle } = await supabase.from('circles').select('created_by').eq('id', circleId).single();
-      if (circle && circle.created_by !== user.id) {
-        await supabase.from('notifications').insert([{ user_id: circle.created_by, from_user_id: user.id, type: 'circle_join' }]);
-      }
-    } catch {}
-    
+    // Notification au créateur : créée en base (déclencheur).
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { success: false, error: /not found/i.test(error?.message || '') ? 'Ce cercle n\'existe plus' : 'Impossible de rejoindre le cercle, réessaie' };
   }
 }
 
@@ -2216,28 +2077,16 @@ export async function getAppStats(): Promise<{ users: number; shakes: number; li
   }
 }
 
-// Send song to friend (notification)
+// Envoyer un son à quelqu'un : un vrai message privé avec le son (C4),
+// qu'il peut écouter depuis sa conversation.
 export async function sendSongNotification(recipientId: string, track: any) {
-  try {
-    const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
-
-    // Create notification
-    const { error } = await supabase
-      .from('notifications')
-      .insert([{
-        user_id: recipientId,
-        from_user_id: user.id,
-        type: 'song_share',
-        post_id: null,
-      }]);
-
-    if (error) throw error;
-    return { success: true };
-  } catch (error: any) {
-    console.error('Error sending song notification:', error);
-    return { success: false, error: error.message };
-  }
+  return sendMessage(recipientId, undefined, {
+    id: track.id || track.track_id,
+    name: track.title || track.name || track.track_name,
+    artist: track.artist || track.artists,
+    cover: track.coverUrl || track.cover || track.cover_url,
+    spotify_url: track.spotifyUrl || track.spotify_url,
+  });
 }
 
 // ==================== MESSAGE LIKES ====================
@@ -2343,7 +2192,9 @@ export async function likeStory(storyId: string, emoji = '❤️') {
       console.warn('Warning: RPC increment failed:', rpcError);
     }
 
-    // Notify story author - send message with story_id for UI preview
+    // Prévenir l'auteur par un message privé lié à la story (aperçu dans la
+    // conversation), une seule fois par story : retirer puis remettre le like
+    // ne recrée rien (A2 / E3). Pas de notification dans la cloche.
     try {
       const { data: story } = await supabase
         .from('stories')
@@ -2351,15 +2202,16 @@ export async function likeStory(storyId: string, emoji = '❤️') {
         .eq('id', storyId)
         .single();
       if (story && story.user_id !== user.id) {
-        // Send message linked to story (UI will show as "liked your story" with preview)
-        await sendMessage(story.user_id, undefined, undefined, undefined, storyId);
-        
-        // Also add notification
-        await supabase.from('notifications').insert([{
-          user_id: story.user_id,
-          from_user_id: user.id,
-          type: 'story_like',
-        }]);
+        const { data: already } = await supabase
+          .from('messages')
+          .select('id')
+          .eq('sender_id', user.id)
+          .eq('story_id', storyId)
+          .is('text', null)
+          .limit(1);
+        if (!already?.length) {
+          await sendMessage(story.user_id, undefined, undefined, undefined, storyId);
+        }
       }
     } catch {}
 
@@ -2467,13 +2319,6 @@ export async function commentOnStory(storyId: string, commentText: string) {
     if (!result.success) {
       throw new Error(result.error);
     }
-
-    // Also create a dedicated story_comment notification
-    await supabase.from('notifications').insert([{
-      user_id: storyAuthorId,
-      from_user_id: user.id,
-      type: 'story_comment',
-    }]);
 
     return { success: true };
   } catch (error: any) {

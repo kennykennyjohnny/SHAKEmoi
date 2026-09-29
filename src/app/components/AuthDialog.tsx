@@ -47,8 +47,6 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
 
     try {
       if (mode === 'signup') {
-        console.log('[AUTH] Signup attempt:', { email: formData.email, username: formData.username });
-
         const { data: existingUser } = await supabase
           .from('users_profile')
           .select('username')
@@ -88,8 +86,6 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
 
         onComplete(profile);
       } else {
-        console.log('[AUTH] Login attempt:', { email: formData.email });
-
         const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password

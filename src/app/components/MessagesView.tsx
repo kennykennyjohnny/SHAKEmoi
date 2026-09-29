@@ -15,6 +15,7 @@ import { getPlatformUrl } from '../../lib/odesli';
 import { useBackHandler } from '../../lib/navigation';
 import { circleLink } from '../../lib/links';
 import { openExternal } from '../../lib/platforms';
+import { MediaImg } from '../../lib/media';
 
 interface MessagesViewProps {
   currentUser: any;
@@ -307,9 +308,9 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
     if (!activeConversation) return;
     setSending(true);
     try {
-      const { supabase } = await import('../../lib/supabase');
       const fileExt = file.name.split('.').pop();
-      const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+      // Dossier de la conversation : seules les deux personnes peuvent l'ouvrir.
+      const fileName = `dm/${currentUser.id}/${activeConversation.id}/${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('circle-media')
         .upload(fileName, file, { cacheControl: '3600', upsert: false });
@@ -431,7 +432,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
                   {msg.text && !msg.story_id && <p className="px-3 py-2 text-sm">{msg.text}</p>}
                   {msg.image_url && (
                     <div className="p-1">
-                      <img src={msg.image_url} alt="" className="max-w-full max-h-64 rounded-xl object-cover" loading="lazy" />
+                      <MediaImg src={msg.image_url} alt="" className="max-w-full max-h-64 min-w-[6rem] min-h-[6rem] rounded-xl object-cover" />
                     </div>
                   )}
                   {isTrack && (
@@ -673,7 +674,7 @@ function CirclesPanel({ currentUser, onOpenCircle, onCircleCreated, onSubViewAct
             <button key={c.id} onClick={() => { setSelectedCircleId(c.id); onSubViewActive?.(true); }} className="w-full flex items-center gap-3 p-3 bg-violet-950/20 hover:bg-violet-950/30 rounded-xl border border-purple-500/25 transition-all">
               <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {c.photo_url ? (
-                  <img src={c.photo_url} className="w-full h-full object-cover" alt="" />
+                  <MediaImg src={c.photo_url} className="w-full h-full object-cover" alt="" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
                     <Users className="w-5 h-5 text-white" />
@@ -1164,12 +1165,14 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
     setUploadingPhoto(true);
     try {
       const ext = file.name.split('.').pop();
-      const fileName = `circle-avatars/${circle.id}-${Date.now()}.${ext}`;
+      // Photo du groupe : espace public (elle s'affiche sur la page
+      // d'invitation et l'aperçu du lien, visibles sans être membre).
+      const fileName = `${currentUser.id}/circle-${circle.id}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
-        .from('circle-media')
-        .upload(fileName, file, { cacheControl: '3600', upsert: true });
+        .from('avatars')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false });
       if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('circle-media').getPublicUrl(fileName);
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
       await updateCirclePhoto(circle.id, publicUrl);
       setCirclePhotoUrl(publicUrl);
     } catch (err) {
@@ -1200,7 +1203,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
         </button>
         <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden">
           {circlePhotoUrl ? (
-            <img src={circlePhotoUrl} className="w-full h-full object-cover" alt="" />
+            <MediaImg src={circlePhotoUrl} className="w-full h-full object-cover" alt="" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
               <Users className="w-4 h-4 text-white" />
@@ -1228,7 +1231,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
               <div className="flex items-center gap-3">
                 <div className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
                   {circlePhotoUrl ? (
-                    <img src={circlePhotoUrl} className="w-full h-full object-cover" alt="" />
+                    <MediaImg src={circlePhotoUrl} className="w-full h-full object-cover" alt="" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
                       <Users className="w-6 h-6 text-white" />
@@ -1309,7 +1312,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
               {/* Photo/GIF message */}
               {msg.image_url && (
                 <div className="px-2.5 pb-2">
-                  <img src={msg.image_url} alt="" className="max-w-full max-h-64 rounded-xl object-cover" loading="lazy" />
+                  <MediaImg src={msg.image_url} alt="" className="max-w-full max-h-64 min-w-[6rem] min-h-[6rem] rounded-xl object-cover" />
                   {msg.text && <p className="text-xs text-purple-300/60 mt-1.5">{msg.text}</p>}
                 </div>
               )}

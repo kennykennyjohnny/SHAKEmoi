@@ -17,6 +17,7 @@ import { circleLink, postLink } from '../../lib/links';
 import { SongShareSheet } from './SongShareSheet';
 import { openExternal } from '../../lib/platforms';
 import { LikersSheet } from './LikersSheet';
+import { MediaImg } from '../../lib/media';
 
 function storyTimeRemaining(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -898,7 +899,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     try {
       const { supabase } = await import('../../lib/supabase');
       const fileExt = file.name.split('.').pop();
-      const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+      const fileName = `circle-${currentFeedId}/${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('circle-media')
         .upload(fileName, file, { cacheControl: '3600', upsert: false });
@@ -1150,7 +1151,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   )}
                   {shake.imageUrl && (
                     <div className={`${shake.caption ? 'mt-2' : ''} rounded-xl overflow-hidden`}>
-                      <img src={shake.imageUrl} alt="" className="max-w-full max-h-64 rounded-xl object-cover" loading="lazy" />
+                      <MediaImg src={shake.imageUrl} alt="" className="max-w-full max-h-64 rounded-xl object-cover" />
                     </div>
                   )}
                   {shake.track.title && (
@@ -1307,7 +1308,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 {/* Image */}
                 {shake.imageUrl && (
                   <div className="px-4 pb-2">
-                    <img src={shake.imageUrl} alt="" className="w-full rounded-xl object-cover max-h-80" loading="lazy" />
+                    <MediaImg src={shake.imageUrl} alt="" className="w-full rounded-xl object-cover max-h-80" />
                   </div>
                 )}
 

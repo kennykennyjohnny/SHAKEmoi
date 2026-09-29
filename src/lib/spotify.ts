@@ -1,5 +1,5 @@
 // SHAKEMOI - Spotify API via Supabase Edge Function
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase';
 
 const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/spotify-proxy`;
 
@@ -20,17 +20,21 @@ export interface SpotifyTrack {
 class SpotifyAPI {
   async callEdgeFunction(action: string, params: any = {}) {
     try {
+      // Membre connecté : son jeton (quota plus large côté relais). Visiteur : clé anon.
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          apikey: SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`
         },
-        body: JSON.stringify({ action, ...params })
+        body: JSON.stringify({ action, ...params }),
+        signal: AbortSignal.timeout(12000),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(`Edge Function error: ${errorData.error || response.status}`);
       }
 
@@ -215,4 +219,3 @@ class SpotifyAPI {
 
 // Initialize Spotify API
 export const spotify = new SpotifyAPI();
-console.log('🎵 Spotify API initialized (via Edge Function)');

@@ -14,6 +14,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     if (searchQuery.length >= 2) {
@@ -38,16 +39,15 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
   const handleSend = async () => {
     if (!selectedUser) return;
 
-    try {
-      setSending(true);
-      await sendSongNotification(selectedUser.id, track);
-      alert(`✅ Son envoyé à @${selectedUser.username} !`);
-      onClose();
-    } catch (error) {
-      console.error('Error sending song:', error);
-      alert('❌ Erreur lors de l\'envoi');
-    } finally {
-      setSending(false);
+    setSending(true);
+    setStatus(null);
+    const r = await sendSongNotification(selectedUser.id, track);
+    setSending(false);
+    if (r.success) {
+      setStatus({ ok: true, text: `Son envoyé à @${selectedUser.username} ✓` });
+      setTimeout(onClose, 1200);
+    } else {
+      setStatus({ ok: false, text: 'Envoi impossible, vérifie ta connexion et réessaie.' });
     }
   };
 
@@ -151,6 +151,9 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
 
         {/* Send Button */}
         <div className="p-4 border-t border-purple-800/20">
+          {status && (
+            <p className={`mb-2 text-center text-sm ${status.ok ? 'text-fuchsia-300' : 'text-pink-400'}`}>{status.text}</p>
+          )}
           <button
             onClick={handleSend}
             disabled={!selectedUser || sending}
