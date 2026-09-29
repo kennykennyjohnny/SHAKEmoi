@@ -185,18 +185,25 @@ export default function App() {
       })
       .subscribe();
 
-    // Realtime: new message → update unread badge
+    // Pastille Messages = nombre de CONVERSATIONS non lues, recalculé en base
+    // (A3) : à chaque message reçu, et quand une conversation est lue.
+    let recount: ReturnType<typeof setTimeout> | null = null;
+    const refreshUnreadMessages = () => {
+      if (recount) clearTimeout(recount);
+      recount = setTimeout(() => { getUnreadMessagesCount().then(setUnreadMessages).catch(() => {}); }, 600);
+    };
     const msgChannel = supabase
       .channel(`app-messages-${currentUser.id}`)
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'messages',
         filter: `receiver_id=eq.${currentUser.id}`
-      }, () => {
-        setUnreadMessages(prev => prev + 1);
-      })
+      }, refreshUnreadMessages)
       .subscribe();
+    window.addEventListener('shakemoi:messages-read', refreshUnreadMessages);
 
     return () => {
+      if (recount) clearTimeout(recount);
+      window.removeEventListener('shakemoi:messages-read', refreshUnreadMessages);
       supabase.removeChannel(notifChannel);
       supabase.removeChannel(msgChannel);
     };
@@ -513,7 +520,7 @@ export default function App() {
                 key={view}
                 onClick={() => {
                   // L'onglet Messages s'ouvre toujours sur les messages privés.
-                  if (view === 'messages') { setViewOptions({}); setUnreadMessages(0); }
+                  if (view === 'messages') { setViewOptions({}); }
                   setCurrentView(view);
                 }}
                 className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all active:scale-90 relative ${
@@ -543,7 +550,7 @@ export default function App() {
           ]).map(({ view, icon: Icon, label }) => (
             <button
               key={view}
-              onClick={() => { if (view === 'messages') { setViewOptions({}); setUnreadMessages(0); } setCurrentView(view); }}
+              onClick={() => { if (view === 'messages') { setViewOptions({}); } setCurrentView(view); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors relative ${
                 currentView === view ? 'bg-purple-500/10 text-purple-400' : 'text-purple-300/60 hover:bg-violet-900/25'
               }`}

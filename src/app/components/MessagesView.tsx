@@ -3,6 +3,7 @@ import { ArrowLeft, Send, Search, Music, Play, Loader2, ExternalLink, Users, Plu
 import { motion, AnimatePresence } from 'motion/react';
 import {
   getConversations, getMessages, sendMessage, getUserFollowing,
+  getMessageById, markConversationRead, deleteMessage, MESSAGES_PAGE,
   createCircle, getUserCircles, getCircleMessages, getCircleMembers,
   searchUsers, addCircleMember, removeCircleMember, getCurrentUser,
   sendCircleMessage, hasLikedPosts, likeCircleMessage, unlikeCircleMessage,
@@ -15,7 +16,9 @@ import { getPlatformUrl } from '../../lib/odesli';
 import { useBackHandler } from '../../lib/navigation';
 import { circleLink } from '../../lib/links';
 import { openExternal } from '../../lib/platforms';
-import { MediaImg, thumb, defaultAvatar, compressImage } from '../../lib/media';
+import { MediaImg, thumb, defaultAvatar, compressImage, extFor } from '../../lib/media';
+import { friendlyError } from '../../lib/errors';
+import { formatListTime, formatDayLabel, isSameDay } from '../../lib/dates';
 
 interface MessagesViewProps {
   currentUser: any;
@@ -171,6 +174,9 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
   // Toujours coller en bas de la conversation (comme les autres messageries) :
   // instantané à l'ouverture, animé ensuite pour les nouveaux messages.
   const initialScrollRef = useRef(true);
+  // Chargement de messages plus anciens : on garde la position de lecture.
+  const skipAutoScrollRef = useRef<number | null>(null);
+  const scrollBoxRef = useRef<HTMLDivElement>(null);
   const scrollToBottom = (instant = false) => {
     messagesEndRef.current?.scrollIntoView({ behavior: instant ? 'auto' : 'smooth', block: 'end' });
   };
@@ -178,6 +184,12 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
   useEffect(() => { loadConversations(); }, []);
   useEffect(() => {
     if (!messages.length) return;
+    if (skipAutoScrollRef.current !== null) {
+      const box = scrollBoxRef.current;
+      if (box) box.scrollTop = box.scrollHeight - skipAutoScrollRef.current;
+      skipAutoScrollRef.current = null;
+      return;
+    }
     const instant = initialScrollRef.current;
     initialScrollRef.current = false;
     scrollToBottom(instant);
@@ -188,10 +200,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
 
   // Retour système depuis une conversation : on revient à la liste des
   // messages, pas au site précédent.
-  useBackHandler(!!activeConversation, () => {
-    setActiveConversation(null);
-    onSubViewActive?.(false);
-  });
+  useBackHandler(!!activeConversation, () => closeConversation());
 
   // Ouverture du clavier mobile : la zone visible rétrécit, on reste en bas.
   useEffect(() => {
@@ -207,11 +216,27 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
     getUserFollowing(currentUser.id).then(setFriends).catch(() => {});
   }, [fabTrigger]);
 
+  // Liste des conversations en direct (C8) : un message reçu la remet à jour.
+  useEffect(() => {
+    if (activeConversation || !currentUser) return;
+    const channel = supabase
+      .channel(`dm-list-${currentUser.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${currentUser.id}` },
+        () => { loadConversations(true); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [activeConversation?.id, currentUser?.id]);
+
   // Realtime subscription for DMs
   useEffect(() => {
     if (!activeConversation || !currentUser) return;
     const channel = supabase
       .channel(`dm-${currentUser.id}-${activeConversation.id}`)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, (payload: any) => {
+        // Message supprimé par son expéditeur (C9).
+        const id = payload.old?.id;
+        if (id) setMessages(prev => prev.filter((m: any) => m.id !== id));
+      })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async (payload: any) => {
         const msg = payload.new;
         const involvesPartner =
@@ -219,15 +244,12 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
           (msg.sender_id === currentUser.id && msg.receiver_id === activeConversation.id);
         if (!involvesPartner) return;
 
-        // Enrich with sender profile (realtime payload lacks joined sender)
+        // Le temps réel n'envoie pas le profil ni l'aperçu de la story : on
+        // relit le message complet (réponse à une story visible tout de suite, C7).
         let enriched = msg;
         try {
-          const { data: senderProfile } = await supabase
-            .from('users_profile')
-            .select('id, username, display_name, profile_album_cover_url')
-            .eq('id', msg.sender_id)
-            .single();
-          if (senderProfile) enriched = { ...msg, sender: senderProfile };
+          const full = await getMessageById(msg.id);
+          if (full) enriched = full;
         } catch {}
 
         setMessages(prev => {
@@ -249,9 +271,9 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
           return [...prev, enriched];
         });
 
-        // Auto mark-as-read if I'm the receiver and actively viewing
-        if (msg.receiver_id === currentUser.id && !msg.is_read) {
-          supabase.from('messages').update({ is_read: true }).eq('id', msg.id).then(() => {}, () => {});
+        // Conversation ouverte : le message reçu est lu tout de suite (A3).
+        if (msg.receiver_id === currentUser.id) {
+          markConversationRead(activeConversation.id).catch(() => {});
         }
       })
       .subscribe();
@@ -266,83 +288,153 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
     return () => clearTimeout(t);
   }, [trackQuery]);
 
-  const loadConversations = async () => {
-    setLoading(true);
-    try { setConversations(await getConversations()); } catch {}
+  const [listError, setListError] = useState<string | null>(null);
+  const loadConversations = async (silent = false) => {
+    if (!silent) setLoading(true);
+    setListError(null);
+    try { setConversations(await getConversations()); }
+    catch (err) { if (!silent) setListError(friendlyError(err)); }
     setLoading(false);
+  };
+
+  // Pagination vers le haut : messages plus anciens (C1).
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [convError, setConvError] = useState<string | null>(null);
+  const loadOlder = async () => {
+    if (!activeConversation || loadingMore) return;
+    const oldest = messages.find((m: any) => !String(m.id).startsWith('temp-'));
+    if (!oldest) return;
+    setLoadingMore(true);
+    try {
+      const older = await getMessages(activeConversation.id, MESSAGES_PAGE, oldest.created_at);
+      setHasMore(older.length === MESSAGES_PAGE);
+      const box = scrollBoxRef.current;
+      skipAutoScrollRef.current = box ? box.scrollHeight - box.scrollTop : 0;
+      setMessages(prev => [...older, ...prev]);
+    } catch {}
+    setLoadingMore(false);
   };
 
   const openConversation = async (partner: any) => {
     setActiveConversation(partner);
     setShowNewConvo(false);
     onSubViewActive?.(true);
+    setMessages([]);
+    setConvError(null);
     initialScrollRef.current = true;   // on ouvre directement en bas
-    try { setMessages(await getMessages(partner.id)); } catch {}
+    // Ouvrir la conversation la marque lue (A3), pas ouvrir l'onglet.
+    setConversations(prev => prev.map(c => c.partnerId === partner.id ? { ...c, unreadCount: 0 } : c));
+    markConversationRead(partner.id).catch(() => {});
+    try {
+      const page = await getMessages(partner.id);
+      setMessages(page);
+      setHasMore(page.length === MESSAGES_PAGE);
+    } catch (err) {
+      setConvError(friendlyError(err));
+    }
+  };
+
+  const closeConversation = () => {
+    setActiveConversation(null);
+    onSubViewActive?.(false);
+    loadConversations(true);
+  };
+
+  // Envoi optimiste : le message s'affiche tout de suite, « Envoi… », puis
+  // soit il est confirmé, soit il passe en échec avec « Réessayer » (C2).
+  const sendOptimistic = async (temp: any, send: () => Promise<{ success: boolean; data?: any }>) => {
+    setMessages(prev => {
+      const without = prev.filter((m: any) => m.id !== temp.id);
+      return [...without, { ...temp, _status: 'sending' }];
+    });
+    let r: { success: boolean; data?: any } = { success: false };
+    try { r = await send(); } catch {}
+    setMessages(prev => {
+      if (!r.success) return prev.map((m: any) => m.id === temp.id ? { ...m, _status: 'failed' } : m);
+      // Le temps réel a pu arriver avant : pas de doublon.
+      if (prev.some((m: any) => m.id === r.data?.id)) return prev.filter((m: any) => m.id !== temp.id);
+      return prev.map((m: any) => m.id === temp.id ? { ...m, ...r.data, _status: undefined, _retry: undefined } : m);
+    });
   };
 
   const handleSend = async (track?: any) => {
     if (!activeConversation || (!track && !newMessage.trim())) return;
     const msgText = track ? null : newMessage.trim();
-    // Optimistic: add message to list immediately
+    const partnerId = activeConversation.id;
     const optimisticMsg: any = {
       id: `temp-${Date.now()}`,
       sender_id: currentUser?.id,
-      receiver_id: activeConversation.id,
+      receiver_id: partnerId,
       text: msgText,
       created_at: new Date().toISOString(),
       ...(track ? { track_name: track.name || track.track_name, artist: track.artist, cover_url: track.cover || track.cover_url, track_id: track.id } : {}),
     };
-    setMessages(prev => [...prev, optimisticMsg]);
+    optimisticMsg._retry = () => sendOptimistic(optimisticMsg, () => sendMessage(partnerId, msgText || undefined, track || undefined));
     setNewMessage('');
     setShowTrackSearch(false);
     setTrackQuery('');
     setTrackResults([]);
-    setSending(true);
-    try {
-      await sendMessage(activeConversation.id, msgText || undefined, track || undefined);
-    } catch {}
-    setSending(false);
+    await optimisticMsg._retry();
   };
 
   const handleSendImage = async (file: File) => {
     if (!activeConversation) return;
-    setSending(true);
-    try {
-      const fileExt = file.name.split('.').pop();
-      // Dossier de la conversation : seules les deux personnes peuvent l'ouvrir.
-      const fileName = `dm/${currentUser.id}/${activeConversation.id}/${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
-        .from('circle-media')
-        .upload(fileName, await compressImage(file, 1280), { cacheControl: '3600', upsert: false });
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('circle-media').getPublicUrl(fileName);
-      const r = await sendMessage(activeConversation.id, undefined, undefined, publicUrl);
-      if (r.success) setMessages(await getMessages(activeConversation.id));
-    } catch (err) {
-      console.error('Error uploading photo:', err);
-    }
-    setSending(false);
+    const partnerId = activeConversation.id;
+    const preview = photoPreview;
     setPhotoPreview(null);
     setPhotoFile(null);
+    const temp: any = {
+      id: `temp-${Date.now()}`,
+      sender_id: currentUser?.id,
+      receiver_id: partnerId,
+      image_url: preview,
+      created_at: new Date().toISOString(),
+    };
+    const upload = async () => {
+      // Dossier de la conversation : seules les deux personnes peuvent l'ouvrir.
+      const small = await compressImage(file, 1280);
+      const fileName = `dm/${currentUser.id}/${partnerId}/${Date.now()}.${extFor(small, file.name)}`;
+      const { error: uploadError } = await supabase.storage
+        .from('circle-media')
+        .upload(fileName, small, { cacheControl: '3600', upsert: false, contentType: small.type || undefined });
+      if (uploadError) return { success: false };
+      const { data: { publicUrl } } = supabase.storage.from('circle-media').getPublicUrl(fileName);
+      return sendMessage(partnerId, undefined, undefined, publicUrl);
+    };
+    temp._retry = () => sendOptimistic(temp, upload);
+    await temp._retry();
   };
 
   const handleSendGif = async (gifUrl: string) => {
     if (!activeConversation || !gifUrl) return;
-    setSending(true);
-    try {
-      const r = await sendMessage(activeConversation.id, undefined, undefined, gifUrl);
-      if (r.success) setMessages(await getMessages(activeConversation.id));
-    } catch {}
-    setSending(false);
+    const partnerId = activeConversation.id;
     setShowGifSearch(false);
     setGifQuery('');
     setGifResults([]);
+    const temp: any = { id: `temp-${Date.now()}`, sender_id: currentUser?.id, receiver_id: partnerId, image_url: gifUrl, created_at: new Date().toISOString() };
+    temp._retry = () => sendOptimistic(temp, () => sendMessage(partnerId, undefined, undefined, gifUrl));
+    await temp._retry();
+  };
+
+  // Supprimer un de ses messages (C9) : on touche la bulle, puis « Supprimer ».
+  const [selectedMsgId, setSelectedMsgId] = useState<string | null>(null);
+  const handleDeleteMessage = async (msg: any) => {
+    setSelectedMsgId(null);
+    if (String(msg.id).startsWith('temp-')) {
+      setMessages(prev => prev.filter((m: any) => m.id !== msg.id));
+      return;
+    }
+    const before = messages;
+    setMessages(prev => prev.filter((m: any) => m.id !== msg.id));
+    const r = await deleteMessage(msg.id);
+    if (!r.success) { setMessages(before); setConvError('Le message n\'a pas pu être supprimé. Réessaie.'); }
   };
 
   const handlePhotoSelect = (e: any) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) { alert('Photo trop lourde (max 10 Mo)'); return; }
+    if (file.size > 30 * 1024 * 1024) { setConvError('Photo trop lourde (30 Mo max).'); return; }
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
   };
@@ -382,7 +474,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
       <div className="flex flex-col flex-1 overflow-hidden min-h-0">
         {/* Instagram-style: sticky header, scrollable messages, sticky input */}
         <div className="px-4 py-3 border-b border-purple-500/25 flex items-center gap-3 flex-shrink-0 bg-[#1E1440]/95 backdrop-blur-sm">
-          <button onClick={() => { setActiveConversation(null); onSubViewActive?.(false); }} className="p-1 hover:bg-violet-900/25 rounded-full">
+          <button onClick={closeConversation} aria-label="Retour aux messages" className="p-1 hover:bg-violet-900/25 rounded-full">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <img loading="lazy" src={thumb(activeConversation.profile_album_cover_url) || defaultAvatar(activeConversation.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
@@ -392,22 +484,48 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
-          {messages.map((msg) => {
+        <div ref={scrollBoxRef} className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0" onClick={() => setSelectedMsgId(null)}>
+          {hasMore && (
+            <div className="flex justify-center">
+              <button
+                onClick={(e) => { e.stopPropagation(); loadOlder(); }}
+                disabled={loadingMore}
+                className="px-3 py-1.5 rounded-full bg-violet-950/40 border border-purple-500/25 text-xs text-purple-200/80 hover:text-white disabled:opacity-50"
+              >
+                {loadingMore ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Messages plus anciens'}
+              </button>
+            </div>
+          )}
+          {convError && (
+            <p className="text-center text-xs text-pink-300 bg-pink-500/10 border border-pink-500/20 rounded-lg px-3 py-2" onClick={() => setConvError(null)}>{convError}</p>
+          )}
+          {messages.map((msg, idx) => {
             const isMine = msg.sender_id === currentUser?.id;
             const isTrack = !!msg.track_name;
             const isStoryInteraction = !!msg.story_id;
             const isOpen = activeEmbedId === msg.id;
             const embedUrl = msg.track_id ? `https://open.spotify.com/embed/track/${msg.track_id}` : null;
+            // Séparateur quand le jour change (C5).
+            const prev = messages[idx - 1];
+            const newDay = !prev || !isSameDay(prev.created_at, msg.created_at);
+            const selected = selectedMsgId === msg.id;
             return (
-              <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] rounded-2xl overflow-hidden ${isMine ? 'bg-purple-600/30 border border-purple-500/30' : 'bg-violet-950/25 border border-purple-500/25'}`}>
+              <div key={msg.id}>
+              {newDay && (
+                <div className="flex justify-center my-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-violet-950/50 text-[11px] font-medium text-purple-300/70">{formatDayLabel(msg.created_at)}</span>
+                </div>
+              )}
+              <div className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
+                <div
+                  onClick={(e) => { if (!isMine || msg._status) return; e.stopPropagation(); setSelectedMsgId(selected ? null : msg.id); }}
+                  className={`max-w-[80%] rounded-2xl overflow-hidden ${msg._status === 'failed' ? 'bg-pink-900/30 border border-pink-500/50' : isMine ? 'bg-purple-600/30 border border-purple-500/30' : 'bg-violet-950/25 border border-purple-500/25'} ${msg._status === 'sending' ? 'opacity-70' : ''} ${selected ? 'ring-2 ring-pink-400/60' : ''}`}>
                   {/* Réaction à une story : aperçu de la story + like ou réponse */}
                   {isStoryInteraction && (
                     <div className="flex gap-2.5 p-2 pr-3 items-start">
                       {(msg.story?.image_url || msg.story?.cover_url) ? (
                         <img loading="lazy"
-                          src={msg.story.image_url || msg.story.cover_url}
+                          src={thumb(msg.story.image_url, 256) || msg.story.cover_url}
                           alt=""
                           className="w-11 h-[4.5rem] rounded-lg object-cover flex-shrink-0 ring-1 ring-white/10"
                         />
@@ -464,8 +582,27 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
                       </AnimatePresence>
                     </div>
                   )}
-                  <p className={`px-3 pb-1.5 text-[10px] ${isMine ? 'text-purple-300/60 text-right' : 'text-purple-400/50'}`}>{formatTime(msg.created_at)}</p>
+                  <p className={`px-3 pb-1.5 text-[10px] ${isMine ? 'text-purple-300/60 text-right' : 'text-purple-400/50'}`}>
+                    {msg._status === 'sending' ? 'Envoi…' : formatTime(msg.created_at)}
+                  </p>
                 </div>
+                {/* Échec d'envoi : visible, avec renvoi (C2). */}
+                {msg._status === 'failed' && (
+                  <div className="flex items-center gap-2 mt-1 text-[11px]">
+                    <span className="text-pink-300">Pas envoyé</span>
+                    <button onClick={(e) => { e.stopPropagation(); msg._retry?.(); }} className="font-semibold text-white underline">Réessayer</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg); }} className="text-purple-300/70">Annuler</button>
+                  </div>
+                )}
+                {selected && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg); }}
+                    className="mt-1 flex items-center gap-1 px-2.5 py-1 rounded-full bg-pink-500/15 border border-pink-500/30 text-[11px] font-semibold text-pink-300"
+                  >
+                    <Trash2 className="w-3 h-3" /> Supprimer pour tous
+                  </button>
+                )}
+              </div>
               </div>
             );
           })}
@@ -561,6 +698,11 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
 
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /></div>
+      ) : listError ? (
+        <div className="text-center py-10">
+          <p className="text-pink-300 text-sm mb-3">{listError}</p>
+          <button onClick={() => loadConversations()} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-semibold">Réessayer</button>
+        </div>
       ) : conversations.length > 0 ? (
         <div className="space-y-0.5">
           {conversations.map((c) => (
@@ -591,8 +733,8 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger }: { currentUser: a
                         : c.lastMessage?.text || '…'}
                 </p>
               </div>
-              <span className="text-[10px] text-purple-300/50 flex-shrink-0">
-                {new Date(c.lastMessage?.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              <span className={`text-[10px] flex-shrink-0 ${c.unreadCount > 0 ? 'text-pink-300 font-semibold' : 'text-purple-300/50'}`}>
+                {formatListTime(c.lastMessage?.created_at)}
               </span>
             </button>
           ))}

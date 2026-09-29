@@ -1104,95 +1104,83 @@ export async function getFriendsShakesDuJour(): Promise<any[]> {
 
 // ==================== MESSAGES (Messagerie musicale) ====================
 
+/**
+ * Conversations : dernier message et nombre de non lus, calculés en base
+ * (C6 — avant, tout l'historique était téléchargé à chaque ouverture).
+ */
 export async function getConversations(): Promise<any[]> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) return [];
-
-    // Get all unique conversation partners
-    const { data, error } = await supabase
-      .from('messages')
-      .select(`
-        *,
-        sender:users_profile!messages_sender_id_fkey(id, username, display_name, profile_album_cover_url),
-        receiver:users_profile!messages_receiver_id_fkey(id, username, display_name, profile_album_cover_url)
-      `)
-      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    // Group by conversation partner, keep last message
-    const conversations = new Map();
-    (data || []).forEach((msg: any) => {
-      const partnerId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
-      if (!conversations.has(partnerId)) {
-        const partner = msg.sender_id === user.id ? msg.receiver : msg.sender;
-        conversations.set(partnerId, {
-          partnerId,
-          partner,
-          lastMessage: msg,
-          unreadCount: (!msg.is_read && msg.receiver_id === user.id) ? 1 : 0
-        });
-      } else if (!msg.is_read && msg.receiver_id === user.id) {
-        conversations.get(partnerId).unreadCount++;
-      }
-    });
-
-    return Array.from(conversations.values());
-  } catch (error) {
+  const { data, error } = await supabase.rpc('get_conversations');
+  if (error) {
     console.error('Error getting conversations:', error);
-    return [];
+    throw error;
   }
+  return (data || []).map((c: any) => ({
+    partnerId: c.partner_id,
+    partner: c.partner,
+    lastMessage: c.last_message,
+    unreadCount: Number(c.unread_count) || 0,
+  }));
 }
 
-export async function getMessages(partnerId: string, limit = 50): Promise<any[]> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) return [];
+export const MESSAGES_PAGE = 50;
+const MESSAGE_SELECT = `
+  *,
+  sender:users_profile!messages_sender_id_fkey(id, username, display_name, profile_album_cover_url),
+  story:stories!messages_story_id_fkey(id, image_url, cover_url, track_name, artist)
+`;
 
-    const { data, error } = await supabase
-      .from('messages')
-      .select(`
-        *,
-        sender:users_profile!messages_sender_id_fkey(id, username, display_name, profile_album_cover_url),
-        story:stories!messages_story_id_fkey(id, image_url, cover_url, track_name, artist)
-      `)
-      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${user.id})`)
-      .order('created_at', { ascending: true })
-      .limit(limit);
+/**
+ * Les 50 DERNIERS messages d'une conversation, du plus ancien au plus récent
+ * (C1 — avant, les 50 premiers : la conversation se figeait). `before` charge
+ * la page précédente.
+ */
+export async function getMessages(partnerId: string, limit = MESSAGES_PAGE, before?: string): Promise<any[]> {
+  const user = await getCurrentUser();
+  if (!user) return [];
 
-    if (error) throw error;
+  let q = supabase
+    .from('messages')
+    .select(MESSAGE_SELECT)
+    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${user.id})`)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (before) q = q.lt('created_at', before);
 
-    // Mark unread messages as read
-    await supabase
-      .from('messages')
-      .update({ is_read: true })
-      .eq('sender_id', partnerId)
-      .eq('receiver_id', user.id)
-      .eq('is_read', false);
-
-    return data || [];
-  } catch (error) {
+  const { data, error } = await q;
+  if (error) {
     console.error('Error getting messages:', error);
-    return [];
+    throw error;
   }
+  return (data || []).reverse();
 }
 
+/** Un message complet (profil de l'expéditeur + aperçu de story), pour le temps réel (C7). */
+export async function getMessageById(id: string): Promise<any | null> {
+  const { data } = await supabase.from('messages').select(MESSAGE_SELECT).eq('id', id).maybeSingle();
+  return data || null;
+}
+
+/** Ouvrir une conversation la marque lue (A3). */
+export async function markConversationRead(partnerId: string) {
+  await supabase.rpc('mark_conversation_read', { p_partner_id: partnerId });
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('shakemoi:messages-read'));
+}
+
+/** Nombre de CONVERSATIONS non lues (pastille Messages, A3). */
 export async function getUnreadMessagesCount(): Promise<number> {
   try {
-    const user = await getCurrentUser();
-    if (!user) return 0;
-    const { count, error } = await supabase
-      .from('messages')
-      .select('id', { count: 'exact', head: true })
-      .eq('receiver_id', user.id)
-      .eq('is_read', false);
+    const { data, error } = await supabase.rpc('unread_conversations_count');
     if (error) throw error;
-    return count || 0;
+    return Number(data) || 0;
   } catch {
     return 0;
   }
+}
+
+/** Supprimer un de ses messages (C9). */
+export async function deleteMessage(messageId: string) {
+  const { error } = await supabase.from('messages').delete().eq('id', messageId);
+  return { success: !error, error: error?.message };
 }
 
 export async function sendMessage(receiverId: string, text?: string, track?: any, imageUrl?: string, storyId?: string) {
