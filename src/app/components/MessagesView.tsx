@@ -19,7 +19,7 @@ import { SongCover } from './SongCover';
 import { MediaImg, thumb, defaultAvatar, compressImage, extFor } from '../../lib/media';
 import { searchGifs, GIF_ERROR_TEXT } from '../../lib/gifs';
 import { friendlyError } from '../../lib/errors';
-import { formatListTime, formatDayLabel, isSameDay } from '../../lib/dates';
+import { formatListTime, formatDayLabel, isSameDay, formatRelative } from '../../lib/dates';
 import { MyAppLogo } from './PlatformLogo';
 
 interface MessagesViewProps {
@@ -1363,13 +1363,8 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const [copied, setCopied] = useState(false);
   const copyLink = () => { navigator.clipboard.writeText(shareLink); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
-  const formatTs = (ts: string) => {
-    const d = new Date(ts), now = new Date(), diff = Math.floor((now.getTime() - d.getTime()) / 60000);
-    if (diff < 1) return 'À l\'instant';
-    if (diff < 60) return `${diff}min`;
-    if (diff < 1440) return `${Math.floor(diff / 60)}h`;
-    return `${Math.floor(diff / 1440)}j`;
-  };
+  // Même format de date partout (lib/dates).
+  const formatTs = (ts: string) => formatRelative(ts);
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden min-h-0">

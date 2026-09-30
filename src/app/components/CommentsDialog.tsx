@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatRelative } from '../../lib/dates';
 import { X, Send, Loader2, Music, Search, Trash2 } from 'lucide-react';
 import { SongCover } from './SongCover';
 import { motion } from 'motion/react';
@@ -129,18 +130,8 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
     if (url) openExternal(url);
   };
 
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffMins < 1) return "À l'instant";
-    if (diffMins < 60) return `${diffMins}min`;
-    if (diffHours < 24) return `${diffHours}h`;
-    return `${diffDays}j`;
-  };
+  // Même format de date partout (lib/dates).
+  const formatTime = (ts: string) => formatRelative(ts);
 
   return (
     <motion.div

@@ -8,6 +8,7 @@ import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
 import { getUserPosts, getUserShakeCount, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, followErrorMessage, removeFollower, likePost, unlikePost, hasLikedPosts, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
+import { formatRelative } from '../../lib/dates';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { StoryArchiveDialog } from './StoryArchiveDialog';
 import { inviteLink, postLink, profileLink } from '../../lib/links';
@@ -108,7 +109,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           reshakes: post.reshakes_count || 0,
           comments: post.comments_count || 0,
           isLiked,
-          timestamp: new Date(post.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+          timestamp: formatRelative(post.created_at)
         };
       });
 
@@ -147,7 +148,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
             displayName: post.original_post.user.display_name || post.original_post.user.username,
             avatar: post.original_post.user.profile_album_cover_url
           } : null,
-          timestamp: new Date(post.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+          timestamp: formatRelative(post.created_at)
         };
       });
 
@@ -202,7 +203,14 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
     }
   };
 
+  // Double tap : un seul like part à la fois (comme dans le fil, F4).
+  const likeBusy = useRef(false);
   const toggleLike = async (shakeId: string) => {
+    if (likeBusy.current) return;
+    likeBusy.current = true;
+    try { await doToggleLike(shakeId); } finally { likeBusy.current = false; }
+  };
+  const doToggleLike = async (shakeId: string) => {
     const currentList = activeTab === 'shakes' ? userShakes : userReshakes;
     const setCurrentList = activeTab === 'shakes' ? setUserShakes : setUserReshakes;
 

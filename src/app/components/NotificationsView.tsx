@@ -1,4 +1,5 @@
 import { Heart, MessageCircle, UserPlus, UserCheck, Music, Repeat2, Loader2, Bell, Users, RefreshCw } from 'lucide-react';
+import { formatRelative } from '../../lib/dates';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { getUserNotifications, followUser, followErrorMessage, unfollowUser, getFollowingIds } from '../../lib/database';
@@ -125,20 +126,8 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
     }
   };
 
-  const formatTimestamp = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return 'maintenant';
-    if (minutes < 60) return `${minutes}min`;
-    if (hours < 24) return `${hours}h`;
-    if (days < 7) return `${days}j`;
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-  };
+  // Même format de date partout (lib/dates).
+  const formatTimestamp = (ts: string) => formatRelative(ts);
 
   return (
     <div className="w-full max-w-2xl mx-auto px-3 py-5 flex-1 overflow-y-auto pb-[var(--nav-h)] lg:pb-4">

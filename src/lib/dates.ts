@@ -40,3 +40,23 @@ export function formatDayLabel(ts: string | Date): string {
     : { day: 'numeric', month: 'long', year: 'numeric' });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
+
+/**
+ * Date relative, la même partout (fil, notifications, commentaires, profil…) :
+ * « À l'instant », « 5min », « 3h », « 2j », puis « 12 sept. » (année si besoin).
+ */
+export function formatRelative(ts?: string | Date | null): string {
+  if (!ts || ts === 'now') return "À l'instant";
+  const date = new Date(ts);
+  if (isNaN(date.getTime())) return '';
+  const mins = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (mins < 1) return "À l'instant";
+  if (mins < 60) return `${mins}min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}j`;
+  return date.toLocaleDateString('fr-FR', date.getFullYear() === new Date().getFullYear()
+    ? { day: 'numeric', month: 'short' }
+    : { day: 'numeric', month: 'short', year: 'numeric' });
+}

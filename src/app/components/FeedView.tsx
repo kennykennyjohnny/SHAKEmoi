@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { formatRelative } from '../../lib/dates';
 import { createPortal } from 'react-dom';
 import { Heart, MessageCircle, Repeat2, Play, Pause, MoreHorizontal, Loader2, Send, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Copy, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -917,21 +918,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     }
   };
 
-  const formatTimestamp = (timestamp: string) => {
-    if (!timestamp || timestamp === 'now') return "À l'instant";
-    const date = new Date(timestamp);
-    if (isNaN(date.getTime())) return "Date inconnue";
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffMins < 1) return "À l'instant";
-    if (diffMins < 60) return `${diffMins}min`;
-    if (diffHours < 24) return `${diffHours}h`;
-    if (diffDays < 7) return `${diffDays}j`;
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-  };
+  // Même format de date partout (lib/dates).
+  const formatTimestamp = (ts: string) => formatRelative(ts);
 
   // Un clic = play/pause de l'extrait 30s. Plus d'embed Spotify à ouvrir :
   // le bouton « Écouter » envoie vers l'app de musique de l'utilisateur.

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { formatRelative } from '../../lib/dates';
 import { X, Heart, MessageCircle, Loader2, Send, Trash2, Share2, Music, Search } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment } from '../../lib/database';
@@ -169,18 +170,8 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: Po
     if (url) openExternal(url);
   };
 
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffMins < 1) return "À l'instant";
-    if (diffMins < 60) return `${diffMins}min`;
-    if (diffHours < 24) return `${diffHours}h`;
-    return `${diffDays}j`;
-  };
+  // Même format de date partout (lib/dates).
+  const formatTime = (ts: string) => formatRelative(ts);
 
   const trackId = post?.track_id || (post?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
   const coverUrl = post?.cover_url || post?.track_cover_url;
