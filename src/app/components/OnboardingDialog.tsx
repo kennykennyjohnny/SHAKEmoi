@@ -186,17 +186,20 @@ export function OnboardingDialog({ initialService, replay, onComplete, onClose }
       aria-modal="true"
       aria-label="Bienvenue sur SHAKEmoi"
     >
-      {/* Halo de couleur qui change à chaque écran */}
-      <AnimatePresence>
-        <motion.div
-          key={`glow-${step}`}
-          className={`pointer-events-none absolute left-1/2 top-[30%] -translate-x-1/2 -translate-y-1/2 w-[34rem] h-[34rem] rounded-full blur-[110px] ${isPicker ? 'bg-purple-600/20' : STEPS[step].glow}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.6 }}
-        />
-      </AnimatePresence>
+      {/* Halo de couleur qui change à chaque écran (dans son propre cadre :
+          plus large que l'écran, il ne doit pas rendre la page défilable). */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <AnimatePresence>
+          <motion.div
+            key={`glow-${step}`}
+            className={`absolute left-1/2 top-[30%] -translate-x-1/2 -translate-y-1/2 w-[34rem] h-[34rem] rounded-full blur-[110px] ${isPicker ? 'bg-purple-600/20' : STEPS[step].glow}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+          />
+        </AnimatePresence>
+      </div>
 
       {/* Barre de progression + Passer */}
       <div className="relative z-10 px-4 pt-[max(1rem,env(safe-area-inset-top))]">
@@ -263,7 +266,7 @@ export function OnboardingDialog({ initialService, replay, onComplete, onClose }
               className="w-full max-w-md overflow-y-auto overscroll-contain py-2"
             >
               <h2 className="text-3xl font-black text-center leading-tight mb-2 tracking-tight">Tu écoutes où ?</h2>
-              <p className="text-center text-purple-200/70 mb-6">On ouvrira chaque son directement là-bas.</p>
+              <p className="text-center text-purple-200/70 mb-5">On ouvrira chaque son directement là-bas.</p>
               <div className="grid grid-cols-2 gap-3">
                 {STREAMING_APPS.map((key, i) => {
                   const selected = service === key;
@@ -275,11 +278,11 @@ export function OnboardingDialog({ initialService, replay, onComplete, onClose }
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.04 * i }}
                       aria-pressed={selected}
-                      className={`relative flex flex-col items-center gap-2.5 p-4 rounded-2xl border-2 transition-all active:scale-[0.97] ${
+                      className={`relative flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all active:scale-[0.97] ${
                         i === STREAMING_APPS.length - 1 && STREAMING_APPS.length % 2 === 1 ? 'col-span-2' : ''
                       } ${selected ? 'border-fuchsia-400 bg-fuchsia-500/15 shadow-lg shadow-fuchsia-900/30' : 'border-white/10 bg-white/[0.04] hover:border-white/25'}`}
                     >
-                      <PlatformLogo platform={key} size="xl" />
+                      <PlatformLogo platform={key} size="lg" />
                       <span className="font-bold text-sm">{PLATFORM_LABELS[key]}</span>
                       {selected && (
                         <span className="absolute top-2 right-2 w-6 h-6 rounded-full bg-fuchsia-500 flex items-center justify-center">
