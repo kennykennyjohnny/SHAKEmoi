@@ -33,7 +33,8 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
       setError(null);
       // Photo de profil : 256 px suffisent (affichée en 28 à 96 px).
       const small = await compressImage(file, 256, 0.82);
-      const filePath = `avatars/${currentUser.id}-${Date.now()}.${extFor(small, file.name)}`;
+      // Dossier à son nom : la base refuse d'écrire ailleurs (sécurité).
+      const filePath = `${currentUser.id}/avatar-${Date.now()}.${extFor(small, file.name)}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')

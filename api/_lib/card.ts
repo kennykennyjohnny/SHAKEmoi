@@ -80,7 +80,13 @@ function frame(a: Assets, content: El, opts: { footer?: boolean } = {}): El {
 }
 
 // Visuel carré : image si dispo, sinon aplat dégradé avec une initiale.
-function tile(src: string | null, label: string, size: number, radius: number): El {
+// Images choisies par les utilisateurs : seulement nos stockages et les CDN
+// des plateformes (le serveur les télécharge : pas de relais vers n'importe où).
+const SAFE_IMG = /^https:\/\/(vbjmhtwrfboqziwibsut\.supabase\.co\/storage\/v1\/object\/public\/|i\.scdn\.co\/|([a-z0-9-]+\.)*dzcdn\.net\/|([a-z0-9-]+\.)*mzstatic\.com\/|i\.ytimg\.com\/|(www\.)?shakemoi\.fr\/)/i;
+const safe = (src: string | null) => (src && SAFE_IMG.test(src) ? src : null);
+
+function tile(rawSrc: string | null, label: string, size: number, radius: number): El {
+  const src = safe(rawSrc);
   if (src) {
     return img(src, {
       width: size,
@@ -156,7 +162,8 @@ function stat(value: number, label: string): El {
   );
 }
 
-function avatar(src: string | null, label: string, size: number): El {
+function avatar(rawSrc: string | null, label: string, size: number): El {
+  const src = safe(rawSrc);
   return h(
     'div',
     { width: size + 16, height: size + 16, borderRadius: 999, backgroundImage: GRADIENT, alignItems: 'center', justifyContent: 'center' },

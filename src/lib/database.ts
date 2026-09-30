@@ -194,9 +194,23 @@ export async function getPostById(postId: string): Promise<any> {
   }
 }
 
-export async function getUserPosts(userId: string, limit = 50): Promise<Post[]> {
+/** Nombre de shakes d'un profil : les siens seulement (pas les reshakes), hors cercles et privés. */
+export async function getUserShakeCount(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('posts')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .not('is_reshake', 'is', true)
+    .not('is_private', 'is', true)
+    .is('circle_id', null);
+  if (error) { console.error('Error counting shakes:', error); return 0; }
+  return count ?? 0;
+}
+
+/** Shakes d'un profil. Les reshakes ont leur propre onglet (getUserReshakes). */
+export async function getUserPosts(userId: string, limit = 50, includeReshakes = false): Promise<Post[]> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('posts')
       .select(`
         *,
@@ -209,7 +223,9 @@ export async function getUserPosts(userId: string, limit = 50): Promise<Post[]> 
       .eq('user_id', userId)
       .neq('is_private', true)
       // Les posts de cercle restent dans leur cercle, jamais sur le profil (B4).
-      .is('circle_id', null)
+      .is('circle_id', null);
+    if (!includeReshakes) query = query.not('is_reshake', 'is', true);
+    const { data, error } = await query
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -554,10 +570,8 @@ export async function addComment(postId: string, text: string) {
       .single();
 
     if (error) throw error;
-
-    // Increment comments_count
-    await supabase.rpc('increment_comments', { post_id: postId });
-
+    // Le compteur est tenu par la base (déclencheur) : plus de +1 ici, qui
+    // comptait chaque commentaire deux fois.
     return { success: true, data };
   } catch (error: any) {
     console.error('Error adding comment:', error);
@@ -1439,8 +1453,8 @@ export async function calculateTasteMatch(otherUserId: string): Promise<{ percen
 
     // Get recent posts from both users
     const [myPosts, theirPosts] = await Promise.all([
-      getUserPosts(user.id, 100),
-      getUserPosts(otherUserId, 100)
+      getUserPosts(user.id, 100, true),
+      getUserPosts(otherUserId, 100, true)
     ]);
 
     // Extract artists
@@ -1772,7 +1786,10 @@ export async function joinCircle(circleId: string) {
     // Notification au créateur : créée en base (déclencheur).
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: /not found/i.test(error?.message || '') ? 'Ce cercle n\'existe plus' : 'Impossible de rejoindre le cercle, réessaie' };
+    const msg = error?.message || '';
+    return { success: false, error: /not found/i.test(msg) ? 'Ce cercle n\'existe plus'
+      : /removed/i.test(msg) ? 'Tu as été retiré·e de ce cercle. Demande à un membre de te rajouter.'
+      : 'Impossible de rejoindre le cercle, réessaie' };
   }
 }
 

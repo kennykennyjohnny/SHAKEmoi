@@ -6,7 +6,7 @@ import { EditProfileDialog } from './EditProfileDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
-import { getUserPosts, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPosts, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
+import { getUserPosts, getUserShakeCount, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPosts, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { StoryArchiveDialog } from './StoryArchiveDialog';
@@ -68,13 +68,14 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
     try {
       if (userShakes.length === 0 && userReshakes.length === 0) setLoading(true);
 
-      const [posts, reshakes, followersCount, followingCount, stories, pinned] = await Promise.all([
+      const [posts, reshakes, followersCount, followingCount, stories, pinned, shakeCount] = await Promise.all([
         getUserPosts(user.id),
         getUserReshakes(user.id),
         getUserFollowersCount(user.id),
         getUserFollowingCount(user.id),
         getUserActiveStories(user.id),
-        getUserPinnedStories(user.id)
+        getUserPinnedStories(user.id),
+        getUserShakeCount(user.id),
       ]);
 
       const allPostIds = [...posts.map((p: any) => p.id), ...reshakes.map((p: any) => p.id)];
@@ -152,7 +153,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       setUserReshakes(reshakesData);
 
       setStats({
-        shakes: posts.length,
+        // Ses shakes seulement : les reshakes ont leur onglet.
+        shakes: shakeCount,
         followers: followersCount,
         following: followingCount
       });
@@ -190,7 +192,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       await deletePost(shakeId);
       setUserShakes(userShakes.filter(shake => shake.id !== shakeId));
       setUserReshakes(userReshakes.filter(shake => shake.id !== shakeId));
-      setStats({ ...stats, shakes: stats.shakes - 1 });
+      if (userShakes.some(s => s.id === shakeId)) setStats({ ...stats, shakes: Math.max(0, stats.shakes - 1) });
       if (detailPostId === shakeId) setDetailPostId(null);
     } catch (error) {
       console.error('Failed to delete shake:', error);

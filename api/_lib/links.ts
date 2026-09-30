@@ -186,7 +186,7 @@ export async function resolveLink({ type, id, by }: LinkParams): Promise<LinkMet
         const user = await userByUsername(id);
         if (!user) return HOME;
         const [songs, followers] = await Promise.all([
-          countOf(`posts?user_id=eq.${user.id}&is_private=not.is.true&circle_id=is.null&select=id`),
+          countOf(`posts?user_id=eq.${user.id}&is_private=not.is.true&circle_id=is.null&is_reshake=not.is.true&select=id`),
           countOf(`follows?following_id=eq.${user.id}&select=id`),
         ]);
         const name = user.display_name || user.username;

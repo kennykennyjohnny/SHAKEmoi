@@ -35,10 +35,10 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore }: Props
       setProfile(p ?? null);
       if (!p) return;
       const [shakes, followers, posts] = await Promise.all([
-        supabase.from('posts').select('id', { count: 'exact', head: true }).eq('user_id', p.id).is('circle_id', null).not('is_private', 'is', true),
+        supabase.from('posts').select('id', { count: 'exact', head: true }).eq('user_id', p.id).is('circle_id', null).not('is_private', 'is', true).not('is_reshake', 'is', true),
         supabase.from('follows').select('id', { count: 'exact', head: true }).eq('following_id', p.id),
         supabase.from('posts').select('id, cover_url, track_name, artist').eq('user_id', p.id).is('circle_id', null)
-          .not('is_private', 'is', true).not('cover_url', 'is', null).order('created_at', { ascending: false }).limit(6),
+          .not('is_private', 'is', true).not('is_reshake', 'is', true).not('cover_url', 'is', null).order('created_at', { ascending: false }).limit(6),
       ]);
       if (cancelled) return;
       setStats({ shakes: shakes.count ?? 0, followers: followers.count ?? 0 });

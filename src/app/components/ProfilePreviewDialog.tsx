@@ -1,7 +1,7 @@
 import { X, Heart, Play, UserPlus, UserCheck, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { getUserProfile, getUserPosts, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing, getUserReshakes, getCachedTasteMatch, calculateTasteMatch, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
+import { getUserProfile, getUserPosts, getUserShakeCount, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing, getUserReshakes, getCachedTasteMatch, calculateTasteMatch, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { StoryViewerDialog } from './StoryViewerDialog';
 
@@ -57,13 +57,14 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
 
       const actualId = profileData.id;
 
-      const [postsData, reshakesData, followersCount, followingCount, followingStatus, storiesData] = await Promise.all([
+      const [postsData, reshakesData, followersCount, followingCount, followingStatus, storiesData, shakeCount] = await Promise.all([
         getUserPosts(actualId, 9),
         getUserReshakes(actualId),
         getUserFollowersCount(actualId),
         getUserFollowingCount(actualId),
         isFollowing(actualId),
-        getUserActiveStories(actualId)
+        getUserActiveStories(actualId),
+        getUserShakeCount(actualId),
       ]);
       const pinnedData = await getUserPinnedStories(actualId);
 
@@ -78,7 +79,8 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
       setStats({
         followers: followersCount,
         following: followingCount,
-        posts: postsData.length
+        // Vrai nombre de shakes (avant : reshakes compris, et plafonné à 9).
+        posts: shakeCount
       });
       setIsFollowingUser(followingStatus);
 

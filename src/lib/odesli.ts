@@ -99,7 +99,8 @@ export function getPlatformUrl(
   const exact = storedUrl(links, key);
   if (exact) return exact;
   if (meta?.title) return searchUrl(key, meta.title, meta.artist || '');
-  return storedUrl(links, 'spotify') || links.odesli_page_url || null;
+  const page = links.odesli_page_url;
+  return storedUrl(links, 'spotify') || (page && /^https:\/\//.test(page) ? page : null);
 }
 
 export { searchUrl };
