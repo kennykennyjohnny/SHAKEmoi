@@ -2,7 +2,7 @@
 
 Tout est en ligne sur **shakemoi.fr** (branche `main`, déployé par Vercel). Build et contrôle des types verts avant chaque envoi. Détail ligne par ligne dans `CE_SOIR.md`.
 
-## En 15 lignes
+## En bref
 1. **Sécurité critique réglée** : une vieille fonction serveur (Figma Make) encore en ligne permettait de récupérer les emails de tous les comptes. Neutralisée.
 2. **Ton bug** : les reshakes étaient comptés comme des shakes sur le profil → corrigé partout (profil, aperçu, page publique, carte de partage). Les compteurs plafonnaient aussi à 9 ou 50.
 3. Chaque commentaire texte était compté **deux fois** → corrigé.
@@ -17,7 +17,8 @@ Tout est en ligne sur **shakemoi.fr** (branche `main`, déployé par Vercel). Bu
 12. iPhone (appli installée) : en-tête plus caché sous l'heure, champs de saisie plus cachés sous la barre du bas.
 13. Erreurs visibles en français au lieu d'échecs silencieux (shake depuis le composer, la Recherche, le TOP ou le Shake de la semaine, commentaire, suivre, like, cercles).
 14. Appli plus légère au premier affichage (253 → 207 Ko), écrans chargés à la demande.
-15. Tests automatiques Playwright (téléphone + ordinateur) : 10/10 sur le site en ligne.
+15. Tests automatiques Playwright (téléphone + ordinateur) : 10/10 sur le site en ligne (relancés après chaque grosse mise en ligne).
+16. **Cohérence (M11)** : un reshake montre partout les chiffres du post d'origine ; les likes des messages de cercle comptent enfin ; le TOP n'inclut plus de posts privés ou de cercle ; une seule façon d'afficher les dates.
 
 ## Commits de la nuit, par thème
 **Données (scripts validés)**
@@ -37,6 +38,12 @@ Tout est en ligne sur **shakemoi.fr** (branche `main`, déployé par Vercel). Bu
 - `80f3ff4` erreurs visibles, cercles, conversations, ordinateur, accessibilité (50 libellés)
 - `30e4d85` erreur de chargement des cercles avec « Réessayer », index base
 - `8b58ad7` une actualisation garde l'onglet en cours
+
+**Cohérence entre écrans (M11)**
+- `d4ea022` likes de cercle, reshakes = post d'origine, TOP sans privé/cercle, Suivre vérifié partout
+- `d06833f` dates identiques partout, like du profil protégé
+- `0f6b235` avatars des pages publiques, code mort retiré
+- `27083b5` shake depuis Recherche/TOP/Shake de la semaine : plus d'échec silencieux
 
 **Perf + tests**
 - `1c57a70` écrans chargés à la demande
@@ -59,6 +66,8 @@ Tout est en ligne sur **shakemoi.fr** (branche `main`, déployé par Vercel). Bu
 11. Clique une conversation dans la colonne de gauche, ferme-la, reclique la même : elle se rouvre.
 12. Le bouton + des messages ne recouvre plus le TOP de droite.
 13. Ouvre `shakemoi.fr/u/Kenny` (majuscule) : ça ouvre bien @kenny.
+14. Profil → onglet Reshakes : les likes/commentaires d'un reshake sont les mêmes que dans le fil ; liker depuis là compte sur le post d'origine.
+15. Dans un cercle, like un message : le chiffre passe à 1 tout de suite (il restait à 0).
 
 ## Section M — rappel de ce qui est fait (soir) et à tester
 M1 tous les sons lisibles (Deezer stable, iTunes, secours « Écouter sur <ton appli> ») · M2 une seule façon de jouer un son, plus d'embed Spotify, pas de lecture auto · M3 compte à rebours des stories · M4 vues visibles par la propriétaire (œil en bas à droite) · M5 GIF (**il te faut une clé KLIPY ou GIPHY**, voir CE_SOIR) · M6 bouton d'installation toujours visible · M7 ordinateur : Messages + Groupes à gauche, TOP à droite · M8 plus de curseur clignotant · M9 logo → accueil + rechargement · M10 likes de story groupés dans la cloche.
@@ -70,7 +79,8 @@ M1 tous les sons lisibles (Deezer stable, iTunes, secours « Écouter sur <ton a
 3. **Fonctions serveur neutralisées** (`make-server-7dbfc935`, `calculate-compatibility`) : à supprimer du tableau de bord Supabase (Edge Functions → Delete). La table `kv_store_7dbfc935` (2 lignes, dont 1 email) peut aussi être supprimée — je ne l'ai pas fait (suppression de données non listée).
 4. **Supabase → Authentication → Passwords** : activer « Leaked password protection » (réglage du tableau de bord, je ne peux pas le faire).
 5. **Vocabulaire** : l'appli dit « Groupes » à certains endroits et « Cercles » à d'autres ; « Shake Éphémère » vs « story ». Tu choisis, je remplace partout.
-6. **Invitation de cercle** : le lien `/c/<id>` reste valable à vie pour qui l'a vu. Option : lien avec un code qu'on peut régénérer (changement de fonctionnement → ton OK).
+6. **Anciennes interactions sur des reshakes** : 9 likes et 2 commentaires (avant avril) sont restés sur des lignes de reshake, plus visibles nulle part. OK pour les déplacer vers les posts d'origine (même méthode que le script 2) ?
+7. **Invitation de cercle** : le lien `/c/<id>` reste valable à vie pour qui l'a vu. Option : lien avec un code qu'on peut régénérer (changement de fonctionnement → ton OK).
 
 ## Grosses décisions (branche `nuit-decisions`)
 Aucune cette nuit : tout ce qui a été fait est petit, réversible et déjà sur `main`. Pas de branche à fusionner.

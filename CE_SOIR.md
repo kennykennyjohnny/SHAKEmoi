@@ -154,3 +154,17 @@ Trouvailles en plus :
 | N-N5 Ordinateur | ✅ | Recliquer sur la même conversation la rouvre ; bouton + qui recouvrait le TOP ; colonne gauche et TOP plus chargés sur téléphone (économie de données). |
 | N-N6 Textes + accessibilité | ✅ | « Messages » au lieu de « DMs », « Chargement des shakes », « Ce shake n'existe plus », « limite de 100 abonnements » ; 50 boutons à icône seule ont un libellé. |
 | N-T1 Tests automatiques | ✅ | Playwright (`npm run test:e2e`) : accueil sans compte, lien de son partagé, profil public, ancien lien `/u/Kenny`, aperçu de lien — téléphone 390 px + ordinateur. **10/10 OK** sur shakemoi.fr. Connexion testée seulement si tu fournis `E2E_EMAIL` / `E2E_PASSWORD` (je n'utilise pas de vrai mot de passe). |
+
+## M11 — incohérences entre écrans (audit de la nuit)
+| # | Statut | Explication |
+|---|---|---|
+| M11-1 Likes des messages de cercle | ✅ | Le compteur restait à 0 (mise à jour refusée sans bruit). Tenu par la base maintenant ; 2 messages corrigés ; cœur + chiffre mis à jour tout de suite, annulés si refus. |
+| M11-2 Reshake : chiffres différents fil / profil | ✅ | Profil (onglet Reshakes), aperçu d'un profil et détail : un reshake montre et agit sur le **post d'origine** (likes, commentaires, partage), comme le fil. Une notification qui pointe sur un reshake ouvre l'original. |
+| M11-3 Détail d'un shake | ✅ | Le compteur de commentaires compte aussi les réponses en musique (comme le fil). |
+| M11-4 TOP | ✅ | TOP, tendances des amis et bilan de la semaine : plus jamais de post privé ou de cercle ; bilan compté comme le profil. |
+| M11-5 Suivre | ✅ | Refus (limite de 100, réseau) signalé partout : Recherche, notifications, page d'un son, profil, aperçu. |
+| M11-6 Dates | ✅ | Un seul format partout : « À l'instant », « 5min », « 3h », « 2j », puis « 12 sept. » (avant : 5 formats, dont « 245j » ou une date fixe 5 minutes après). |
+| M11-7 Avatars | ✅ | Pages publiques : petite image + initiale comme ailleurs (« % » pour un pseudo accentué corrigé). |
+| M11-8 Like du profil | ✅ | Protégé du double tap, annulé si refusé. |
+| M11-9 Anciennes interactions sur des reshakes | 🟡 | 9 likes et 2 commentaires (avant avril) sont restés attachés à des lignes de reshake. Plus visibles nulle part depuis M11-2. Les déplacer vers les posts d'origine = modification de données → **ton OK** (même méthode que le script 2). |
+| M11-10 Cache du fil | ⏭️ | Supprimer un shake depuis le profil : le fil l'affiche encore une seconde, jusqu'à son rafraîchissement automatique. Petit, noté pour plus tard. |
