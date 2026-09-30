@@ -152,12 +152,12 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
   // Ordre fixé à l'ouverture, plateforme préférée en premier. On ne réordonne
   // PAS au clic : avant, le bouton sautait en haut au lieu de s'ouvrir.
   const preferred = useMemo<PlatformKey | null>(
-    () => normalizePlatform(currentUser?.musicService || currentUser?.preferred_platform)
+    () => normalizePlatform(currentUser?.musicService || currentUser?.preferred_streaming_app || currentUser?.preferred_platform)
       || normalizePlatform(getPreferredPlatform()),
     [currentUser?.id],
   );
   const ordered = useMemo(
-    () => LISTEN_PLATFORMS
+    () => (preferred && !LISTEN_PLATFORMS.includes(preferred) ? [preferred, ...LISTEN_PLATFORMS] : LISTEN_PLATFORMS)
       .slice()
       .sort((a, b) => (b === preferred ? 1 : 0) - (a === preferred ? 1 : 0))
       .map(k => PLATFORM_BUTTONS.find(p => p.key === k))
@@ -165,13 +165,12 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
     [preferred],
   );
 
-  // Le clic ne fait que mémoriser la préférence : l'ouverture est assurée par
-  // le lien lui-même (<a href>), ce qui marche partout, iOS compris.
+  // Le clic ne fait que mémoriser la préférence du VISITEUR : l'ouverture est
+  // assurée par le lien lui-même (<a href>), ce qui marche partout, iOS compris.
+  // Connecté : l'appli d'écoute est celle du profil (O1), modifiable dans les
+  // paramètres — un clic ici ne la change plus en douce.
   const rememberPlatform = (key: PlatformKey) => {
-    setPreferredPlatform(key);
-    if (currentUser && normalizePlatform(currentUser.musicService) !== key) {
-      supabase.from('users_profile').update({ preferred_platform: key }).eq('id', currentUser.id).then(() => {});
-    }
+    if (!currentUser) setPreferredPlatform(key);
   };
 
   const follow = async () => {

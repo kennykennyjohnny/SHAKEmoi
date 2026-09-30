@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { SongCover } from './SongCover';
-import { TrendingUp, Users, Loader2, ExternalLink, Music, Crown, Repeat2, BarChart3, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { TrendingUp, Users, Loader2, Music, Crown, Repeat2, BarChart3, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getFriendsTrending, getCurrentUser, getUserFollowing, createPost } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 import { supabase } from '../../lib/supabase';
 import { openExternal } from '../../lib/platforms';
+import { MyAppLogo } from './PlatformLogo';
 
 interface TopFriendsViewProps {
   currentUser: any;
@@ -319,7 +320,7 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
                           </div>
                         </div>
                         <button onClick={() => openInMusicApp(track)} className="p-1.5 rounded-full bg-[#FFEFD5]/10 hover:bg-[#FFEFD5]/20 transition-colors flex-shrink-0">
-                          <ExternalLink className="w-4 h-4 text-[#FFEFD5]" />
+                          <MyAppLogo className="w-4 h-4 text-[#FFEFD5]" />
                         </button>
                         {shakedIds.has(track.track_id || track.track_name) ? (
                           <span className="text-[10px] text-fuchsia-400 font-semibold flex-shrink-0">Shaké !</span>

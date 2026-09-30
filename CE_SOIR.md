@@ -121,7 +121,14 @@ Trouvailles en plus :
 - D4 / D6 vraies notifications push (appli fermée) — nécessite Web Push + service worker + clés VAPID.
 - G9 Connexion Google / Apple.
 
-## En attente de ton OK
-1. `supabase/pending/1_pseudos_en_minuscules.sql` — met les 27 pseudos en minuscules (« Raph » → `raph`, l'autre « raph » vide → `raph2`) puis rend l'unicité sans casse obligatoire.
-2. `supabase/pending/2_reshakes_en_double.sql` — supprime 3 reshakes interdits (1 doublon + 2 reshakes de son propre post), puis pose la contrainte « 1 reshake par personne et par post ».
-3. `scripts/recompress-avatars.mjs` — recompresse une fois les photos de profil lourdes (jusqu'à 9,7 Mo → ~15 Ko), sans supprimer les originaux. Se lance d'abord en simulation.
+## Scripts validés par Kenny (nuit du 29 au 30/09)
+| # | Statut | Explication |
+|---|---|---|
+| 1. Pseudos en minuscules | ✅ | Appliqué. 0 pseudo hors règle, noms d'affichage intacts, 28 anciens pseudos gardés → `/u/Ancien` redirige. Rangé dans `supabase/applied/`. |
+| 2. Reshakes en double | ✅ | Appliqué. 3 reshakes supprimés (liste dans MATIN.md), leur commentaire et leurs 2 likes déplacés sur le post d'origine, 0 compteur faux. Rangé dans `supabase/applied/`. |
+| 3. Avatars | 🟡 | Simulation faite : 5 avatars lourds, **13,7 Mo → 42 Ko**. L'envoi réel demande la clé secrète « service_role » que je n'ai pas le droit de lire → une commande à lancer (voir MATIN.md). |
+
+## Section O
+| # | Statut | Explication |
+|---|---|---|
+| O3 | ✅ | Une réponse en musique = un commentaire partout : compteur calculé en base (texte + musique, sur ajout ET suppression), notification « a répondu en musique à ton shake » (ouvre le post), liste avec pochette jouable, suppression par son auteur ou l'auteur du post. Test en base : 1 texte + 1 musique = 2 ✓, suppression → 1 ✓. **4 posts corrigés.** Au passage (sécurité) : commentaires, likes et réponses en musique ne sont lisibles que si on peut voir le post. |

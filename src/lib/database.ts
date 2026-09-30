@@ -15,6 +15,8 @@ export interface UserProfile {
   display_name?: string | null;
   bio?: string | null;
   preferred_platform?: string | null;
+  preferred_streaming_app?: string | null;
+  onboarding_completed_at?: string | null;
   feels_count: number;
   feelings_count: number;
 }

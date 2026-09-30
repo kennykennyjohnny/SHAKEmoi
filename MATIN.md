@@ -20,5 +20,19 @@
 
 Ce qui était attaché à ces reshakes : 1 commentaire de @lil_mga (« Trop bien on voit les commentaires 😱 », 16/12/2025) et 2 likes de @kenny → **déplacés sur le post d'origine** au lieu d'être perdus.
 
-### 3. Recompression des avatars
-(en cours)
+### 3. Recompression des avatars — 🟡 simulation faite, envoi à lancer par toi
+| profil | avant | après |
+|---|---|---|
+| @fawn28 | 9 685 Ko | 8 Ko |
+| @bapt22 | 2 626 Ko | 12 Ko |
+| @shakemoi | 1 021 Ko | 7 Ko |
+| @kenny | 641 Ko | 7 Ko |
+| @lil_mga | 11 Ko | (déjà léger, pas touché) |
+| **Total** | **13,7 Mo** | **~42 Ko** |
+
+Pourquoi pas fini : l'envoi des nouvelles images dans le stockage demande la clé secrète Supabase (« service_role »), et je n'ai pas le droit d'aller la chercher. Les originaux ne sont jamais supprimés.
+À lancer dans le dossier du projet (clé : Supabase → Project Settings → API → service_role) :
+```
+$env:SUPABASE_SERVICE_ROLE_KEY="ta_cle"; node scripts/recompress-avatars.mjs --apply
+```
+En attendant, l'appli affiche déjà ces avatars en petite version via `/api/img` : rien de lent côté utilisateurs.

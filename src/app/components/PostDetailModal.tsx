@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Heart, MessageCircle, ExternalLink, Loader2, Send, Trash2, Share2, Music, Search } from 'lucide-react';
+import { X, Heart, MessageCircle, Loader2, Send, Trash2, Share2, Music, Search } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -11,6 +11,7 @@ import { LikersSheet } from './LikersSheet';
 
 import { thumb, defaultAvatar } from '../../lib/media';
 import { SongCover } from './SongCover';
+import { MyAppLogo } from './PlatformLogo';
 interface PostDetailModalProps {
   postId: string;
   currentUser: any;
@@ -271,7 +272,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
             </button>
 
             <button onClick={openInMusicApp} className="flex items-center gap-1.5 group ml-auto px-3 py-1.5 rounded-full bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors">
-              <ExternalLink className="w-4 h-4 text-fuchsia-400" />
+              <MyAppLogo className="w-4 h-4 text-fuchsia-400" />
               <span className="text-xs font-medium text-fuchsia-400">Écouter</span>
             </button>
 
@@ -355,7 +356,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
                         <p className="text-xs text-purple-300/60 truncate">{r.artist}</p>
                       </div>
                       <button onClick={e => { e.stopPropagation(); openReactionInApp(r); }} aria-label="Ouvrir dans mon appli de musique" className="p-1.5 rounded-full bg-purple-600/10 hover:bg-purple-600/20">
-                        <ExternalLink className="w-3.5 h-3.5 text-purple-400" />
+                        <MyAppLogo className="w-3.5 h-3.5 text-purple-400" />
                       </button>
                     </div>
                   </div>

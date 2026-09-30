@@ -1,4 +1,4 @@
-import { Archive, Pin, Music, Heart, Settings, Play, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, ExternalLink, UserMinus, Share2, Copy, Check, Send, ArrowLeft } from 'lucide-react';
+import { Archive, Pin, Music, Heart, Settings, Play, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, UserMinus, Share2, Copy, Check, Send, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useRef } from 'react';
 import { SettingsDialog } from './SettingsDialog';
@@ -17,6 +17,7 @@ import { LikersSheet } from './LikersSheet';
 
 import { thumb, defaultAvatar } from '../../lib/media';
 import { SongCover } from './SongCover';
+import { MyAppLogo } from './PlatformLogo';
 interface ProfileViewProps {
   user: any;
   onUpdateUser?: (updatedUser: any) => void;
@@ -181,11 +182,6 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
     const updatedUser = { ...user, ...settings };
     if (onUpdateUser) {
       onUpdateUser(updatedUser);
-    }
-    const onboarding = localStorage.getItem('shakemoi_onboarding');
-    if (onboarding) {
-      const data = JSON.parse(onboarding);
-      localStorage.setItem('shakemoi_onboarding', JSON.stringify({ ...data, ...settings }));
     }
   };
 
@@ -583,7 +579,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                         </button>
 
                         <button onClick={() => openInMusicApp(detailShake)} className="flex items-center gap-1.5 group ml-auto px-3 py-1.5 rounded-full bg-[#FFEFD5]/10 hover:bg-[#FFEFD5]/20 transition-colors">
-                          <ExternalLink className="w-4 h-4 text-[#FFEFD5]" />
+                          <MyAppLogo className="w-4 h-4 text-[#FFEFD5]" />
                           <span className="text-xs font-medium text-[#FFEFD5]">Écouter</span>
                         </button>
 

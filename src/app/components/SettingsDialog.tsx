@@ -1,10 +1,13 @@
-import { X, Music2, Check, LogOut, User, Bell, Info, BellRing, Shield, Trash2, ChevronRight, Loader2 } from 'lucide-react';
+import { X, Music2, Check, LogOut, User, Bell, Info, BellRing, Shield, Trash2, ChevronRight, Loader2, PlayCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 
 import { thumb, defaultAvatar } from '../../lib/media';
 import { showLocalNotification } from '../../lib/notify';
-type MusicPlatform = 'spotify' | 'apple_music' | 'deezer' | 'youtube_music' | 'tidal';
+import { normalizePlatform, PLATFORM_LABELS, STREAMING_APPS, type PlatformKey } from '../../lib/platforms';
+import { PlatformLogo } from './PlatformLogo';
+import { OnboardingDialog } from './OnboardingDialog';
+type MusicPlatform = PlatformKey;
 
 interface SettingsDialogProps {
   currentUser: any;
@@ -13,13 +16,21 @@ interface SettingsDialogProps {
   onLogout?: () => void;
 }
 
+const savedPlatform = (u: any): MusicPlatform =>
+  normalizePlatform(u?.musicService || u?.preferred_streaming_app || u?.preferred_platform) || 'spotify';
+
+async function savePlatform(userId: string, service: MusicPlatform) {
+  const { supabase } = await import('../../lib/supabase');
+  const { error } = await supabase.from('users_profile').update({ preferred_streaming_app: service }).eq('id', userId);
+  if (error) throw error;
+}
+
 export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: SettingsDialogProps) {
-  const [musicService, setMusicService] = useState<MusicPlatform>(
-    currentUser?.musicService || currentUser?.preferred_platform || 'spotify'
-  );
-  const [initialMusicService] = useState<MusicPlatform>(
-    currentUser?.musicService || currentUser?.preferred_platform || 'spotify'
-  );
+  const [musicService, setMusicService] = useState<MusicPlatform>(() => savedPlatform(currentUser));
+  const [initialMusicService, setInitialMusicService] = useState<MusicPlatform>(() => savedPlatform(currentUser));
+  // « Revoir le tuto » : s'ouvre par-dessus, on revient ici à la fin (O1).
+  const [replay, setReplay] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   // L'email n'est plus copié dans users_profile (profil public) : on le lit
   // dans la session, seul endroit où il est visible par son propriétaire.
   const [email, setEmail] = useState<string | null>(null);
@@ -89,17 +100,31 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
   const [pushUnsupported, setPushUnsupported] = useState(false);
 
   const handleSave = async () => {
-    try {
-      const { supabase } = await import('../../lib/supabase');
-      await supabase
-        .from('users_profile')
-        .update({ preferred_platform: musicService })
-        .eq('id', currentUser.id);
-    } catch (e) {
-      console.error('Error saving platform:', e);
+    if (musicService !== initialMusicService) {
+      try {
+        await savePlatform(currentUser.id, musicService);
+      } catch (e) {
+        console.error('Error saving platform:', e);
+        setSaveError('Ton appli d\'écoute n\'a pas pu être enregistrée. Vérifie ta connexion et réessaie.');
+        return;
+      }
     }
     onSave({ musicService });
     onClose();
+  };
+
+  const handleReplayDone = async (service: MusicPlatform) => {
+    setReplay(false);
+    setMusicService(service);
+    if (service === initialMusicService) return;
+    try {
+      await savePlatform(currentUser.id, service);
+      setInitialMusicService(service);
+      onSave({ musicService: service });
+    } catch (e) {
+      console.error('Error saving platform:', e);
+      setSaveError('Ton appli d\'écoute n\'a pas pu être enregistrée. Vérifie ta connexion et réessaie.');
+    }
   };
 
   const hasChanges = musicService !== initialMusicService ||
@@ -148,7 +173,6 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
         await supabase.auth.signOut();
         localStorage.removeItem('shakemoi_auth_token');
         localStorage.removeItem('shakemoi_user');
-        localStorage.removeItem('shakemoi_onboarding');
         if (onLogout) {
           onLogout();
         } else {
@@ -161,13 +185,6 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
     }
   };
 
-  const platforms = [
-    { id: 'spotify', name: 'Spotify', icon: '🟢', color: 'from-green-600 to-green-500' },
-    { id: 'apple_music', name: 'Apple Music', icon: '🍎', color: 'from-pink-600 to-pink-500' },
-    { id: 'deezer', name: 'Deezer', icon: '🎵', color: 'from-purple-500 to-purple-400' },
-    { id: 'youtube_music', name: 'YouTube Music', icon: '▶️', color: 'from-pink-600 to-orange-500' },
-    { id: 'tidal', name: 'Tidal', icon: '🌊', color: 'from-cyan-600 to-cyan-500' },
-  ];
 
   const avatar = thumb(currentUser?.avatar) || thumb(currentUser?.profile_album_cover_url) || defaultAvatar(currentUser?.username);
   const displayName = currentUser?.displayName || currentUser?.display_name || currentUser?.username;
@@ -227,34 +244,39 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Music2 className="w-4 h-4 text-purple-400" />
-              <h3 className="text-sm font-semibold text-purple-200/80 uppercase tracking-wide">Plateforme musicale</h3>
+              <h3 className="text-sm font-semibold text-purple-200/80 uppercase tracking-wide">Appli d'écoute</h3>
             </div>
             <p className="text-xs text-purple-400/50 mb-3">
-              Le bouton "Écouter" ouvrira les morceaux dans cette app
+              Les sons s'ouvriront dans cette appli
             </p>
-            <div className="space-y-2">
-              {platforms.map((service) => (
+            <div className="grid grid-cols-2 gap-2">
+              {STREAMING_APPS.map((key) => (
                 <button
-                  key={service.id}
-                  onClick={() => setMusicService(service.id as MusicPlatform)}
-                  className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
-                    musicService === service.id
-                      ? 'border-purple-500 bg-purple-500/10'
+                  key={key}
+                  onClick={() => { setMusicService(key); setSaveError(null); }}
+                  aria-pressed={musicService === key}
+                  className={`relative flex items-center gap-2.5 p-2.5 rounded-xl border-2 transition-all text-left ${
+                    musicService === key
+                      ? 'border-fuchsia-400 bg-fuchsia-500/10'
                       : 'border-purple-800/30 bg-purple-950/40 hover:border-purple-700/40'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${service.color} flex items-center justify-center text-lg`}>
-                      {service.icon}
-                    </div>
-                    <span className="font-medium text-white">{service.name}</span>
-                  </div>
-                  {musicService === service.id && (
-                    <Check className="w-5 h-5 text-purple-500" />
+                  <PlatformLogo platform={key} size="md" />
+                  <span className="font-medium text-white text-sm leading-tight">{PLATFORM_LABELS[key]}</span>
+                  {musicService === key && (
+                    <Check className="w-4 h-4 text-fuchsia-400 absolute top-1.5 right-1.5" />
                   )}
                 </button>
               ))}
             </div>
+            {saveError && <p className="text-xs text-pink-400 mt-2">{saveError}</p>}
+            <button
+              onClick={() => setReplay(true)}
+              className="mt-3 w-full flex items-center justify-between px-3 py-3 rounded-xl bg-purple-950/40 hover:bg-purple-900/40 text-sm text-white transition-colors"
+            >
+              <span className="flex items-center gap-2"><PlayCircle className="w-4 h-4 text-fuchsia-400" /> Revoir le tuto</span>
+              <ChevronRight className="w-4 h-4 text-purple-300/60" />
+            </button>
           </div>
 
           {/* Notifications */}
@@ -343,7 +365,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-purple-300/60">Intégrations</span>
-                <span className="text-sm text-white">Spotify, Apple Music, Deezer, YouTube Music</span>
+                <span className="text-sm text-white text-right">{STREAMING_APPS.map(k => PLATFORM_LABELS[k]).join(', ')}</span>
               </div>
             </div>
           </div>
@@ -396,6 +418,16 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
           </button>
         </div>
       </motion.div>
+      {replay && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <OnboardingDialog
+            replay
+            initialService={musicService}
+            onComplete={handleReplayDone}
+            onClose={() => setReplay(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }

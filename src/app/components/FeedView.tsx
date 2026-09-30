@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Heart, MessageCircle, Repeat2, Play, Pause, MoreHorizontal, Loader2, Send, ExternalLink, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Copy, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
+import { Heart, MessageCircle, Repeat2, Play, Pause, MoreHorizontal, Loader2, Send, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Copy, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as db from '../../lib/database';
 import { supabase } from '../../lib/supabase';
@@ -15,11 +15,12 @@ import { MusicReactionsDialog } from './MusicReactionsDialog';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { circleLink, postLink } from '../../lib/links';
 import { SongShareSheet } from './SongShareSheet';
-import { openExternal } from '../../lib/platforms';
+import { openExternal, normalizePlatform, PLATFORM_LABELS } from '../../lib/platforms';
 import { LikersSheet } from './LikersSheet';
 import { MediaImg, thumb, defaultAvatar, compressImage } from '../../lib/media';
 import { searchGifs, GIF_ERROR_TEXT } from '../../lib/gifs';
 import { friendlyError } from '../../lib/errors';
+import { MyAppLogo } from './PlatformLogo';
 
 function storyTimeRemaining(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -1441,7 +1442,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                             onClick={() => { openInMusicApp(shake); setMenuOpenId(null); }}
                             className="w-full px-4 py-2.5 text-left text-sm hover:bg-purple-900/50 transition-colors flex items-center gap-2"
                           >
-                            <ExternalLink className="w-4 h-4" />
+                            <MyAppLogo className="w-4 h-4" />
                             Écouter
                           </button>
                         </motion.div>
@@ -1559,7 +1560,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     onClick={() => openInMusicApp(shake)}
                     className="flex items-center gap-1.5 group ml-auto px-3 py-1 rounded-full bg-[#FFEFD5]/10 hover:bg-[#FFEFD5]/20 transition-colors"
                   >
-                    <ExternalLink className="w-4 h-4 text-[#FFEFD5] group-hover:text-[#FFEFD5] transition-colors" />
+                    <MyAppLogo className="w-4 h-4 text-[#FFEFD5] group-hover:text-[#FFEFD5] transition-colors" />
                     <span className="text-xs font-medium text-[#FFEFD5] group-hover:text-[#FFEFD5] hidden sm:inline">Écouter</span>
                   </button>
                 </div>
@@ -1605,12 +1606,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             <button
               onClick={() => {
                 const s = noPreviewShake;
-                openExternal(s.track.spotifyUri || `https://open.spotify.com/search/${encodeURIComponent(`${s.track.title} ${s.track.artist}`)}`);
+                openInMusicApp(s);
                 setNoPreviewShake(null);
               }}
-              className="flex-shrink-0 px-3 py-1.5 rounded-full bg-[#1DB954] text-white font-bold"
+              className="flex-shrink-0 px-3 py-1.5 rounded-full bg-white text-[#1E1440] font-bold inline-flex items-center gap-1.5"
             >
-              Écouter sur Spotify
+              <MyAppLogo className="w-3.5 h-3.5" /> Écouter sur {PLATFORM_LABELS[normalizePlatform(currentUser?.musicService) || 'spotify']}
             </button>
           </motion.div>
         )}

@@ -3,11 +3,12 @@
 // - un clic lance / met en pause l'extrait dans notre lecteur (jamais d'embed
 //   Spotify, jamais de lecture automatique) ;
 // - un seul son à la fois dans toute l'appli (lecteur global de lib/preview) ;
-// - pas d'extrait nulle part (M1) : petit bouton « Écouter sur Spotify ».
+// - pas d'extrait nulle part (M1) : petit bouton « Écouter sur <mon appli> » (O1).
 import { useEffect, useState } from 'react';
-import { Play, Pause, Loader2, ExternalLink } from 'lucide-react';
+import { Play, Pause, Loader2 } from 'lucide-react';
 import { resolvePreviewUrl, togglePreview, playPreview, getPreviewState, onPreviewChange } from '../../lib/preview';
-import { openExternal } from '../../lib/platforms';
+import { openExternal, PLATFORM_LABELS, searchUrl } from '../../lib/platforms';
+import { MyAppLogo, useMyStreamingApp } from './PlatformLogo';
 import { thumb } from '../../lib/media';
 
 export interface SongCoverProps {
@@ -38,6 +39,7 @@ export function SongCover({
   className = 'w-12 h-12', rounded = 'rounded-lg', iconSize = 'md',
 }: SongCoverProps) {
   const state = usePreviewState();
+  const myApp = useMyStreamingApp();
   const [loading, setLoading] = useState(false);
   const [noPreview, setNoPreview] = useState(false);
   const isCurrent = state.key === songKey;
@@ -58,8 +60,7 @@ export function SongCover({
 
   const openSpotify = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const q = encodeURIComponent(`${title || ''} ${artist || ''}`.trim());
-    openExternal(trackId ? `https://open.spotify.com/track/${trackId}` : `https://open.spotify.com/search/${q}`);
+    openExternal(myApp === 'spotify' && trackId ? `https://open.spotify.com/track/${trackId}` : searchUrl(myApp, title || '', artist || ''));
   };
 
   return (
@@ -97,7 +98,7 @@ export function SongCover({
           onClick={openSpotify}
           className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 whitespace-nowrap flex items-center gap-1 px-2 py-1 rounded-full bg-white text-[#1E1440] text-[10px] font-bold shadow-lg"
         >
-          <ExternalLink className="w-3 h-3" /> Écouter sur Spotify
+          <MyAppLogo className="w-3 h-3" /> Écouter sur {PLATFORM_LABELS[myApp]}
         </button>
       )}
     </div>

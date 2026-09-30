@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Send, Loader2, Music, Search, Trash2, ExternalLink } from 'lucide-react';
+import { X, Send, Loader2, Music, Search, Trash2 } from 'lucide-react';
 import { SongCover } from './SongCover';
 import { motion } from 'motion/react';
 import { getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment, getPostOwnerId, deleteMusicReaction } from '../../lib/database';
@@ -8,6 +8,7 @@ import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
 
 import { thumb, defaultAvatar } from '../../lib/media';
+import { MyAppLogo } from './PlatformLogo';
 interface CommentsDialogProps {
   postId: string;
   onClose: () => void;
@@ -257,7 +258,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
                         <p className="text-xs text-purple-300/60 truncate">{r.artist}</p>
                       </div>
                       <button onClick={e => { e.stopPropagation(); openInApp(r); }} aria-label="Ouvrir dans mon appli de musique" className="p-1.5 rounded-full bg-purple-600/10 hover:bg-purple-600/20">
-                        <ExternalLink className="w-3.5 h-3.5 text-purple-400" />
+                        <MyAppLogo className="w-3.5 h-3.5 text-purple-400" />
                       </button>
                       {canDelete(r) && (
                         <button onClick={() => handleDeleteMusic(r.id)} aria-label="Supprimer la réponse en musique" className="p-1.5 rounded-full text-purple-400/50 hover:text-pink-400">

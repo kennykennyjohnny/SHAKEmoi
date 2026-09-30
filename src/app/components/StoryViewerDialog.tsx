@@ -1,4 +1,4 @@
-import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Hourglass, Play, Pause, ExternalLink, Pin, Volume2, VolumeX } from 'lucide-react';
+import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Hourglass, Play, Pause, Pin, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers, getStoryLikes, markStoryAsViewed } from '../../lib/database';
@@ -10,6 +10,7 @@ import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
 
 import { thumb, defaultAvatar } from '../../lib/media';
+import { MyAppLogo } from './PlatformLogo';
 interface StoryViewerDialogProps {
   open: boolean;
   story: any | null;
@@ -605,7 +606,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                         title="Ouvrir dans mon appli"
                         className="p-2.5 rounded-full bg-white/15 hover:bg-white/25 text-white flex-shrink-0"
                       >
-                        <ExternalLink className="w-4 h-4" />
+                        <MyAppLogo className="w-4 h-4" />
                       </button>
                     </div>
                   )}
@@ -663,7 +664,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                       onClick={(e) => { e.stopPropagation(); openInApp(); }}
                       className="relative z-20 mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 text-xs font-semibold text-white transition-colors"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      <MyAppLogo className="w-3.5 h-3.5" />
                       Ouvrir dans mon appli
                     </button>
                   )}

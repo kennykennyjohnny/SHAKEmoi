@@ -11,7 +11,25 @@
 
 import { PUBLIC_ORIGIN } from './links';
 
-export type PlatformKey = 'spotify' | 'apple_music' | 'deezer' | 'youtube_music' | 'tidal';
+export type PlatformKey = 'spotify' | 'apple_music' | 'deezer' | 'youtube_music' | 'soundcloud' | 'amazon_music' | 'tidal';
+
+/** Les 7 applis d'écoute proposées (tuto, paramètres) — O1/O2. */
+export const STREAMING_APPS: PlatformKey[] = ['spotify', 'apple_music', 'deezer', 'youtube_music', 'soundcloud', 'amazon_music', 'tidal'];
+
+// Appli d'écoute de la personne connectée (profil, O1), connue de toute
+// l'appli : App la met à jour, les boutons « ouvrir » affichent son logo.
+let myApp: PlatformKey = 'spotify';
+const myAppListeners = new Set<() => void>();
+export function getMyStreamingApp(): PlatformKey { return myApp; }
+export function setMyStreamingApp(p: PlatformKey) {
+  if (p === myApp) return;
+  myApp = p;
+  myAppListeners.forEach(fn => fn());
+}
+export function onMyStreamingAppChange(fn: () => void): () => void {
+  myAppListeners.add(fn);
+  return () => { myAppListeners.delete(fn); };
+}
 
 /** Plateformes proposées sur la page d'un son, dans l'ordre par défaut. */
 export const LISTEN_PLATFORMS: PlatformKey[] = ['spotify', 'apple_music', 'deezer', 'youtube_music'];
@@ -21,6 +39,8 @@ export const PLATFORM_LABELS: Record<PlatformKey, string> = {
   apple_music: 'Apple Music',
   deezer: 'Deezer',
   youtube_music: 'YouTube Music',
+  soundcloud: 'SoundCloud',
+  amazon_music: 'Amazon Music',
   tidal: 'Tidal',
 };
 
@@ -31,6 +51,8 @@ export function normalizePlatform(p: string | null | undefined): PlatformKey | n
     case 'apple': case 'apple_music': case 'applemusic': case 'itunes': return 'apple_music';
     case 'deezer': return 'deezer';
     case 'youtube': case 'youtube_music': case 'youtubemusic': case 'ytmusic': return 'youtube_music';
+    case 'soundcloud': return 'soundcloud';
+    case 'amazon': case 'amazon_music': case 'amazonmusic': return 'amazon_music';
     case 'tidal': return 'tidal';
     default: return null;
   }
@@ -53,6 +75,8 @@ export function searchUrl(platform: PlatformKey, title: string, artist: string):
     case 'apple_music': return `https://music.apple.com/fr/search?term=${q}`;
     case 'deezer': return `https://www.deezer.com/search/${q}`;
     case 'youtube_music': return `https://music.youtube.com/search?q=${q}`;
+    case 'soundcloud': return `https://soundcloud.com/search?q=${q}`;
+    case 'amazon_music': return `https://music.amazon.fr/search/${q}`;
     case 'tidal': return `https://listen.tidal.com/search?q=${q}`;
   }
 }
@@ -76,6 +100,8 @@ export function storedUrl(links: StoredLinks, platform: PlatformKey): string | n
     case 'deezer': return toHttps(links.deezer_url);
     case 'youtube_music': return toHttps(links.youtube_music_url) || toHttps(links.youtube_url);
     case 'tidal': return toHttps(links.tidal_url);
+    // Pas de lien exact enregistré pour ces deux-là : recherche sur la plateforme.
+    case 'soundcloud': case 'amazon_music': return null;
   }
 }
 

@@ -27,6 +27,8 @@ import { PostDetailModal } from './components/PostDetailModal';
 import { StoryViewerDialog } from './components/StoryViewerDialog';
 import { supabase } from '../lib/supabase';
 import { resolveUserId } from '../lib/username';
+import { normalizePlatform, setMyStreamingApp, type PlatformKey } from '../lib/platforms';
+import { getPreferredPlatform } from '../lib/shares';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount, getCurrentShakeWeekStart, getStoryById } from '../lib/database';
 import { useBackHandler } from '../lib/navigation';
 import { parseRoute, type Route } from '../lib/links';
@@ -89,6 +91,11 @@ export default function App() {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  // Appli d'écoute connue partout (logos des boutons « ouvrir », O1/O2).
+  useEffect(() => {
+    setMyStreamingApp(normalizePlatform(currentUser?.musicService) || normalizePlatform(getPreferredPlatform()) || 'spotify');
+  }, [currentUser?.musicService]);
+
   // G6 : le Shake de la semaine passe après la présentation et le profil.
   const [sdjPending, setSdjPending] = useState(false);
   useEffect(() => {
@@ -107,7 +114,8 @@ export default function App() {
     avatar: profile.profile_album_cover_url || profile.avatar || defaultAvatar(profile.username),
     displayName: profile.display_name || profile.displayName || profile.username,
     bio: profile.bio || '',
-    musicService: profile.preferred_platform || profile.musicService || 'spotify',
+    // Appli d'écoute : celle du profil (O1), une seule clé partout.
+    musicService: normalizePlatform(profile.musicService || profile.preferred_streaming_app || profile.preferred_platform) || 'spotify',
   });
 
   useEffect(() => {
@@ -120,7 +128,8 @@ export default function App() {
         const profile = await getUserProfile(session.user.id);
         if (profile) {
           setCurrentUser(buildUserObject(profile));
-          const needsOnboarding = !localStorage.getItem('shakemoi_onboarding');
+          // Tuto : enregistré dans le profil (O1), plus dans le téléphone.
+          const needsOnboarding = !profile.onboarding_completed_at;
           if (needsOnboarding) setShowOnboarding(true);
           const profileCompleted = localStorage.getItem('shakemoi_profile_completed');
           const needsProfile = !profileCompleted && (!profile.display_name || !profile.profile_album_cover_url);
@@ -267,7 +276,7 @@ export default function App() {
       window.history.replaceState({}, document.title, `/c/${pendingCircle}`);
       setRoute({ type: 'circle', id: pendingCircle });
     }
-    if (!localStorage.getItem('shakemoi_onboarding')) setShowOnboarding(true);
+    if (!user?.onboarding_completed_at) setShowOnboarding(true);
     setAuthReason(null);
 
     // Action lancée sans compte (suivre, shaker, envoyer) : on la termine et
@@ -296,19 +305,23 @@ export default function App() {
     }
   };
 
-  const handleOnboardingComplete = async (preferences: { musicService: 'spotify' | 'apple' }) => {
-    localStorage.setItem('shakemoi_onboarding', JSON.stringify(preferences));
+  // Fin du tuto : fait + appli d'écoute, dans le profil (O1) → jamais rejoué
+  // après une déconnexion ou sur un autre appareil.
+  const handleOnboardingComplete = async (service: PlatformKey) => {
     setShowOnboarding(false);
+    const done = new Date().toISOString();
+    setCurrentUser((u: any) => u ? { ...u, musicService: service, preferred_streaming_app: service, onboarding_completed_at: done } : u);
     try {
       const user = await getCurrentUser();
       if (user) {
-        const profile = await getUserProfile(user.id);
-        if (profile) {
-          if (preferences.musicService) await supabase.from('users_profile').update({ preferred_platform: preferences.musicService }).eq('id', user.id);
-          setCurrentUser(buildUserObject({ ...profile, musicService: preferences.musicService }));
-        }
+        const { error } = await supabase.from('users_profile')
+          .update({ onboarding_completed_at: done, preferred_streaming_app: service })
+          .eq('id', user.id);
+        if (error) throw error;
       }
-    } catch {}
+    } catch (err) {
+      console.error('Enregistrement du tuto :', err);
+    }
   };
 
   if (showPrivacy) {
@@ -382,7 +395,14 @@ export default function App() {
       />
     );
   }
-  if (showOnboarding) return <OnboardingDialog onComplete={handleOnboardingComplete} />;
+  if (showOnboarding) {
+    return (
+      <OnboardingDialog
+        initialService={normalizePlatform(currentUser?.preferred_streaming_app) || normalizePlatform(getPreferredPlatform())}
+        onComplete={handleOnboardingComplete}
+      />
+    );
+  }
   // Connecté (ou déconnexion en cours) : l'auth prend tout l'écran.
   // Pour un visiteur, elle s'ouvre en popup par-dessus la recherche (plus bas).
   if (showAuth && currentUser) return <AuthDialog onComplete={handleAuthComplete} referrer={referrer} />;

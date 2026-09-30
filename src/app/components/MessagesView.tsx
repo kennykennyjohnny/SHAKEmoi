@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Send, Search, Music, Loader2, ExternalLink, Users, Plus, Copy, Check, X, Settings, LogOut, Camera, Smile, Heart, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, Search, Music, Loader2, Users, Plus, Copy, Check, X, Settings, LogOut, Camera, Smile, Heart, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   getConversations, getMessages, sendMessage, getUserFollowing,
@@ -20,6 +20,7 @@ import { MediaImg, thumb, defaultAvatar, compressImage, extFor } from '../../lib
 import { searchGifs, GIF_ERROR_TEXT } from '../../lib/gifs';
 import { friendlyError } from '../../lib/errors';
 import { formatListTime, formatDayLabel, isSameDay } from '../../lib/dates';
+import { MyAppLogo } from './PlatformLogo';
 
 interface MessagesViewProps {
   currentUser: any;
@@ -581,7 +582,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
                           aria-label="Ouvrir dans mon appli de musique"
                           className="flex-shrink-0 p-2 rounded-full bg-purple-600/20 hover:bg-purple-600/30"
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <MyAppLogo className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>

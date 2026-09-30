@@ -1,7 +1,8 @@
 import type { ReactElement } from 'react';
-import type { PlatformKey } from '../../lib/platforms';
+import { PLATFORM_LABELS, STREAMING_APPS, type PlatformKey } from '../../lib/platforms';
+import { PlatformLogo } from './PlatformLogo';
 
-// SHAKEMOI - Boutons « Écouter sur … » : logo + couleur de chaque plateforme.
+// SHAKEMOI - Boutons « Écouter sur … » : logo officiel + couleur de chaque plateforme.
 
 export interface PlatformButton {
   key: PlatformKey;
@@ -10,17 +11,19 @@ export interface PlatformButton {
   logo: ReactElement;
 }
 
-export const PLATFORM_BUTTONS: PlatformButton[] = [
-  { key: 'spotify', label: 'Spotify', color: 'from-green-500 to-green-600', logo: (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-  ) },
-  { key: 'apple_music', label: 'Apple Music', color: 'from-pink-500 to-pink-600', logo: (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.994 6.124a9.23 9.23 0 00-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043A5.022 5.022 0 0019.7.243a10.16 10.16 0 00-1.564-.2C17.596.007 17.052 0 16.21 0h-8.42c-.842 0-1.386.007-1.926.044-.776.05-1.166.12-1.574.243a5.022 5.022 0 00-1.874.838C1.298 1.926.553 2.926.236 4.236A9.23 9.23 0 000 6.124C.007 6.664 0 7.208 0 8.05v7.9c0 .842.007 1.386.044 1.926.05.776.12 1.166.236 1.574.317 1.31 1.062 2.31 2.18 3.043A5.022 5.022 0 004.3 23.23c.52.098.96.166 1.574.2.54.036 1.084.044 1.926.044h8.42c.842 0 1.386-.008 1.926-.044.776-.05 1.166-.12 1.574-.236a5.022 5.022 0 001.874-.838c1.118-.734 1.863-1.734 2.18-3.043.117-.408.187-.798.236-1.574.037-.54.044-1.084.044-1.926v-7.9c.007-.842-.007-1.386-.06-1.79zM9.75 16.28a2.108 2.108 0 01-1.5.62 2.11 2.11 0 01-1.5-3.6 2.108 2.108 0 011.5-.62c.174 0 .345.02.51.06V7.68a.6.6 0 01.48-.588l5.4-1.09a.6.6 0 01.72.588v6.24a2.108 2.108 0 01-1.5 3.6 2.11 2.11 0 01-2.11-2.11c0-.83.48-1.548 1.18-1.892V9.06l-4.2.848v5.06c0 .49-.17.94-.46 1.31z"/></svg>
-  ) },
-  { key: 'deezer', label: 'Deezer', color: 'from-purple-500 to-purple-600', logo: (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><rect x="0" y="18" width="4" height="4" rx="0.5"/><rect x="0" y="13" width="4" height="4" rx="0.5"/><rect x="5" y="18" width="4" height="4" rx="0.5"/><rect x="5" y="13" width="4" height="4" rx="0.5"/><rect x="5" y="8" width="4" height="4" rx="0.5"/><rect x="10" y="18" width="4" height="4" rx="0.5"/><rect x="10" y="13" width="4" height="4" rx="0.5"/><rect x="10" y="8" width="4" height="4" rx="0.5"/><rect x="10" y="3" width="4" height="4" rx="0.5"/><rect x="15" y="18" width="4" height="4" rx="0.5"/><rect x="15" y="13" width="4" height="4" rx="0.5"/><rect x="15" y="8" width="4" height="4" rx="0.5"/><rect x="20" y="18" width="4" height="4" rx="0.5"/><rect x="20" y="13" width="4" height="4" rx="0.5"/><rect x="20" y="8" width="4" height="4" rx="0.5"/><rect x="20" y="3" width="4" height="4" rx="0.5"/></svg>
-  ) },
-  { key: 'youtube_music', label: 'YouTube Music', color: 'from-red-500 to-orange-500', logo: (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.376 0 0 5.376 0 12s5.376 12 12 12 12-5.376 12-12S18.624 0 12 0zm0 19.104c-3.924 0-7.104-3.18-7.104-7.104S8.076 4.896 12 4.896s7.104 3.18 7.104 7.104-3.18 7.104-7.104 7.104zm0-13.332c-3.432 0-6.228 2.796-6.228 6.228S8.568 18.228 12 18.228 18.228 15.432 18.228 12 15.432 5.772 12 5.772zM9.684 15.54V8.46L15.816 12l-6.132 3.54z"/></svg>
-  ) },
-];
+const COLORS: Record<PlatformKey, string> = {
+  spotify: 'from-green-500 to-green-600',
+  apple_music: 'from-pink-500 to-rose-600',
+  deezer: 'from-purple-500 to-purple-600',
+  youtube_music: 'from-red-500 to-red-600',
+  soundcloud: 'from-orange-500 to-orange-600',
+  amazon_music: 'from-cyan-600 to-sky-700',
+  tidal: 'from-neutral-800 to-black',
+};
+
+export const PLATFORM_BUTTONS: PlatformButton[] = STREAMING_APPS.map(key => ({
+  key,
+  label: PLATFORM_LABELS[key],
+  color: COLORS[key],
+  logo: <PlatformLogo platform={key} variant="glyph" className="w-5 h-5" />,
+}));
