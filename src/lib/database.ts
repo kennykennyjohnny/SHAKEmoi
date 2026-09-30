@@ -835,42 +835,6 @@ export async function searchUsers(query: string) {
   }
 }
 
-export async function getTopUsers(limit = 20) {
-  try {
-    const { data, error } = await supabase
-      .from('users_profile')
-      .select('*')
-      .order('feels_count', { ascending: false })
-      .limit(limit);
-
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error getting top users:', error);
-    return [];
-  }
-}
-
-export async function searchPosts(query: string) {
-  try {
-    const { data, error } = await supabase
-      .from('posts')
-      .select(`
-        *,
-        user:users_profile!posts_user_id_fkey(id, username, display_name, color)
-      `)
-      .or(`track_name.ilike.%${query}%,artist.ilike.%${query}%`)
-      .order('created_at', { ascending: false })
-      .limit(20);
-
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error searching posts:', error);
-    return [];
-  }
-}
-
 // ==================== ADDITIONAL FUNCTIONS ====================
 
 export async function getTopPosts(limit = 10) {
