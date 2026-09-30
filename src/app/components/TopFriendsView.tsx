@@ -38,7 +38,10 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
         .select('*')
         .eq('user_id', user.id)
         .gte('created_at', since.toISOString())
-        .eq('is_reshake', false);
+        // Mêmes règles que le compteur du profil (pas de cercle, pas de privé).
+        .eq('is_reshake', false)
+        .is('circle_id', null)
+        .not('is_private', 'is', true);
 
       const { data: myReshakes } = await supabase
         .from('posts')
@@ -56,7 +59,10 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
           .from('posts')
           .select('user_id, user:users_profile!posts_user_id_fkey(username)')
           .in('user_id', friendIds)
-          .gte('created_at', since.toISOString());
+          .gte('created_at', since.toISOString())
+          .not('is_reshake', 'is', true)
+          .is('circle_id', null)
+          .not('is_private', 'is', true);
         const counts: Record<string, { count: number; username: string }> = {};
         (friendPosts || []).forEach((p: any) => {
           if (!counts[p.user_id]) counts[p.user_id] = { count: 0, username: p.user?.username || '?' };

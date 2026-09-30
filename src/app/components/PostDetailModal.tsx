@@ -13,6 +13,7 @@ import { thumb, defaultAvatar } from '../../lib/media';
 import { SongCover } from './SongCover';
 import { MyAppLogo } from './PlatformLogo';
 import { useBackHandler } from '../../lib/navigation';
+import { supabase } from '../../lib/supabase';
 interface PostDetailModalProps {
   postId: string;
   currentUser: any;
@@ -20,7 +21,22 @@ interface PostDetailModalProps {
   onDeletePost?: (postId: string) => void;
 }
 
-export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: PostDetailModalProps) {
+// Un reshake ouvre le post d'origine (mêmes chiffres que dans le fil) : une
+// notification qui pointe sur un reshake affichait sinon ses propres compteurs.
+export function PostDetailModal(props: PostDetailModalProps) {
+  const [id, setId] = useState<string | null>(null);
+  useEffect(() => {
+    let off = false;
+    supabase.from('posts').select('is_reshake, original_post_id').eq('id', props.postId).maybeSingle()
+      .then(({ data }) => { if (!off) setId(data?.is_reshake && data.original_post_id ? data.original_post_id : props.postId); },
+            () => { if (!off) setId(props.postId); });
+    return () => { off = true; };
+  }, [props.postId]);
+  if (!id) return null;
+  return <PostDetailModalInner key={id} {...props} postId={id} />;
+}
+
+function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: PostDetailModalProps) {
   // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
   useBackHandler(true, onClose);
   const [post, setPost] = useState<any>(null);
@@ -275,7 +291,8 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: 
 
             <button onClick={() => setTab('comments')} className="flex items-center gap-1.5 group">
               <MessageCircle className="w-6 h-6 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
-              <span className="text-sm font-medium text-purple-300/70">{comments.length}</span>
+              {/* Texte + réponses en musique (O3), comme dans le fil. */}
+              <span className="text-sm font-medium text-purple-300/70">{comments.length + musicReactions.length}</span>
             </button>
 
             <button onClick={openInMusicApp} className="flex items-center gap-1.5 group ml-auto px-3 py-1.5 rounded-full bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors">

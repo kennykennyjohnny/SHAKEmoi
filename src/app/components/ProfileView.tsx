@@ -6,7 +6,7 @@ import { EditProfileDialog } from './EditProfileDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
-import { getUserPosts, getUserShakeCount, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, removeFollower, likePost, unlikePost, hasLikedPosts, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
+import { getUserPosts, getUserShakeCount, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, followErrorMessage, removeFollower, likePost, unlikePost, hasLikedPosts, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
 import { getPlatformUrl } from '../../lib/odesli';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { StoryArchiveDialog } from './StoryArchiveDialog';
@@ -78,7 +78,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         getUserShakeCount(user.id),
       ]);
 
-      const allPostIds = [...posts.map((p: any) => p.id), ...reshakes.map((p: any) => p.id)];
+      // Reshake : likes, commentaires et compteurs sont ceux du post d'origine (comme dans le fil).
+      const allPostIds = [...posts.map((p: any) => p.id), ...reshakes.map((p: any) => p.original_post?.id || p.id)];
       const likedMap = await hasLikedPosts(allPostIds);
 
       const shakesData = posts.map((post: any) => {
@@ -112,11 +113,12 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       });
 
       const reshakesData = reshakes.map((post: any) => {
-        const isLiked = likedMap[post.id] || false;
         // Use original post data for display
         const orig = post.original_post || post;
+        const isLiked = likedMap[orig.id] || false;
         return {
           id: post.id,
+          sourceId: orig.id,
           track: {
             id: orig.track_id || post.track_id || post.id,
             title: orig.track_name || post.track_name,
@@ -127,17 +129,17 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
             spotifyEmbedUrl: orig.spotify_embed_url || post.spotify_embed_url || ((orig.track_id || post.track_id) ? `https://open.spotify.com/embed/track/${orig.track_id || post.track_id}?theme=0` : null),
           },
           links: {
-            spotify_url: post.spotify_url || null,
-            apple_music_url: post.apple_music_url || null,
-            deezer_url: post.deezer_url || null,
-            youtube_url: post.youtube_url || null,
-            youtube_music_url: post.youtube_music_url || null,
-            tidal_url: post.tidal_url || null,
+            spotify_url: orig.spotify_url || post.spotify_url || null,
+            apple_music_url: orig.apple_music_url || post.apple_music_url || null,
+            deezer_url: orig.deezer_url || post.deezer_url || null,
+            youtube_url: orig.youtube_url || post.youtube_url || null,
+            youtube_music_url: orig.youtube_music_url || post.youtube_music_url || null,
+            tidal_url: orig.tidal_url || post.tidal_url || null,
           },
           caption: post.text,
-          likes: post.likes_count || 0,
-          reshakes: post.reshakes_count || 0,
-          comments: post.comments_count || 0,
+          likes: orig.likes_count || 0,
+          reshakes: orig.reshakes_count || 0,
+          comments: orig.comments_count || 0,
           isLiked,
           originalUser: post.original_post?.user ? {
             id: post.original_post.user.id,
@@ -213,7 +215,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         s.id === shakeId ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) } : s
       ));
       // likePost / unlikePost renvoient { success } sans lever d'erreur.
-      try { const r = await unlikePost(shakeId); if (!r?.success) throw new Error(r?.error); } catch (error) {
+      try { const r = await unlikePost(shake.sourceId || shakeId); if (!r?.success) throw new Error(r?.error); } catch (error) {
         console.error('Error unliking:', error);
         setCurrentList(prev => prev.map(s =>
           s.id === shakeId ? { ...s, isLiked: true, likes: s.likes + 1 } : s
@@ -223,7 +225,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       setCurrentList(prev => prev.map(s =>
         s.id === shakeId ? { ...s, isLiked: true, likes: s.likes + 1 } : s
       ));
-      try { const r = await likePost(shakeId); if (!r?.success) throw new Error(r?.error); } catch (error) {
+      try { const r = await likePost(shake.sourceId || shakeId); if (!r?.success) throw new Error(r?.error); } catch (error) {
         console.error('Error liking:', error);
         setCurrentList(prev => prev.map(s =>
           s.id === shakeId ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) } : s
@@ -267,7 +269,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
   const handleUnfollow = async (targetUserId: string) => {
     try {
-      await unfollowUser(targetUserId);
+      const r = await unfollowUser(targetUserId); if (!r.success) { alert(followErrorMessage(r.error)); return; }
       setFollowingList(followingList.filter(u => u.id !== targetUserId));
       setStats({ ...stats, following: Math.max(0, stats.following - 1) });
     } catch (err) {
@@ -543,7 +545,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           </button>
                           {detailShake.likes > 0 && activeTab === 'shakes' ? (
                             <button
-                              onClick={() => setLikersPostId(detailShake.id)}
+                              onClick={() => setLikersPostId(detailShake.sourceId || detailShake.id)}
                               title="Voir qui a liké"
                               className="text-sm font-medium text-pink-400/90 underline underline-offset-2 decoration-dotted px-1 -mx-1 py-1"
                             >{detailShake.likes}</button>
@@ -552,7 +554,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           )}
                         </div>
 
-                        <button onClick={() => setCommentsPostId(detailShake.id)} className="flex items-center gap-1.5 group">
+                        <button onClick={() => setCommentsPostId(detailShake.sourceId || detailShake.id)} className="flex items-center gap-1.5 group">
                           <MessageCircle className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
                           <span className="text-sm font-medium text-purple-300/70">{detailShake.comments}</span>
                         </button>
@@ -561,7 +563,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           <SongShareSheet
                             song={{ title: detailShake.track.title, artist: detailShake.track.artist, cover: detailShake.track.coverUrl, previewUrl: detailShake.track.previewUrl }}
                             by={user?.username}
-                            link={postLink(detailShake.id)}
+                            link={postLink(detailShake.sourceId || detailShake.id)}
                             onClose={() => setShareShakeId(null)}
                           />
                         )}

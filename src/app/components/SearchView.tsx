@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Search as SearchIcon, Play, Pause, User, Music, Loader2, Sparkles, UserPlus, UserCheck, Send, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
-import { searchUsers, createPost, searchCircles, joinCircle, followUser, unfollowUser, getFollowingIds } from '../../lib/database';
+import { searchUsers, createPost, searchCircles, joinCircle, followUser, followErrorMessage, unfollowUser, getFollowingIds } from '../../lib/database';
 import { resolvePreviewUrl, playPreview, togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
 import { createSongShare } from '../../lib/shares';
 import { openExternal } from '../../lib/platforms';
@@ -150,10 +150,10 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
     setFollowLoading(userId);
     try {
       if (followingMap[userId]) {
-        await unfollowUser(userId);
+        const r = await unfollowUser(userId); if (!r.success) { alert(followErrorMessage(r.error)); return; }
         setFollowingMap(prev => ({ ...prev, [userId]: false }));
       } else {
-        await followUser(userId);
+        const r = await followUser(userId); if (!r.success) { alert(followErrorMessage(r.error)); return; }
         setFollowingMap(prev => ({ ...prev, [userId]: true }));
       }
     } catch (err) {

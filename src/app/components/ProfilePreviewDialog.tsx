@@ -1,7 +1,7 @@
 import { X, Heart, Play, UserPlus, UserCheck, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { getUserProfile, getUserPosts, getUserShakeCount, getUserFollowersCount, getUserFollowingCount, followUser, unfollowUser, isFollowing, getUserReshakes, getCachedTasteMatch, calculateTasteMatch, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
+import { getUserProfile, getUserPosts, getUserShakeCount, getUserFollowersCount, getUserFollowingCount, followUser, followErrorMessage, unfollowUser, isFollowing, getUserReshakes, getCachedTasteMatch, calculateTasteMatch, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { StoryViewerDialog } from './StoryViewerDialog';
 
@@ -106,13 +106,13 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
     if (onRequireAuth) { onRequireAuth({ id: profile.id, username: profile.username }); return; }
     try {
       if (isFollowingUser) {
-        await unfollowUser(profile.id);
+        const r = await unfollowUser(profile.id); if (!r.success) { alert(followErrorMessage(r.error)); return; }
         setIsFollowingUser(false);
         setStats({ ...stats, followers: stats.followers - 1 });
       } else {
         const r = await followUser(profile.id);
         // Refusé (limite de 100, réseau…) : on le dit au lieu d'afficher « Abonné ».
-        if (!r.success) { alert(/100/.test(r.error || '') ? "Tu suis déjà 100 personnes : c'est la limite." : 'Impossible de suivre pour le moment. Réessaie.'); return; }
+        if (!r.success) { alert(followErrorMessage(r.error)); return; }
         setIsFollowingUser(true);
         setStats({ ...stats, followers: stats.followers + 1 });
       }
@@ -326,7 +326,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
                       )}
                       <div className="absolute bottom-0.5 right-0.5 bg-black/60 rounded-full px-1 py-0.5 flex items-center gap-0.5">
                         <Heart className="w-2 h-2 text-pink-400" />
-                        <span className="text-[8px] text-white font-medium">{post.likes_count || 0}</span>
+                        <span className="text-[8px] text-white font-medium">{(activeTab === 'reshakes' && origPost ? origPost.likes_count : post.likes_count) || 0}</span>
                       </div>
                     </button>
                   );

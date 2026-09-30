@@ -729,6 +729,13 @@ export async function unfollowUser(targetUserId: string) {
   }
 }
 
+/** Message à montrer quand suivre / ne plus suivre a échoué. */
+export function followErrorMessage(error?: string): string {
+  return /100/.test(error || '')
+    ? "Tu suis déjà 100 personnes : c'est la limite."
+    : 'Impossible pour le moment. Vérifie ta connexion et réessaie.';
+}
+
 export async function isFollowing(targetUserId: string): Promise<boolean> {
   try {
     const user = await getCurrentUser();
@@ -876,6 +883,9 @@ export async function getTopPosts(limit = 10) {
         user:users_profile!posts_user_id_fkey(*)
       `)
       .eq('is_reshake', false)
+      // TOP public : jamais de post de cercle ni privé (« ce qui est dans un cercle reste dans le cercle »).
+      .is('circle_id', null)
+      .not('is_private', 'is', true)
       .order('created_at', { ascending: false })
       .limit(200);
 
@@ -1407,6 +1417,9 @@ export async function getFriendsTrending(days = 7, limit = 20): Promise<any[]> {
       `)
       .in('user_id', friendIds)
       .gte('created_at', since.toISOString())
+      // TOP public : jamais de post de cercle ni privé (« ce qui est dans un cercle reste dans le cercle »).
+      .is('circle_id', null)
+      .not('is_private', 'is', true)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -2079,14 +2092,7 @@ export async function likeCircleMessage(messageId: string, emoji = '❤️') {
 
     if (likeError) throw likeError;
 
-    // Increment likes_count via RPC
-    const { error: rpcError } = await supabase.rpc('increment_circle_message_likes', {
-      message_id: messageId
-    });
-
-    if (rpcError) {
-      console.warn('Warning: RPC increment failed:', rpcError);
-    }
+    // Compteur tenu par la base (déclencheur).
 
     return { success: true, data: likeData };
   } catch (error: any) {
@@ -2108,14 +2114,7 @@ export async function unlikeCircleMessage(messageId: string) {
 
     if (deleteError) throw deleteError;
 
-    // Decrement likes_count via RPC
-    const { error: rpcError } = await supabase.rpc('decrement_circle_message_likes', {
-      message_id: messageId
-    });
-
-    if (rpcError) {
-      console.warn('Warning: RPC decrement failed:', rpcError);
-    }
+    // Compteur tenu par la base (déclencheur).
 
     return { success: true };
   } catch (error: any) {

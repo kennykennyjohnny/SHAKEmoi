@@ -8,7 +8,7 @@ import {
   LISTEN_PLATFORMS, mergeLinks, normalizePlatform, platformUrl, resolveLinks,
   type PlatformKey, type StoredLinks,
 } from '../../lib/platforms';
-import { followUser, isFollowing } from '../../lib/database';
+import { followUser, followErrorMessage, isFollowing } from '../../lib/database';
 import { postLink, songLink } from '../../lib/links';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';
@@ -177,8 +177,9 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
     if (!sharer) return;
     setFollowBusy(true);
     try {
-      await followUser(sharer.id);
-      setFollowing(true);
+      const r = await followUser(sharer.id);
+      if (!r.success) alert(followErrorMessage(r.error));
+      else setFollowing(true);
     } catch { /* on laisse le bouton */ }
     setFollowBusy(false);
   };

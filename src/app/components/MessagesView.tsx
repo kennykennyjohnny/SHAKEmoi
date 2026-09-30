@@ -1235,12 +1235,16 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
 
   const toggleLikeMessage = async (messageId: string) => {
     const isLiked = likedMessages[messageId];
-    if (isLiked) {
-      await unlikeCircleMessage(messageId);
-    } else {
-      await likeCircleMessage(messageId);
-    }
+    // Mise à jour immédiate (cœur + compteur), annulée si la base refuse.
+    const bump = (d: number) => setPosts(prev => prev.map(m => m.id === messageId ? { ...m, likes_count: Math.max(0, (m.likes_count || 0) + d) } : m));
     setLikedMessages(prev => ({ ...prev, [messageId]: !isLiked }));
+    bump(isLiked ? -1 : 1);
+    const r = isLiked ? await unlikeCircleMessage(messageId) : await likeCircleMessage(messageId);
+    if (!r.success) {
+      setLikedMessages(prev => ({ ...prev, [messageId]: isLiked }));
+      bump(isLiked ? 1 : -1);
+      return;
+    }
     // Optionally reload likes count
     const likers = await getCircleMessageLikes(messageId);
     if (likers.length > 0) {

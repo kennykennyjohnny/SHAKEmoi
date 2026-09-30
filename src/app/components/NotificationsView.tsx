@@ -1,7 +1,7 @@
 import { Heart, MessageCircle, UserPlus, UserCheck, Music, Repeat2, Loader2, Bell, Users, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { getUserNotifications, followUser, unfollowUser, getFollowingIds } from '../../lib/database';
+import { getUserNotifications, followUser, followErrorMessage, unfollowUser, getFollowingIds } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
@@ -54,14 +54,14 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
     try {
       if (followingState[userId] || followedBack.has(userId)) {
         // Unfollow
-        await unfollowUser(userId);
+        const r = await unfollowUser(userId); if (!r.success) { alert(followErrorMessage(r.error)); return; }
         const newFollowed = new Set(followedBack);
         newFollowed.delete(userId);
         setFollowedBack(newFollowed);
         setFollowingState({ ...followingState, [userId]: false });
       } else {
         // Follow
-        await followUser(userId);
+        const r = await followUser(userId); if (!r.success) { alert(followErrorMessage(r.error)); return; }
         setFollowedBack(new Set([...followedBack, userId]));
         setFollowingState({ ...followingState, [userId]: true });
       }
