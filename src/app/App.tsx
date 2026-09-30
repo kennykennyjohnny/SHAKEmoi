@@ -49,7 +49,18 @@ type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'notifications'
 const PENDING_CIRCLE_KEY = 'shakemoi_pending_circle';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<View>('feed');
+  // Onglet en cours gardé par onglet du navigateur : une actualisation ne
+  // renvoie plus à l'accueil (et deux onglets restent indépendants).
+  const [currentView, setCurrentView] = useState<View>(() => {
+    try {
+      const v = sessionStorage.getItem('shakemoi_view');
+      if (window.location.pathname === '/' && v && ['feed', 'search', 'top', 'profile', 'messages', 'notifications'].includes(v)) return v as View;
+    } catch { /* stockage indisponible */ }
+    return 'feed';
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem('shakemoi_view', currentView); } catch { /* pas grave */ }
+  }, [currentView]);
   const [showCreateShake, setShowCreateShake] = useState(false);
   const [showEphemeralShake, setShowEphemeralShake] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
