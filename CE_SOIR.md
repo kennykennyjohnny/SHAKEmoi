@@ -131,4 +131,19 @@ Trouvailles en plus :
 ## Section O
 | # | Statut | Explication |
 |---|---|---|
+| O1 | ✅ | Tuto fait + appli d'écoute enregistrés **dans le profil** (`onboarding_completed_at`, `preferred_streaming_app`) : plus jamais rejoué après une déconnexion ou sur un autre téléphone. Les 30 comptes existants sont marqués « tuto fait » avec leur appli reprise (21 Spotify, 4 Apple Music, 4 YouTube Music, 1 Deezer). Paramètres → « Revoir le tuto » (choix pré-rempli, retour aux paramètres). Un clic sur une autre plateforme ne change plus l'appli du profil en douce. |
+| O2 | ✅ | Tuto plein écran : 4 écrans + choix de l'appli, visuels animés légers (vinyle, pochette qui joue, réactions, cercles), glisser gauche/droite, barre de progression, « Passer », flèches clavier sur ordinateur. 7 applis en grandes tuiles avec **logos officiels** (Simple Icons, libres de droits ; Amazon Music : version simplifiée, Amazon ne publie pas son logo). Les mêmes logos dans les paramètres, la page d'un son, et **tous** les boutons « ouvrir dans mon appli » (fil, profil, TOP, post, commentaires, messages, stories). Secours sans extrait : « Écouter sur <ton appli> ». |
 | O3 | ✅ | Une réponse en musique = un commentaire partout : compteur calculé en base (texte + musique, sur ajout ET suppression), notification « a répondu en musique à ton shake » (ouvre le post), liste avec pochette jouable, suppression par son auteur ou l'auteur du post. Test en base : 1 texte + 1 musique = 2 ✓, suppression → 1 ✓. **4 posts corrigés.** Au passage (sécurité) : commentaires, likes et réponses en musique ne sont lisibles que si on peut voir le post. |
+
+## Mode nuit — corrections
+| # | Statut | Explication |
+|---|---|---|
+| N-P1 Reshakes comptés comme shakes (vu par Kenny) | ✅ | Cause : la liste « Shakes » d'un profil ramenait aussi les reshakes. Corrigé partout : onglet Shakes, compteur de ton profil, aperçu d'un profil, page publique `/u/…` et carte de partage. Au passage : le compteur de l'aperçu plafonnait à 9 et celui du profil à 50 → vrai nombre maintenant. |
+| N-S1 Ancienne fonction serveur (Figma Make) | ✅ | **Critique** : encore en ligne avec la clé secrète, elle permettait à n'importe qui de lister les emails des comptes. Neutralisée (répond 410). Idem `calculate-compatibility` (inutilisée, cassée). À supprimer du tableau de bord Supabase quand tu veux. |
+| N-S2 Commentaires comptés double | ✅ | L'appli ajoutait +1 après le recomptage de la base. Retiré ; la fonction ancienne recompte (pas de casse pour une appli en cache). |
+| N-S3 Compteurs d'abonnés faux | ✅ | 4 déclencheurs se marchaient dessus → colonne stockée fausse (ex. 37 au lieu de 18). Un seul déclencheur qui recompte, 30 profils recalculés. (L'écran profil affichait déjà le vrai nombre ; la colonne servait à « Envoyer à un ami » et au tri de la recherche.) |
+| N-S4 Triche sur les compteurs | ✅ | On ne peut plus modifier soi-même ses abonnés, séries, likes/commentaires/reshakes (colonnes verrouillées). Testé : refusé. |
+| N-S5 Cercles | ✅ | Une personne retirée par la créatrice ne peut plus revenir seule avec l'ancien lien (message clair) ; si un membre la rajoute, c'est rouvert. |
+| N-S6 Faux liens « Écouter sur … » | ✅ | N'importe qui pouvait créer une page shakemoi.fr/s/… qui menait vers un faux site. Seuls les liens des vraies plateformes sont gardés (testé). |
+| N-S7 Stockage photos | ✅ | Taille et types limités (plus de SVG/HTML/gros fichiers), chacun n'écrit que dans son dossier. |
+| N-S8 Divers | ✅ | Règles trop larges retirées (humeurs, artistes, capsules), vues de story seulement sur une story visible, fonctions internes plus appelables de l'extérieur, images de la carte de partage filtrées, lien de secours en https seulement. |

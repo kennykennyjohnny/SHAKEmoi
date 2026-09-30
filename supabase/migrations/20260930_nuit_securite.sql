@@ -15,12 +15,12 @@ DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'increment_likes' AND pronargs = 1) THEN
     EXECUTE $f$CREATE OR REPLACE FUNCTION public.increment_likes(post_id uuid)
       RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = public AS
-      $b$ UPDATE posts p SET likes_count = (SELECT count(*) FROM likes l WHERE l.post_id = p.id) WHERE p.id = $1 $b$$f$;
+      $b$ UPDATE posts p SET likes_count = (SELECT count(*) FROM likes l WHERE l.post_id = p.id) WHERE p.id = $1 $b$ $f$;
   END IF;
   IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'decrement_likes' AND pronargs = 1) THEN
     EXECUTE $f$CREATE OR REPLACE FUNCTION public.decrement_likes(post_id uuid)
       RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = public AS
-      $b$ UPDATE posts p SET likes_count = (SELECT count(*) FROM likes l WHERE l.post_id = p.id) WHERE p.id = $1 $b$$f$;
+      $b$ UPDATE posts p SET likes_count = (SELECT count(*) FROM likes l WHERE l.post_id = p.id) WHERE p.id = $1 $b$ $f$;
   END IF;
 END $$;
 
