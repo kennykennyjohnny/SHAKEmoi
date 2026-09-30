@@ -5,6 +5,7 @@ import { updateUserProfile } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { compressImage, extFor, thumb, defaultAvatar } from '../../lib/media';
 import { normalizeUsername, usernameError, isUsernameTaken } from '../../lib/username';
+import { useBackHandler } from '../../lib/navigation';
 
 interface EditProfileDialogProps {
   currentUser: any;
@@ -13,6 +14,8 @@ interface EditProfileDialogProps {
 }
 
 export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditProfileDialogProps) {
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
+  useBackHandler(true, onClose);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({

@@ -12,6 +12,7 @@ import { LikersSheet } from './LikersSheet';
 import { thumb, defaultAvatar } from '../../lib/media';
 import { SongCover } from './SongCover';
 import { MyAppLogo } from './PlatformLogo';
+import { useBackHandler } from '../../lib/navigation';
 interface PostDetailModalProps {
   postId: string;
   currentUser: any;
@@ -20,6 +21,8 @@ interface PostDetailModalProps {
 }
 
 export function PostDetailModal({ postId, currentUser, onClose, onDeletePost }: PostDetailModalProps) {
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
+  useBackHandler(true, onClose);
   const [post, setPost] = useState<any>(null);
   const [showShare, setShowShare] = useState(false);
   const [showLikers, setShowLikers] = useState(false);

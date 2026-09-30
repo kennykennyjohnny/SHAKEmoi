@@ -9,6 +9,7 @@ import { openExternal } from '../../lib/platforms';
 
 import { thumb, defaultAvatar } from '../../lib/media';
 import { MyAppLogo } from './PlatformLogo';
+import { useBackHandler } from '../../lib/navigation';
 interface CommentsDialogProps {
   postId: string;
   onClose: () => void;
@@ -18,6 +19,8 @@ interface CommentsDialogProps {
 }
 
 export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDeleted, currentUser }: CommentsDialogProps) {
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
+  useBackHandler(true, onClose);
   const [comments, setComments] = useState<any[]>([]);
   const [musicReactions, setMusicReactions] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');

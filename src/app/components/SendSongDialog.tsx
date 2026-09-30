@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react';
 import { searchUsers, sendSongNotification } from '../../lib/database';
 
 import { thumb, defaultAvatar } from '../../lib/media';
+import { useBackHandler } from '../../lib/navigation';
 interface SendSongDialogProps {
   track: any;
   onClose: () => void;
 }
 
 export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
+  useBackHandler(true, onClose);
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);

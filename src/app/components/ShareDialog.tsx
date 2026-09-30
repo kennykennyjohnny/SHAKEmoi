@@ -5,12 +5,15 @@ import { getAppStats } from '../../lib/database';
 import { inviteLink } from '../../lib/links';
 
 import { thumb, defaultAvatar } from '../../lib/media';
+import { useBackHandler } from '../../lib/navigation';
 interface ShareDialogProps {
   currentUser: any;
   onClose: () => void;
 }
 
 export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
+  useBackHandler(true, onClose);
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState({ users: 0, shakes: 0, likes: 0 });
   const shareUrl = inviteLink(currentUser?.username);

@@ -287,7 +287,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
   const currentShakes = activeTab === 'shakes' ? userShakes : userReshakes;
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4">
+    <div className="w-full max-w-2xl mx-auto flex-1 overflow-y-auto pb-[var(--nav-h)] lg:pb-4">
       {/* Profile Header */}
       <div className="px-4 pt-6 pb-4">
         <div className="flex items-start gap-4">

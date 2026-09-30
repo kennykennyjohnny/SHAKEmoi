@@ -7,6 +7,7 @@ import { StoryViewerDialog } from './StoryViewerDialog';
 
 import { thumb, defaultAvatar } from '../../lib/media';
 import { SongCover } from './SongCover';
+import { useBackHandler } from '../../lib/navigation';
 interface ProfilePreviewDialogProps {
   userId: string;
   username: string;
@@ -16,6 +17,8 @@ interface ProfilePreviewDialogProps {
 }
 
 export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth }: ProfilePreviewDialogProps) {
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
+  useBackHandler(true, onClose);
   const [profile, setProfile] = useState<any>(null);
   const [shakes, setShakes] = useState<any[]>([]);
   const [reshakes, setReshakes] = useState<any[]>([]);

@@ -73,7 +73,7 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
       {!inSubView && (
         <button
           onClick={() => setFabTrigger(n => n + 1)}
-          className="fixed bottom-[5.5rem] right-5 lg:bottom-6 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full shadow-xl shadow-purple-900/60 flex items-center justify-center active:scale-95 transition-transform hover:opacity-90 z-50"
+          className="fixed bottom-[calc(var(--nav-h)+1rem)] right-5 lg:bottom-6 lg:right-[17rem] bg-gradient-to-br from-purple-600 to-pink-600 rounded-full shadow-xl shadow-purple-900/60 flex items-center justify-center active:scale-95 transition-transform hover:opacity-90 z-50"
           style={{ width: 52, height: 52 }}
         >
           <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
@@ -670,7 +670,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
           )}
         </AnimatePresence>
 
-        <div className="flex-shrink-0 bg-[#1E1440] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] pb-[4.5rem] lg:pb-0">
+        <div className="flex-shrink-0 bg-[#1E1440] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] pb-[var(--nav-h)] lg:pb-0">
           <div className="px-3 py-2 flex items-center gap-2">
                 <button onClick={() => { setShowTrackSearch(!showTrackSearch); setShowGifSearch(false); }} className={`flex-shrink-0 p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
                   <Music className="w-5 h-5" />
@@ -693,7 +693,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 pb-[4.5rem] lg:pb-4">
+    <div className="flex-1 overflow-y-auto p-4 pb-[var(--nav-h)] lg:pb-4">
       {showNewConvo && (
         <NewConvoSearch
           friends={friends}
@@ -820,7 +820,7 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 pb-[4.5rem] lg:pb-4">
+    <div className="flex-1 overflow-y-auto p-4 pb-[var(--nav-h)] lg:pb-4">
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /></div>
       ) : circles.length > 0 ? (
@@ -1065,6 +1065,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
 
 function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser: any; onBack: () => void }) {
   const [posts, setPosts] = useState<any[]>([]);
+  const loadedOnce = useRef(false);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
@@ -1119,11 +1120,14 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [posts.length]);
 
+  // Spinner seulement au premier chargement : un message reçu ou envoyé ne
+  // remplace plus toute la conversation par un chargement (la lecture sautait).
   const loadData = async () => {
-    setLoading(true);
+    if (!loadedOnce.current) setLoading(true);
     try {
       const [p, m] = await Promise.all([getCircleMessages(circle.id), getCircleMembers(circle.id)]);
       setPosts(p);
+      loadedOnce.current = true;
       setMembers(m);
       // Load likes status for all messages
       const messageIds = p.map((msg: any) => msg.id);
@@ -1609,7 +1613,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       </AnimatePresence>
 
       {/* Chat bar */}
-      <div className="px-3 py-2.5 pb-[calc(0.625rem+4.5rem)] lg:pb-2.5 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0 bg-[#1E1440]/95 backdrop-blur-lg">
+      <div className="px-3 py-2.5 pb-[calc(0.625rem+var(--nav-h))] lg:pb-2.5 border-t border-purple-500/25 flex items-center gap-2 flex-shrink-0 bg-[#1E1440]/95 backdrop-blur-lg">
         <button onClick={() => setShowTrackSearch(!showTrackSearch)} className={`flex-shrink-0 p-2 rounded-full transition-colors ${showTrackSearch ? 'bg-purple-500 text-white' : 'hover:bg-violet-900/25 text-purple-300/60'}`} title="Partager un son">
           <Music className="w-5 h-5" />
         </button>

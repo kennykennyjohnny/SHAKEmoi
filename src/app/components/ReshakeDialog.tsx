@@ -1,6 +1,7 @@
 import { X, Repeat2, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
+import { useBackHandler } from '../../lib/navigation';
 
 interface ReshakeDialogProps {
   shake: any;
@@ -9,6 +10,8 @@ interface ReshakeDialogProps {
 }
 
 export function ReshakeDialog({ shake, onClose, onConfirm }: ReshakeDialogProps) {
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
+  useBackHandler(true, onClose);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
 

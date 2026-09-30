@@ -10,6 +10,8 @@ import { stopPreview } from '../../lib/preview';
 import { STORY_THEMES, getCoverPalette, themeCss, autoBackgroundCss, type StoryTheme, type Palette } from '../../lib/storyTheme';
 import { StoryComposerPreview, composeStoryImage, defaultTransform, type PhotoTransform } from './StoryComposerPreview';
 import { useCoverPalette } from './StoryBackdrop';
+import { useBackHandler } from '../../lib/navigation';
+import { friendlyError } from '../../lib/errors';
 
 interface UnifiedComposerDialogProps {
   open: boolean;
@@ -23,6 +25,8 @@ interface UnifiedComposerDialogProps {
 type ComposerType = 'shake' | 'story';
 
 export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, initialComposerType = 'shake' }: UnifiedComposerDialogProps) {
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
+  useBackHandler(open, onClose);
   // Type selector - use initialComposerType when opening
   const [composerType, setComposerType] = useState<ComposerType>(initialComposerType);
 
@@ -168,7 +172,9 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
     setIsCreating(true);
     try {
       const imageUrl = await uploadPhotoIfNeeded();
-      await createPost(
+      // createPost ne lève pas d'erreur : on lit son résultat (avant, un échec
+      // affichait quand même la coche « publié »).
+      const result = await createPost(
         selectedTrack?.title || '',
         selectedTrack?.artist || '',
         selectedTrack?.coverUrl || '',
@@ -180,6 +186,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
         null,
         imageUrl
       );
+      if (!result?.success) throw new Error(result?.error || 'createPost');
       setSuccess(true);
       setTimeout(() => {
         resetForm();
@@ -188,7 +195,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
       }, 500);
     } catch (error) {
       console.error('Error creating shake:', error);
-      alert('Erreur lors de la création du shake');
+      alert(friendlyError(error, "Ton shake n'a pas pu être publié. Vérifie ta connexion et réessaie."));
       setIsCreating(false);
     }
   };
@@ -230,7 +237,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
       }, 500);
     } catch (error: any) {
       console.error('Error creating story:', error);
-      alert(error?.message || 'Erreur lors de la création de la story');
+      alert(friendlyError(error, "Ta story n'a pas pu être publiée. Vérifie ta connexion et réessaie."));
       setIsCreating(false);
     }
   };

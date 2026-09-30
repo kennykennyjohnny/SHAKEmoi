@@ -3,6 +3,13 @@
 
 @import 'tw-animate-css';
 
+/* Hauteur réelle de la barre du bas (téléphone), zone de l'iPhone comprise :
+   le contenu et les champs de saisie réservent cette place (avant 72 px fixes,
+   ~20 px passaient sous la barre sur iPhone). */
+:root {
+  --nav-h: calc(3.75rem + max(0.625rem, env(safe-area-inset-bottom)));
+}
+
 /* A1 : sous 16 px, l'iPhone zoome tout seul quand on touche un champ, et le
    bouton Envoyer sort de l'écran. Sur téléphone et tablette, tous les champs
    passent à 16 px (prime sur les text-sm des composants). */

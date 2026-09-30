@@ -299,7 +299,7 @@ function CircleChatBar({ chatText, setChatText, chatSending, showChatTrackSearch
   };
 
   return (
-    <div className="fixed bottom-[4.5rem] lg:bottom-0 left-0 right-0 z-40 pointer-events-none">
+    <div className="fixed bottom-[var(--nav-h)] lg:bottom-0 left-0 right-0 z-40 pointer-events-none">
       <div className="max-w-2xl mx-auto pointer-events-auto bg-[#1E1440] border-t border-purple-500/25 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
       <AnimatePresence>
         {showChatTrackSearch && (
@@ -1096,7 +1096,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   if (loading) {
     return (
-      <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4" style={currentFeedId ? { minHeight: '100%' } : undefined}>
+      <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[var(--nav-h)] lg:pb-4" style={currentFeedId ? { minHeight: '100%' } : undefined}>
         {/* Always show feed selector even while loading */}
         {(circles.length > 0 || !!onCreateCircle) && (
           <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
@@ -1116,7 +1116,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
   if (error) {
     return (
-      <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4">
+      <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[var(--nav-h)] lg:pb-4">
         {(circles.length > 0 || !!onCreateCircle) && (
           <FeedTabs circles={circles} currentFeedId={currentFeedId} onSelectFeed={onSelectFeed} onCreateCircle={onCreateCircle} />
         )}
@@ -1136,7 +1136,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   // Empty state is now rendered inline, not as early return
 
   return (
-    <div ref={feedScrollRef} className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4" style={currentFeedId ? { minHeight: '100%' } : undefined} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <div ref={feedScrollRef} className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-y-auto pb-[var(--nav-h)] lg:pb-4" style={currentFeedId ? { minHeight: '100%' } : undefined} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className={`p-4 space-y-6 ${currentFeedId ? 'flex-1 pb-40 lg:pb-24' : ''}`}>
         {/* Horizontal feed selector */}
         {(circles.length > 0 || !!onCreateCircle) && (

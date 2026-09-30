@@ -9,6 +9,7 @@ import { openExternal } from '../../lib/platforms';
 
 import { thumb, defaultAvatar } from '../../lib/media';
 import { MyAppLogo } from './PlatformLogo';
+import { useBackHandler } from '../../lib/navigation';
 interface Props {
   postId: string;
   currentUser: any;
@@ -16,6 +17,8 @@ interface Props {
 }
 
 export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
+  useBackHandler(true, onClose);
   const [reactions, setReactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');

@@ -7,6 +7,7 @@ import { showLocalNotification } from '../../lib/notify';
 import { normalizePlatform, PLATFORM_LABELS, STREAMING_APPS, type PlatformKey } from '../../lib/platforms';
 import { PlatformLogo } from './PlatformLogo';
 import { OnboardingDialog } from './OnboardingDialog';
+import { useBackHandler } from '../../lib/navigation';
 type MusicPlatform = PlatformKey;
 
 interface SettingsDialogProps {
@@ -26,6 +27,8 @@ async function savePlatform(userId: string, service: MusicPlatform) {
 }
 
 export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: SettingsDialogProps) {
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
+  useBackHandler(true, onClose);
   const [musicService, setMusicService] = useState<MusicPlatform>(() => savedPlatform(currentUser));
   const [initialMusicService, setInitialMusicService] = useState<MusicPlatform>(() => savedPlatform(currentUser));
   // « Revoir le tuto » : s'ouvre par-dessus, on revient ici à la fin (O1).

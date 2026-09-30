@@ -413,7 +413,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <div className="h-[100dvh] w-screen bg-[#1E1440] text-white overflow-hidden flex flex-col">
-        <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/80 sticky top-0 z-40 flex-shrink-0">
+        <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/80 sticky top-0 z-40 flex-shrink-0 pt-[env(safe-area-inset-top)]">
           <div className="px-4 py-2 flex items-center justify-between gap-3">
             {/* M9 : le logo ramène à l'accueil. */}
             <a href="/" aria-label="Accueil SHAKEmoi" className="min-w-0 flex-shrink">
@@ -542,7 +542,7 @@ export default function App() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/80 sticky top-0 z-40">
+        <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/80 sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
           <div className="px-4 py-2 flex items-center justify-between">
             {/* M9 : le logo ramène à l'accueil et recharge le fil (retour en haut). */}
             <button onClick={() => { setCurrentView('feed'); setRefreshFeed(p => p + 1); }} aria-label="Accueil" className="focus:outline-none">

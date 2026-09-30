@@ -5,6 +5,7 @@ import { X, Copy, Check, Download, Share2, Clapperboard, Loader2, Link2, Message
 import { createStoryVideo, pickVideoMime, type StoryResult } from '../../lib/storyVideo';
 import { resolvePreviewUrl } from '../../lib/preview';
 import { PUBLIC_ORIGIN } from '../../lib/links';
+import { useBackHandler } from '../../lib/navigation';
 
 // SHAKEMOI - Feuille de partage d'un son : vidéo story (Insta, TikTok, Snap,
 // WhatsApp…) + partages rapides. Même feuille partout (recherche, feed, profil,
@@ -43,6 +44,8 @@ const TelegramIcon = () => (
 );
 
 export function SongShareSheet({ song, by, link, onClose }: Props) {
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
+  useBackHandler(true, onClose);
   const [url, setUrl] = useState<string | null>(typeof link === 'string' ? link : null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(song.previewUrl ?? null);
   const [video, setVideo] = useState<VideoState>('idle');

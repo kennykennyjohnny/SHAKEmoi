@@ -141,7 +141,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-3 py-5 flex-1 overflow-y-auto pb-[4.5rem] lg:pb-4">
+    <div className="w-full max-w-2xl mx-auto px-3 py-5 flex-1 overflow-y-auto pb-[var(--nav-h)] lg:pb-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">

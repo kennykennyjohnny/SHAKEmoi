@@ -4,6 +4,7 @@ import { Search, Sparkles, Loader2, X, Sun } from 'lucide-react';
 import { motion } from 'motion/react';
 import { spotify } from '../../lib/spotify';
 import { createPost, createShakeDuJour } from '../../lib/database';
+import { useBackHandler } from '../../lib/navigation';
 
 
 interface ShakeDuJourDialogProps {
@@ -12,6 +13,8 @@ interface ShakeDuJourDialogProps {
 }
 
 export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps) {
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
+  useBackHandler(true, onSkip);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
