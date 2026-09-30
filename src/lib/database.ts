@@ -1569,8 +1569,9 @@ export async function getUserCircles(): Promise<any[]> {
     }
     return (data || []).map((item: any) => item.circle).filter(Boolean);
   } catch (error) {
+    // L'erreur remonte : un souci réseau ne doit pas s'afficher « Aucun cercle ».
     console.error('Error getting user circles:', error);
-    return [];
+    throw error;
   }
 }
 

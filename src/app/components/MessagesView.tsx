@@ -761,6 +761,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
 function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigger, openCircleId, openNonce }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openCircleId?: string | null; openNonce?: number }) {
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedCircleId, setSelectedCircleId] = useState<string | null>(null);
 
@@ -784,6 +785,7 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
 
   const load = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const circlesData = await getUserCircles();
       if (circlesData.length === 0) { setCircles([]); setLoading(false); return; }
@@ -804,7 +806,9 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
         return new Date(bTime).getTime() - new Date(aTime).getTime();
       });
       setCircles(sorted);
-    } catch {}
+    } catch (err) {
+      setLoadError(friendlyError(err, 'Impossible de charger tes cercles. Vérifie ta connexion.'));
+    }
     setLoading(false);
   };
 
@@ -823,6 +827,13 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
     <div className="flex-1 overflow-y-auto p-4 pb-[var(--nav-h)] lg:pb-4">
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /></div>
+      ) : loadError ? (
+        <div className="text-center py-16">
+          <p className="text-purple-200/80 text-sm">{loadError}</p>
+          <button onClick={load} className="mt-4 px-5 py-2 bg-purple-900/40 hover:bg-purple-900/60 rounded-full text-sm font-semibold">
+            Réessayer
+          </button>
+        </div>
       ) : circles.length > 0 ? (
         <div className="space-y-2">
           {circles.map((c) => (
