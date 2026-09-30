@@ -677,9 +677,8 @@ export async function followUser(targetUserId: string) {
       .eq('following_id', targetUserId)
       .single();
 
-    if (existing) {
-      throw new Error('Already following this user');
-    }
+    // Déjà abonné·e : rien à faire, ce n'est pas une erreur.
+    if (existing) return { success: true };
 
     // Check limit of 100 follows
     const { count } = await supabase
@@ -688,7 +687,7 @@ export async function followUser(targetUserId: string) {
       .eq('follower_id', user.id);
 
     if (count && count >= 100) {
-      throw new Error('Limite de 100 feels atteinte');
+      throw new Error('Limite de 100 abonnements atteinte');
     }
 
     // Create follow

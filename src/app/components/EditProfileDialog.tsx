@@ -116,7 +116,7 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
         {/* Header */}
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Modifier le profil</h2>
-          <button
+          <button aria-label="Fermer"
             onClick={onClose}
             className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
           >

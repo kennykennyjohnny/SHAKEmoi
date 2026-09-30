@@ -267,7 +267,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                   {composerType === 'shake' ? 'Crée un Shake' : 'Publie un Shake Éphémère'}
                 </h2>
               </div>
-              <button
+              <button aria-label="Fermer"
                 onClick={onClose}
                 className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
               >
@@ -380,7 +380,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                         {selectedTrack.artist}
                       </p>
                     </div>
-                    <button
+                    <button aria-label="Fermer"
                       onClick={() => setSelectedTrack(null)}
                       className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
                     >

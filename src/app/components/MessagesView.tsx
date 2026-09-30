@@ -30,7 +30,7 @@ interface MessagesViewProps {
 }
 
 export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewOptions }: MessagesViewProps) {
-  const { initialTab = 'dms', openPartnerId = null, openCircleId = null } = viewOptions || {};
+  const { initialTab = 'dms', openPartnerId = null, openCircleId = null, nonce = 0 } = viewOptions || {};
   const [tab, setTab] = useState<'dms' | 'circles'>(initialTab);
   // Ouverture depuis la colonne de gauche (ordinateur) ou une notif alors
   // qu'on est déjà dans Messages : on suit l'onglet demandé.
@@ -63,15 +63,15 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
       )}
 
       <div className={tab === 'dms' ? 'flex flex-col flex-1 min-h-0 overflow-hidden' : 'hidden'}>
-        <DmsPanel currentUser={currentUser} onSubViewActive={setInSubView} fabTrigger={fabTrigger} openPartnerId={openPartnerId} />
+        <DmsPanel currentUser={currentUser} onSubViewActive={setInSubView} fabTrigger={fabTrigger} openPartnerId={openPartnerId} openNonce={nonce} />
       </div>
       <div className={tab === 'circles' ? 'flex flex-col flex-1 min-h-0 overflow-hidden' : 'hidden'}>
-        <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setInSubView} fabTrigger={fabTrigger} openCircleId={openCircleId} />
+        <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setInSubView} fabTrigger={fabTrigger} openCircleId={openCircleId} openNonce={nonce} />
       </div>
 
       {/* FAB — bouton + fixe en bas à droite, au-dessus de la nav bar */}
       {!inSubView && (
-        <button
+        <button aria-label="Nouveau"
           onClick={() => setFabTrigger(n => n + 1)}
           className="fixed bottom-[calc(var(--nav-h)+1rem)] right-5 lg:bottom-6 lg:right-[17rem] bg-gradient-to-br from-purple-600 to-pink-600 rounded-full shadow-xl shadow-purple-900/60 flex items-center justify-center active:scale-95 transition-transform hover:opacity-90 z-50"
           style={{ width: 52, height: 52 }}
@@ -119,7 +119,7 @@ function NewConvoSearch({ friends, onSelect, onClose }: { friends: any[]; onSele
     <div className="mb-4 bg-violet-950/20 rounded-xl border border-purple-500/25 p-3">
       <div className="flex items-center justify-between mb-2.5">
         <p className="text-sm font-semibold">Nouvelle conversation</p>
-        <button onClick={onClose}><X className="w-4 h-4 text-purple-300/60" /></button>
+        <button aria-label="Fermer" onClick={onClose}><X className="w-4 h-4 text-purple-300/60" /></button>
       </div>
       <div className="relative mb-2">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
@@ -154,7 +154,7 @@ function NewConvoSearch({ friends, onSelect, onClose }: { friends: any[]; onSele
 
 // ==================== DMs ====================
 
-function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: { currentUser: any; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openPartnerId?: string | null }) {
+function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, openNonce }: { currentUser: any; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openPartnerId?: string | null; openNonce?: number }) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeConversation, setActiveConversation] = useState<any>(null);
@@ -193,7 +193,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
     supabase.from('users_profile').select('id, username, display_name, profile_album_cover_url')
       .eq('id', openPartnerId).maybeSingle()
       .then(({ data }) => { if (data) openConversation(data); });
-  }, [openPartnerId]);
+  }, [openPartnerId, openNonce]); // nonce : rouvrir la même conversation marche aussi
   useEffect(() => {
     if (!messages.length) return;
     if (skipAutoScrollRef.current !== null) {
@@ -623,7 +623,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
                   <input autoFocus type="text" value={trackQuery} onChange={e => setTrackQuery(e.target.value)} placeholder="Rechercher un son à envoyer..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
                 </div>
                 {trackResults.map((t: any) => (
-                  <button key={t.id} onClick={() => handleSend(t)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
+                  <button aria-label="Envoyer" key={t.id} onClick={() => handleSend(t)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
                     <img loading="lazy" src={t.cover} alt="" className="w-10 h-10 rounded-md object-cover" />
                     <div className="flex-1 text-left min-w-0"><p className="text-sm font-medium truncate">{t.name}</p><p className="text-xs text-purple-200/70 truncate">{t.artist}</p></div>
                     <Send className="w-4 h-4 text-purple-400" />
@@ -658,7 +658,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
               <div className="flex items-end gap-3">
                 <div className="relative inline-block">
                   <img loading="lazy" src={photoPreview} alt="Aperçu" className="max-h-40 rounded-lg object-cover" />
-                  <button onClick={() => { setPhotoFile(null); if (photoPreview) URL.revokeObjectURL(photoPreview); setPhotoPreview(null); }} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                  <button aria-label="Retirer la photo" onClick={() => { setPhotoFile(null); if (photoPreview) URL.revokeObjectURL(photoPreview); setPhotoPreview(null); }} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                     <X className="w-3 h-3 text-white" />
                   </button>
                 </div>
@@ -678,7 +678,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
                 <button onClick={() => { setShowGifSearch(!showGifSearch); setShowTrackSearch(false); }} className={`flex-shrink-0 p-2 rounded-full transition-colors ${showGifSearch ? 'bg-purple-500 text-white' : 'hover:bg-purple-900/40 text-purple-400'}`}>
                   <Smile className="w-5 h-5" />
                 </button>
-                <button onClick={() => fileInputRef.current?.click()} className="flex-shrink-0 p-2 rounded-full hover:bg-purple-900/40 text-purple-400 transition-colors">
+                <button aria-label="Ajouter une photo" onClick={() => fileInputRef.current?.click()} className="flex-shrink-0 p-2 rounded-full hover:bg-purple-900/40 text-purple-400 transition-colors">
                   <Camera className="w-5 h-5" />
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
@@ -758,7 +758,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId }: {
 
 // ==================== Cercles ====================
 
-function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigger, openCircleId }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openCircleId?: string | null }) {
+function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigger, openCircleId, openNonce }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openCircleId?: string | null; openNonce?: number }) {
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -771,7 +771,7 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
       setSelectedCircleId(openCircleId);
       onSubViewActive?.(true);
     }
-  }, [openCircleId, circles.length]);
+  }, [openCircleId, circles.length, openNonce]);
   useEffect(() => {
     if (!fabTrigger) return;
     setShowCreate(true);
@@ -815,7 +815,7 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
   if (selectedCircleId) {
     const circle = circles.find(c => c.id === selectedCircleId);
     if (circle) {
-      return <CircleView circle={circle} currentUser={currentUser} onBack={() => { setSelectedCircleId(null); onSubViewActive?.(false); }} />;
+      return <CircleView circle={circle} currentUser={currentUser} onBack={(left?: boolean) => { setSelectedCircleId(null); onSubViewActive?.(false); if (left) load(); }} />;
     }
   }
 
@@ -886,6 +886,8 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
 
   const handleCreate = async () => {
     if (!name.trim()) return;
+    // Déjà créé (retour à l'étape 1 puis « Créer ») : on ne le recrée pas.
+    if (createdCircle) { setStep(2); return; }
     setCreating(true);
     setCreateError('');
     try {
@@ -894,10 +896,10 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
         setCreatedCircle(r.data);
         setStep(2);
       } else {
-        setCreateError(r.error || 'Erreur lors de la création');
+        setCreateError(friendlyError(r.error, "Le cercle n'a pas pu être créé. Réessaie."));
       }
     } catch (e: any) {
-      setCreateError(e?.message || 'Erreur inconnue');
+      setCreateError(friendlyError(e, "Le cercle n'a pas pu être créé. Réessaie."));
     }
     setCreating(false);
   };
@@ -925,7 +927,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
   return (
     <div className="flex-1 overflow-y-auto p-4">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={step === 1 ? onBack : () => setStep(s => (s - 1) as any)} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors">
+        <button aria-label="Retour" onClick={step === 1 ? onBack : () => setStep(s => (s - 1) as any)} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
@@ -980,7 +982,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
                 <span key={f.id} className="flex items-center gap-1 bg-purple-600/20 border border-purple-500/30 rounded-full px-2.5 py-1 text-xs">
                   <img loading="lazy" src={thumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-4 h-4 rounded-full" alt="" />
                   @{f.username}
-                  <button onClick={() => toggleFriend(f)} className="text-purple-300/60 hover:text-pink-400 ml-0.5"><X className="w-3 h-3" /></button>
+                  <button aria-label="Retirer" onClick={() => toggleFriend(f)} className="text-purple-300/60 hover:text-pink-400 ml-0.5"><X className="w-3 h-3" /></button>
                 </span>
               ))}
             </div>
@@ -1063,7 +1065,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
 
 // ==================== Circle View (feed + settings) ====================
 
-function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser: any; onBack: () => void }) {
+function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser: any; onBack: (left?: boolean) => void }) {
   const [posts, setPosts] = useState<any[]>([]);
   const loadedOnce = useRef(false);
   const [loading, setLoading] = useState(true);
@@ -1313,8 +1315,9 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   };
 
   const leaveCircle = async () => {
+    if (!confirm(`Quitter le cercle « ${circle.name} » ?`)) return;
     const user = await getCurrentUser();
-    if (user) { await removeCircleMember(circle.id, user.id); onBack(); }
+    if (user) { await removeCircleMember(circle.id, user.id); onBack(true); }
   };
 
   const handleCirclePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1357,7 +1360,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
     <div className="flex flex-col flex-1 overflow-hidden min-h-0">
       {/* Instagram-style: sticky circle header */}
       <div className="px-4 py-3 border-b border-purple-500/25 flex items-center gap-3 flex-shrink-0 bg-[#1E1440]/95 backdrop-blur-sm">
-        <button onClick={onBack} className="p-1 hover:bg-violet-900/25 rounded-full transition-colors">
+        <button aria-label="Retour" onClick={() => onBack()} className="p-1 hover:bg-violet-900/25 rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden">
@@ -1376,7 +1379,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
         <button onClick={copyLink} className={`flex-shrink-0 p-2 rounded-full transition-colors ${copied ? 'text-fuchsia-400' : 'text-purple-300/60 hover:text-white hover:bg-violet-900/25'}`} title="Copier le lien d'invitation">
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
         </button>
-        <button onClick={() => setShowSettings(!showSettings)} className={`flex-shrink-0 p-2 rounded-full transition-colors ${showSettings ? 'bg-violet-900/40 text-white' : 'text-purple-300/60 hover:text-white hover:bg-violet-900/25'}`}>
+        <button aria-label="Paramètres" onClick={() => setShowSettings(!showSettings)} className={`flex-shrink-0 p-2 rounded-full transition-colors ${showSettings ? 'bg-violet-900/40 text-white' : 'text-purple-300/60 hover:text-white hover:bg-violet-900/25'}`}>
           <Settings className="w-4 h-4" />
         </button>
       </div>
@@ -1422,7 +1425,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
                   <span key={m.id} className="flex items-center gap-1 bg-violet-950/30 rounded-full px-2.5 py-1 text-xs border border-purple-500/20">
                     <img loading="lazy" src={thumb(m.profile_album_cover_url) || defaultAvatar(m.username)} className="w-4 h-4 rounded-full" alt="" />
                     @{m.username}
-                    {m.id !== currentUser?.id && <button onClick={() => removeMember(m.id)} className="text-purple-300/60 hover:text-pink-400 ml-0.5"><X className="w-3 h-3" /></button>}
+                    {m.id !== currentUser?.id && <button aria-label="Retirer du cercle" onClick={() => removeMember(m.id)} className="text-purple-300/60 hover:text-pink-400 ml-0.5"><X className="w-3 h-3" /></button>}
                   </span>
                 ))}
               </div>
@@ -1548,7 +1551,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
         <div className="px-3 py-2 border-t border-purple-500/25 bg-violet-950/15 flex items-end gap-2 flex-shrink-0">
           <div className="relative">
             <img loading="lazy" src={photoPreview} alt="" className="h-20 w-20 rounded-lg object-cover" />
-            <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600">
+            <button aria-label="Retirer la photo" onClick={() => { setPhotoPreview(null); setPhotoFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600">
               <X className="w-3 h-3 text-white" />
             </button>
           </div>
@@ -1572,7 +1575,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
                 <input autoFocus type="text" value={trackQuery} onChange={e => setTrackQuery(e.target.value)} placeholder="Rechercher un son..." className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
               </div>
               {trackResults.map((t: any) => (
-                <button key={t.id} onClick={() => sendChatTrack(t)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
+                <button aria-label="Envoyer" key={t.id} onClick={() => sendChatTrack(t)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
                   <img loading="lazy" src={t.cover} alt="" className="w-9 h-9 rounded-md object-cover" />
                   <div className="flex-1 text-left min-w-0"><p className="text-sm font-medium truncate">{t.name}</p><p className="text-xs text-purple-200/70 truncate">{t.artist}</p></div>
                   <Send className="w-4 h-4 text-purple-400" />
@@ -1598,7 +1601,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
                 <div className="grid grid-cols-2 gap-1.5">
                   {gifError && <p className="col-span-full text-center text-xs text-purple-200/80 py-3 px-2">{gifError}</p>}
                   {gifResults.map((g: any) => (
-                    <button key={g.id} onClick={() => sendChatGif(g.url)} className="relative group overflow-hidden rounded-lg">
+                    <button aria-label="Envoyer" key={g.id} onClick={() => sendChatGif(g.url)} className="relative group overflow-hidden rounded-lg">
                       <img loading="lazy" src={g.preview} alt="" className="w-full aspect-square object-cover" />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                         <Send className="w-4 h-4 text-white" />

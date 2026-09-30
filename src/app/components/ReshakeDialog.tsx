@@ -48,7 +48,7 @@ export function ReshakeDialog({ shake, onClose, onConfirm }: ReshakeDialogProps)
             <Repeat2 className="w-5 h-5 text-fuchsia-500" />
             <h2 className="text-lg font-bold">Reshake ce son</h2>
           </div>
-          <button
+          <button aria-label="Fermer"
             onClick={onClose}
             className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
           >

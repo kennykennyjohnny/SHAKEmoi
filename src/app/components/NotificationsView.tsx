@@ -150,7 +150,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
           </div>
           <h1 className="text-2xl font-black text-white">Notifications</h1>
         </div>
-        <button onClick={loadNotifications} className="p-2 hover:bg-purple-900/30 rounded-full transition-colors">
+        <button aria-label="Actualiser" onClick={loadNotifications} className="p-2 hover:bg-purple-900/30 rounded-full transition-colors">
           <RefreshCw className="w-4 h-4 text-purple-400/60" />
         </button>
       </div>

@@ -408,7 +408,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
         >
           {/* Navigation arrows desktop */}
           {hasPrev && (
-            <button
+            <button aria-label="Retour"
               onClick={(e) => { e.stopPropagation(); navigatePrev(); }}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all hidden md:flex"
             >
@@ -527,7 +527,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                     >
                       <Pin className={`w-4 h-4 ${pinned ? 'fill-current' : ''}`} />
                     </button>
-                    <button
+                    <button aria-label="Supprimer"
                       onClick={handleDelete}
                       className="p-2 rounded-full bg-black/30 text-white/70 hover:text-red-300 hover:bg-red-500/20 transition-colors"
                     >
@@ -535,7 +535,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                     </button>
                   </>
                 )}
-                <button
+                <button aria-label="Fermer"
                   onClick={onClose}
                   className="p-2 rounded-full bg-black/30 text-white hover:bg-white/10 transition-colors"
                 >
@@ -708,7 +708,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                         <Heart className="w-4 h-4" /> Likes {likers && likers.length > 0 ? `(${likers.length})` : ''}
                       </button>
                     </div>
-                    <button onClick={() => setShowViewers(false)} className="p-1 text-white/50 hover:text-white">
+                    <button aria-label="Fermer" onClick={() => setShowViewers(false)} className="p-1 text-white/50 hover:text-white">
                       <X className="w-4 h-4" />
                     </button>
                   </div>

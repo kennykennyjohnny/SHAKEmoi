@@ -87,7 +87,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
             <Sun className="w-5 h-5 text-yellow-400" />
             <h2 className="text-lg font-bold">Shake de la semaine</h2>
           </div>
-          <button onClick={onSkip} className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors">
+          <button aria-label="Fermer" onClick={onSkip} className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors">
             <X className="w-5 h-5 text-purple-300/60" />
           </button>
         </div>
@@ -162,7 +162,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
                     <p className="font-bold text-sm truncate">{selectedTrack.title}</p>
                     <p className="text-xs text-purple-300/60 truncate">{selectedTrack.artist}</p>
                   </div>
-                  <button
+                  <button aria-label="Fermer"
                     onClick={() => setSelectedTrack(null)}
                     className="text-purple-400/50 hover:text-white self-start"
                   >

@@ -110,7 +110,9 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
         setIsFollowingUser(false);
         setStats({ ...stats, followers: stats.followers - 1 });
       } else {
-        await followUser(profile.id);
+        const r = await followUser(profile.id);
+        // Refusé (limite de 100, réseau…) : on le dit au lieu d'afficher « Abonné ».
+        if (!r.success) { alert(/100/.test(r.error || '') ? "Tu suis déjà 100 personnes : c'est la limite." : 'Impossible de suivre pour le moment. Réessaie.'); return; }
         setIsFollowingUser(true);
         setStats({ ...stats, followers: stats.followers + 1 });
       }
@@ -162,7 +164,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth 
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
-        <button
+        <button aria-label="Fermer"
           onClick={onClose}
           className="absolute top-3 right-3 p-1.5 bg-black/50 hover:bg-black/70 rounded-full transition-colors z-10"
         >

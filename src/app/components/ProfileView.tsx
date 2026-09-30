@@ -393,7 +393,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           >
             <Share2 className="w-4 h-4 text-purple-300" />
           </button>
-          <button
+          <button aria-label="Paramètres"
             onClick={() => setShowSettings(true)}
             className="px-4 py-2 bg-purple-950/50 border border-purple-800/30 hover:bg-purple-900/40 rounded-xl transition-colors"
           >
@@ -497,14 +497,14 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                     <div className="mt-3 bg-purple-950/40 rounded-2xl border border-purple-800/20 overflow-hidden">
                       {/* Header */}
                       <div className="px-4 py-2.5 flex items-center gap-3 border-b border-purple-800/20">
-                        <button onClick={() => { setDetailPostId(null); setShowDetailEmbed(false); }} className="p-1 hover:bg-purple-900/40 rounded-full transition-colors">
+                        <button aria-label="Retour" onClick={() => { setDetailPostId(null); setShowDetailEmbed(false); }} className="p-1 hover:bg-purple-900/40 rounded-full transition-colors">
                           <ArrowLeft className="w-5 h-5 text-purple-300/60" />
                         </button>
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-sm text-white truncate">{detailShake.track.title}</p>
                           <p className="text-xs text-purple-300/60 truncate">{detailShake.track.artist}</p>
                         </div>
-                        <button onClick={() => { setDetailPostId(null); setShowDetailEmbed(false); }} className="p-1 hover:bg-purple-900/40 rounded-full">
+                        <button aria-label="Fermer" onClick={() => { setDetailPostId(null); setShowDetailEmbed(false); }} className="p-1 hover:bg-purple-900/40 rounded-full">
                           <X className="w-5 h-5 text-purple-300/60" />
                         </button>
                       </div>
@@ -585,7 +585,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                           <span className="text-xs font-medium text-[#FFEFD5]">Écouter</span>
                         </button>
 
-                        <button
+                        <button aria-label="Supprimer"
                           onClick={() => { if (confirm('Supprimer ce shake ?')) { handleDeleteShake(detailShake.id); } }}
                           className="p-1.5 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg transition-colors"
                         >
@@ -646,7 +646,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                 <h3 className="font-bold text-white">
                   {showFollowersList === 'followers' ? `Abonnés (${stats.followers})` : `Abonnements (${stats.following})`}
                 </h3>
-                <button onClick={() => setShowFollowersList(null)} className="p-1.5 hover:bg-purple-900/40 rounded-full">
+                <button aria-label="Fermer" onClick={() => setShowFollowersList(null)} className="p-1.5 hover:bg-purple-900/40 rounded-full">
                   <X className="w-5 h-5 text-purple-300/60" />
                 </button>
               </div>
@@ -775,7 +775,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                   <Share2 className="w-5 h-5 text-fuchsia-400" />
                   Partager mon profil
                 </h2>
-                <button onClick={() => setShowShareProfile(false)} className="p-1.5 hover:bg-purple-900/40 rounded-full">
+                <button aria-label="Fermer" onClick={() => setShowShareProfile(false)} className="p-1.5 hover:bg-purple-900/40 rounded-full">
                   <X className="w-5 h-5 text-purple-300/60" />
                 </button>
               </div>

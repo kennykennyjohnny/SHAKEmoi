@@ -77,7 +77,7 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
                 <Share2 className="w-5 h-5 text-purple-400" />
                 <h2 className="text-lg font-bold text-white">Partage Shakemoi</h2>
               </div>
-              <button
+              <button aria-label="Fermer"
                 onClick={onClose}
                 className="p-2 hover:bg-purple-900/40 rounded-full transition-colors"
               >

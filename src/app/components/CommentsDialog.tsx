@@ -92,9 +92,12 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
         setNewComment('');
         await loadComments();
         onCommentAdded?.();
+      } else {
+        alert("Ton commentaire n'est pas parti. Vérifie ta connexion et réessaie.");
       }
     } catch (error) {
       console.error('Error sending comment:', error);
+      alert("Ton commentaire n'est pas parti. Vérifie ta connexion et réessaie.");
     } finally {
       setSending(false);
     }
@@ -172,7 +175,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
                 Sons ({musicReactions.length})
               </button>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
+            <button aria-label="Fermer" onClick={onClose} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
               <X className="w-6 h-6 text-purple-300/60" />
             </button>
           </div>
@@ -304,7 +307,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
                         <p className="text-sm font-semibold truncate">{selectedTrack.name}</p>
                         <p className="text-xs text-purple-300/60 truncate">{selectedTrack.artist}</p>
                       </div>
-                      <button onClick={() => setSelectedTrack(null)} className="text-purple-400/50 hover:text-white"><X className="w-4 h-4" /></button>
+                      <button aria-label="Retirer le son" onClick={() => setSelectedTrack(null)} className="text-purple-400/50 hover:text-white"><X className="w-4 h-4" /></button>
                     </div>
                     <input type="text" value={musicComment} onChange={e => setMusicComment(e.target.value)} placeholder="Commentaire (optionnel)" className="w-full px-3 py-2 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-pink-500" maxLength={200} />
                     <button onClick={() => handleSendMusicReaction(selectedTrack)} disabled={musicSending} className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2">

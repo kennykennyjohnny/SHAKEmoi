@@ -204,7 +204,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
         {/* Header */}
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between sticky top-0 bg-[#1D0F3D] z-10">
           <h2 className="text-lg font-bold text-white">Paramètres</h2>
-          <button onClick={handleClose} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
+          <button aria-label="Fermer" onClick={handleClose} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
             <X className="w-6 h-6 text-purple-300/60" />
           </button>
         </div>

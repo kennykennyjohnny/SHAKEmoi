@@ -70,7 +70,7 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
             <Music className="w-5 h-5 text-pink-400" />
             <h2 className="text-lg font-bold">Réactions musicales</h2>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-purple-900/40 rounded-full"><X className="w-5 h-5 text-purple-300/60" /></button>
+          <button aria-label="Fermer" onClick={onClose} className="p-1.5 hover:bg-purple-900/40 rounded-full"><X className="w-5 h-5 text-purple-300/60" /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -125,7 +125,7 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
                     <p className="text-sm font-semibold truncate">{selectedTrack.name}</p>
                     <p className="text-xs text-purple-300/60 truncate">{selectedTrack.artist}</p>
                   </div>
-                  <button onClick={() => setSelectedTrack(null)} className="text-purple-400/50 hover:text-white"><X className="w-4 h-4" /></button>
+                  <button aria-label="Retirer le son" onClick={() => setSelectedTrack(null)} className="text-purple-400/50 hover:text-white"><X className="w-4 h-4" /></button>
                 </div>
                 <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Commentaire (optionnel)" className="w-full px-3 py-2 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-pink-500" maxLength={200} />
                 <button onClick={() => handleSend(selectedTrack)} disabled={sending} className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2">

@@ -29,6 +29,7 @@ import { supabase } from '../lib/supabase';
 import { resolveUserId } from '../lib/username';
 import { normalizePlatform, setMyStreamingApp, type PlatformKey } from '../lib/platforms';
 import { getPreferredPlatform } from '../lib/shares';
+import { useMediaQuery } from '../lib/useMediaQuery';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount, getCurrentShakeWeekStart, getStoryById } from '../lib/database';
 import { useBackHandler } from '../lib/navigation';
 import { parseRoute, type Route } from '../lib/links';
@@ -50,6 +51,8 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const isXl = useMediaQuery('(min-width: 1280px)');
+  const isLg = useMediaQuery('(min-width: 1024px)');
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCompleteProfile, setShowCompleteProfile] = useState(false);
@@ -356,6 +359,15 @@ export default function App() {
 
   // Invitation dans un cercle.
   if (route?.type === 'circle') {
+    // Attendre de savoir si la personne est connectée (sinon un membre voyait
+    // un instant « Rejoindre SHAKEmoi »).
+    if (!authReady) {
+      return (
+        <div className="min-h-[100dvh] bg-[#1E1440] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-purple-500/40 border-t-purple-400 rounded-full animate-spin" />
+        </div>
+      );
+    }
     return (
       <CircleInviteView
         circleId={route.id}
@@ -505,8 +517,8 @@ export default function App() {
             currentUser={currentUser}
             onNavigateToPost={(postId) => setNotifPostId(postId)}
             onNavigateToProfile={(userId) => setProfilePreview({ userId, username: '' })}
-            onOpenConversation={(userId) => { setViewOptions({ initialTab: 'dms', openPartnerId: userId }); setCurrentView('messages'); }}
-            onOpenCircle={(circleId) => { setViewOptions({ initialTab: 'circles', openCircleId: circleId }); setCurrentView('messages'); }}
+            onOpenConversation={(userId) => { setViewOptions({ initialTab: 'dms', openPartnerId: userId, nonce: Date.now() }); setCurrentView('messages'); }}
+            onOpenCircle={(circleId) => { setViewOptions({ initialTab: 'circles', openCircleId: circleId, nonce: Date.now() }); setCurrentView('messages'); }}
             onOpenStory={async (storyId) => {
               // M10 : ouvre la story ; expirée (et pas épinglée) → la liste des likes.
               const s = await getStoryById(storyId);
@@ -530,14 +542,16 @@ export default function App() {
   return (
     <div className="h-[100dvh] w-screen bg-[#1E1440] text-white overflow-hidden flex">
       {/* Colonne gauche (grand écran) : Messages et Groupes (M7) */}
-      <aside className="hidden xl:block w-80 border-r border-violet-900/30 overflow-hidden">
+      {/* Monté seulement sur grand écran : sur téléphone, il chargeait messages et
+          cercles (et une connexion en direct) pour rien. */}
+      {isXl && <aside className="hidden xl:block w-80 border-r border-violet-900/30 overflow-hidden">
         <DesktopInbox
           currentUser={currentUser}
           activePartnerId={currentView === 'messages' ? viewOptions?.openPartnerId : null}
-          onOpenConversation={(partner) => { setViewOptions({ initialTab: 'dms', openPartnerId: partner.id }); setCurrentView('messages'); }}
-          onOpenCircle={(circleId) => { setViewOptions({ initialTab: 'circles', openCircleId: circleId }); setCurrentView('messages'); }}
+          onOpenConversation={(partner) => { setViewOptions({ initialTab: 'dms', openPartnerId: partner.id, nonce: Date.now() }); setCurrentView('messages'); }}
+          onOpenCircle={(circleId) => { setViewOptions({ initialTab: 'circles', openCircleId: circleId, nonce: Date.now() }); setCurrentView('messages'); }}
         />
-      </aside>
+      </aside>}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -550,7 +564,7 @@ export default function App() {
             </button>
 
             <div className="flex items-center gap-1.5">
-              <button onClick={() => setShowShareDialog(true)} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors">
+              <button aria-label="Partager" onClick={() => setShowShareDialog(true)} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors">
                 <Share2 className="w-5 h-5 text-purple-300/60" />
               </button>
 
@@ -612,7 +626,7 @@ export default function App() {
               { view: 'feed' as View, icon: Home, label: 'Accueil' },
               { view: 'top' as View, icon: TrendingUp, label: 'TOP' },
               { view: 'search' as View, icon: Search, label: 'Recherche' },
-              { view: 'messages' as View, icon: MessageCircle, label: 'DMs' },
+              { view: 'messages' as View, icon: MessageCircle, label: 'Messages' },
               { view: 'profile' as View, icon: User, label: 'Profil' },
             ]).map(({ view, icon: Icon, label }) => (
               <button
@@ -696,7 +710,7 @@ export default function App() {
 
         {/* M7 : le TOP, à droite sous le menu. */}
         <div className="pt-3 mt-3 border-t border-purple-500/25">
-          <TrendingBar limit={8} onSeeAll={() => setCurrentView('top')} />
+          {isLg && <TrendingBar limit={8} onSeeAll={() => setCurrentView('top')} />}
         </div>
       </aside>
 
