@@ -126,9 +126,12 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
       if (result.success) {
         setShakedIds(new Set([...shakedIds, key]));
         if (onRefreshFeed) onRefreshFeed();
+      } else {
+        alert("Ton shake n'a pas pu être publié. Vérifie ta connexion et réessaie.");
       }
     } catch (err) {
       console.error('Error shaking from top:', err);
+      alert("Ton shake n'a pas pu être publié. Vérifie ta connexion et réessaie.");
     } finally {
       setShakingId(null);
     }

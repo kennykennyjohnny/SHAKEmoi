@@ -130,9 +130,12 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
         setShowCaptionFor(null);
         setShakeCaption('');
         if (onRefreshFeed) onRefreshFeed();
+      } else {
+        alert("Ton shake n'a pas pu être publié. Vérifie ta connexion et réessaie.");
       }
     } catch (error) {
       console.error('Error shaking:', error);
+      alert("Ton shake n'a pas pu être publié. Vérifie ta connexion et réessaie.");
     } finally {
       setShakingTrackId(null);
     }

@@ -212,7 +212,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       setCurrentList(prev => prev.map(s =>
         s.id === shakeId ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) } : s
       ));
-      try { await unlikePost(shakeId); } catch (error) {
+      // likePost / unlikePost renvoient { success } sans lever d'erreur.
+      try { const r = await unlikePost(shakeId); if (!r?.success) throw new Error(r?.error); } catch (error) {
         console.error('Error unliking:', error);
         setCurrentList(prev => prev.map(s =>
           s.id === shakeId ? { ...s, isLiked: true, likes: s.likes + 1 } : s
@@ -222,7 +223,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       setCurrentList(prev => prev.map(s =>
         s.id === shakeId ? { ...s, isLiked: true, likes: s.likes + 1 } : s
       ));
-      try { await likePost(shakeId); } catch (error) {
+      try { const r = await likePost(shakeId); if (!r?.success) throw new Error(r?.error); } catch (error) {
         console.error('Error liking:', error);
         setCurrentList(prev => prev.map(s =>
           s.id === shakeId ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) } : s

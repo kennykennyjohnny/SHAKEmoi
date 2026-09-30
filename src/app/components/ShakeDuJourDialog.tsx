@@ -65,9 +65,12 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
       if (result.success && result.data) {
         await createShakeDuJour(result.data.id);
         onComplete();
+      } else {
+        alert("Ton shake de la semaine n'a pas pu être publié. Vérifie ta connexion et réessaie.");
       }
     } catch (err) {
       console.error('Error posting shake du jour:', err);
+      alert("Ton shake de la semaine n'a pas pu être publié. Vérifie ta connexion et réessaie.");
     } finally {
       setPosting(false);
     }
