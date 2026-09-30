@@ -3,33 +3,19 @@ import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun,
 import { AnimatePresence, motion } from 'motion/react';
 import { FeedView } from './components/FeedView';
 import { SearchView } from './components/SearchView';
-import { ProfileView } from './components/ProfileView';
-import { UnifiedComposerDialog } from './components/UnifiedComposerDialog';
 import { TrendingBar } from './components/TrendingBar';
-import { DesktopInbox } from './components/DesktopInbox';
-import { OnboardingDialog } from './components/OnboardingDialog';
-import { ShareDialog } from './components/ShareDialog';
 import { AuthDialog } from './components/AuthDialog';
-import { SettingsDialog } from './components/SettingsDialog';
-import { CompleteProfileDialog } from './components/CompleteProfileDialog';
-import { ShakeDuJourDialog } from './components/ShakeDuJourDialog';
-import { MessagesView } from './components/MessagesView';
-import { TopFriendsView } from './components/TopFriendsView';
 import { SongLanding } from './components/SongLanding';
-import { PrivacyPage } from './components/PrivacyPage';
 import { ProfileLanding } from './components/ProfileLanding';
 import { takePendingAction, pendingActionReason } from '../lib/pendingAction';
 
-import { CircleInviteView } from './components/CircleInviteView';
-import { NotificationsView } from './components/NotificationsView';
 import { ProfilePreviewDialog } from './components/ProfilePreviewDialog';
-import { PostDetailModal } from './components/PostDetailModal';
-import { StoryViewerDialog } from './components/StoryViewerDialog';
 import { supabase } from '../lib/supabase';
 import { resolveUserId } from '../lib/username';
 import { normalizePlatform, setMyStreamingApp, type PlatformKey } from '../lib/platforms';
 import { getPreferredPlatform } from '../lib/shares';
 import { useMediaQuery } from '../lib/useMediaQuery';
+import { lazyView, preloadViews, ViewSpinner } from '../lib/lazyView';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount, getCurrentShakeWeekStart, getStoryById } from '../lib/database';
 import { useBackHandler } from '../lib/navigation';
 import { parseRoute, type Route } from '../lib/links';
@@ -39,6 +25,24 @@ import { FinishProfileDialog, ResetPasswordDialog } from './components/AccountDi
 
 import { defaultAvatar, thumb } from '../lib/media';
 import { isNotifTypeShown, notificationText, showLocalNotification } from '../lib/notify';
+
+// Écrans chargés à la demande (perf 4G), préchargés ensuite en arrière-plan.
+const ProfileView = lazyView(() => import('./components/ProfileView'), (m) => m.ProfileView, ViewSpinner);
+const UnifiedComposerDialog = lazyView(() => import('./components/UnifiedComposerDialog'), (m) => m.UnifiedComposerDialog);
+const DesktopInbox = lazyView(() => import('./components/DesktopInbox'), (m) => m.DesktopInbox);
+const OnboardingDialog = lazyView(() => import('./components/OnboardingDialog'), (m) => m.OnboardingDialog);
+const ShareDialog = lazyView(() => import('./components/ShareDialog'), (m) => m.ShareDialog);
+const SettingsDialog = lazyView(() => import('./components/SettingsDialog'), (m) => m.SettingsDialog);
+const CompleteProfileDialog = lazyView(() => import('./components/CompleteProfileDialog'), (m) => m.CompleteProfileDialog);
+const ShakeDuJourDialog = lazyView(() => import('./components/ShakeDuJourDialog'), (m) => m.ShakeDuJourDialog);
+const MessagesView = lazyView(() => import('./components/MessagesView'), (m) => m.MessagesView, ViewSpinner);
+const TopFriendsView = lazyView(() => import('./components/TopFriendsView'), (m) => m.TopFriendsView, ViewSpinner);
+const PrivacyPage = lazyView(() => import('./components/PrivacyPage'), (m) => m.PrivacyPage, ViewSpinner);
+const CircleInviteView = lazyView(() => import('./components/CircleInviteView'), (m) => m.CircleInviteView, ViewSpinner);
+const NotificationsView = lazyView(() => import('./components/NotificationsView'), (m) => m.NotificationsView, ViewSpinner);
+const PostDetailModal = lazyView(() => import('./components/PostDetailModal'), (m) => m.PostDetailModal);
+const StoryViewerDialog = lazyView(() => import('./components/StoryViewerDialog'), (m) => m.StoryViewerDialog);
+
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'notifications';
 
 // Cercle à rejoindre après inscription (lien d'invitation ouvert sans compte).
@@ -163,6 +167,7 @@ export default function App() {
         setReferrer(route.id);
       }
       setAuthReady(true);
+      preloadViews();
     };
     checkAuth();
   }, []);
