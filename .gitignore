@@ -25,3 +25,8 @@ build/
 *.log
 .claude/
 .vercel
+
+# Tests Playwright
+e2e/screens/
+test-results/
+playwright-report/
