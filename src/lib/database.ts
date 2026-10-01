@@ -1565,25 +1565,21 @@ export async function getUserCircles(): Promise<any[]> {
  * Cercles de l'utilisateur triés du plus actif au moins actif (dernier message
  * le plus récent en premier, comme WhatsApp). Un cercle sans message est classé
  * selon sa date de création. Même tri sur téléphone et sur ordinateur (P13).
- * Une requête par cercle (limit 1) : léger même quand l'historique grossit.
+ * Calculé en base (get_my_circles) en une requête, avec le dernier message et
+ * le nombre de non-lus (P26).
  */
 export async function getUserCirclesByActivity(): Promise<any[]> {
-  const circles = await getUserCircles();
-  if (circles.length === 0) return [];
-  const last = await Promise.all(
-    circles.map((c: any) =>
-      supabase
-        .from('circle_messages')
-        .select('created_at')
-        .eq('circle_id', c.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .then(({ data }) => (data && data[0]?.created_at) || null, () => null)
-    )
-  );
-  return circles
-    .map((c: any, i: number) => ({ ...c, last_activity_at: last[i] || c.created_at }))
-    .sort((a: any, b: any) => new Date(b.last_activity_at).getTime() - new Date(a.last_activity_at).getTime());
+  const user = await getCurrentUser();
+  if (!user) return [];
+  const { data, error } = await supabase.rpc('get_my_circles');
+  if (error) throw error;
+  return (data || []).map((c: any) => ({ ...c, unread_count: Number(c.unread_count) || 0, member_count: Number(c.member_count) || 0 }));
+}
+
+/** Marque un cercle comme lu (P26) : la pastille Messages baisse tout de suite. */
+export async function markCircleRead(circleId: string) {
+  const { error } = await supabase.rpc('mark_circle_read', { p_circle_id: circleId });
+  if (!error) window.dispatchEvent(new CustomEvent('shakemoi:messages-read'));
 }
 
 /** Retirer un de ses messages de cercle (P12). La base doit l'autoriser (auteur ; admin du cercle à venir). */
@@ -1665,23 +1661,11 @@ export async function updateCircleName(circleId: string, newName: string) {
   try {
     const name = newName.trim().slice(0, 40);
     if (!name) return { success: false, error: 'Le nom ne peut pas être vide.' };
-    // Fonction SQL rename_circle (supabase/pending) : tout membre peut renommer,
-    // sans pouvoir toucher aux autres colonnes. Repli sur un UPDATE direct si
-    // la fonction n'est pas encore installée.
-    const rpc = await supabase.rpc('rename_circle', { p_circle_id: circleId, p_name: name });
-    if (!rpc.error) return { success: true, name: (rpc.data as string) || name };
-    if (!/function|rename_circle|schema cache/i.test(rpc.error.message)) {
-      return { success: false, error: rpc.error.message };
-    }
-    const { data, error } = await supabase
-      .from('circles')
-      .update({ name })
-      .eq('id', circleId)
-      .select('id, name');
-    if (error) throw error;
-    // Une règle d'accès qui refuse renvoie 0 ligne sans erreur (P8).
-    if (!data || data.length === 0) return { success: false, error: 'Seuls les membres du cercle peuvent le renommer.' };
-    return { success: true, name };
+    // Fonction SQL rename_circle : tout membre peut renommer, sans pouvoir
+    // toucher aux autres colonnes ; elle ajoute « X a renommé le cercle » (P8).
+    const { data, error } = await supabase.rpc('rename_circle', { p_circle_id: circleId, p_name: name });
+    if (error) return { success: false, error: error.message };
+    return { success: true, name: (data as string) || name };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

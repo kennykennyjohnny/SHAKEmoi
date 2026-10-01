@@ -6,7 +6,7 @@ import {
   getMessageById, markConversationRead, deleteMessage, MESSAGES_PAGE,
   createCircle, getUserCirclesByActivity, getCircleMessages, getCircleMembers,
   searchUsers, addCircleMember, removeCircleMember, getCurrentUser,
-  sendCircleMessage, deleteCircleMessage, likeCircleMessage, unlikeCircleMessage, getCircleMessageLikes, hasLikedCircleMessages,
+  sendCircleMessage, deleteCircleMessage, markCircleRead, likeCircleMessage, unlikeCircleMessage, getCircleMessageLikes, hasLikedCircleMessages,
   updateCirclePhoto, updateCircleName
 } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
@@ -21,6 +21,7 @@ import { searchGifs, GIF_ERROR_TEXT } from '../../lib/gifs';
 import { friendlyError } from '../../lib/errors';
 import { formatListTime, formatDayLabel, isSameDay, formatRelative } from '../../lib/dates';
 import { MyAppLogo } from './PlatformLogo';
+import { circlePreviewText } from '../../lib/chat';
 
 interface MessagesViewProps {
   currentUser: any;
@@ -794,9 +795,14 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
   useEffect(() => {
     load();
     // Cercle renommé ou modifié ailleurs (P8) : la liste se met à jour.
-    const onChanged = () => load();
+    const onChanged = () => load(true);
     window.addEventListener('shakemoi:circles-changed', onChanged);
-    return () => window.removeEventListener('shakemoi:circles-changed', onChanged);
+    // Nouveau message dans un de mes cercles : il remonte en haut, en direct (P13).
+    const channel = supabase
+      .channel(`circles-list-${currentUser?.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'circle_messages' }, () => load(true))
+      .subscribe();
+    return () => { window.removeEventListener('shakemoi:circles-changed', onChanged); supabase.removeChannel(channel); };
   }, []);
   // Ouverture directe d'un cercle (depuis une notification, D1).
   useEffect(() => {
@@ -815,8 +821,9 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
   useBackHandler(!!selectedCircleId, () => { setSelectedCircleId(null); onSubViewActive?.(false); });
   useBackHandler(showCreate, () => { setShowCreate(false); onSubViewActive?.(false); });
 
-  const load = async () => {
-    setLoading(true);
+  // silent : rafraîchissement en fond (nouveau message, cercle lu ou renommé), sans spinner.
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true);
     setLoadError(null);
     try {
       // Plus actif en premier (P13) : même fonction que la colonne ordinateur.
@@ -835,7 +842,7 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
   if (selectedCircleId) {
     const circle = circles.find(c => c.id === selectedCircleId);
     if (circle) {
-      return <CircleView circle={circle} currentUser={currentUser} onBack={(left?: boolean) => { setSelectedCircleId(null); onSubViewActive?.(false); if (left) load(); }} />;
+      return <CircleView circle={circle} currentUser={currentUser} onBack={(left?: boolean) => { setSelectedCircleId(null); onSubViewActive?.(false); load(!left); }} />;
     }
   }
 
@@ -846,7 +853,7 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
       ) : loadError ? (
         <div className="text-center py-16">
           <p className="text-purple-200/80 text-sm">{loadError}</p>
-          <button onClick={load} className="mt-4 px-5 py-2 bg-purple-900/40 hover:bg-purple-900/60 rounded-full text-sm font-semibold">
+          <button onClick={() => load()} className="mt-4 px-5 py-2 bg-purple-900/40 hover:bg-purple-900/60 rounded-full text-sm font-semibold">
             Réessayer
           </button>
         </div>
@@ -864,10 +871,17 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
                 )}
               </div>
               <div className="flex-1 text-left min-w-0">
-                <p className="font-semibold text-sm">{c.name}</p>
-                <p className="text-xs text-purple-300/60">{c.invite_code ? `Code: ${c.invite_code}` : 'Cercle privé'}</p>
+                <div className="flex items-baseline gap-2">
+                  <p className={`text-sm truncate flex-1 ${c.unread_count > 0 ? 'font-bold text-white' : 'font-semibold'}`}>{c.name}</p>
+                  <span className="text-[11px] text-purple-300/60 flex-shrink-0">{formatListTime(c.last_activity_at)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <p className={`text-xs truncate flex-1 ${c.unread_count > 0 ? 'text-white font-semibold' : 'text-purple-300/60'}`}>{circlePreviewText(c, currentUser?.id)}</p>
+                  {c.unread_count > 0 && (
+                    <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-[11px] font-bold flex items-center justify-center flex-shrink-0">{c.unread_count > 99 ? '99+' : c.unread_count}</span>
+                  )}
+                </div>
               </div>
-              <ArrowLeft className="w-4 h-4 text-purple-300/60 rotate-180" />
             </button>
           ))}
         </div>
@@ -1114,6 +1128,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       circle.name = r.name || draft;
       setNameMsg('Nom enregistré');
       window.dispatchEvent(new CustomEvent('shakemoi:circles-changed'));
+      loadData();
     } else {
       setNameMsg(r.error || 'Impossible de renommer le cercle. Réessaie.');
     }
@@ -1190,6 +1205,8 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
         table: 'circle_messages',
         filter: `circle_id=eq.${circle.id}`
       }, (payload: any) => {
+        // Renommé par un autre membre : l'en-tête suit tout de suite (P8).
+        if (payload.new?.kind === 'rename' && payload.new?.text) { setCircleName(payload.new.text); setNameDraft(payload.new.text); }
         if (payload.new?.sender_id === currentUser?.id) return;
         loadData();
       })
@@ -1211,6 +1228,8 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       setPosts(p);
       loadedOnce.current = true;
       setMembers(m);
+      // Cercle ouvert = lu (P26) : la pastille baisse tout de suite.
+      markCircleRead(circle.id).catch(() => {});
       // Load likes status for all messages
       const messageIds = p.map((msg: any) => msg.id);
       if (messageIds.length > 0) {
@@ -1563,6 +1582,14 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
           const user = msg.user;
           const isLiked = likedMessages[msg.id];
           const likersData = messageLikers[msg.id] || [];
+          // Message système : « X a renommé le cercle en … » (P8).
+          if (msg.kind === 'rename') {
+            return (
+              <p key={msg.id} className="text-center text-[11px] text-purple-300/70 py-1">
+                {msg.sender_id === currentUser?.id ? 'Tu as' : `@${user?.username || 'quelqu\'un'} a`} renommé le cercle en « {msg.text} »
+              </p>
+            );
+          }
           if (!msg.track_name && !msg.text && !msg.image_url) return null;
           return (
             <div key={msg.id}

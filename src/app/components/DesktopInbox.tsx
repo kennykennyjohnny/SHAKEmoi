@@ -6,6 +6,7 @@ import { getConversations, getUserCirclesByActivity } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { thumb, defaultAvatar, MediaImg } from '../../lib/media';
 import { formatListTime } from '../../lib/dates';
+import { circlePreviewText } from '../../lib/chat';
 
 interface Props {
   currentUser: any;
@@ -112,7 +113,18 @@ export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation,
                     <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center"><Users className="w-4 h-4 text-white" /></div>
                   )}
                 </div>
-                <p className="text-sm font-semibold text-white/90 truncate">{g.name}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2">
+                    <p className={`text-sm truncate flex-1 ${g.unread_count > 0 ? 'font-bold text-white' : 'font-semibold text-white/90'}`}>{g.name}</p>
+                    <span className={`text-[10px] flex-shrink-0 ${g.unread_count > 0 ? 'text-pink-300' : 'text-purple-300/50'}`}>{formatListTime(g.last_activity_at)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <p className={`text-xs truncate flex-1 ${g.unread_count > 0 ? 'text-purple-100/90' : 'text-purple-300/60'}`}>{circlePreviewText(g, currentUser?.id)}</p>
+                    {g.unread_count > 0 && (
+                      <span className="min-w-[17px] h-[17px] px-1 bg-pink-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white flex-shrink-0">{g.unread_count > 9 ? '9+' : g.unread_count}</span>
+                    )}
+                  </div>
+                </div>
               </button>
             ))}
           </div>
