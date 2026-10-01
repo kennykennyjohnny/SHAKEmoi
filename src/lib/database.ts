@@ -1654,12 +1654,17 @@ export async function removeCircleMember(circleId: string, userId: string) {
 
 export async function updateCircleName(circleId: string, newName: string) {
   try {
-    const { error } = await supabase
+    const name = newName.trim().slice(0, 40);
+    if (!name) return { success: false, error: 'Le nom ne peut pas être vide.' };
+    const { data, error } = await supabase
       .from('circles')
-      .update({ name: newName })
-      .eq('id', circleId);
+      .update({ name })
+      .eq('id', circleId)
+      .select('id, name');
     if (error) throw error;
-    return { success: true };
+    // Une règle d'accès qui refuse renvoie 0 ligne sans erreur (P8).
+    if (!data || data.length === 0) return { success: false, error: 'Seul le créateur du cercle peut le renommer.' };
+    return { success: true, name };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

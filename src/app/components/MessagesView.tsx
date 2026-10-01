@@ -7,7 +7,7 @@ import {
   createCircle, getUserCirclesByActivity, getCircleMessages, getCircleMembers,
   searchUsers, addCircleMember, removeCircleMember, getCurrentUser,
   sendCircleMessage, deleteCircleMessage, likeCircleMessage, unlikeCircleMessage, getCircleMessageLikes, hasLikedCircleMessages,
-  updateCirclePhoto
+  updateCirclePhoto, updateCircleName
 } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
@@ -791,7 +791,13 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
   const [showCreate, setShowCreate] = useState(false);
   const [selectedCircleId, setSelectedCircleId] = useState<string | null>(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // Cercle renommé ou modifié ailleurs (P8) : la liste se met à jour.
+    const onChanged = () => load();
+    window.addEventListener('shakemoi:circles-changed', onChanged);
+    return () => window.removeEventListener('shakemoi:circles-changed', onChanged);
+  }, []);
   // Ouverture directe d'un cercle (depuis une notification, D1).
   useEffect(() => {
     if (openCircleId && circles.some(c => c.id === openCircleId)) {
@@ -1091,6 +1097,28 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const loadedOnce = useRef(false);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  // Renommer le cercle (P8) : réservé au créateur, la base le vérifie aussi.
+  const [circleName, setCircleName] = useState<string>(circle.name);
+  const [nameDraft, setNameDraft] = useState<string>(circle.name);
+  const [savingName, setSavingName] = useState(false);
+  const [nameMsg, setNameMsg] = useState<string | null>(null);
+  const isCircleOwner = circle.created_by === currentUser?.id;
+  const saveCircleName = async () => {
+    const draft = nameDraft.trim();
+    if (!draft || draft === circleName) return;
+    setSavingName(true);
+    setNameMsg(null);
+    const r: any = await updateCircleName(circle.id, draft);
+    setSavingName(false);
+    if (r.success) {
+      setCircleName(r.name || draft);
+      circle.name = r.name || draft;
+      setNameMsg('Nom enregistré');
+      window.dispatchEvent(new CustomEvent('shakemoi:circles-changed'));
+    } else {
+      setNameMsg(r.error || 'Impossible de renommer le cercle. Réessaie.');
+    }
+  };
   const [members, setMembers] = useState<any[]>([]);
   const [searchQ, setSearchQ] = useState('');
   const [searchRes, setSearchRes] = useState<any[]>([]);
@@ -1425,7 +1453,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm">{circle.name}</p>
+          <p className="font-semibold text-sm truncate">{circleName}</p>
           <p className="text-xs text-purple-300/60">{members.length} membre{members.length > 1 ? 's' : ''}</p>
         </div>
         <button onClick={copyLink} className={`flex-shrink-0 p-2 rounded-full transition-colors ${copied ? 'text-fuchsia-400' : 'text-purple-300/60 hover:text-white hover:bg-violet-900/25'}`} title="Copier le lien d'invitation">
@@ -1464,6 +1492,29 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
                   <input ref={circlePhotoInputRef} type="file" accept="image/*" className="hidden" onChange={handleCirclePhotoUpload} />
                 </div>
               </div>
+              {/* Nom du cercle (P8) */}
+              {isCircleOwner && (
+                <div>
+                  <p className="text-[10px] text-purple-300/60 uppercase tracking-wider mb-1">Nom du cercle</p>
+                  <div className="flex gap-2">
+                    <input
+                      value={nameDraft}
+                      onChange={(e) => { setNameDraft(e.target.value); setNameMsg(null); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') saveCircleName(); }}
+                      maxLength={40}
+                      className="flex-1 min-w-0 bg-violet-950/40 border border-purple-500/30 rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:outline-none focus:border-pink-400/60"
+                    />
+                    <button
+                      onClick={saveCircleName}
+                      disabled={savingName || !nameDraft.trim() || nameDraft.trim() === circleName}
+                      className="px-3 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-xs font-semibold disabled:opacity-40"
+                    >
+                      {savingName ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Enregistrer'}
+                    </button>
+                  </div>
+                  {nameMsg && <p className="text-[11px] text-purple-200/80 mt-1">{nameMsg}</p>}
+                </div>
+              )}
               {/* Invite Code */}
               {circle.invite_code && (
                 <div className="bg-purple-900/20 border border-purple-500/20 rounded-lg p-3 text-center">

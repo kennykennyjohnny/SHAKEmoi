@@ -46,7 +46,8 @@ export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation,
       .subscribe();
     const onRead = () => load();
     window.addEventListener('shakemoi:messages-read', onRead);
-    return () => { supabase.removeChannel(channel); window.removeEventListener('shakemoi:messages-read', onRead); };
+    window.addEventListener('shakemoi:circles-changed', onRead);
+    return () => { supabase.removeChannel(channel); window.removeEventListener('shakemoi:messages-read', onRead); window.removeEventListener('shakemoi:circles-changed', onRead); };
   }, [currentUser?.id]);
 
   return (
