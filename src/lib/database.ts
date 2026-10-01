@@ -1665,6 +1665,14 @@ export async function updateCircleName(circleId: string, newName: string) {
   try {
     const name = newName.trim().slice(0, 40);
     if (!name) return { success: false, error: 'Le nom ne peut pas être vide.' };
+    // Fonction SQL rename_circle (supabase/pending) : tout membre peut renommer,
+    // sans pouvoir toucher aux autres colonnes. Repli sur un UPDATE direct si
+    // la fonction n'est pas encore installée.
+    const rpc = await supabase.rpc('rename_circle', { p_circle_id: circleId, p_name: name });
+    if (!rpc.error) return { success: true, name: (rpc.data as string) || name };
+    if (!/function|rename_circle|schema cache/i.test(rpc.error.message)) {
+      return { success: false, error: rpc.error.message };
+    }
     const { data, error } = await supabase
       .from('circles')
       .update({ name })
@@ -1672,7 +1680,7 @@ export async function updateCircleName(circleId: string, newName: string) {
       .select('id, name');
     if (error) throw error;
     // Une règle d'accès qui refuse renvoie 0 ligne sans erreur (P8).
-    if (!data || data.length === 0) return { success: false, error: 'Seul le créateur du cercle peut le renommer.' };
+    if (!data || data.length === 0) return { success: false, error: 'Seuls les membres du cercle peuvent le renommer.' };
     return { success: true, name };
   } catch (error: any) {
     return { success: false, error: error.message };

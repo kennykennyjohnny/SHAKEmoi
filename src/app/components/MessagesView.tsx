@@ -1097,12 +1097,11 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const loadedOnce = useRef(false);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
-  // Renommer le cercle (P8) : réservé au créateur, la base le vérifie aussi.
+  // Renommer le cercle (P8) : tous les membres peuvent le faire, la base le vérifie aussi.
   const [circleName, setCircleName] = useState<string>(circle.name);
   const [nameDraft, setNameDraft] = useState<string>(circle.name);
   const [savingName, setSavingName] = useState(false);
   const [nameMsg, setNameMsg] = useState<string | null>(null);
-  const isCircleOwner = circle.created_by === currentUser?.id;
   const saveCircleName = async () => {
     const draft = nameDraft.trim();
     if (!draft || draft === circleName) return;
@@ -1493,7 +1492,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
                 </div>
               </div>
               {/* Nom du cercle (P8) */}
-              {isCircleOwner && (
+              {(
                 <div>
                   <p className="text-[10px] text-purple-300/60 uppercase tracking-wider mb-1">Nom du cercle</p>
                   <div className="flex gap-2">
