@@ -16,7 +16,7 @@ import { normalizePlatform, setMyStreamingApp, type PlatformKey } from '../lib/p
 import { getPreferredPlatform } from '../lib/shares';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { lazyView, preloadViews, ViewSpinner } from '../lib/lazyView';
-import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getUnreadMessagesCount, getCurrentShakeWeekStart, getStoryById } from '../lib/database';
+import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getInboxCounts, getCurrentShakeWeekStart, getStoryById } from '../lib/database';
 import { useBackHandler } from '../lib/navigation';
 import { parseRoute, type Route } from '../lib/links';
 import { Slogan } from './components/Slogan';
@@ -75,6 +75,9 @@ export default function App() {
   const [refreshFeed, setRefreshFeed] = useState(0);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  // Détail de la pastille Messages : conversations et cercles (P26).
+  const [inboxCounts, setInboxCounts] = useState({ dms: 0, circles: 0 });
+  const applyInbox = (c: { dms: number; circles: number }) => { setInboxCounts(c); setUnreadMessages(c.dms + c.circles); };
   const [showShakeDuJour, setShowShakeDuJour] = useState(false);
   const [hasPostedToday, setHasPostedToday] = useState(true);
   const [viewOptions, setViewOptions] = useState<any>({});
@@ -209,12 +212,12 @@ export default function App() {
 
     const fetchCounts = async () => {
       try {
-        const [notifs, msgCount] = await Promise.all([
+        const [notifs, inbox] = await Promise.all([
           getUserNotifications(currentUser.id),
-          getUnreadMessagesCount(),
+          getInboxCounts(),
         ]);
         setUnreadNotifs(notifs.filter((n: any) => !n.is_read).length);
-        setUnreadMessages(msgCount);
+        applyInbox(inbox);
       } catch {}
     };
 
@@ -250,7 +253,7 @@ export default function App() {
     let recount: ReturnType<typeof setTimeout> | null = null;
     const refreshUnreadMessages = () => {
       if (recount) clearTimeout(recount);
-      recount = setTimeout(() => { getUnreadMessagesCount().then(setUnreadMessages).catch(() => {}); }, 600);
+      recount = setTimeout(() => { getInboxCounts().then(applyInbox).catch(() => {}); }, 600);
     };
     const msgChannel = supabase
       .channel(`app-messages-${currentUser.id}`)
@@ -258,6 +261,17 @@ export default function App() {
         event: 'INSERT', schema: 'public', table: 'messages',
         filter: `receiver_id=eq.${currentUser.id}`
       }, () => refreshUnreadMessages())
+      // Like reçu sur un message (P9) : pastille Messages aussi.
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_likes' }, (p: any) => {
+        if (p.new?.user_id !== currentUser.id) refreshUnreadMessages();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'circle_message_likes' }, (p: any) => {
+        if (p.new?.user_id !== currentUser.id) refreshUnreadMessages();
+      })
+      // Message de cercle (P26) : pastille Messages, jamais la cloche (A2).
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'circle_messages' }, (p: any) => {
+        if (p.new?.sender_id !== currentUser.id) refreshUnreadMessages();
+      })
       .subscribe();
     window.addEventListener('shakemoi:messages-read', refreshUnreadMessages);
 
@@ -561,7 +575,7 @@ export default function App() {
       case 'top':
         return <TopFriendsView currentUser={currentUser} onRefreshFeed={() => setRefreshFeed(p => p + 1)} />;
       case 'messages':
-        return <MessagesView currentUser={currentUser} viewOptions={viewOptions} />;
+        return <MessagesView currentUser={currentUser} viewOptions={viewOptions} inboxCounts={inboxCounts} />;
       case 'notifications':
         return (
           <NotificationsView

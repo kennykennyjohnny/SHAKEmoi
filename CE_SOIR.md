@@ -235,3 +235,41 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 1. Ouvre le profil de quelqu'un que tes potes suivent : la ligne « Suivi par … » apparaît sous la bio ; touche-la → la liste.
 2. Touche « Abonnés » sur son profil → les gens que tu suis sont en haut, « Vous suit » sur ceux qui te suivent ; tape 2 lettres dans la recherche ; suis quelqu'un depuis la liste.
 3. Sur ton profil → Abonnés → « Retirer » sur quelqu'un → il disparaît et ton compteur baisse.
+
+## Lot 4 — Messagerie (P26, P27, P28, P9, P12, P8, P10)
+**Décision technique** : les messages privés et les cercles utilisent maintenant **le même écran de conversation** (`ChatThread`) et **la même logique** (`lib/chatData.ts`). Avant, c'étaient deux écrans écrits différemment (bulles d'un côté, cartes de l'autre) : impossible de garantir « exactement les mêmes possibilités ». Désormais tout ce qui suit marche à l'identique en privé et en cercle.
+
+| # | Statut | Explication |
+|---|---|---|
+| P26 | ✅ | Lecture des cercles enregistrée en base (`circle_reads`). **Pastille Messages = conversations non lues + cercles non lus** (`unread_inbox_count`), une pastille par onglet (Messages / Cercles), chaque cercle affiche son nombre de non-lus en gras. **Rien dans la cloche** (A2). Ouvrir un cercle le marque lu : la pastille baisse tout de suite (téléphone et colonne ordinateur). |
+| P27 | ✅ | **Répondre** : par le menu, ou en **glissant la bulle vers la droite** (comme WhatsApp ; pas depuis le bord gauche, réservé au retour d'iPhone). Barre « Répondre à … » avec croix. La réponse affiche la citation (auteur + début du texte, ou pochette / photo) ; la toucher remonte jusqu'au message d'origine (en chargeant les plus anciens si besoin) et le surligne. Original retiré → « Message retiré ». Texte, photo, GIF, son. Colonne `reply_to_id` sur les deux tables. |
+| P28 | ✅ | En tapant **@** dans un cercle : la liste des membres (filtrée en tapant), on choisit, le @pseudo s'insère. Les @mentions sont **en couleur et cliquables** (ouvrent le profil). Les ids mentionnés sont enregistrés avec le message (`mentioned_ids`, survit à un changement de pseudo). Push « @kenny t'a mentionné·e » **même si le cercle est en sourdine** ; petit **@** rose sur le cercle dans la liste (et la colonne ordinateur). |
+| P9 | ✅ | **Double-tap** (double-clic sur ordinateur) sur un message = like, avec un cœur animé ; affiché tout de suite, annulé si la base refuse. Petit cœur + nombre **sous la bulle** ; le toucher retire le like. Sur un son : le toucher de la pochette lance / met en pause (M2), le double-tap se fait sur la bulle (pas sur la pochette, pour ne jamais couper le son). Défilement, appui long et sélection ne déclenchent pas de like. **Messages privés : les likes existent maintenant** (table `message_likes` + compteur tenu par la base, comme les cercles). Règle d'accès : on ne like que dans une conversation / un cercle dont on fait partie (vérifié). Un like reçu allume la **pastille Messages** (pas la cloche) et envoie une notif push groupée par message. |
+| P12 retirer | ✅ | « Retirer le message » dans le **même menu** en privé et en cercle. Par son auteur, ou par le **créateur du cercle** (modération), imposé en base (`retract_message`, testé : refusé sur le message de quelqu'un d'autre). Chez tout le monde, **en direct**, la bulle devient « Message retiré » ; la photo est supprimée du stockage quand c'est l'auteur qui retire. |
+| P12 audit 1 | ✅ | **Menu sur appui long** (ou clic droit, ou « ⋯ » au survol sur ordinateur), identique partout : Répondre, Copier, Liker / Retirer mon like, Voir les likes, Retirer. (« Signaler » arrive avec P17.) |
+| P12 audit 2-3 | ✅ | Répondre (P27) et retirer dans les cercles (ci-dessus). |
+| P12 audit 4 | ✅ | **« Vu à 14:32 »** sous mon dernier message en privé ; **« Vu par 3 »** / « Vu par tout le monde » en cercle, avec la liste au toucher. Mis à jour en direct. |
+| P12 audit 5 | ✅ | **« … est en train d'écrire »** en temps réel (canal Supabase, rien n'est écrit en base). |
+| P12 audit 6 | ✅ | **Sourdine** (cloche dans l'en-tête de chaque conversation / cercle) : plus de push ni de pastille pour elle (une @mention passe quand même). Icône 🔕 dans les listes. |
+| P12 audit 7 | ✅ | Séparateur **« Non lus »** à l'ouverture (on arrive dessus) et bouton **« ↓ N nouveaux messages »** quand on a remonté. |
+| P12 audit 8 | ✅ | @mentions (P28). |
+| P12 audit 9 | ✅ | **Envoyer un son dans un cercle** exactement comme en privé (recherche, pochette, lecture M2, liens de toutes les plateformes, logo de mon appli). |
+| P12 audit 10 | ✅ | **Infos du cercle** (toucher l'en-tête ou ⚙️) : photo, nom (P8), lien d'invitation + partage + code, **membres avec leur rôle** (Créateur / Membre), ajouter quelqu'un, retirer (créateur), quitter, **supprimer le cercle** (créateur, tape SUPPRIMER, imposé en base). |
+| P8 | ✅ | Renommer depuis les infos (tous les membres) ; « Kenny a renommé le cercle en … » dans la conversation ; le nouveau nom suit **en direct** partout (en-tête, listes, colonne ordinateur). |
+| P10 | ✅ | Glisser entre Messages et Cercles : **les listes et l'indicateur suivent le doigt en direct**, ça résiste aux bords, ça se cale à la fin du geste. Seulement sur les listes, jamais dans une conversation ; les bords de l'écran restent au geste retour ; un geste vertical fait défiler. L'onglet est **gardé à l'actualisation**. Gestes natifs, aucune bibliothèque ajoutée (`useSwipeTabs`, réutilisé pour le TOP). |
+| Trouvailles | ✅ | La liste « qui a liké » d'un message de cercle appelait une fonction SQL **qui n'existe pas** (toujours vide) : remplacée. Le bouton + ouvrait « nouvelle conversation » ET « nouveau cercle » en même temps (l'un caché) : un compteur par onglet. Le retrait d'un membre était proposé à tous alors que seul le créateur peut le faire : bouton réservé au créateur. |
+
+**Testé ici** : composant monté avec de faux messages (double-tap 2 → 3, toucher le cœur 3 → 2, menu complet sur mon message, sans « Retirer » sur celui d'un autre, barre « Répondre », séparateur « Non lus », « Vu par tout le monde », @mention qui se complète) ; requêtes validées par la base ; fonctions SQL testées avec un vrai compte (dans une transaction annulée).
+
+**Idées en plus (pas faites, pour plus tard)** : réactions emoji au choix (pas seulement ❤️), messages vocaux, épingler un message dans un cercle, transférer un message ou un son, rechercher dans une conversation.
+
+**Tests (lot 4)** — à deux téléphones (toi + un 2ᵉ compte)
+1. Messages privés : double-tap un message → cœur animé + « ♥ 1 » sous la bulle chez vous deux ; re-touche le cœur → retiré. La pastille Messages s'allume chez l'autre quand tu likes.
+2. Glisse une bulle vers la droite → « Répondre à … » ; envoie → la citation apparaît ; touche-la → ça remonte au message d'origine qui clignote.
+3. Appui long sur ton message → Retirer → « Message retiré » chez l'autre en direct.
+4. Commence à écrire → chez l'autre, « est en train d'écrire… ». Envoie → chez toi « Envoyé » puis « Vu à 14:32 » quand il ouvre.
+5. Cercle : tape « @ » → la liste des membres ; choisis → envoie → le @ est en couleur ; le membre mentionné voit un @ rose sur le cercle et reçoit une notif même si le cercle est en sourdine.
+6. 🔔 en haut d'une conversation → sourdine : plus de notif ni de pastille pour elle.
+7. Remonte loin dans une conversation pendant que l'autre écrit → bouton « ↓ 1 nouveau message ».
+8. Infos du cercle : renomme, ajoute un ami, partage le lien ; (créateur) supprime un cercle de test.
+9. Onglet Messages : glisse doucement vers la gauche → la liste et le trait rose suivent ton doigt ; relâche à mi-chemin → ça revient ; actualise → tu restes sur Cercles.

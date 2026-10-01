@@ -1227,68 +1227,27 @@ export async function getConversations(): Promise<any[]> {
     partner: c.partner,
     lastMessage: c.last_message,
     unreadCount: Number(c.unread_count) || 0,
+    muted: !!c.muted,
+    unreadLikes: Number(c.unread_likes) || 0,
   }));
 }
 
-export const MESSAGES_PAGE = 50;
-const MESSAGE_SELECT = `
-  *,
-  sender:users_profile!messages_sender_id_fkey(id, username, display_name, profile_album_cover_url),
-  story:stories!messages_story_id_fkey(id, image_url, cover_url, track_name, artist)
-`;
-
 /**
- * Les 50 DERNIERS messages d'une conversation, du plus ancien au plus récent
- * (C1 — avant, les 50 premiers : la conversation se figeait). `before` charge
- * la page précédente.
+ * Pastille Messages (A3, P26) : conversations privées non lues + cercles non
+ * lus (hors sourdine ; une @mention compte toujours), calculé en base.
  */
-export async function getMessages(partnerId: string, limit = MESSAGES_PAGE, before?: string): Promise<any[]> {
-  const user = await getCurrentUser();
-  if (!user) return [];
-
-  let q = supabase
-    .from('messages')
-    .select(MESSAGE_SELECT)
-    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${user.id})`)
-    .order('created_at', { ascending: false })
-    .limit(limit);
-  if (before) q = q.lt('created_at', before);
-
-  const { data, error } = await q;
-  if (error) {
-    console.error('Error getting messages:', error);
-    throw error;
-  }
-  return (data || []).reverse();
-}
-
-/** Un message complet (profil de l'expéditeur + aperçu de story), pour le temps réel (C7). */
-export async function getMessageById(id: string): Promise<any | null> {
-  const { data } = await supabase.from('messages').select(MESSAGE_SELECT).eq('id', id).maybeSingle();
-  return data || null;
-}
-
-/** Ouvrir une conversation la marque lue (A3). */
-export async function markConversationRead(partnerId: string) {
-  await supabase.rpc('mark_conversation_read', { p_partner_id: partnerId });
-  if (typeof window !== 'undefined') window.dispatchEvent(new Event('shakemoi:messages-read'));
-}
-
-/** Nombre de CONVERSATIONS non lues (pastille Messages, A3). */
-export async function getUnreadMessagesCount(): Promise<number> {
+export async function getInboxCounts(): Promise<{ dms: number; circles: number }> {
   try {
-    const { data, error } = await supabase.rpc('unread_conversations_count');
+    const { data, error } = await supabase.rpc('unread_inbox_count');
     if (error) throw error;
-    return Number(data) || 0;
+    return { dms: Number(data?.dms) || 0, circles: Number(data?.circles) || 0 };
   } catch {
-    return 0;
+    return { dms: 0, circles: 0 };
   }
 }
-
-/** Supprimer un de ses messages (C9). */
-export async function deleteMessage(messageId: string) {
-  const { error } = await supabase.from('messages').delete().eq('id', messageId);
-  return { success: !error, error: error?.message };
+export async function getUnreadMessagesCount(): Promise<number> {
+  const c = await getInboxCounts();
+  return c.dms + c.circles;
 }
 
 export async function sendMessage(receiverId: string, text?: string, track?: any, imageUrl?: string, storyId?: string) {
@@ -1626,20 +1585,7 @@ export async function getUserCirclesByActivity(): Promise<any[]> {
   if (!user) return [];
   const { data, error } = await supabase.rpc('get_my_circles');
   if (error) throw error;
-  return (data || []).map((c: any) => ({ ...c, unread_count: Number(c.unread_count) || 0, member_count: Number(c.member_count) || 0 }));
-}
-
-/** Marque un cercle comme lu (P26) : la pastille Messages baisse tout de suite. */
-export async function markCircleRead(circleId: string) {
-  const { error } = await supabase.rpc('mark_circle_read', { p_circle_id: circleId });
-  if (!error) window.dispatchEvent(new CustomEvent('shakemoi:messages-read'));
-}
-
-/** Retirer un de ses messages de cercle (P12). La base doit l'autoriser (auteur ; admin du cercle à venir). */
-export async function deleteCircleMessage(messageId: string) {
-  const { error, count } = await supabase.from('circle_messages').delete({ count: 'exact' }).eq('id', messageId);
-  // Une règle d'accès qui refuse renvoie 0 ligne sans erreur : on le traite comme un échec.
-  return { success: !error && (count ?? 1) > 0, error: error?.message };
+  return (data || []).map((c: any) => ({ ...c, unread_count: Number(c.unread_count) || 0, member_count: Number(c.member_count) || 0, unread_likes: Number(c.unread_likes) || 0 }));
 }
 
 export async function getCircleById(circleId: string): Promise<any | null> {
@@ -1724,6 +1670,13 @@ export async function updateCircleName(circleId: string, newName: string) {
   }
 }
 
+/** Supprimer un cercle pour tout le monde (créateur seulement, vérifié en base). */
+export async function deleteCircle(circleId: string) {
+  const { error } = await supabase.rpc('delete_circle', { p_circle_id: circleId });
+  if (!error) window.dispatchEvent(new CustomEvent('shakemoi:circles-changed'));
+  return { success: !error, error: error?.message };
+}
+
 export async function updateCirclePhoto(circleId: string, photoUrl: string) {
   try {
     const { error } = await supabase
@@ -1759,44 +1712,6 @@ export async function getCircleMessages(circleId: string, limit = 50) {
   } catch (error) {
     console.error('Error getting circle messages:', error);
     return [];
-  }
-}
-
-export async function sendCircleMessage(circleId: string, text?: string, track?: any, imageUrl?: string) {
-  try {
-    const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const msgData: any = {
-      circle_id: circleId,
-      sender_id: user.id,
-      text: text || null,
-      image_url: imageUrl || null,
-    };
-
-    if (track) {
-      msgData.track_name = track.name || track.track_name;
-      msgData.artist = track.artist;
-      msgData.cover_url = track.cover || track.cover_url || track.coverUrl;
-      msgData.track_id = track.id || track.track_id;
-      msgData.spotify_url = track.spotify_url || track.spotifyUrl;
-      msgData.spotify_embed_url = track.id ? `https://open.spotify.com/embed/track/${track.id}` : null;
-      Object.assign(msgData, await getSongPreview(msgData.spotify_url || msgData.track_id || '', { title: msgData.track_name, artist: msgData.artist }, track.preview_url || track.previewUrl));
-    }
-
-    const { data, error } = await supabase
-      .from('circle_messages')
-      .insert([msgData])
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Pas de notification « a posté dans ton cercle » : c'est une messagerie (A2).
-    return { success: true, data };
-  } catch (error: any) {
-    console.error('Error sending circle message:', error);
-    return { success: false, error: error.message };
   }
 }
 
@@ -2130,117 +2045,6 @@ export async function getCircleWeeklyShakes(circleId: string): Promise<any[]> {
 }
 
 // ==================== CIRCLE MESSAGE LIKES ====================
-
-export async function likeCircleMessage(messageId: string, emoji = '❤️') {
-  try {
-    const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const { data: likeData, error: likeError } = await supabase
-      .from('circle_message_likes')
-      .insert([{
-        message_id: messageId,
-        user_id: user.id,
-        emoji: emoji
-      }])
-      .select();
-
-    if (likeError) throw likeError;
-
-    // Compteur tenu par la base (déclencheur).
-
-    return { success: true, data: likeData };
-  } catch (error: any) {
-    console.error('Error liking circle message:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-export async function unlikeCircleMessage(messageId: string) {
-  try {
-    const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const { error: deleteError } = await supabase
-      .from('circle_message_likes')
-      .delete()
-      .eq('message_id', messageId)
-      .eq('user_id', user.id);
-
-    if (deleteError) throw deleteError;
-
-    // Compteur tenu par la base (déclencheur).
-
-    return { success: true };
-  } catch (error: any) {
-    console.error('Error unliking circle message:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-export async function hasLikedCircleMessage(messageId: string): Promise<boolean> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) return false;
-
-    const { data, error } = await supabase
-      .from('circle_message_likes')
-      .select('id')
-      .eq('message_id', messageId)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error checking circle message like status:', error);
-      return false;
-    }
-
-    return !!data;
-  } catch (error) {
-    console.error('Error in hasLikedCircleMessage:', error);
-    return false;
-  }
-}
-
-export async function getCircleMessageLikes(messageId: string) {
-  try {
-    const { data, error } = await supabase
-      .rpc('get_circle_message_likers', { message_id: messageId });
-
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error getting circle message likes:', error);
-    return [];
-  }
-}
-
-export async function hasLikedCircleMessages(messageIds: string[]): Promise<Record<string, boolean>> {
-  try {
-    if (messageIds.length === 0) return {};
-    const user = await getCurrentUser();
-    if (!user) return {};
-
-    const { data, error } = await supabase
-      .from('circle_message_likes')
-      .select('message_id')
-      .eq('user_id', user.id)
-      .in('message_id', messageIds);
-
-    if (error) {
-      console.error('Error batch checking circle message likes:', error);
-      return {};
-    }
-
-    const likedSet = new Set((data || []).map((d: any) => d.message_id));
-    const result: Record<string, boolean> = {};
-    for (const id of messageIds) result[id] = likedSet.has(id);
-    return result;
-  } catch (error) {
-    console.error('Error in hasLikedCircleMessages:', error);
-    return {};
-  }
-}
 
 // ==================== APP STATS ====================
 export async function getAppStats(): Promise<{ users: number; shakes: number; likes: number }> {

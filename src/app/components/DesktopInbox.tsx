@@ -6,7 +6,7 @@ import { getConversations, getUserCirclesByActivity } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { thumb, defaultAvatar, MediaImg } from '../../lib/media';
 import { formatListTime } from '../../lib/dates';
-import { circlePreviewText } from '../../lib/chat';
+import { circlePreviewText, dmPreviewText } from '../../lib/chat';
 
 interface Props {
   currentUser: any;
@@ -15,13 +15,6 @@ interface Props {
   onOpenCircle: (circleId: string) => void;
 }
 
-function preview(m: any): string {
-  if (!m) return '';
-  if (m.track_name) return `🎵 ${m.track_name}`;
-  if (m.story_id) return m.text ? `Story : ${m.text}` : '❤️ a aimé une story';
-  if (m.image_url && !m.text) return '📷 Photo';
-  return m.text || '…';
-}
 
 export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation, onOpenCircle }: Props) {
   const [conversations, setConversations] = useState<any[]>([]);
@@ -71,7 +64,7 @@ export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation,
               >
                 <div className="relative flex-shrink-0">
                   <img loading="lazy" src={thumb(c.partner?.profile_album_cover_url, 128) || defaultAvatar(c.partner?.username)} alt="" className="w-10 h-10 rounded-full object-cover" />
-                  {c.unreadCount > 0 && (
+                  {c.unreadCount > 0 && !c.muted && (
                     <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 bg-pink-500 border-2 border-[#1E1440] rounded-full text-[9px] font-bold flex items-center justify-center text-white">
                       {c.unreadCount > 9 ? '9+' : c.unreadCount}
                     </span>
@@ -84,7 +77,7 @@ export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation,
                     </p>
                     <span className={`text-[10px] flex-shrink-0 ${c.unreadCount > 0 ? 'text-pink-300' : 'text-purple-300/50'}`}>{formatListTime(c.lastMessage?.created_at)}</span>
                   </div>
-                  <p className={`text-xs truncate ${c.unreadCount > 0 ? 'text-purple-100/90' : 'text-purple-300/60'}`}>{preview(c.lastMessage)}</p>
+                  <p className={`text-xs truncate ${c.unreadCount > 0 ? 'text-purple-100/90' : 'text-purple-300/60'}`}>{dmPreviewText(c.lastMessage, currentUser?.id)}</p>
                 </div>
               </button>
             ))}
@@ -120,8 +113,9 @@ export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation,
                   </div>
                   <div className="flex items-center gap-1.5">
                     <p className={`text-xs truncate flex-1 ${g.unread_count > 0 ? 'text-purple-100/90' : 'text-purple-300/60'}`}>{circlePreviewText(g, currentUser?.id)}</p>
+                    {g.has_mention && <span className="w-[17px] h-[17px] bg-pink-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white flex-shrink-0">@</span>}
                     {g.unread_count > 0 && (
-                      <span className="min-w-[17px] h-[17px] px-1 bg-pink-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white flex-shrink-0">{g.unread_count > 9 ? '9+' : g.unread_count}</span>
+                      <span className={`min-w-[17px] h-[17px] px-1 rounded-full text-[9px] font-bold flex items-center justify-center flex-shrink-0 ${g.muted ? 'bg-purple-800/70 text-purple-200' : 'bg-pink-500 text-white'}`}>{g.unread_count > 9 ? '9+' : g.unread_count}</span>
                     )}
                   </div>
                 </div>
