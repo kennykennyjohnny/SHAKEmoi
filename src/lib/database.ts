@@ -1577,6 +1577,13 @@ export async function getUserCirclesByActivity(): Promise<any[]> {
     .sort((a: any, b: any) => new Date(b.last_activity_at).getTime() - new Date(a.last_activity_at).getTime());
 }
 
+/** Retirer un de ses messages de cercle (P12). La base doit l'autoriser (auteur ; admin du cercle à venir). */
+export async function deleteCircleMessage(messageId: string) {
+  const { error, count } = await supabase.from('circle_messages').delete({ count: 'exact' }).eq('id', messageId);
+  // Une règle d'accès qui refuse renvoie 0 ligne sans erreur : on le traite comme un échec.
+  return { success: !error && (count ?? 1) > 0, error: error?.message };
+}
+
 export async function getCircleById(circleId: string): Promise<any | null> {
   try {
     let { data, error } = await supabase

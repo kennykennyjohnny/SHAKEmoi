@@ -6,7 +6,7 @@ import {
   getMessageById, markConversationRead, deleteMessage, MESSAGES_PAGE,
   createCircle, getUserCirclesByActivity, getCircleMessages, getCircleMembers,
   searchUsers, addCircleMember, removeCircleMember, getCurrentUser,
-  sendCircleMessage, likeCircleMessage, unlikeCircleMessage, getCircleMessageLikes, hasLikedCircleMessages,
+  sendCircleMessage, deleteCircleMessage, likeCircleMessage, unlikeCircleMessage, getCircleMessageLikes, hasLikedCircleMessages,
   updateCirclePhoto
 } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
@@ -1109,6 +1109,38 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const [gifSearching, setGifSearching] = useState(false);
   // Likes system
   const [likedMessages, setLikedMessages] = useState<Record<string, boolean>>({});
+  // Double-tap = like (P9), appui long sur son message = Retirer (P12).
+  const lastTap = useRef<{ id: string; t: number } | null>(null);
+  const pressTimer = useRef<number | null>(null);
+  const [heartBurst, setHeartBurst] = useState<string | null>(null);
+  const [actionMsgId, setActionMsgId] = useState<string | null>(null);
+  const [circleMsgError, setCircleMsgError] = useState<string | null>(null);
+  const isInteractive = (el: EventTarget | null) => !!(el as HTMLElement | null)?.closest?.('button, a, input, textarea');
+  const handleBubbleTap = (e: React.MouseEvent, msg: any) => {
+    if (isInteractive(e.target)) return;
+    const now = Date.now();
+    if (lastTap.current && lastTap.current.id === msg.id && now - lastTap.current.t < 320) {
+      lastTap.current = null;
+      setHeartBurst(msg.id);
+      window.setTimeout(() => setHeartBurst(h => (h === msg.id ? null : h)), 700);
+      toggleLikeMessage(msg.id);
+    } else {
+      lastTap.current = { id: msg.id, t: now };
+    }
+  };
+  const startPress = (e: React.TouchEvent, msg: any) => {
+    if (msg.sender_id !== currentUser?.id || isInteractive(e.target)) return;
+    if (pressTimer.current) window.clearTimeout(pressTimer.current);
+    pressTimer.current = window.setTimeout(() => setActionMsgId(msg.id), 500);
+  };
+  const cancelPress = () => { if (pressTimer.current) { window.clearTimeout(pressTimer.current); pressTimer.current = null; } };
+  const handleRemoveCircleMessage = async (msg: any) => {
+    setActionMsgId(null);
+    const before = posts;
+    setPosts(prev => prev.filter((m: any) => m.id !== msg.id));
+    const r = await deleteCircleMessage(msg.id);
+    if (!r.success) { setPosts(before); setCircleMsgError('Le message n\'a pas pu être retiré. Réessaie.'); }
+  };
   const [messageLikers, setMessageLikers] = useState<Record<string, any[]>>({});
   const [showLikers, setShowLikers] = useState<string | null>(null);
   // Circle group photo
@@ -1469,7 +1501,10 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
       </AnimatePresence>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0" onClick={() => setActionMsgId(null)}>
+        {circleMsgError && (
+          <p className="text-center text-xs text-pink-300 bg-pink-500/10 border border-pink-500/20 rounded-lg px-3 py-2" onClick={() => setCircleMsgError(null)}>{circleMsgError}</p>
+        )}
         {loading ? (
           <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /></div>
         ) : posts.length > 0 ? [...posts].reverse().map((msg: any) => {
@@ -1480,7 +1515,24 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
           const likersData = messageLikers[msg.id] || [];
           if (!msg.track_name && !msg.text && !msg.image_url) return null;
           return (
-            <div key={msg.id} className={`rounded-xl border transition-all overflow-hidden group ${isOpen ? 'bg-violet-950/30 border-purple-600/30' : 'bg-violet-950/15 border-purple-500/20'}`}>
+            <div key={msg.id}
+              onClick={(e) => { if (actionMsgId === msg.id) { e.stopPropagation(); return; } handleBubbleTap(e, msg); }}
+              onTouchStart={(e) => startPress(e, msg)}
+              onTouchEnd={cancelPress}
+              onTouchMove={cancelPress}
+              onContextMenu={(e) => { if (msg.sender_id === currentUser?.id) { e.preventDefault(); setActionMsgId(msg.id); } }}
+              className={`relative select-none rounded-xl border transition-all overflow-hidden group ${actionMsgId === msg.id ? 'ring-2 ring-pink-400/60' : ''} ${isOpen ? 'bg-violet-950/30 border-purple-600/30' : 'bg-violet-950/15 border-purple-500/20'}`}>
+              {heartBurst === msg.id && (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-10">
+                  <Heart className="w-12 h-12 text-pink-500 fill-current drop-shadow-lg animate-ping" />
+                </div>
+              )}
+              {actionMsgId === msg.id && (
+                <div className="absolute top-2 right-2 z-20 flex gap-1.5">
+                  <button onClick={(e) => { e.stopPropagation(); handleRemoveCircleMessage(msg); }} className="px-2.5 py-1 rounded-lg bg-red-500/90 text-white text-xs font-semibold">Retirer le message</button>
+                  <button onClick={(e) => { e.stopPropagation(); setActionMsgId(null); }} className="px-2 py-1 rounded-lg bg-violet-900/90 text-purple-100 text-xs">Annuler</button>
+                </div>
+              )}
               <div className="p-2.5 flex items-center gap-2">
                 <img loading="lazy" src={thumb(user?.profile_album_cover_url) || defaultAvatar(user?.username)} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
                 <span className="text-xs font-medium text-purple-200/80">@{user?.username}</span>
