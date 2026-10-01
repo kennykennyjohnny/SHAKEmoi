@@ -1362,29 +1362,38 @@ export async function getMusicReactions(postId: string): Promise<any[]> {
 
 // ==================== TOP PERSONNALISÉ (Friends Trending) ====================
 
-export async function getFriendsTrending(days = 7, limit = 20): Promise<any[]> {
+/**
+ * Sons les plus shakés (publiés + reshakés). days = 0 → depuis toujours (P14).
+ * scope 'friends' : moi + les gens que je suis ; 'all' : tout SHAKEMOI.
+ */
+export async function getFriendsTrending(days = 7, limit = 20, scope: 'friends' | 'all' = 'friends'): Promise<any[]> {
   try {
     const user = await getCurrentUser();
     if (!user) return [];
 
-    const friendIds = [...(await getFollowingIds(user.id)), user.id];
-
-    // Get posts from friends in the last N days
-    const since = new Date();
-    since.setDate(since.getDate() - days);
-
-    const { data: posts, error } = await supabase
+    let query = supabase
       .from('posts')
       .select(`
         *,
         user:users_profile!posts_user_id_fkey(id, username, display_name, profile_album_cover_url)
       `)
-      .in('user_id', friendIds)
-      .gte('created_at', since.toISOString())
       // TOP public : jamais de post de cercle ni privé (« ce qui est dans un cercle reste dans le cercle »).
       .is('circle_id', null)
       .not('is_private', 'is', true)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(3000);
+
+    if (scope === 'friends') {
+      const friendIds = [...(await getFollowingIds(user.id)), user.id];
+      query = query.in('user_id', friendIds);
+    }
+    if (days > 0) {
+      const since = new Date();
+      since.setDate(since.getDate() - days);
+      query = query.gte('created_at', since.toISOString());
+    }
+
+    const { data: posts, error } = await query;
 
     if (error) throw error;
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SongCover } from './SongCover';
 import { TrendingUp, Users, Loader2, Music, Crown, Repeat2, BarChart3, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -17,21 +17,36 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
   const [trending, setTrending] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
-  const [period, setPeriod] = useState<7 | 30>(7);
+  // P14 : deux onglets (Amis / Tout SHAKEMOI) et la période « Depuis toujours » (0).
+  const [period, setPeriod] = useState<7 | 30 | 0>(7);
+  const [scope, setScope] = useState<'friends' | 'all'>('friends');
+  const swipe = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    swipe.current = t.clientX < 28 || t.clientX > window.innerWidth - 28 ? null : { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = swipe.current; swipe.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x, dy = t.clientY - start.y;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0) setScope('all'); else setScope('friends');
+  };
   const [wrap, setWrap] = useState<any>(null);
   const [wrapOpen, setWrapOpen] = useState(true);
   const [shakingId, setShakingId] = useState<string | null>(null);
   const [shakedIds, setShakedIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => { loadTrending(); }, [period]);
+  useEffect(() => { loadTrending(); }, [period, scope]);
   useEffect(() => { generateWrap(); }, [period]);
 
   const generateWrap = async () => {
     try {
       const user = await getCurrentUser();
       if (!user) return;
-      const since = new Date();
-      since.setDate(since.getDate() - period);
+      const since = new Date(period === 0 ? 0 : Date.now());
+      if (period > 0) since.setDate(since.getDate() - period);
 
       const { data: myPosts } = await supabase
         .from('posts')
@@ -93,7 +108,7 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
   const loadTrending = async () => {
     setLoading(true);
     try {
-      const data = await getFriendsTrending(period, 20);
+      const data = await getFriendsTrending(period, 20, scope);
       setTrending(data);
     } catch (err) {
       console.error('Error loading trending:', err);
@@ -147,24 +162,37 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
   const rest = trending.slice(3);
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 flex-1 overflow-y-auto pb-[var(--nav-h)] lg:pb-4">
+    <div className="w-full max-w-2xl mx-auto p-4 flex-1 overflow-y-auto pb-[var(--nav-h)] lg:pb-4" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      {/* Onglets Amis / Tout SHAKEMOI (P14), on glisse ou on touche */}
+      <div className="flex items-center border-b border-purple-500/20 mb-4 -mx-1">
+        {(['friends', 'all'] as const).map(sc => (
+          <button
+            key={sc}
+            onClick={() => setScope(sc)}
+            className={`relative px-4 py-2.5 text-sm font-semibold transition-all ${scope === sc ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}
+          >
+            {sc === 'friends' ? 'Amis' : 'Tout SHAKEMOI'}
+            {scope === sc && <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />}
+          </button>
+        ))}
+      </div>
       {/* Header + period selector */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between gap-2 mb-5 flex-wrap">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-purple-400" />
-            Top de tes amis
+            {scope === 'friends' ? 'Top de tes amis' : 'Top SHAKEMOI'}
           </h2>
-          <p className="text-xs text-purple-300/60 mt-0.5">Sons les plus partagés dans ton réseau</p>
+          <p className="text-xs text-purple-300/60 mt-0.5">{scope === 'friends' ? 'Sons les plus shakés dans ton réseau' : 'Sons les plus shakés sur toute l\'appli'}</p>
         </div>
         <div className="flex bg-violet-950/25 rounded-full p-0.5 border border-purple-500/20">
-          {([7, 30] as const).map(p => (
+          {([7, 30, 0] as const).map(p => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
               className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${period === p ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm' : 'text-purple-300/60 hover:text-white'}`}
             >
-              {p === 7 ? '7 jours' : '30 jours'}
+              {p === 7 ? '7 jours' : p === 30 ? '30 jours' : 'Depuis toujours'}
             </button>
           ))}
         </div>
@@ -179,7 +207,7 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
           >
             <div className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-fuchsia-400" />
-              <span className="text-sm font-bold text-white">{period === 7 ? 'Mon résumé de la semaine' : 'Mon résumé du mois'}</span>
+              <span className="text-sm font-bold text-white">{period === 7 ? 'Mon résumé de la semaine' : period === 30 ? 'Mon résumé du mois' : 'Mon résumé depuis le début'}</span>
             </div>
             {wrapOpen ? <ChevronUp className="w-4 h-4 text-purple-400/60" /> : <ChevronDown className="w-4 h-4 text-purple-400/60" />}
           </button>
@@ -360,7 +388,7 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
           <div className="w-20 h-20 mb-4 bg-gradient-to-br from-purple-900/30 to-pink-900/30 rounded-full flex items-center justify-center border border-purple-700/20">
             <Music className="w-8 h-8 text-purple-400/50" />
           </div>
-          <p className="font-semibold text-purple-200/70">Aucune tendance sur {period === 7 ? '7 jours' : '30 jours'}</p>
+          <p className="font-semibold text-purple-200/70">Aucune tendance {period === 7 ? 'sur 7 jours' : period === 30 ? 'sur 30 jours' : 'pour l\'instant'}</p>
           <p className="text-xs text-purple-300/60 mt-1.5 max-w-xs">Suis des amis et partage des sons pour voir les tendances de ton réseau</p>
         </div>
       )}
