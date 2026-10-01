@@ -1552,6 +1552,31 @@ export async function getUserCircles(): Promise<any[]> {
   }
 }
 
+/**
+ * Cercles de l'utilisateur triés du plus actif au moins actif (dernier message
+ * le plus récent en premier, comme WhatsApp). Un cercle sans message est classé
+ * selon sa date de création. Même tri sur téléphone et sur ordinateur (P13).
+ * Une requête par cercle (limit 1) : léger même quand l'historique grossit.
+ */
+export async function getUserCirclesByActivity(): Promise<any[]> {
+  const circles = await getUserCircles();
+  if (circles.length === 0) return [];
+  const last = await Promise.all(
+    circles.map((c: any) =>
+      supabase
+        .from('circle_messages')
+        .select('created_at')
+        .eq('circle_id', c.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .then(({ data }) => (data && data[0]?.created_at) || null, () => null)
+    )
+  );
+  return circles
+    .map((c: any, i: number) => ({ ...c, last_activity_at: last[i] || c.created_at }))
+    .sort((a: any, b: any) => new Date(b.last_activity_at).getTime() - new Date(a.last_activity_at).getTime());
+}
+
 export async function getCircleById(circleId: string): Promise<any | null> {
   try {
     let { data, error } = await supabase

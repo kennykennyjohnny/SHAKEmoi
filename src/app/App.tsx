@@ -557,7 +557,7 @@ export default function App() {
 
   return (
     <div className="h-[100dvh] w-screen bg-[#1E1440] text-white overflow-hidden flex">
-      {/* Colonne gauche (grand écran) : Messages et Groupes (M7) */}
+      {/* Colonne gauche (grand écran) : Messages et Cercles (M7) */}
       {/* Monté seulement sur grand écran : sur téléphone, il chargeait messages et
           cercles (et une connexion en direct) pour rien. */}
       {isXl && <aside className="hidden xl:block w-80 border-r border-violet-900/30 overflow-hidden">

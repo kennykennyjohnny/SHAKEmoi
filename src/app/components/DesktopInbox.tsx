@@ -2,7 +2,7 @@
 // avec pastilles de non-lus. Un clic ouvre la conversation ou le cercle.
 import { useEffect, useState } from 'react';
 import { MessageCircle, Users, Loader2 } from 'lucide-react';
-import { getConversations, getUserCircles } from '../../lib/database';
+import { getConversations, getUserCirclesByActivity } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { thumb, defaultAvatar, MediaImg } from '../../lib/media';
 import { formatListTime } from '../../lib/dates';
@@ -28,7 +28,7 @@ export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation,
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    const [c, g] = await Promise.all([getConversations().catch(() => []), getUserCircles().catch(() => [])]);
+    const [c, g] = await Promise.all([getConversations().catch(() => []), getUserCirclesByActivity().catch(() => [])]);
     setConversations(c);
     setCircles(g);
     setLoading(false);
@@ -41,6 +41,8 @@ export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation,
     const channel = supabase
       .channel(`desktop-inbox-${currentUser.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${currentUser.id}` }, () => load())
+      // Un nouveau message de cercle fait remonter ce cercle en haut (P13).
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'circle_messages' }, () => load())
       .subscribe();
     const onRead = () => load();
     window.addEventListener('shakemoi:messages-read', onRead);
@@ -90,7 +92,7 @@ export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation,
 
       <section>
         <h2 className="flex items-center gap-2 text-sm font-bold text-white mb-2 px-1">
-          <Users className="w-4 h-4 text-fuchsia-400" /> Groupes
+          <Users className="w-4 h-4 text-fuchsia-400" /> Cercles
         </h2>
         {!loading && circles.length === 0 ? (
           <p className="text-xs text-purple-300/60 px-1">Aucun cercle pour l'instant.</p>

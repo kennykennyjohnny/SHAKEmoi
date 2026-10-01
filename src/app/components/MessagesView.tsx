@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   getConversations, getMessages, sendMessage, getUserFollowing,
   getMessageById, markConversationRead, deleteMessage, MESSAGES_PAGE,
-  createCircle, getUserCircles, getCircleMessages, getCircleMembers,
+  createCircle, getUserCirclesByActivity, getCircleMessages, getCircleMembers,
   searchUsers, addCircleMember, removeCircleMember, getCurrentUser,
   sendCircleMessage, likeCircleMessage, unlikeCircleMessage, getCircleMessageLikes, hasLikedCircleMessages,
   updateCirclePhoto
@@ -53,7 +53,7 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
                   : 'text-purple-300/50 hover:text-purple-200'
               }`}
             >
-              {t === 'dms' ? 'Messages' : 'Groupes'}
+              {t === 'dms' ? 'Messages' : 'Cercles'}
               {tab === t && (
                 <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
               )}
@@ -787,24 +787,8 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
     setLoading(true);
     setLoadError(null);
     try {
-      const circlesData = await getUserCircles();
-      if (circlesData.length === 0) { setCircles([]); setLoading(false); return; }
-      // Fetch last message timestamp per circle to sort by activity
-      const circleIds = circlesData.map((c: any) => c.id);
-      const { data: lastMsgs } = await supabase
-        .from('circle_messages')
-        .select('circle_id, created_at')
-        .in('circle_id', circleIds)
-        .order('created_at', { ascending: false });
-      const lastActivity: Record<string, string> = {};
-      (lastMsgs || []).forEach((m: any) => {
-        if (!lastActivity[m.circle_id]) lastActivity[m.circle_id] = m.created_at;
-      });
-      const sorted = [...circlesData].sort((a: any, b: any) => {
-        const aTime = lastActivity[a.id] || a.created_at;
-        const bTime = lastActivity[b.id] || b.created_at;
-        return new Date(bTime).getTime() - new Date(aTime).getTime();
-      });
+      // Plus actif en premier (P13) : même fonction que la colonne ordinateur.
+      const sorted = await getUserCirclesByActivity();
       setCircles(sorted);
     } catch (err) {
       setLoadError(friendlyError(err, 'Impossible de charger tes cercles. Vérifie ta connexion.'));
@@ -1417,7 +1401,7 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
                     className="text-xs px-3 py-1.5 bg-violet-900/30 border border-purple-500/30 rounded-full hover:bg-violet-900/50 transition-colors disabled:opacity-50 flex items-center gap-1.5"
                   >
                     {uploadingPhoto ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
-                    Photo du groupe
+                    Photo du cercle
                   </button>
                   <input ref={circlePhotoInputRef} type="file" accept="image/*" className="hidden" onChange={handleCirclePhotoUpload} />
                 </div>
