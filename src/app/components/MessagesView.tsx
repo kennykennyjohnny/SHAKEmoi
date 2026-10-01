@@ -38,8 +38,34 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
   const [inSubView, setInSubView] = useState(false);
   const [fabTrigger, setFabTrigger] = useState(0);
 
+  // Glisser du doigt entre Messages et Cercles (P10), seulement sur les listes
+  // (pas dans une conversation ouverte). On ignore les bords de l'écran pour
+  // laisser le geste retour d'iPhone/Android, et les gestes surtout verticaux.
+  const swipe = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (inSubView) { swipe.current = null; return; }
+    const t = e.touches[0];
+    const edge = 28;
+    swipe.current = t.clientX < edge || t.clientX > window.innerWidth - edge ? null : { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = swipe.current;
+    swipe.current = null;
+    if (!start || inSubView) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0 && tab === 'dms') setTab('circles');
+    if (dx > 0 && tab === 'circles') setTab('dms');
+  };
+
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-hidden min-h-0 relative">
+    <div
+      className="w-full max-w-2xl mx-auto flex flex-col flex-1 overflow-hidden min-h-0 relative"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       {/* Tab bar — masqué quand on est dans une conversation ou un cercle */}
       {!inSubView && (
         <div className="flex items-center border-b border-purple-500/20 px-4 pt-2 pb-0 gap-1 flex-shrink-0">
