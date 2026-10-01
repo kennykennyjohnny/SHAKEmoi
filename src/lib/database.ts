@@ -143,7 +143,7 @@ export async function getFeed(limit = 20, before?: string): Promise<Post[]> {
       .select(`
         *,
         user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color),
-        original_post:posts!original_post_id(
+        original_post:original_post_id(
           *,
           user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
         )
@@ -207,6 +207,42 @@ export async function getUserShakeCount(userId: string): Promise<number> {
   return count ?? 0;
 }
 
+/**
+ * Grille d'un profil (P1), page par page (24) en remontant le temps, la même
+ * pour mon profil et celui des autres. Jamais de post privé ni de cercle (B2,
+ * B4). Un reshake porte le post d'origine (pochette, likes) comme dans le fil.
+ */
+export const PROFILE_PAGE = 24;
+export async function getProfileGridPage(userId: string, kind: 'shakes' | 'reshakes', before: string | null): Promise<any[]> {
+  let query = supabase
+    .from('posts')
+    .select(`id, user_id, created_at, track_name, artist, cover_url, image_url, likes_count, comments_count, reshakes_count, is_reshake, original_post_id,
+      original_post:original_post_id(id, track_name, artist, cover_url, image_url, likes_count, comments_count, reshakes_count, is_private, circle_id,
+        user:users_profile!posts_user_id_fkey(id, username))`)
+    .eq('user_id', userId)
+    .not('is_private', 'is', true)
+    .is('circle_id', null)
+    .order('created_at', { ascending: false })
+    .limit(PROFILE_PAGE);
+  query = kind === 'shakes' ? query.not('is_reshake', 'is', true) : query.eq('is_reshake', true);
+  if (before) query = query.lt('created_at', before);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || [])
+    .map((p: any) => ({ ...p, original_post: Array.isArray(p.original_post) ? p.original_post[0] : p.original_post }))
+    // Reshake d'un post devenu invisible (supprimé, privé) : rien à montrer.
+    .filter((p: any) => !p.is_reshake || p.original_post);
+}
+
+/** Ai-je déjà reshaké ce post ? (un reshake par personne et par post, F1) */
+export async function hasReshaked(originalPostId: string): Promise<boolean> {
+  const user = await getCurrentUser();
+  if (!user) return false;
+  const { count } = await supabase.from('posts').select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id).eq('is_reshake', true).eq('original_post_id', originalPostId);
+  return (count ?? 0) > 0;
+}
+
 /** Shakes d'un profil. Les reshakes ont leur propre onglet (getUserReshakes). */
 export async function getUserPosts(userId: string, limit = 50, includeReshakes = false): Promise<Post[]> {
   try {
@@ -215,7 +251,7 @@ export async function getUserPosts(userId: string, limit = 50, includeReshakes =
       .select(`
         *,
         user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color),
-        original_post:posts!original_post_id(
+        original_post:original_post_id(
           *,
           user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
         )
@@ -994,7 +1030,7 @@ export async function getUserReshakes(userId: string) {
       .select(`
         *,
         user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color),
-        original_post:posts!original_post_id(
+        original_post:original_post_id(
           *,
           user:users_profile!posts_user_id_fkey(id, username, display_name, color, profile_album_cover_url, profile_color)
         )

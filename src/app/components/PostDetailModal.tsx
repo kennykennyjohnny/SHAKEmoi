@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { formatRelative } from '../../lib/dates';
-import { X, Heart, MessageCircle, Loader2, Send, Trash2, Share2, Music, Search } from 'lucide-react';
-import { motion } from 'motion/react';
-import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment } from '../../lib/database';
+import { X, Heart, MessageCircle, Loader2, Send, Trash2, Share2, Music, Search, Repeat2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment, reshakePost, unreshakePost, hasReshaked } from '../../lib/database';
+import { ReshakeDialog } from './ReshakeDialog';
+import { SendSongDialog } from './SendSongDialog';
 import { getPlatformUrl } from '../../lib/odesli';
 import { spotify } from '../../lib/spotify';
 import { postLink } from '../../lib/links';
@@ -14,12 +16,15 @@ import { thumb, defaultAvatar } from '../../lib/media';
 import { SongCover } from './SongCover';
 import { MyAppLogo } from './PlatformLogo';
 import { useBackHandler } from '../../lib/navigation';
+import { openProfile } from '../../lib/appNav';
 import { supabase } from '../../lib/supabase';
 interface PostDetailModalProps {
   postId: string;
   currentUser: any;
   onClose: () => void;
   onDeletePost?: (postId: string) => void;
+  /** Like / reshake faits ici : l'écran d'en dessous (profil, TOP…) suit. */
+  onUpdated?: (postId: string, patch: { likes_count?: number; reshaked?: boolean }) => void;
 }
 
 // Un reshake ouvre le post d'origine (mêmes chiffres que dans le fil) : une
@@ -37,7 +42,7 @@ export function PostDetailModal(props: PostDetailModalProps) {
   return <PostDetailModalInner key={id} {...props} postId={id} />;
 }
 
-function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: PostDetailModalProps) {
+function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUpdated }: PostDetailModalProps) {
   // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
   useBackHandler(true, onClose);
   const [post, setPost] = useState<any>(null);
@@ -46,6 +51,12 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: Po
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  // Reshake (P2) : un par personne, jamais le sien, annulable (F1).
+  const [reshaked, setReshaked] = useState(false);
+  const [reshakeCount, setReshakeCount] = useState(0);
+  const [showReshake, setShowReshake] = useState(false);
+  const [reshakeNotice, setReshakeNotice] = useState<string | null>(null);
+  const [sendTrack, setSendTrack] = useState<any>(null);
 
   // Comments & music reactions
   const [tab, setTab] = useState<'comments' | 'music'>('comments');
@@ -84,8 +95,10 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: Po
       if (data) {
         setPost(data);
         setLikeCount(data.likes_count || data.likes || 0);
-        const liked = await hasLikedPost(postId);
+        setReshakeCount(data.reshakes_count || 0);
+        const [liked, didReshake] = await Promise.all([hasLikedPost(postId), hasReshaked(postId)]);
         setIsLiked(liked);
+        setReshaked(didReshake);
       }
       await loadComments();
       await loadMusicReactions();
@@ -121,8 +134,28 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: Po
     if (!r.success) {
       setIsLiked(!next);
       setLikeCount(c => Math.max(0, c + (next ? -1 : 1)));
+    } else {
+      onUpdated?.(postId, { likes_count: Math.max(0, likeCount + (next ? 1 : -1)) });
     }
     likeBusyRef.current = false;
+  };
+
+  const notice = (text: string) => { setReshakeNotice(text); setTimeout(() => setReshakeNotice(null), 3000); };
+  const handleReshakeButton = async () => {
+    if (isOwner) { notice('C’est ton shake : partage-le plutôt avec le bouton Partager.'); return; }
+    if (!reshaked) { setShowReshake(true); return; }
+    setReshaked(false);
+    setReshakeCount(c => Math.max(0, c - 1));
+    const r = await unreshakePost(postId);
+    if (!r.success) { setReshaked(true); setReshakeCount(c => c + 1); notice('Impossible d’annuler le reshake. Réessaie.'); return; }
+    onUpdated?.(postId, { reshaked: false });
+  };
+  const confirmReshake = async (comment?: string) => {
+    const r = await reshakePost(postId, comment);
+    if (!r.success) { notice(r.error || 'Le reshake n’a pas marché. Réessaie.'); return; }
+    setReshaked(true);
+    setReshakeCount(c => c + 1);
+    onUpdated?.(postId, { reshaked: true });
   };
 
   const handleSendComment = async () => {
@@ -210,11 +243,14 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: Po
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center gap-3 flex-shrink-0">
-          <img loading="lazy" src={avatar} alt="" className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-700/30" />
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white truncate">{userName}</p>
-            <p className="text-xs text-purple-300/60">@{post.user?.username}</p>
-          </div>
+          {/* L'auteur : ouvre son profil par-dessus (le retour ramène ici). */}
+          <button onClick={() => openProfile(post.user_id || post.user?.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+            <img loading="lazy" src={avatar} alt="" className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-700/30" />
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm text-white truncate">{userName}</p>
+              <p className="text-xs text-purple-300/60">@{post.user?.username}</p>
+            </div>
+          </button>
 
           <button aria-label="Partager"
             onClick={() => setShowShare(true)}
@@ -263,7 +299,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: Po
 
 
           {/* Action bar */}
-          <div className="px-4 py-3 flex items-center gap-5">
+          <div className="px-4 py-3 flex items-center gap-3.5">
             <div className="flex items-center gap-1.5">
               <button onClick={toggleLike} aria-label={isLiked ? 'Retirer le like' : 'Liker'} className="group">
                 <Heart className={`w-6 h-6 transition-all ${isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-300/70 group-hover:text-pink-500'}`} />
@@ -286,6 +322,24 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: Po
               <span className="text-sm font-medium text-purple-300/70">{comments.length + musicReactions.length}</span>
             </button>
 
+            <button
+              onClick={handleReshakeButton}
+              aria-label={reshaked ? 'Annuler le reshake' : 'Reshaker'}
+              aria-pressed={reshaked}
+              className={`flex items-center gap-1.5 group ${isOwner ? 'opacity-40' : ''}`}
+            >
+              <Repeat2 className={`w-6 h-6 transition-colors ${reshaked ? 'text-fuchsia-400' : 'text-purple-300/70 group-hover:text-fuchsia-400'}`} />
+              <span className={`text-sm font-medium ${reshaked ? 'text-fuchsia-400' : 'text-purple-300/70'}`}>{reshakeCount}</span>
+            </button>
+
+            <button
+              onClick={() => setSendTrack({ id: post.track_id, title: post.track_name, artist: post.artist, coverUrl: post.cover_url, spotifyUrl: post.spotify_url, previewUrl: post.preview_url })}
+              aria-label="Envoyer à un ami"
+              className="p-1 group"
+            >
+              <Send className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
+            </button>
+
             <button onClick={openInMusicApp} className="flex items-center gap-1.5 group ml-auto px-3 py-1.5 rounded-full bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors">
               <MyAppLogo className="w-4 h-4 text-fuchsia-400" />
               <span className="text-xs font-medium text-fuchsia-400">Écouter</span>
@@ -300,6 +354,8 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: Po
               </button>
             )}
           </div>
+
+          {reshakeNotice && <p className="mx-4 mb-2 text-xs text-pink-300 bg-pink-500/10 border border-pink-500/20 rounded-lg px-3 py-2">{reshakeNotice}</p>}
 
           {/* Tabs: Comments / Music reactions */}
           <div className="px-4 border-t border-purple-800/20">
@@ -329,10 +385,12 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: Po
               ) : (
                 comments.map((c: any) => (
                   <div key={c.id} className="flex gap-2.5">
-                    <img loading="lazy" src={thumb(c.user?.profile_album_cover_url) || defaultAvatar(c.user?.username || 'U')} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                    <button onClick={() => openProfile(c.user_id || c.user?.id)} aria-label={`Profil de @${c.user?.username || ''}`} className="flex-shrink-0 self-start">
+                      <img loading="lazy" src={thumb(c.user?.profile_album_cover_url) || defaultAvatar(c.user?.username || 'U')} alt="" className="w-7 h-7 rounded-full object-cover" />
+                    </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-xs text-white">@{c.user?.username || 'inconnu'}</span>
+                        <button onClick={() => openProfile(c.user_id || c.user?.id)} className="font-semibold text-xs text-white hover:underline">@{c.user?.username || 'inconnu'}</button>
                         <span className="text-[10px] text-purple-500/50">{formatTime(c.created_at)}</span>
                         {currentUser?.id && (c.user_id === currentUser.id || isOwner) && (
                           <button
@@ -360,8 +418,10 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: Po
               {musicReactions.map(r => (
                   <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <img loading="lazy" src={thumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full" alt="" />
-                      <span className="text-xs font-medium">@{r.user?.username}</span>
+                      <button onClick={() => openProfile(r.user_id || r.user?.id)} className="flex items-center gap-2">
+                        <img loading="lazy" src={thumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full" alt="" />
+                        <span className="text-xs font-medium hover:underline">@{r.user?.username}</span>
+                      </button>
                       {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}
                     </div>
                     <div className="flex gap-2 items-center">
@@ -442,6 +502,18 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost }: Po
           </div>
         )}
       </motion.div>
+      <div onClick={(e) => e.stopPropagation()}>
+        {showReshake && (
+          <ReshakeDialog
+            shake={{ track: { coverUrl: post.cover_url, title: post.track_name, artist: post.artist }, user: { username: post.user?.username }, caption: post.text }}
+            onClose={() => setShowReshake(false)}
+            onConfirm={confirmReshake}
+          />
+        )}
+        <AnimatePresence>
+          {sendTrack && <SendSongDialog track={sendTrack} onClose={() => setSendTrack(null)} />}
+        </AnimatePresence>
+      </div>
     </motion.div>
   );
 }

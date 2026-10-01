@@ -302,14 +302,17 @@ export default function App() {
       window.history.replaceState({}, document.title, '/');
       openTarget(open);
     }
-    if (!('serviceWorker' in navigator)) return;
+    // Même chemin pour tous les écrans de l'appli (lib/appNav : profil, conversation…).
+    const onOpen = (e: Event) => { const t = (e as CustomEvent).detail; if (typeof t === 'string') openTarget(t); };
+    window.addEventListener('shakemoi:open', onOpen);
     const onMessage = (e: MessageEvent) => {
       if (e.data?.type !== 'shakemoi:open') return;
       const target = new URL(e.data.url, window.location.origin).searchParams.get('open');
       if (target) openTarget(target);
     };
-    navigator.serviceWorker.addEventListener('message', onMessage);
-    return () => navigator.serviceWorker.removeEventListener('message', onMessage);
+    const sw = 'serviceWorker' in navigator ? navigator.serviceWorker : null;
+    sw?.addEventListener('message', onMessage);
+    return () => { window.removeEventListener('shakemoi:open', onOpen); sw?.removeEventListener('message', onMessage); };
   }, [currentUser?.id]);
 
   const handleAuthComplete = async (user: any) => {

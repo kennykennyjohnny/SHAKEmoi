@@ -208,3 +208,18 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 3. Depuis un 2ᵉ compte, like un de tes shakes → tu reçois « @lautre a aimé ton shake « Titre » ». Touche-la : l'appli s'ouvre sur le post.
 4. Depuis le 2ᵉ compte, envoie-toi un message → notif « @lautre » avec le texte ; la toucher ouvre la conversation.
 5. Paramètres → Notifications → coupe « Likes » → refais un like depuis le 2ᵉ compte : rien n'arrive.
+
+## Lot 2 — P1 + P2 : profil complet et post complet
+| # | Statut | Explication |
+|---|---|---|
+| P1 | ✅ | **Un seul composant de fil de profil** (`ProfileGrid`) pour mon profil ET celui des autres : onglets Shakes / Reshakes, grille de pochettes, **chargement au fil du défilement** (24 par 24, testé sur 16 shakes en pages de 5 : 5 → 10 → 15 → 16, sans doublon). L'aperçu de profil devient un **grand panneau presque plein écran** sur téléphone (96 % de la hauteur), une fenêtre haute et centrée sur ordinateur, avec tout le fil, les Shakes éphémères, Suivre, **Message**, et un bouton **« Profil complet »** qui passe en page entière. Jamais de post privé ou de cercle (filtré dans la requête + règles de la base). |
+| P1 partout | ✅ | Le profil s'ouvre maintenant aussi depuis : l'auteur d'un post en détail, les commentaires (texte et musique), la liste des likes. (Fil, recherche, notifications, abonnés : déjà. Messages, cercles, TOP et Shakes éphémères : branchés avec leurs lots 4, 6 et N1.) |
+| P2 | ✅ | Toucher une pochette (mon profil ou un autre) ouvre **le post en détail** avec tout : écouter (M2, pochette = notre lecteur), liker (compteur juste), commenter et répondre en musique, voir tous les commentaires, **reshaker (nouveau, annulable)**, partager, **envoyer à un ami (nouveau)**, ouvrir dans mon appli (logo O1), supprimer si c'est le mien. Le **retour** ferme le post et ramène au profil à la même position (testé). Like/reshake faits dans le détail : la grille suit. |
+| Trouvaille | ✅ | **Les reshakes n'affichaient pas le post d'origine** dans les requêtes : la jointure `posts!original_post_id` renvoyait une liste vide (le fil le contournait avec **une requête de plus par reshake**). Corrigé aux 4 endroits (fil, profil) : moins de requêtes, et l'onglet Reshakes d'un ami montre bien les pochettes et l'auteur d'origine (testé : 7 reshakes de @kenny avec @raph, @bapt22…). |
+
+**Tests (lot 2)**
+1. Ouvre le profil d'un ami depuis le fil : grand panneau, fais défiler jusqu'en bas → tous ses shakes arrivent. Onglet Reshakes → les pochettes et le @ de l'auteur d'origine.
+2. Touche une pochette → le post complet. Like → +1 ; reshake → le bouton devient rose (re-touche pour annuler) ; commente ; réponds en musique ; « Écouter » ouvre ton appli. Fais **retour** → tu es sur le profil, au même endroit.
+3. Dans le post, touche le nom de l'auteur → son profil s'ouvre par-dessus ; retour → le post.
+4. « Profil complet » → page entière ; retour → fermé.
+5. Mon profil : touche une de mes pochettes → poubelle → supprimé, le compteur Shakes baisse.

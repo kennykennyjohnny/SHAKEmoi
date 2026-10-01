@@ -1,45 +1,24 @@
-import { Archive, Pin, Music, Heart, Settings, Play, Trash2, Repeat2, MessageCircle, Loader2, Edit3, X, UserMinus, Share2, Copy, Check, Send, ArrowLeft } from 'lucide-react';
+import { Archive, Pin, Settings, Loader2, Edit3, X, UserMinus, Share2, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { ProfileGrid } from './ProfileGrid';
 import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
-import { CommentsDialog } from './CommentsDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
-import { SendSongDialog } from './SendSongDialog';
-import { getUserPosts, getUserShakeCount, getUserReshakes, deletePost, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, followErrorMessage, removeFollower, likePost, unlikePost, hasLikedPosts, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
-import { getPlatformUrl } from '../../lib/odesli';
-import { formatRelative } from '../../lib/dates';
+import { getUserShakeCount, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, followErrorMessage, removeFollower, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { StoryArchiveDialog } from './StoryArchiveDialog';
-import { inviteLink, postLink, profileLink } from '../../lib/links';
-import { SongShareSheet } from './SongShareSheet';
-import { openExternal } from '../../lib/platforms';
-import { LikersSheet } from './LikersSheet';
+import { inviteLink, profileLink } from '../../lib/links';
 
 import { thumb, defaultAvatar } from '../../lib/media';
-import { SongCover } from './SongCover';
-import { MyAppLogo } from './PlatformLogo';
 interface ProfileViewProps {
   user: any;
   onUpdateUser?: (updatedUser: any) => void;
 }
 
-type TabType = 'shakes' | 'reshakes';
-
 export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
   const [showSettings, setShowSettings] = useState(false);
-  const [shareShakeId, setShareShakeId] = useState<string | null>(null);
-  const [likersPostId, setLikersPostId] = useState<string | null>(null);
   const [showEditProfile, setShowEditProfile] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>('shakes');
-  const [userShakes, setUserShakes] = useState<any[]>([]);
-  const [userReshakes, setUserReshakes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
-  const [sendSongTrack, setSendSongTrack] = useState<any>(null);
-  const [detailPostId, setDetailPostId] = useState<string | null>(null);
-  const [, setShowDetailEmbed] = useState(false);
-  const detailRef = useRef<HTMLDivElement>(null);
   const [showFollowersList, setShowFollowersList] = useState<'followers' | 'following' | null>(null);
   const [followersList, setFollowersList] = useState<any[]>([]);
   const [followingList, setFollowingList] = useState<any[]>([]);
@@ -65,96 +44,14 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
   const loadUserData = async () => {
     if (!user) return;
-
     try {
-      if (userShakes.length === 0 && userReshakes.length === 0) setLoading(true);
-
-      const [posts, reshakes, followersCount, followingCount, stories, pinned, shakeCount] = await Promise.all([
-        getUserPosts(user.id),
-        getUserReshakes(user.id),
+      const [followersCount, followingCount, stories, pinned, shakeCount] = await Promise.all([
         getUserFollowersCount(user.id),
         getUserFollowingCount(user.id),
         getUserActiveStories(user.id),
         getUserPinnedStories(user.id),
         getUserShakeCount(user.id),
       ]);
-
-      // Reshake : likes, commentaires et compteurs sont ceux du post d'origine (comme dans le fil).
-      const allPostIds = [...posts.map((p: any) => p.id), ...reshakes.map((p: any) => p.original_post?.id || p.id)];
-      const likedMap = await hasLikedPosts(allPostIds);
-
-      const shakesData = posts.map((post: any) => {
-        const isLiked = likedMap[post.id] || false;
-        return {
-          id: post.id,
-          track: {
-            id: post.track_id || post.id,
-            title: post.track_name,
-            artist: post.artist,
-            coverUrl: post.cover_url,
-            previewUrl: post.preview_url,
-            spotifyUrl: post.spotify_url,
-            spotifyEmbedUrl: post.spotify_embed_url || (post.track_id ? `https://open.spotify.com/embed/track/${post.track_id}?theme=0` : null),
-          },
-          links: {
-            spotify_url: post.spotify_url || null,
-            apple_music_url: post.apple_music_url || null,
-            deezer_url: post.deezer_url || null,
-            youtube_url: post.youtube_url || null,
-            youtube_music_url: post.youtube_music_url || null,
-            tidal_url: post.tidal_url || null,
-          },
-          caption: post.text,
-          likes: post.likes_count || 0,
-          reshakes: post.reshakes_count || 0,
-          comments: post.comments_count || 0,
-          isLiked,
-          timestamp: formatRelative(post.created_at)
-        };
-      });
-
-      const reshakesData = reshakes.map((post: any) => {
-        // Use original post data for display
-        const orig = post.original_post || post;
-        const isLiked = likedMap[orig.id] || false;
-        return {
-          id: post.id,
-          sourceId: orig.id,
-          track: {
-            id: orig.track_id || post.track_id || post.id,
-            title: orig.track_name || post.track_name,
-            artist: orig.artist || post.artist,
-            coverUrl: orig.cover_url || post.cover_url,
-            previewUrl: orig.preview_url || post.preview_url,
-            spotifyUrl: orig.spotify_url || post.spotify_url,
-            spotifyEmbedUrl: orig.spotify_embed_url || post.spotify_embed_url || ((orig.track_id || post.track_id) ? `https://open.spotify.com/embed/track/${orig.track_id || post.track_id}?theme=0` : null),
-          },
-          links: {
-            spotify_url: orig.spotify_url || post.spotify_url || null,
-            apple_music_url: orig.apple_music_url || post.apple_music_url || null,
-            deezer_url: orig.deezer_url || post.deezer_url || null,
-            youtube_url: orig.youtube_url || post.youtube_url || null,
-            youtube_music_url: orig.youtube_music_url || post.youtube_music_url || null,
-            tidal_url: orig.tidal_url || post.tidal_url || null,
-          },
-          caption: post.text,
-          likes: orig.likes_count || 0,
-          reshakes: orig.reshakes_count || 0,
-          comments: orig.comments_count || 0,
-          isLiked,
-          originalUser: post.original_post?.user ? {
-            id: post.original_post.user.id,
-            username: post.original_post.user.username,
-            displayName: post.original_post.user.display_name || post.original_post.user.username,
-            avatar: post.original_post.user.profile_album_cover_url
-          } : null,
-          timestamp: formatRelative(post.created_at)
-        };
-      });
-
-      setUserShakes(shakesData);
-      setUserReshakes(reshakesData);
-
       setStats({
         // Ses shakes seulement : les reshakes ont leur onglet.
         shakes: shakeCount,
@@ -165,10 +62,6 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       setPinnedStories(pinned || []);
     } catch (error) {
       console.error('Failed to load user data:', error);
-      setUserShakes([]);
-      setUserReshakes([]);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -187,73 +80,6 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
     const updatedUser = { ...user, ...settings };
     if (onUpdateUser) {
       onUpdateUser(updatedUser);
-    }
-  };
-
-  const handleDeleteShake = async (shakeId: string) => {
-    try {
-      await deletePost(shakeId);
-      setUserShakes(userShakes.filter(shake => shake.id !== shakeId));
-      setUserReshakes(userReshakes.filter(shake => shake.id !== shakeId));
-      if (userShakes.some(s => s.id === shakeId)) setStats({ ...stats, shakes: Math.max(0, stats.shakes - 1) });
-      if (detailPostId === shakeId) setDetailPostId(null);
-    } catch (error) {
-      console.error('Failed to delete shake:', error);
-      alert('Erreur lors de la suppression');
-    }
-  };
-
-  // Double tap : un seul like part à la fois (comme dans le fil, F4).
-  const likeBusy = useRef(false);
-  const toggleLike = async (shakeId: string) => {
-    if (likeBusy.current) return;
-    likeBusy.current = true;
-    try { await doToggleLike(shakeId); } finally { likeBusy.current = false; }
-  };
-  const doToggleLike = async (shakeId: string) => {
-    const currentList = activeTab === 'shakes' ? userShakes : userReshakes;
-    const setCurrentList = activeTab === 'shakes' ? setUserShakes : setUserReshakes;
-
-    const shake = currentList.find(s => s.id === shakeId);
-    if (!shake) return;
-
-    // Optimistic update first
-    if (shake.isLiked) {
-      setCurrentList(prev => prev.map(s =>
-        s.id === shakeId ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) } : s
-      ));
-      // likePost / unlikePost renvoient { success } sans lever d'erreur.
-      try { const r = await unlikePost(shake.sourceId || shakeId); if (!r?.success) throw new Error(r?.error); } catch (error) {
-        console.error('Error unliking:', error);
-        setCurrentList(prev => prev.map(s =>
-          s.id === shakeId ? { ...s, isLiked: true, likes: s.likes + 1 } : s
-        ));
-      }
-    } else {
-      setCurrentList(prev => prev.map(s =>
-        s.id === shakeId ? { ...s, isLiked: true, likes: s.likes + 1 } : s
-      ));
-      try { const r = await likePost(shake.sourceId || shakeId); if (!r?.success) throw new Error(r?.error); } catch (error) {
-        console.error('Error liking:', error);
-        setCurrentList(prev => prev.map(s =>
-          s.id === shakeId ? { ...s, isLiked: false, likes: Math.max(0, s.likes - 1) } : s
-        ));
-      }
-    }
-  };
-
-  const openInMusicApp = (shake: any) => {
-    const platform = user?.musicService || user?.preferred_platform || 'spotify';
-    const links = {
-      ...shake.links,
-      spotify_url: shake.links?.spotify_url || shake.track.spotifyUrl || null,
-    };
-    const url = getPlatformUrl(links, platform, { title: shake.track.title, artist: shake.track.artist });
-    if (url) {
-      openExternal(url);
-    } else {
-      const q = encodeURIComponent(`${shake.track.title} ${shake.track.artist}`);
-      window.open(`https://open.spotify.com/search/${q}`, '_blank');
     }
   };
 
@@ -294,8 +120,6 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       console.error('Error removing follower:', err);
     }
   };
-
-  const currentShakes = activeTab === 'shakes' ? userShakes : userReshakes;
 
   return (
     <div className="w-full max-w-2xl mx-auto flex-1 overflow-y-auto pb-[var(--nav-h)] lg:pb-4">
@@ -413,227 +237,13 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-y border-purple-800/20 px-4 sticky top-0 bg-[#1E1440] z-30">
-        <div className="flex gap-6">
-          <button
-            onClick={() => { setActiveTab('shakes'); }}
-            className={`py-3 border-b-2 font-semibold text-sm transition-colors ${
-              activeTab === 'shakes'
-                ? 'border-purple-500 text-purple-300'
-                : 'border-transparent text-purple-500/40 hover:text-purple-300'
-            }`}
-          >
-            Mes shakes
-          </button>
-          <button
-            onClick={() => { setActiveTab('reshakes'); }}
-            className={`py-3 border-b-2 font-semibold text-sm transition-colors ${
-              activeTab === 'reshakes'
-                ? 'border-fuchsia-500 text-fuchsia-400'
-                : 'border-transparent text-purple-500/40 hover:text-purple-300'
-            }`}
-          >
-            Re-shakes
-          </button>
-        </div>
-      </div>
-
-      {/* Cover Art Grid */}
-      <div className="p-3">
-        {loading ? (
-          <div className="text-center py-8">
-            <Loader2 className="w-8 h-8 text-purple-500 animate-spin mx-auto mb-2" />
-            <p className="text-purple-400/50">Chargement...</p>
-          </div>
-        ) : currentShakes.length > 0 ? (
-          <>
-            {/* Grid of covers with inline detail after clicked row */}
-            <div className="grid grid-cols-3 gap-1.5">
-              {currentShakes.map((shake, index) => {
-                // Check if detail should appear after this row (every 3 items)
-                const detailShakeIdx = detailPostId ? currentShakes.findIndex(s => s.id === detailPostId) : -1;
-                const detailRow = detailShakeIdx >= 0 ? Math.floor(detailShakeIdx / 3) : -1;
-                const currentRow = Math.floor(index / 3);
-                const isLastInRow = (index % 3 === 2) || (index === currentShakes.length - 1);
-                const showDetailAfter = isLastInRow && currentRow === detailRow;
-
-                return (
-                  <React.Fragment key={shake.id}>
-                    <div>
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.03 }}
-                        onClick={() => {
-                          if (detailPostId === shake.id) { setDetailPostId(null); setShowDetailEmbed(false); }
-                          else { setDetailPostId(shake.id); setShowDetailEmbed(false); setTimeout(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100); }
-                        }}
-                        className={`relative aspect-square rounded-lg overflow-hidden group transition-all w-full hover:opacity-90 ${detailPostId === shake.id ? 'ring-2 ring-fuchsia-500 opacity-100' : ''}`}
-                      >
-                        <img loading="lazy"
-                          src={shake.track.coverUrl}
-                          alt={shake.track.title}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                          <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                        </div>
-                        {activeTab === 'reshakes' && shake.originalUser && (
-                          <div className="absolute top-1 left-1 bg-fuchsia-500/80 rounded-full p-0.5">
-                            <Repeat2 className="w-2.5 h-2.5 text-white" />
-                          </div>
-                        )}
-                        <div className="absolute bottom-1 right-1 bg-black/60 rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
-                          <Heart className="w-2.5 h-2.5 text-pink-400" />
-                          <span className="text-[9px] text-white font-medium">{shake.likes}</span>
-                        </div>
-                      </motion.button>
-                    </div>
-                    {showDetailAfter && detailPostId && (() => {
-                      const detailShake = currentShakes.find(s => s.id === detailPostId);
-                      if (!detailShake) return null;
-                      const trackId = detailShake.track.id || (detailShake.track.spotifyUrl?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
-                      return (
-                        <div className="col-span-3" ref={detailRef}>
-                          <AnimatePresence>
-                            <motion.div
-                              key={detailPostId}
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="overflow-hidden"
-                            >
-                    <div className="mt-3 bg-purple-950/40 rounded-2xl border border-purple-800/20 overflow-hidden">
-                      {/* Header */}
-                      <div className="px-4 py-2.5 flex items-center gap-3 border-b border-purple-800/20">
-                        <button aria-label="Retour" onClick={() => { setDetailPostId(null); setShowDetailEmbed(false); }} className="p-1 hover:bg-purple-900/40 rounded-full transition-colors">
-                          <ArrowLeft className="w-5 h-5 text-purple-300/60" />
-                        </button>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm text-white truncate">{detailShake.track.title}</p>
-                          <p className="text-xs text-purple-300/60 truncate">{detailShake.track.artist}</p>
-                        </div>
-                        <button aria-label="Fermer" onClick={() => { setDetailPostId(null); setShowDetailEmbed(false); }} className="p-1 hover:bg-purple-900/40 rounded-full">
-                          <X className="w-5 h-5 text-purple-300/60" />
-                        </button>
-                      </div>
-
-                      {/* Track Card - compact like feed */}
-                      <div className="px-4 pt-3">
-                        {/* M2 : pochette jouable, même lecteur que le fil. */}
-                        <div className="rounded-xl px-3 py-2 flex gap-2.5 items-center border bg-purple-900/20 border-purple-800/10">
-                          <SongCover
-                            songKey={`profile-${detailShake.id}`}
-                            title={detailShake.track.title} artist={detailShake.track.artist} cover={detailShake.track.coverUrl}
-                            previewUrl={(detailShake.track as any).previewUrl} spotifyId={trackId} spotifyUrl={detailShake.track.spotifyUrl}
-                            className="w-11 h-11" iconSize="sm"
-                          />
-                          <div className="flex-1 min-w-0 flex flex-col justify-center">
-                            <h3 className="font-bold text-sm truncate">{detailShake.track.title}</h3>
-                            <p className="text-xs text-purple-200/70 truncate">{detailShake.track.artist}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Caption */}
-                      {detailShake.caption && (
-                        <div className="px-4 pt-3">
-                          <p className="text-sm text-purple-200/80">{detailShake.caption}</p>
-                        </div>
-                      )}
-
-
-                      {/* Action bar */}
-                      <div className="px-4 py-3 flex items-center gap-3 flex-wrap">
-                        <div className="flex items-center gap-1.5">
-                          <button onClick={() => toggleLike(detailShake.id)} aria-label={detailShake.isLiked ? 'Retirer le like' : 'Liker'} className="group">
-                            <Heart className={`w-5 h-5 transition-all duration-200 ${detailShake.isLiked ? 'text-pink-500 fill-pink-500 scale-110' : 'text-purple-300/70 scale-100 group-hover:text-pink-500 group-active:scale-125'}`} />
-                          </button>
-                          {detailShake.likes > 0 && activeTab === 'shakes' ? (
-                            <button
-                              onClick={() => setLikersPostId(detailShake.sourceId || detailShake.id)}
-                              title="Voir qui a liké"
-                              className="text-sm font-medium text-pink-400/90 underline underline-offset-2 decoration-dotted px-1 -mx-1 py-1"
-                            >{detailShake.likes}</button>
-                          ) : (
-                            <span className={`text-sm font-medium ${detailShake.isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{detailShake.likes}</span>
-                          )}
-                        </div>
-
-                        <button onClick={() => setCommentsPostId(detailShake.sourceId || detailShake.id)} className="flex items-center gap-1.5 group">
-                          <MessageCircle className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
-                          <span className="text-sm font-medium text-purple-300/70">{detailShake.comments}</span>
-                        </button>
-
-                        {shareShakeId === detailShake.id && (
-                          <SongShareSheet
-                            song={{ title: detailShake.track.title, artist: detailShake.track.artist, cover: detailShake.track.coverUrl, previewUrl: detailShake.track.previewUrl }}
-                            by={user?.username}
-                            link={postLink(detailShake.sourceId || detailShake.id)}
-                            onClose={() => setShareShakeId(null)}
-                          />
-                        )}
-                        <button
-                          onClick={() => setShareShakeId(detailShake.id)}
-                          className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors group"
-                          title="Partager"
-                        >
-                          <Share2 className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
-                        </button>
-
-                        <button
-                          onClick={() => setSendSongTrack(detailShake.track)}
-                          className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors group"
-                          title="Envoyer à un ami"
-                        >
-                          <Send className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
-                        </button>
-
-                        <button onClick={() => openInMusicApp(detailShake)} className="flex items-center gap-1.5 group ml-auto px-3 py-1.5 rounded-full bg-[#FFEFD5]/10 hover:bg-[#FFEFD5]/20 transition-colors">
-                          <MyAppLogo className="w-4 h-4 text-[#FFEFD5]" />
-                          <span className="text-xs font-medium text-[#FFEFD5]">Écouter</span>
-                        </button>
-
-                        <button aria-label="Supprimer"
-                          onClick={() => { if (confirm('Supprimer ce shake ?')) { handleDeleteShake(detailShake.id); } }}
-                          className="p-1.5 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4 text-pink-400" />
-                        </button>
-                      </div>
-
-                      {/* Timestamp */}
-                      <div className="px-4 pb-3">
-                        <p className="text-[10px] text-purple-500/40">{detailShake.timestamp}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                          </AnimatePresence>
-                        </div>
-                      );
-                    })()}
-                  </React.Fragment>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 bg-[#1D0F3D] rounded-full flex items-center justify-center border border-purple-800/20">
-              {activeTab === 'shakes' ? (
-                <Music className="w-8 h-8 text-[#FFEFD5]" />
-              ) : (
-                <Repeat2 className="w-8 h-8 text-[#FFEFD5]" />
-              )}
-            </div>
-            <p className="text-purple-300/60">
-              {activeTab === 'shakes' ? 'Aucun shake pour le moment' : 'Aucun reshake pour le moment'}
-            </p>
-          </div>
-        )}
-      </div>
+      {/* Fil complet, même composant que le profil des autres (P1/P2) */}
+      <ProfileGrid
+        userId={user.id}
+        currentUser={user}
+        isOwn
+        onDeleted={(wasShake: boolean) => { if (wasShake) setStats(st => ({ ...st, shakes: Math.max(0, st.shakes - 1) })); }}
+      />
 
       {/* Followers / Following List Dialog */}
       <AnimatePresence>
@@ -718,19 +328,6 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
               </div>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Comments Dialog */}
-      <AnimatePresence>
-        {commentsPostId && (
-          <CommentsDialog
-            postId={commentsPostId}
-            onClose={() => setCommentsPostId(null)}
-            currentUser={user}
-            onCommentAdded={() => loadUserData()}
-            onCommentDeleted={() => loadUserData()}
-          />
         )}
       </AnimatePresence>
 
@@ -908,16 +505,6 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         )}
       </AnimatePresence>
 
-      {/* Send Song Dialog */}
-      <AnimatePresence>
-        {sendSongTrack && (
-          <SendSongDialog
-            track={sendSongTrack}
-            onClose={() => setSendSongTrack(null)}
-          />
-        )}
-      </AnimatePresence>
-
       <StoryViewerDialog
         open={!!selectedStory}
         story={selectedStory}
@@ -926,14 +513,6 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         stories={storyList}
         onNavigate={setSelectedStory}
       />
-
-      {likersPostId && (
-        <LikersSheet
-          postId={likersPostId}
-          onClose={() => setLikersPostId(null)}
-          onOpenProfile={u => { setLikersPostId(null); setProfilePreview({ userId: u.id, username: u.username }); }}
-        />
-      )}
 
       {showArchive && (
         <StoryArchiveDialog

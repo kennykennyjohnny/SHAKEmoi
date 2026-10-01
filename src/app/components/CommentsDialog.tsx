@@ -11,6 +11,7 @@ import { openExternal } from '../../lib/platforms';
 import { thumb, defaultAvatar } from '../../lib/media';
 import { MyAppLogo } from './PlatformLogo';
 import { useBackHandler } from '../../lib/navigation';
+import { openProfile } from '../../lib/appNav';
 interface CommentsDialogProps {
   postId: string;
   onClose: () => void;
@@ -185,15 +186,17 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
               ) : (
                 comments.map((comment: any) => (
                   <div key={comment.id} className="flex gap-3">
-                    <img loading="lazy"
-                      src={thumb(comment.user?.profile_album_cover_url) || defaultAvatar(comment.user?.username || 'U')}
-                      alt=""
-                      className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-purple-700/30"
-                    />
+                    <button onClick={() => openProfile(comment.user_id || comment.user?.id)} aria-label={`Profil de @${comment.user?.username || ''}`} className="flex-shrink-0 self-start">
+                      <img loading="lazy"
+                        src={thumb(comment.user?.profile_album_cover_url) || defaultAvatar(comment.user?.username || 'U')}
+                        alt=""
+                        className="w-8 h-8 rounded-full object-cover ring-1 ring-purple-700/30"
+                      />
+                    </button>
                     <div className="flex-1 min-w-0">
                       <div className="bg-purple-950/40 rounded-xl px-3 py-2 border border-purple-800/15">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm text-white">@{comment.user?.username || 'inconnu'}</span>
+                          <button onClick={() => openProfile(comment.user_id || comment.user?.id)} className="font-semibold text-sm text-white hover:underline">@{comment.user?.username || 'inconnu'}</button>
                           <span className="text-xs text-purple-500/50">{formatTime(comment.created_at)}</span>
                           {canDelete(comment) && (
                             confirmDeleteId === comment.id ? (
@@ -244,8 +247,10 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
               {musicReactions.map(r => (
                   <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <img loading="lazy" src={thumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full" alt="" />
-                      <span className="text-xs font-medium">@{r.user?.username}</span>
+                      <button onClick={() => openProfile(r.user_id || r.user?.id)} className="flex items-center gap-2">
+                        <img loading="lazy" src={thumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full" alt="" />
+                        <span className="text-xs font-medium hover:underline">@{r.user?.username}</span>
+                      </button>
                       {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}
                     </div>
                     <div className="flex gap-2 items-center">
