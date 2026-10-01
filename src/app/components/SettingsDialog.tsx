@@ -1,9 +1,10 @@
-import { X, Music2, Check, LogOut, User, Bell, Info, BellRing, Shield, Trash2, ChevronRight, Loader2, PlayCircle } from 'lucide-react';
+import { X, Music2, Check, LogOut, User, Bell, Info, Shield, Trash2, ChevronRight, Loader2, PlayCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 
 import { thumb, defaultAvatar } from '../../lib/media';
-import { showLocalNotification } from '../../lib/notify';
+import { PushToggle, NotifPrefsList } from './PushToggle';
+import { forgetPushOnLogout } from '../../lib/push';
 import { normalizePlatform, PLATFORM_LABELS, STREAMING_APPS, type PlatformKey } from '../../lib/platforms';
 import { PlatformLogo } from './PlatformLogo';
 import { OnboardingDialog } from './OnboardingDialog';
@@ -42,66 +43,6 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
       supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null))
     );
   }, []);
-  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
-    typeof Notification !== 'undefined' ? Notification.permission : 'default'
-  );
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem('shakemoi_notif_prefs');
-    return saved ? JSON.parse(saved) : {
-      likes: true,
-      comments: true,
-      reshakes: true,
-      follows: true,
-    };
-  });
-  const [initialNotifications] = useState(() => {
-    const saved = localStorage.getItem('shakemoi_notif_prefs');
-    return saved ? JSON.parse(saved) : {
-      likes: true,
-      comments: true,
-      reshakes: true,
-      follows: true,
-    };
-  });
-
-  useEffect(() => {
-    localStorage.setItem('shakemoi_notif_prefs', JSON.stringify(notifications));
-  }, [notifications]);
-
-  const [pushEnabled, setPushEnabled] = useState(() => {
-    return localStorage.getItem('shakemoi_push_enabled') === 'true';
-  });
-
-  const togglePushNotifications = async () => {
-    if (typeof Notification === 'undefined') {
-      // iPhone : seulement dans l'appli installée sur l'écran d'accueil.
-      setPushUnsupported(true);
-      return;
-    }
-
-    if (pushEnabled) {
-      // Disable
-      setPushEnabled(false);
-      localStorage.setItem('shakemoi_push_enabled', 'false');
-      return;
-    }
-
-    // Enable - request permission if needed
-    if (Notification.permission === 'default') {
-      const perm = await Notification.requestPermission();
-      setNotifPermission(perm);
-      if (perm !== 'granted') return;
-    } else if (Notification.permission === 'denied') {
-      return; // Can't enable, blocked by browser
-    }
-
-    setPushEnabled(true);
-    localStorage.setItem('shakemoi_push_enabled', 'true');
-    // Via le service worker : `new Notification()` plante sur Chrome Android (D4).
-    showLocalNotification('C\'est activé ! Tu verras tes notifications ici.', 'welcome');
-  };
-  const [pushUnsupported, setPushUnsupported] = useState(false);
-
   const handleSave = async () => {
     if (musicService !== initialMusicService) {
       try {
@@ -130,8 +71,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
     }
   };
 
-  const hasChanges = musicService !== initialMusicService ||
-    JSON.stringify(notifications) !== JSON.stringify(initialNotifications);
+  const hasChanges = musicService !== initialMusicService;
 
   const handleClose = () => {
     if (hasChanges) {
@@ -173,6 +113,8 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
     if (confirm('Te déconnecter de Shakemoi ?')) {
       try {
         const { supabase } = await import('../../lib/supabase');
+        // Ce téléphone ne reçoit plus les notifs de ce compte.
+        await forgetPushOnLogout();
         await supabase.auth.signOut();
         localStorage.removeItem('shakemoi_auth_token');
         localStorage.removeItem('shakemoi_user');
@@ -289,66 +231,9 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
               <h3 className="text-sm font-semibold text-purple-200/80 uppercase tracking-wide">Notifications</h3>
             </div>
 
-            {/* Push notification permission */}
-            <div className="bg-purple-950/40 rounded-xl p-3 mb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <BellRing className="w-4 h-4 text-purple-400" />
-                  <div>
-                    <p className="text-sm text-white font-medium">Notifications sur ce téléphone</p>
-                    <p className="text-xs text-purple-400/50">Quand SHAKEmoi est ouvert ou en arrière-plan</p>
-                  </div>
-                </div>
-                <button
-                  onClick={togglePushNotifications}
-                  className={`w-10 h-6 rounded-full transition-colors ${
-                    notifPermission === 'denied'
-                      ? 'bg-pink-900/50 cursor-not-allowed'
-                      : pushEnabled && notifPermission === 'granted'
-                        ? 'bg-purple-500'
-                        : 'bg-purple-900/50'
-                  }`}
-                  disabled={notifPermission === 'denied'}
-                >
-                  <div className={`w-4 h-4 bg-white rounded-full transition-transform mx-1 ${
-                    pushEnabled && notifPermission === 'granted' ? 'translate-x-4' : 'translate-x-0'
-                  }`} />
-                </button>
-              </div>
-              {pushUnsupported && (
-                <p className="text-xs text-purple-300/70 mt-2">
-                  Sur iPhone, installe d'abord SHAKEmoi sur l'écran d'accueil (Partager → « Sur l'écran d'accueil »), puis active-les depuis l'appli.
-                </p>
-              )}
-              {notifPermission === 'denied' && (
-                <p className="text-xs text-pink-400 mt-2">
-                  Les notifications sont bloquées. Va dans les paramètres de ton navigateur pour les réactiver.
-                </p>
-              )}
-            </div>
-
-            <div className="bg-purple-950/40 rounded-xl divide-y divide-purple-800/20">
-              {[
-                { key: 'likes', label: 'Likes sur mes shakes' },
-                { key: 'comments', label: 'Commentaires' },
-                { key: 'reshakes', label: 'Reshakes' },
-                { key: 'follows', label: 'Nouveaux abonnés' },
-              ].map((item) => (
-                <div key={item.key} className="flex items-center justify-between p-3">
-                  <span className="text-sm text-white">{item.label}</span>
-                  <button
-                    onClick={() => setNotifications({ ...notifications, [item.key]: !notifications[item.key as keyof typeof notifications] })}
-                    className={`w-10 h-6 rounded-full transition-colors ${
-                      notifications[item.key as keyof typeof notifications] ? 'bg-purple-500' : 'bg-purple-900/50'
-                    }`}
-                  >
-                    <div className={`w-4 h-4 bg-white rounded-full transition-transform mx-1 ${
-                      notifications[item.key as keyof typeof notifications] ? 'translate-x-4' : 'translate-x-0'
-                    }`} />
-                  </button>
-                </div>
-              ))}
-            </div>
+            <PushToggle />
+            <p className="text-xs text-purple-300/60 mt-3 mb-2 px-1">Ce que tu reçois (cloche et téléphone) :</p>
+            <NotifPrefsList />
           </div>
 
           {/* À propos */}

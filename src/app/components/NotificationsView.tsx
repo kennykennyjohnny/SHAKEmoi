@@ -1,4 +1,5 @@
-import { Heart, MessageCircle, UserPlus, UserCheck, Music, Repeat2, Loader2, Bell, Users, RefreshCw } from 'lucide-react';
+import { Heart, MessageCircle, UserPlus, UserCheck, Music, Repeat2, Loader2, Bell, Users, RefreshCw, ChevronRight } from 'lucide-react';
+import { PushToggle } from './PushToggle';
 import { formatRelative } from '../../lib/dates';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
@@ -14,9 +15,10 @@ interface NotificationsViewProps {
   onOpenConversation?: (userId: string) => void;
   onOpenCircle?: (circleId: string | null) => void;
   onOpenStory?: (storyId: string) => void;
+  onOpenSettings?: () => void;
 }
 
-export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToProfile, onOpenConversation, onOpenCircle, onOpenStory }: NotificationsViewProps) {
+export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToProfile, onOpenConversation, onOpenCircle, onOpenStory, onOpenSettings }: NotificationsViewProps) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
@@ -142,6 +144,17 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
         <button aria-label="Actualiser" onClick={loadNotifications} className="p-2 hover:bg-purple-900/30 rounded-full transition-colors">
           <RefreshCw className="w-4 h-4 text-purple-400/60" />
         </button>
+      </div>
+
+      {/* P6 : notifs sur le téléphone, et lien vers les réglages détaillés. */}
+      <div className="mb-4 rounded-xl border border-purple-500/20 bg-violet-950/30 overflow-hidden">
+        <PushToggle compact />
+        {onOpenSettings && (
+          <button onClick={onOpenSettings} className="w-full flex items-center justify-between px-4 py-2.5 text-xs text-purple-200/80 hover:bg-violet-900/30 transition-colors">
+            Choisir ce que je reçois (likes, commentaires, messages…)
+            <ChevronRight className="w-4 h-4 text-purple-300/60" />
+          </button>
+        )}
       </div>
 
       <div className="space-y-1.5">

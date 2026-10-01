@@ -30,13 +30,45 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Toucher une notification ramène dans l'appli (ou l'ouvre).
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
+// Notification push (P7) : arrive même appli fermée. Si l'appli est déjà à
+// l'écran, on ne double pas avec une notif système (les pastilles suffisent).
+self.addEventListener('push', event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data && event.data.text() }; }
+  const title = data.title || 'SHAKEmoi';
+  const options = {
+    body: data.body || '',
+    icon: '/icon-192.png',
+    badge: '/favicon-32.png',
+    tag: data.tag || undefined,
+    renotify: !!data.tag,
+    data: { url: data.url || '/' },
+  };
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      const client = list[0];
-      return client ? client.focus() : self.clients.openWindow('/');
+      const visible = list.some(c => c.visibilityState === 'visible' && c.focused);
+      if (visible && !data.force) return;
+      return self.registration.showNotification(title, options);
     }),
   );
 });
+
+// Toucher une notification ouvre l'appli au bon endroit (post, conversation,
+// cercle, story, profil) : l'adresse porte la cible (?open=…).
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      const client = list.find(c => new URL(c.url).origin === self.location.origin) || list[0];
+      if (client) {
+        client.postMessage({ type: 'shakemoi:open', url });
+        return client.focus();
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});
+
+// Abonnement renouvelé par le navigateur : l'appli le réenregistre à la prochaine ouverture.
+self.addEventListener('pushsubscriptionchange', () => {});

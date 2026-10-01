@@ -24,7 +24,8 @@ import { InstallAppButton } from './components/InstallAppButton';
 import { FinishProfileDialog, ResetPasswordDialog } from './components/AccountDialogs';
 
 import { defaultAvatar, thumb } from '../lib/media';
-import { isNotifTypeShown, notificationText, showLocalNotification } from '../lib/notify';
+import { isNotifTypeShown, loadNotifPrefs } from '../lib/notify';
+import { syncPushSubscription } from '../lib/push';
 
 // Écrans chargés à la demande (perf 4G), préchargés ensuite en arrière-plan.
 const ProfileView = lazyView(() => import('./components/ProfileView'), (m) => m.ProfileView, ViewSpinner);
@@ -229,26 +230,18 @@ export default function App() {
         const type = payload.new?.type || '';
         // Réglages « Notifications » respectés (D5), messages hors cloche (A2).
         if (!isNotifTypeShown(type)) return;
+        // La notif sur le téléphone vient maintenant du serveur (push, P7).
         setUnreadNotifs(prev => prev + 1);
-        let who = 'Quelqu\'un';
-        try {
-          const { data } = await supabase.from('users_profile').select('username').eq('id', payload.new?.from_user_id).maybeSingle();
-          if (data?.username) who = `@${data.username}`;
-        } catch {}
-        showLocalNotification(`${who} ${notificationText(type)}`, `notif-${type}`);
       })
       // M10 : un like de story déjà notifié remet sa notif en haut et non lue
       // (mise à jour, pas une nouvelle ligne) : on recompte.
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'notifications',
         filter: `user_id=eq.${currentUser.id}`
-      }, (payload: any) => {
+      }, () => {
         getUserNotifications(currentUser.id)
           .then((n: any[]) => setUnreadNotifs(n.filter(x => !x.is_read).length))
           .catch(() => {});
-        if (payload.new?.type === 'story_like' && payload.new?.is_read === false) {
-          showLocalNotification('Nouveau like sur ta story', 'notif-story_like');
-        }
       })
       .subscribe();
 
@@ -264,11 +257,7 @@ export default function App() {
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'messages',
         filter: `receiver_id=eq.${currentUser.id}`
-      }, () => {
-        refreshUnreadMessages();
-        // Appli en arrière-plan : petite notif sur le téléphone.
-        if (document.hidden) showLocalNotification('Tu as un nouveau message', 'message');
-      })
+      }, () => refreshUnreadMessages())
       .subscribe();
     window.addEventListener('shakemoi:messages-read', refreshUnreadMessages);
 
@@ -279,6 +268,49 @@ export default function App() {
       supabase.removeChannel(msgChannel);
     };
   }, [currentUser]);
+
+  // Notifications push (P7) : l'abonnement de ce téléphone suit le compte
+  // connecté ; les réglages viennent de la base (P6/D5).
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    syncPushSubscription();
+    loadNotifPrefs();
+  }, [currentUser?.id]);
+
+  // Toucher une notif push ouvre l'appli au bon endroit (D1) : l'adresse porte
+  // la cible (?open=post:<id>, dm:<id>, circle:<id>, story:<id>, profile:<id>).
+  const openTarget = async (target: string) => {
+    const [kind, id] = target.split(':');
+    if (!id) return;
+    if (kind === 'post') setNotifPostId(id);
+    else if (kind === 'dm') { setViewOptions({ initialTab: 'dms', openPartnerId: id, nonce: Date.now() }); setCurrentView('messages'); }
+    else if (kind === 'circle') { setViewOptions({ initialTab: 'circles', openCircleId: id, nonce: Date.now() }); setCurrentView('messages'); }
+    else if (kind === 'profile') setProfilePreview({ userId: id, username: '' });
+    else if (kind === 'notifications') setCurrentView('notifications');
+    else if (kind === 'story') {
+      const s = await getStoryById(id);
+      if (!s) return;
+      const expired = new Date(s.expires_at).getTime() < Date.now() && !(s as any).is_pinned;
+      setNotifStory({ story: s, likes: expired });
+    }
+  };
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    const params = new URLSearchParams(window.location.search);
+    const open = params.get('open');
+    if (open) {
+      window.history.replaceState({}, document.title, '/');
+      openTarget(open);
+    }
+    if (!('serviceWorker' in navigator)) return;
+    const onMessage = (e: MessageEvent) => {
+      if (e.data?.type !== 'shakemoi:open') return;
+      const target = new URL(e.data.url, window.location.origin).searchParams.get('open');
+      if (target) openTarget(target);
+    };
+    navigator.serviceWorker.addEventListener('message', onMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage);
+  }, [currentUser?.id]);
 
   const handleAuthComplete = async (user: any) => {
     if (user?.__needsProfile) {
@@ -535,6 +567,7 @@ export default function App() {
             onNavigateToProfile={(userId) => setProfilePreview({ userId, username: '' })}
             onOpenConversation={(userId) => { setViewOptions({ initialTab: 'dms', openPartnerId: userId, nonce: Date.now() }); setCurrentView('messages'); }}
             onOpenCircle={(circleId) => { setViewOptions({ initialTab: 'circles', openCircleId: circleId, nonce: Date.now() }); setCurrentView('messages'); }}
+            onOpenSettings={() => setShowSettings(true)}
             onOpenStory={async (storyId) => {
               // M10 : ouvre la story ; expirée (et pas épinglée) → la liste des likes.
               const s = await getStoryById(storyId);

@@ -168,3 +168,43 @@ Trouvailles en plus :
 | M11-8 Like du profil | ✅ | Protégé du double tap, annulé si refusé. |
 | M11-9 Anciennes interactions sur des reshakes | 🟡 | 9 likes et 2 commentaires (avant avril) sont restés attachés à des lignes de reshake. Plus visibles nulle part depuis M11-2. Les déplacer vers les posts d'origine = modification de données → **ton OK** (même méthode que le script 2). |
 | M11-10 Cache du fil | ⏭️ | Supprimer un shake depuis le profil : le fil l'affiche encore une seconde, jusqu'à son rafraîchissement automatique. Petit, noté pour plus tard. |
+
+---
+
+# Section P — soirée du 01/10/2026
+
+Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session · ⏳ pas encore traité
+
+## Étape 0 — travail de Jerry (patch de l'après-midi)
+| # | Statut | Explication |
+|---|---|---|
+| Patch | ✅ | `git am` sans conflit (6 commits). Types + build verts. Relu et corrigé ci-dessous. |
+| P5 | ✅ | Plus aucun « Groupe(s) » visible (appli, notifications, base) : vérifié par recherche dans tout le code et les fonctions SQL. |
+| P13 tri | ✅ | La « requête par cercle » est remplacée par **une seule fonction SQL** `get_my_circles` : cercles triés par dernier message, avec le dernier message (« @léa : 🎵 Lithe ») et le nombre de non-lus. Même liste sur téléphone et ordinateur, qui remonte en direct à chaque message. |
+| P12 retrait | ✅ | La règle de base existait déjà pour l'auteur ; ajouté : le **créateur du cercle** peut retirer n'importe quel message (modération). Le fichier « en attente » de Jerry est appliqué puis supprimé. |
+| P8 | ✅ | Fonction `rename_circle` appliquée : tout membre renomme, **seulement le nom** (testé : un membre non créateur ne peut pas toucher au code d'invitation). Le message « @kenny a renommé le cercle en … » apparaît dans la discussion (nouveau type de message « système », qu'un membre ne peut pas fabriquer : testé, refusé). L'en-tête suit en direct chez les autres. |
+| P14 (accès) | ✅ | Vérifié : la règle de lecture des posts laisse lire tous les posts **publics** → « Tout SHAKEMOI » est bien différent d'« Amis ». Les reshakes sont des lignes de posts : ils comptent dans « sons les plus shakés ». (Le TOP sera recalculé en base au lot 6.) |
+| B5 | ✅ | Vérifié dans la base : l'espace `circle-media` est **privé** ; `getPublicUrl` ne sert qu'à fabriquer l'adresse, l'affichage passe toujours par un lien signé (1 h). Messages privés (`dm/…`, lisibles par les 2 personnes) et cercles (`circle-<id>/…`, membres seulement). |
+| Trouvaille | ✅ | **Le temps réel des messages privés et de la cloche ne marchait pas** : les tables `messages` et `notifications` n'étaient pas publiées dans Supabase Realtime. Ajoutées (+ `circles` pour le renommage). Conséquence : nouveau message, pastille et cloche se mettent à jour en direct. |
+
+**Tests (étape 0)**
+1. Dans un cercle dont tu n'es pas le créateur : Paramètres → change le nom → « Tu as renommé le cercle en … » apparaît, l'autre membre le voit en direct et l'en-tête change chez lui.
+2. Onglet Cercles : chaque ligne montre le dernier message et l'heure ; envoie un message dans le cercle du bas → il remonte en haut.
+3. Depuis un 2ᵉ compte, envoie-toi un message privé appli ouverte : la pastille Messages s'allume tout de suite (avant : il fallait recharger).
+
+## Lot 1 — P7 + P6 : vraies notifications push
+| # | Statut | Explication |
+|---|---|---|
+| P7 | ✅ | **Web Push complet, même appli fermée.** Base → déclencheurs → Edge Function `push` → Google / Apple / Mozilla. Envoyé pour : chaque notif de la cloche (likes, commentaires, réponses en musique, reshakes, abonnés, cercles), chaque **message privé**, chaque **message de cercle**, chaque **like de message**. Like de Shake éphémère groupé (M10) : une seule notif mise à jour (« @léa et 3 autres… »), pas 10. Toucher la notif ouvre le bon endroit (post, conversation, cercle, Shake éphémère, profil). Abonnements expirés (404/410) supprimés automatiquement (testé en vrai). |
+| Clés | ✅ | **Rien à configurer pour toi** : les clés VAPID ont été générées par la fonction elle-même et rangées dans le **coffre Supabase (Vault)**, comme le secret entre la base et la fonction. Aucune clé privée dans le code ni dans le dépôt, et personne ne l'a vue. |
+| Chiffrement | ✅ | Écrit sans bibliothèque (norme Web Push), testé en local (`node scripts/test-webpush.ts` : chiffrement → déchiffrement OK, signature OK) et en vrai contre le serveur de Google. |
+| P6 | ✅ | En haut de l'onglet Notifications : interrupteur **« Notifications sur le téléphone »**. L'activer demande l'autorisation puis enregistre ce téléphone ; une **notif de test** arrive tout de suite. Le désactiver coupe ce téléphone seulement. L'état est le vrai : refusé (avec quoi faire), iPhone pas installé (« Installe d'abord l'appli sur ton écran d'accueil »), navigateur incompatible. Lien vers les réglages détaillés. |
+| D5 | ✅ | Les réglages (likes, commentaires, reshakes, abonnés, **messages privés**, **cercles**, rappel de série) sont maintenant **en base** et respectés par le serveur. Enregistrés dès qu'on touche l'interrupteur. |
+| Divers | ✅ | Ceux qui avaient activé les anciennes notifs « appli ouverte » passent automatiquement aux vraies (si l'autorisation est déjà donnée). Déconnexion = ce téléphone ne reçoit plus les notifs du compte. Appli à l'écran : pas de notif système en double (les pastilles suffisent). |
+
+**Test précis P7 (Android Chrome ou iPhone avec l'appli installée, iOS 16.4+)**
+1. Onglet Notifications → active « Notifications sur le téléphone » → accepte → tu reçois « C'est activé ! … ».
+2. **Ferme complètement l'appli** (balaye-la).
+3. Depuis un 2ᵉ compte, like un de tes shakes → tu reçois « @lautre a aimé ton shake « Titre » ». Touche-la : l'appli s'ouvre sur le post.
+4. Depuis le 2ᵉ compte, envoie-toi un message → notif « @lautre » avec le texte ; la toucher ouvre la conversation.
+5. Paramètres → Notifications → coupe « Likes » → refais un like depuis le 2ᵉ compte : rien n'arrive.

@@ -27,21 +27,61 @@ export function notificationText(type: string): string {
   }
 }
 
-// Réglages « Notifications » des paramètres (enregistrés sur l'appareil).
-type Prefs = { likes: boolean; comments: boolean; reshakes: boolean; follows: boolean };
+// Réglages « Notifications » : enregistrés en base (user_settings, respectés
+// par le serveur pour les notifs push) avec une copie sur l'appareil pour
+// filtrer la cloche sans attendre le réseau.
+export type NotifPrefs = { likes: boolean; comments: boolean; reshakes: boolean; follows: boolean; circles: boolean; messages: boolean; streak: boolean };
+type Prefs = NotifPrefs;
+export const DEFAULT_NOTIF_PREFS: NotifPrefs = { likes: true, comments: true, reshakes: true, follows: true, circles: true, messages: true, streak: true };
 const PREF_OF_TYPE: Record<string, keyof Prefs> = {
   like: 'likes', comment_like: 'likes', story_like: 'likes',
   comment: 'comments', music_reaction: 'comments',
   reshake: 'reshakes',
   follow: 'follows', feel: 'follows',
+  circle_join: 'circles', circle_add: 'circles', circle_invite: 'circles',
 };
+const PREFS_KEY = 'shakemoi_notif_prefs';
 
 export function getNotifPrefs(): Prefs {
   try {
-    const saved = JSON.parse(localStorage.getItem('shakemoi_notif_prefs') || 'null');
-    return { likes: true, comments: true, reshakes: true, follows: true, ...(saved || {}) };
+    const saved = JSON.parse(localStorage.getItem(PREFS_KEY) || 'null');
+    return { ...DEFAULT_NOTIF_PREFS, ...(saved || {}) };
   } catch {
-    return { likes: true, comments: true, reshakes: true, follows: true };
+    return { ...DEFAULT_NOTIF_PREFS };
+  }
+}
+
+/** Relit les réglages en base (au démarrage) ; renvoie ceux à appliquer. */
+export async function loadNotifPrefs(): Promise<Prefs> {
+  try {
+    const { supabase } = await import('./supabase');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return getNotifPrefs();
+    const { data } = await supabase.from('user_settings').select('notif_prefs').eq('user_id', session.user.id).maybeSingle();
+    if (data?.notif_prefs) {
+      const merged = { ...DEFAULT_NOTIF_PREFS, ...data.notif_prefs };
+      localStorage.setItem(PREFS_KEY, JSON.stringify(merged));
+      return merged;
+    }
+    // Premier passage : on envoie en base les réglages faits sur ce téléphone.
+    const local = getNotifPrefs();
+    await supabase.from('user_settings').upsert({ user_id: session.user.id, notif_prefs: local, updated_at: new Date().toISOString() });
+    return local;
+  } catch {
+    return getNotifPrefs();
+  }
+}
+
+export async function saveNotifPrefs(prefs: Prefs): Promise<boolean> {
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch { /* pas grave */ }
+  try {
+    const { supabase } = await import('./supabase');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return false;
+    const { error } = await supabase.from('user_settings').upsert({ user_id: session.user.id, notif_prefs: prefs, updated_at: new Date().toISOString() });
+    return !error;
+  } catch {
+    return false;
   }
 }
 
