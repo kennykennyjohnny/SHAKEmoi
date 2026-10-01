@@ -10,7 +10,7 @@ import { getUserProfile, getUserShakeCount, getUserFollowersCount, getUserFollow
 import { supabase } from '../../lib/supabase';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { ProfileGrid } from './ProfileGrid';
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { useBackHandler } from '../../lib/navigation';
 import { openConversation } from '../../lib/appNav';
 import { FollowListSheet, MutualFollowersLine, type FollowListKind } from './FollowListSheet';
@@ -111,7 +111,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
 
   const isMe = !!me && profile?.id === me.id;
   const displayName = profile?.display_name || profile?.username || username;
-  const avatar = thumb(profile?.profile_album_cover_url) || defaultAvatar(profile?.username || username);
+  const avatar = avatarThumb(profile?.profile_album_cover_url) || defaultAvatar(profile?.username || username);
 
   // Panneau presque plein écran (téléphone) ou fenêtre haute (ordinateur) ;
   // « Profil complet » = toute la page.
@@ -228,7 +228,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                           <button key={story.id} onClick={() => { setViewerList(stories); setActiveStory(story); }} className="flex-shrink-0 text-center w-16">
                             <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
                               <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
-                                <img loading="lazy" src={thumb(story.image_url, 256) || story.cover_url || avatar} className="w-full h-full rounded-full object-cover" alt="" />
+                                <img loading="lazy" src={avatarThumb(story.image_url, 256) || story.cover_url || avatar} className="w-full h-full rounded-full object-cover" alt="" />
                               </div>
                             </div>
                             <p className="text-[10px] text-purple-300/70 mt-1">En cours</p>
@@ -238,7 +238,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                           <button key={story.id} onClick={() => { setViewerList(pinnedStories); setActiveStory(story); }} className="flex-shrink-0 text-center w-16">
                             <div className="w-16 h-16 rounded-full p-[2px] bg-purple-700/50">
                               <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
-                                <img loading="lazy" src={thumb(story.image_url, 256) || story.cover_url || avatar} className="w-full h-full rounded-full object-cover" alt="" />
+                                <img loading="lazy" src={avatarThumb(story.image_url, 256) || story.cover_url || avatar} className="w-full h-full rounded-full object-cover" alt="" />
                               </div>
                             </div>
                             <p className="text-[10px] text-purple-300/70 mt-1 truncate">{story.track_name || 'À la une'}</p>

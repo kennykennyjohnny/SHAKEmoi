@@ -5,7 +5,7 @@ import { Heart, X, Loader2 } from 'lucide-react';
 import { getPostLikers } from '../../lib/database';
 import { useBackHandler } from '../../lib/navigation';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { openProfile } from '../../lib/appNav';
 // SHAKEMOI - Qui a liké ce shake (visible par l'auteur du post).
 // Même feuille partout : fil, profil, détail d'un post.
@@ -65,7 +65,7 @@ export function LikersSheet({ postId, onClose, onOpenProfile }: Props) {
                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-purple-900/20 transition-colors text-left disabled:cursor-default"
               >
                 <img loading="lazy"
-                  src={thumb(u.profile_album_cover_url) || defaultAvatar(u.username)}
+                  src={avatarThumb(u.profile_album_cover_url) || defaultAvatar(u.username)}
                   alt=""
                   className="w-9 h-9 rounded-full object-cover ring-1 ring-purple-700/30"
                 />

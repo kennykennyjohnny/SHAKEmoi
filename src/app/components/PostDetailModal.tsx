@@ -12,7 +12,7 @@ import { SongShareSheet } from './SongShareSheet';
 import { openExternal } from '../../lib/platforms';
 import { LikersSheet } from './LikersSheet';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { SongCover } from './SongCover';
 import { MyAppLogo } from './PlatformLogo';
 import { useBackHandler } from '../../lib/navigation';
@@ -209,7 +209,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
   const trackId = post?.track_id || (post?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
   const coverUrl = post?.cover_url || post?.track_cover_url;
   const userName = post?.user?.display_name || post?.user?.username || '';
-  const avatar = thumb(post?.user?.profile_album_cover_url) || defaultAvatar(post?.user?.username || 'U');
+  const avatar = avatarThumb(post?.user?.profile_album_cover_url) || defaultAvatar(post?.user?.username || 'U');
   const isOwner = currentUser?.id === post?.user_id || currentUser?.id === post?.user?.id;
 
   if (loading) return (
@@ -386,7 +386,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
                 comments.map((c: any) => (
                   <div key={c.id} className="flex gap-2.5">
                     <button onClick={() => openProfile(c.user_id || c.user?.id)} aria-label={`Profil de @${c.user?.username || ''}`} className="flex-shrink-0 self-start">
-                      <img loading="lazy" src={thumb(c.user?.profile_album_cover_url) || defaultAvatar(c.user?.username || 'U')} alt="" className="w-7 h-7 rounded-full object-cover" />
+                      <img loading="lazy" src={avatarThumb(c.user?.profile_album_cover_url) || defaultAvatar(c.user?.username || 'U')} alt="" className="w-7 h-7 rounded-full object-cover" />
                     </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
@@ -419,7 +419,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
                   <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <button onClick={() => openProfile(r.user_id || r.user?.id)} className="flex items-center gap-2">
-                        <img loading="lazy" src={thumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full" alt="" />
+                        <img loading="lazy" src={avatarThumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full object-cover" alt="" />
                         <span className="text-xs font-medium hover:underline">@{r.user?.username}</span>
                       </button>
                       {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}

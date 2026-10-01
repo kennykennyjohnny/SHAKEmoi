@@ -9,7 +9,7 @@ import { StoryBackdrop } from './StoryBackdrop';
 import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { thumb, defaultAvatar, avatarThumb } from '../../lib/media';
 import { MyAppLogo } from './PlatformLogo';
 interface StoryViewerDialogProps {
   open: boolean;
@@ -390,7 +390,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   if (!story) return null;
 
   const user = owner;
-  const avatarSrc = thumb(user?.profile_album_cover_url) || thumb(user?.avatar) || defaultAvatar(user?.username || 'S');
+  const avatarSrc = avatarThumb(user?.profile_album_cover_url) || avatarThumb(user?.avatar) || defaultAvatar(user?.username || 'S');
   const timeRemaining = story.expires_at ? formatCountdown(story.expires_at, now) : null;
 
   const hasTrack = !!(trackTitle || story.track_id);
@@ -724,7 +724,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                         likers.map((u: any) => (
                           <div key={u.id} className="flex items-center gap-3 px-4 py-2.5">
                             <img loading="lazy"
-                              src={thumb(u.profile_album_cover_url) || defaultAvatar(u.username || 'U')}
+                              src={avatarThumb(u.profile_album_cover_url) || defaultAvatar(u.username || 'U')}
                               className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                               alt=""
                             />
@@ -746,7 +746,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                       viewers.map((viewer: any) => (
                         <div key={viewer.id} className="flex items-center gap-3 px-4 py-2.5">
                           <img loading="lazy"
-                            src={thumb(viewer.profile_album_cover_url) || defaultAvatar(viewer.username || 'U')}
+                            src={avatarThumb(viewer.profile_album_cover_url) || defaultAvatar(viewer.username || 'U')}
                             className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                             alt=""
                           />

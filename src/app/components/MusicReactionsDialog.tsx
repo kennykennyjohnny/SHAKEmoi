@@ -7,7 +7,7 @@ import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { MyAppLogo } from './PlatformLogo';
 import { useBackHandler } from '../../lib/navigation';
 interface Props {
@@ -79,7 +79,7 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
             reactions.map(r => (
                 <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <img loading="lazy" src={thumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full" alt="" />
+                    <img loading="lazy" src={avatarThumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full object-cover" alt="" />
                     <span className="text-xs font-medium">@{r.user?.username}</span>
                     {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}
                   </div>

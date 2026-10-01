@@ -2,7 +2,7 @@ import { X, Music2, Check, LogOut, User, Bell, Info, Shield, Trash2, ChevronRigh
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { PushToggle, NotifPrefsList } from './PushToggle';
 import { forgetPushOnLogout } from '../../lib/push';
 import { normalizePlatform, PLATFORM_LABELS, STREAMING_APPS, type PlatformKey } from '../../lib/platforms';
@@ -131,7 +131,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
   };
 
 
-  const avatar = thumb(currentUser?.avatar) || thumb(currentUser?.profile_album_cover_url) || defaultAvatar(currentUser?.username);
+  const avatar = avatarThumb(currentUser?.avatar) || avatarThumb(currentUser?.profile_album_cover_url) || defaultAvatar(currentUser?.username);
   const displayName = currentUser?.displayName || currentUser?.display_name || currentUser?.username;
 
   return (

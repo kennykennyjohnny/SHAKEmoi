@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getAppStats } from '../../lib/database';
 import { inviteLink } from '../../lib/links';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { useBackHandler } from '../../lib/navigation';
 interface ShareDialogProps {
   currentUser: any;
@@ -100,7 +100,7 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
                   className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full blur-xl"
                 />
                 <img loading="lazy"
-                  src={thumb(currentUser?.avatar) || thumb(currentUser?.profile_album_cover_url) || defaultAvatar(currentUser?.username || 'S')}
+                  src={avatarThumb(currentUser?.avatar) || avatarThumb(currentUser?.profile_album_cover_url) || defaultAvatar(currentUser?.username || 'S')}
                   alt=""
                   className="w-20 h-20 rounded-full object-cover ring-3 ring-fuchsia-500/50 relative z-10"
                 />

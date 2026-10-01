@@ -273,3 +273,23 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 7. Remonte loin dans une conversation pendant que l'autre écrit → bouton « ↓ 1 nouveau message ».
 8. Infos du cercle : renomme, ajoute un ami, partage le lien ; (créateur) supprime un cercle de test.
 9. Onglet Messages : glisse doucement vers la gauche → la liste et le trait rose suivent ton doigt ; relâche à mi-chemin → ça revient ; actualise → tu restes sur Cercles.
+
+## Lot 5 — P11 (cadrage des miniatures) + P13 (colonnes ordinateur)
+| # | Statut | Explication |
+|---|---|---|
+| P11 cause | ✅ | **Vérifié en base** : le cadrage des Shakes éphémères est déjà « cuit » dans l'image publiée (pas en cause). Le vrai problème : **les avatars n'avaient aucun outil de cadrage** et les 6 photos de profil en ligne sont **verticales** (captures d'écran, ex. 1080 × 2520). Le rond n'en montrait que le milieu, souvent sans le visage ; et 4 endroits (réponses en musique, détail d'un post, membres d'un cercle…) **écrasaient** l'image (pas de `object-cover`). |
+| P11 exemples | ✅ | **@bapt22** : avant, le rond montrait le chapeau et coupait le sourire ; après, tout le visage. **@fawn28** : avant, le haut du visage coupé ; après, visage entier. (@kenny : la capture d'écran est bien gérée, le rond garde la photo de plage et pas le bandeau du téléphone.) Comparé sur les vraies images : « milieu » (avant) / « attention » / « entropie » → l'**entropie** est la seule bonne dans les 3 cas, retenue. |
+| P11 correctif 1 | ✅ | `/api/img` sait rendre un **carré recadré sur la zone la plus détaillée** (`sq=1`) : tous les avatars et vignettes rondes de Shakes éphémères passent par là (`avatarThumb`, 51 endroits). Corrige **toutes les photos existantes tout de suite**, sans toucher aux fichiers ni avoir besoin de ta clé. |
+| P11 correctif 2 | ✅ | **Outil de cadrage à l'envoi** (photo de profil, inscription, photo de cercle) : on glisse / pince / zoome dans un carré (le rond montre ce qu'on verra), et on enregistre **l'image déjà recadrée** (512 × 512). Testé : la partie choisie est exactement celle enregistrée. |
+| P11 correctif 3 | ✅ | Plus aucune image déformée : `object-cover` partout (vérifié par un script qui parcourt toutes les images de l'appli). Photos de posts et de messages : déjà en `object-cover` centré, rien à corriger. |
+| P13 causes | ✅ | Trois causes trouvées en lisant le code : (1) **course entre clics** — chaque clic relisait le profil en ligne, la réponse la plus lente gagnait et ouvrait la **mauvaise** conversation ; (2) **un seul état « conversation ouverte » pour Messages ET Cercles** : ouvrir un cercle depuis la colonne pendant qu'un privé était ouvert laissait l'écran incohérent ; (3) la colonne **devinait** ce qui était ouvert (pas de surbrillance des cercles, surbrillance fausse après un retour). |
+| P13 correctif | ✅ | **Une seule source de vérité** (`activeChat`) : la conversation ouverte la déclare, la colonne la lit (surbrillance juste, cercles compris). Seul le **dernier clic** compte. Un état « ouvert » par onglet. Le bouton « Messages » du menu ramène à la liste. La colonne se met à jour en direct : nouveau message, message lu ou retiré, **ajout à un cercle, cercle renommé**, likes reçus (rechargements regroupés, jamais une vieille réponse par-dessus une récente). Un cercle qu'on vient de rejoindre s'ouvre (la liste se recharge). |
+| P13 TOP | ✅ | Colonne de droite : toucher le titre d'un son du TOP ouvre le post complet. |
+| P13 test | 🟡 | Test Playwright prêt (`e2e/desktop-inbox.spec.ts`, 1280 et 1440 px) : clics rapides puis un par un, vérifie que le titre ouvert est chaque fois le bon. **Il lui faut un compte de test** (`E2E_EMAIL` / `E2E_PASSWORD` avec au moins 3 conversations ou cercles) : sans, il est sauté. |
+| P13 tri | ✅ | (étape 0 + lot 4) cercles triés par dernier message en base, remontent en direct ; conversations privées pareil (un like reçu les fait aussi remonter). |
+
+**Tests (lot 5)**
+1. Ordinateur (≥ 1280 px) : clique vite sur 3 conversations de la colonne de gauche → c'est la dernière cliquée qui s'ouvre, et elle est surlignée. Clique un cercle → il s'ouvre et se surligne ; reviens à un privé → idem.
+2. Pendant qu'un cercle est ouvert, quelqu'un le renomme → la colonne et l'en-tête changent tout seuls.
+3. Ton profil → Modifier → change de photo : une fenêtre de cadrage s'ouvre, place ton visage dans le rond → OK. Partout (fil, commentaires, messages), le rond montre exactement ce cadrage.
+4. Regarde l'avatar de @bapt22 dans le fil : on voit tout le visage (plus seulement le chapeau).

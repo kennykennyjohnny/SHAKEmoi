@@ -10,7 +10,7 @@ import { StoryViewerDialog } from './StoryViewerDialog';
 import { StoryArchiveDialog } from './StoryArchiveDialog';
 import { inviteLink, profileLink } from '../../lib/links';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 interface ProfileViewProps {
   user: any;
   onUpdateUser?: (updatedUser: any) => void;
@@ -90,7 +90,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           <motion.img
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            src={thumb(user.avatar) || thumb(user.profile_album_cover_url) || defaultAvatar(user.username || user.displayName)}
+            src={avatarThumb(user.avatar) || avatarThumb(user.profile_album_cover_url) || defaultAvatar(user.username || user.displayName)}
             alt={user.displayName || user.username}
             className="w-20 h-20 rounded-full object-cover ring-2 ring-purple-500 shadow-lg shadow-purple-500/20 flex-shrink-0"
             onError={(e) => {
@@ -137,7 +137,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                 <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
                   <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
                     <img loading="lazy"
-                      src={thumb(story.image_url, 256) || story.cover_url || thumb(user.avatar) || defaultAvatar(user.username || user.displayName)}
+                      src={avatarThumb(story.image_url, 256) || story.cover_url || avatarThumb(user.avatar) || defaultAvatar(user.username || user.displayName)}
                       className="w-full h-full rounded-full object-cover"
                       alt={story.track_name || ''}
                     />
@@ -151,7 +151,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                 <div className="relative w-16 h-16 rounded-full p-[2px] bg-purple-700/50">
                   <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
                     <img loading="lazy"
-                      src={thumb(story.image_url, 256) || story.cover_url || user.avatar}
+                      src={avatarThumb(story.image_url, 256) || story.cover_url || user.avatar}
                       className="w-full h-full rounded-full object-cover"
                       alt={story.track_name || ''}
                     />
@@ -270,7 +270,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
               <div className="p-5">
                 <div className="bg-gradient-to-br from-fuchsia-600/20 via-purple-900/30 to-pink-600/20 rounded-2xl p-5 text-center border border-fuchsia-500/20 mb-5">
                   <img loading="lazy"
-                    src={thumb(user.avatar) || thumb(user.profile_album_cover_url) || defaultAvatar(user.username)}
+                    src={avatarThumb(user.avatar) || avatarThumb(user.profile_album_cover_url) || defaultAvatar(user.username)}
                     className="w-20 h-20 rounded-full object-cover mx-auto ring-3 ring-fuchsia-500/40 mb-3"
                     alt=""
                   />

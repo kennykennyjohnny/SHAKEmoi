@@ -6,7 +6,7 @@ import { resolveUserId } from '../../lib/username';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 // SHAKEMOI - Arrivée d'un visiteur sur un profil partagé (/u/<pseudo> ou
 // l'invitation /i/<pseudo>) : on voit tout de suite qui invite, ses derniers
 // sons, et on peut créer son compte pour l'ajouter en ami d'un geste.
@@ -54,13 +54,13 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore }: Props
   );
 
   const name = profile?.display_name || profile?.username || username;
-  const avatar = thumb(profile?.profile_album_cover_url) || defaultAvatar(username);
+  const avatar = avatarThumb(profile?.profile_album_cover_url) || defaultAvatar(username);
 
   return (
     <div className="min-h-[100dvh] bg-[#1E1440] text-white relative overflow-x-hidden">
       {profile?.profile_album_cover_url && (
         <div className="fixed inset-0 pointer-events-none">
-          <img loading="lazy" src={thumb(profile.profile_album_cover_url, 128) || profile.profile_album_cover_url} alt="" className="w-full h-full object-cover opacity-20 blur-3xl scale-110" />
+          <img loading="lazy" src={avatarThumb(profile.profile_album_cover_url, 128) || profile.profile_album_cover_url} alt="" className="w-full h-full object-cover opacity-20 blur-3xl scale-110" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1E1440]/60 via-[#1E1440]/70 to-[#1E1440]" />
         </div>
       )}

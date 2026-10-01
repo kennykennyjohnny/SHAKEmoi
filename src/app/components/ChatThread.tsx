@@ -13,11 +13,12 @@ import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
 import { SongCover } from './SongCover';
-import { MediaImg, thumb, defaultAvatar } from '../../lib/media';
+import { MediaImg, thumb, defaultAvatar, avatarThumb } from '../../lib/media';
 import { searchGifs, GIF_ERROR_TEXT } from '../../lib/gifs';
 import { formatDayLabel, isSameDay, formatTime } from '../../lib/dates';
 import { MyAppLogo } from './PlatformLogo';
 import { openProfile } from '../../lib/appNav';
+import { setActiveChat, getActiveChat } from '../../lib/activeChat';
 import {
   type ChatRef, CHAT_PAGE, fetchChatPage, fetchChatMessage, sendChatMessage, uploadChatPhoto, likedMessageIds,
   setMessageLike, messageLikers, retractMessage, markChatRead, fetchDmPartnerRead, fetchCircleReads,
@@ -98,6 +99,12 @@ export function ChatThread({
   const membersByName = useMemo(() => Object.fromEntries(members.map((m: any) => [String(m.username).toLowerCase(), m])), [members]);
 
   const flash = (t: string) => { setNotice(t); setTimeout(() => setNotice(null), 3000); };
+
+  // Source de vérité partagée avec la colonne ordinateur (P13).
+  useEffect(() => {
+    setActiveChat(chat);
+    return () => { const a = getActiveChat(); if (a?.kind === chat.kind && a?.id === chat.id) setActiveChat(null); };
+  }, [chat.kind, chat.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------- Défilement ----------
   const scrollToBottom = (smooth = false) => {
@@ -511,11 +518,11 @@ export function ChatThread({
               circlePhoto ? <MediaImg src={circlePhoto} width={128} className="w-full h-full object-cover" alt="" />
                 : <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center"><Users className="w-4 h-4 text-white" /></div>
             ) : (
-              <img src={thumb(avatarUrl, 128) || defaultAvatar(avatarName)} className="w-full h-full object-cover" alt="" />
+              <img src={avatarThumb(avatarUrl, 128) || defaultAvatar(avatarName)} className="w-full h-full object-cover" alt="" />
             )}
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-sm truncate">{title}</p>
+            <p className="font-semibold text-sm truncate" data-testid="chat-title">{title}</p>
             <p className={`text-xs truncate ${typingNames.length ? 'text-pink-300' : 'text-purple-300/70'}`}>
               {typingNames.length ? (isCircle ? `${typingNames.slice(0, 2).join(', ')} ${typingNames.length > 1 ? 'écrivent' : 'écrit'}…` : 'est en train d’écrire…') : subtitle}
             </p>
@@ -577,7 +584,7 @@ export function ChatThread({
                 {sw > 0 && <Reply className="w-4 h-4 text-pink-300 self-center flex-shrink-0" style={{ opacity: Math.min(1, sw / 55) }} />}
                 {isCircle && !mine && (
                   <button data-no-gesture onClick={() => sender && openProfile(sender.id)} className={`w-7 h-7 flex-shrink-0 self-end ${showName ? '' : 'invisible'}`} aria-label={`Profil de @${sender?.username || ''}`}>
-                    <img src={thumb(sender?.profile_album_cover_url, 64) || defaultAvatar(sender?.username)} className="w-7 h-7 rounded-full object-cover" alt="" />
+                    <img src={avatarThumb(sender?.profile_album_cover_url, 64) || defaultAvatar(sender?.username)} className="w-7 h-7 rounded-full object-cover" alt="" />
                   </button>
                 )}
                 <div className={`flex flex-col max-w-[78%] ${mine ? 'items-end' : 'items-start'}`}>
@@ -782,7 +789,7 @@ export function ChatThread({
         <div className="border-t border-purple-500/25 bg-[#1D0F3D] max-h-48 overflow-y-auto flex-shrink-0">
           {mentionOptions.map((m: any) => (
             <button key={m.id} onMouseDown={(e) => e.preventDefault()} onClick={() => pickMention(m)} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-violet-900/30 text-left">
-              <img src={thumb(m.profile_album_cover_url, 64) || defaultAvatar(m.username)} className="w-7 h-7 rounded-full object-cover" alt="" />
+              <img src={avatarThumb(m.profile_album_cover_url, 64) || defaultAvatar(m.username)} className="w-7 h-7 rounded-full object-cover" alt="" />
               <span className="text-sm font-medium">{m.display_name || m.username}</span>
               <span className="text-xs text-purple-300/60">@{m.username}</span>
             </button>
@@ -841,7 +848,7 @@ export function ChatThread({
             <p className="font-bold mb-2 px-1">{likersOf ? 'Likes' : 'Vu par'}</p>
             {(likersOf ? likersOf.users : seenBy.map((r) => ({ id: r.user_id, username: r.username, display_name: r.display_name, profile_album_cover_url: r.profile_album_cover_url, at: r.last_read_at }))).map((u: any) => (
               <button key={u.id} onClick={() => { setLikersOf(null); setShowSeen(false); openProfile(u.id); }} className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-purple-900/30 text-left">
-                <img src={thumb(u.profile_album_cover_url, 64) || defaultAvatar(u.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
+                <img src={avatarThumb(u.profile_album_cover_url, 64) || defaultAvatar(u.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold truncate">{u.display_name || u.username}</p>
                   <p className="text-xs text-purple-300/60">@{u.username}{u.at ? ` · ${formatTime(u.at)}` : ''}</p>

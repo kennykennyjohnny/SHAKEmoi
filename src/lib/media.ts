@@ -77,6 +77,21 @@ export function thumb(url?: string | null, width = 256): string | undefined {
   return url;
 }
 
+/**
+ * Avatar (ou photo de cercle) en petit (P11) : toujours CARRÉ. Les anciennes
+ * photos sont souvent verticales (captures d'écran) ; le rond n'en montrait que
+ * le milieu (visage coupé). /api/img les recadre en carré sur la zone la plus
+ * détaillée (le visage, en pratique). Les nouvelles photos sont déjà carrées
+ * (outil de cadrage à l'envoi).
+ */
+export function avatarThumb(url?: string | null, width = 128): string | undefined {
+  if (!url) return undefined;
+  if (import.meta.env.PROD && STORAGE_PUBLIC.test(url)) {
+    return `/api/img?w=${width}&sq=1&u=${encodeURIComponent(url)}`;
+  }
+  return thumb(url, width);
+}
+
 /** Avatar par défaut (initiale sur fond violet), généré sur place : aucun service extérieur ne voit le pseudo. */
 export function defaultAvatar(name?: string | null): string {
   const letter = (String(name || '?').trim()[0] || '?').toUpperCase().replace(/[<>&"']/g, '?');

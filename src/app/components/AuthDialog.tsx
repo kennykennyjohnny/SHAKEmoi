@@ -7,7 +7,7 @@ import { Slogan } from './Slogan';
 import { friendlyError } from '../../lib/errors';
 import { normalizeUsername, usernameError, resolveUserId } from '../../lib/username';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 interface AuthDialogProps {
   onComplete: (user: any) => void;
   referrer?: string | null;
@@ -170,7 +170,7 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
                   className="mb-3 flex flex-col items-center"
                 >
                   <img loading="lazy"
-                    src={thumb(referrerProfile.profile_album_cover_url) || defaultAvatar(referrerProfile.username)}
+                    src={avatarThumb(referrerProfile.profile_album_cover_url) || defaultAvatar(referrerProfile.username)}
                     alt={referrerProfile.username}
                     className="w-16 h-16 rounded-full object-cover ring-2 ring-fuchsia-500 mb-2"
                   />

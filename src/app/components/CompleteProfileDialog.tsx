@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Camera, Loader2, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { compressImage, extFor } from '../../lib/media';
+import { ImageCropDialog } from './ImageCropDialog';
 
 interface CompleteProfileDialogProps {
   user: any;
@@ -11,15 +11,17 @@ interface CompleteProfileDialogProps {
 
 export function CompleteProfileDialog({ user, onComplete }: CompleteProfileDialogProps) {
   const [displayName, setDisplayName] = useState(user.display_name || user.username || '');
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  // Photo déjà cadrée en carré (P11), prête à envoyer.
+  const [avatarFile, setAvatarFile] = useState<Blob | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user.profile_album_cover_url || null);
   const [loading, setLoading] = useState(false);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+    setCropFile(file);
   };
 
   const handleSubmit = async () => {
@@ -30,11 +32,10 @@ export function CompleteProfileDialog({ user, onComplete }: CompleteProfileDialo
       if (avatarFile) {
         // Photo de profil compressée (256 px) ; nom unique pour ne pas
         // resservir l'ancienne photo depuis les caches.
-        const small = await compressImage(avatarFile, 256, 0.82);
-        const path = `${user.id}/avatar-${Date.now()}.${extFor(small, avatarFile.name)}`;
+        const path = `${user.id}/avatar-${Date.now()}.jpg`;
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(path, small, { cacheControl: '31536000', upsert: false, contentType: small.type || undefined });
+          .upload(path, avatarFile, { cacheControl: '31536000', upsert: false, contentType: 'image/jpeg' });
 
         if (!uploadError) {
           const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
@@ -92,6 +93,14 @@ export function CompleteProfileDialog({ user, onComplete }: CompleteProfileDialo
               <Camera className="w-6 h-6 text-purple-400/50" />
             )}
             <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+            {cropFile && (
+              <ImageCropDialog
+                file={cropFile}
+                title="Cadre ta photo de profil"
+                onCancel={() => setCropFile(null)}
+                onDone={(blob) => { setCropFile(null); setAvatarFile(blob); setAvatarPreview(URL.createObjectURL(blob)); }}
+              />
+            )}
           </label>
 
           {/* Display Name */}

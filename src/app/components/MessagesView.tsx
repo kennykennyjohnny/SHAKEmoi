@@ -9,11 +9,12 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useBackHandler } from '../../lib/navigation';
 import { circleLink } from '../../lib/links';
-import { MediaImg, thumb, defaultAvatar, compressImage, extFor } from '../../lib/media';
+import { MediaImg, defaultAvatar, avatarThumb } from '../../lib/media';
 import { friendlyError } from '../../lib/errors';
 import { formatListTime } from '../../lib/dates';
 import { openProfile } from '../../lib/appNav';
 import { ChatThread } from './ChatThread';
+import { ImageCropDialog } from './ImageCropDialog';
 import { circlePreviewText, dmPreviewText } from '../../lib/chat';
 import { useSwipeTabs } from '../../lib/useSwipeTabs';
 
@@ -31,7 +32,7 @@ const MSG_TABS = ['dms', 'circles'] as const;
 type MsgTab = typeof MSG_TABS[number];
 
 export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewOptions, inboxCounts }: MessagesViewProps) {
-  const { initialTab, openPartnerId = null, openCircleId = null, nonce = 0 } = viewOptions || {};
+  const { initialTab, openPartnerId = null, openPartner = null, openCircleId = null, nonce = 0, reset = 0 } = viewOptions || {};
   // Onglet gardé à l'actualisation et au retour (N2), sauf ouverture demandée.
   const [tab, setTabState] = useState<MsgTab>(() => {
     if (initialTab) return initialTab;
@@ -41,7 +42,12 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
   // Ouverture depuis la colonne de gauche (ordinateur) ou une notif alors
   // qu'on est déjà dans Messages : on suit l'onglet demandé.
   useEffect(() => { if (initialTab) setTab(initialTab); }, [viewOptions]); // eslint-disable-line react-hooks/exhaustive-deps
-  const [inSubView, setInSubView] = useState(false);
+  // Une conversation ouverte PAR onglet (avant : un seul drapeau pour les deux,
+  // d'où un écran incohérent en passant d'un privé à un cercle depuis la colonne).
+  const [sub, setSub] = useState({ dms: false, circles: false });
+  const inSubView = sub[tab];
+  const setDmsSub = (v: boolean) => setSub((s) => (s.dms === v ? s : { ...s, dms: v }));
+  const setCirclesSub = (v: boolean) => setSub((s) => (s.circles === v ? s : { ...s, circles: v }));
   // Un compteur par onglet : le + n'ouvre que l'écran de l'onglet affiché.
   const [fab, setFab] = useState({ dms: 0, circles: 0 });
 
@@ -79,10 +85,10 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
       <div ref={swipe.ref} className="flex-1 min-h-0 overflow-hidden" {...swipe.handlers}>
         <div className="flex h-full" style={swipe.trackStyle}>
           <div className="w-full flex-shrink-0 flex flex-col min-h-0 overflow-hidden" aria-hidden={tab !== 'dms'}>
-            <DmsPanel currentUser={currentUser} onSubViewActive={setInSubView} fabTrigger={fab.dms} openPartnerId={openPartnerId} openNonce={nonce} />
+            <DmsPanel currentUser={currentUser} onSubViewActive={setDmsSub} fabTrigger={fab.dms} openPartnerId={openPartnerId} openPartner={openPartner} openNonce={nonce} resetNonce={reset} />
           </div>
           <div className="w-full flex-shrink-0 flex flex-col min-h-0 overflow-hidden" aria-hidden={tab !== 'circles'}>
-            <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setInSubView} fabTrigger={fab.circles} openCircleId={openCircleId} openNonce={nonce} />
+            <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setCirclesSub} fabTrigger={fab.circles} openCircleId={openCircleId} openNonce={nonce} resetNonce={reset} />
           </div>
         </div>
       </div>
@@ -155,7 +161,7 @@ function NewConvoSearch({ friends, onSelect, onClose }: { friends: any[]; onSele
         <div className="space-y-0.5 max-h-52 overflow-y-auto">
           {results.map((f: any) => (
             <button key={f.id} onClick={() => onSelect(f)} className="w-full flex items-center gap-2.5 p-2 hover:bg-violet-900/25 rounded-lg transition-colors">
-              <img loading="lazy" src={thumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+              <img loading="lazy" src={avatarThumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
               <div className="text-left min-w-0">
                 <p className="text-sm font-medium truncate">{f.display_name || f.username}</p>
                 <p className="text-xs text-purple-300/60">@{f.username}</p>
@@ -172,7 +178,7 @@ function NewConvoSearch({ friends, onSelect, onClose }: { friends: any[]; onSele
 
 // ==================== DMs ====================
 
-function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, openNonce }: { currentUser: any; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openPartnerId?: string | null; openNonce?: number }) {
+function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, openPartner, openNonce, resetNonce }: { currentUser: any; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openPartnerId?: string | null; openPartner?: any; openNonce?: number; resetNonce?: number }) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<{ partner: any; unread: number } | null>(null);
@@ -190,12 +196,19 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
 
   useEffect(() => { loadConversations(); }, []);
   // Ouverture directe d'une conversation (notification, profil, colonne ordinateur, D1).
+  // Clics rapides (colonne ordinateur, P13) : seule la DERNIÈRE demande compte,
+  // une réponse plus lente ne peut plus ouvrir la mauvaise conversation.
+  const openReq = useRef(0);
   useEffect(() => {
     if (!openPartnerId) return;
+    const req = ++openReq.current;
+    if (openPartner?.id === openPartnerId) { openConversation(openPartner); return; }
     supabase.from('users_profile').select('id, username, display_name, profile_album_cover_url')
       .eq('id', openPartnerId).maybeSingle()
-      .then(({ data }) => { if (data) openConversation(data); });
+      .then(({ data }) => { if (data && req === openReq.current) openConversation(data); });
   }, [openPartnerId, openNonce]); // eslint-disable-line react-hooks/exhaustive-deps
+  // « Messages » dans le menu : retour à la liste.
+  useEffect(() => { if (resetNonce && active) closeConversation(); }, [resetNonce]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!fabTrigger) return;
     setShowNewConvo(true);
@@ -266,7 +279,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
             return (
               <button key={c.partnerId} onClick={() => openConversation(c.partner)} className="w-full flex items-center gap-3 px-3 py-3 hover:bg-violet-950/25 rounded-xl transition-colors">
                 <div className="relative flex-shrink-0">
-                  <img loading="lazy" src={thumb(c.partner?.profile_album_cover_url) || defaultAvatar(c.partner?.username)} className="w-12 h-12 rounded-full object-cover ring-1 ring-purple-700/30" alt="" />
+                  <img loading="lazy" src={avatarThumb(c.partner?.profile_album_cover_url) || defaultAvatar(c.partner?.username)} className="w-12 h-12 rounded-full object-cover ring-1 ring-purple-700/30" alt="" />
                   {unread && (
                     <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-pink-500 border-2 border-[#1E1440] rounded-full text-[9px] font-bold flex items-center justify-center text-white">{c.unreadCount || '♥'}</span>
                   )}
@@ -296,7 +309,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
 
 // ==================== Cercles ====================
 
-function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigger, openCircleId, openNonce }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openCircleId?: string | null; openNonce?: number }) {
+function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigger, openCircleId, openNonce, resetNonce }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openCircleId?: string | null; openNonce?: number; resetNonce?: number }) {
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -316,12 +329,25 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
     return () => { window.removeEventListener('shakemoi:circles-changed', onChanged); supabase.removeChannel(channel); };
   }, []);
   // Ouverture directe d'un cercle (depuis une notification, D1).
+  // Cercle pas encore dans la liste (on vient d'y entrer) : on recharge une fois.
+  const reloadedFor = useRef<string | null>(null);
   useEffect(() => {
-    if (openCircleId && circles.some(c => c.id === openCircleId)) {
+    if (!openCircleId) return;
+    if (circles.some(c => c.id === openCircleId)) {
       setSelectedCircleId(openCircleId);
+      setShowCreate(false);
       onSubViewActive?.(true);
+    } else if (!loading && reloadedFor.current !== `${openCircleId}-${openNonce}`) {
+      reloadedFor.current = `${openCircleId}-${openNonce}`;
+      load(true);
     }
-  }, [openCircleId, circles.length, openNonce]);
+  }, [openCircleId, circles.length, openNonce, loading]); // eslint-disable-line react-hooks/exhaustive-deps
+  // « Messages » dans le menu : retour à la liste.
+  useEffect(() => {
+    if (!resetNonce || !selectedCircleId) return;
+    setSelectedCircleId(null);
+    onSubViewActive?.(false);
+  }, [resetNonce]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!fabTrigger) return;
     setShowCreate(true);
@@ -539,7 +565,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
             <div className="flex flex-wrap gap-2 p-3 bg-violet-950/15 rounded-xl border border-purple-500/20">
               {selectedFriends.map(f => (
                 <span key={f.id} className="flex items-center gap-1 bg-purple-600/20 border border-purple-500/30 rounded-full px-2.5 py-1 text-xs">
-                  <img loading="lazy" src={thumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-4 h-4 rounded-full" alt="" />
+                  <img loading="lazy" src={avatarThumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-4 h-4 rounded-full object-cover" alt="" />
                   @{f.username}
                   <button aria-label="Retirer" onClick={() => toggleFriend(f)} className="text-purple-300/60 hover:text-pink-400 ml-0.5"><X className="w-3 h-3" /></button>
                 </span>
@@ -557,7 +583,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
               const selected = !!selectedFriends.find(x => x.id === f.id);
               return (
                 <button key={f.id} onClick={() => toggleFriend(f)} className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all ${selected ? 'bg-purple-600/20 border border-purple-500/30' : 'hover:bg-violet-900/25 border border-transparent'}`}>
-                  <img loading="lazy" src={thumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
+                  <img loading="lazy" src={avatarThumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
                   <div className="flex-1 text-left min-w-0">
                     <p className="text-sm font-medium">{f.display_name || f.username}</p>
                     <p className="text-xs text-purple-300/60">@{f.username}</p>
@@ -720,16 +746,19 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
     else setMsg(friendlyError(r.error, 'Impossible de renommer le cercle. Réessaie.'));
   };
 
-  const uploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const uploadPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file) return;
+    if (file) setCropFile(file);
+  };
+  const uploadCropped = async (cropped: Blob) => {
+    setCropFile(null);
     setUploading(true);
     try {
-      // Photo du cercle : espace public (page d'invitation et aperçu du lien).
-      const small = await compressImage(file, 256);
-      const fileName = `${currentUser.id}/circle-${circle.id}-${Date.now()}.${extFor(small, file.name)}`;
-      const { error } = await supabase.storage.from('avatars').upload(fileName, small, { cacheControl: '31536000', upsert: false, contentType: small.type || undefined });
+      // Photo du cercle déjà cadrée (P11) : espace public (page d'invitation et aperçu du lien).
+      const fileName = `${currentUser.id}/circle-${circle.id}-${Date.now()}.jpg`;
+      const { error } = await supabase.storage.from('avatars').upload(fileName, cropped, { cacheControl: '31536000', upsert: false, contentType: 'image/jpeg' });
       if (error) throw error;
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
       const r = await updateCirclePhoto(circle.id, publicUrl);
@@ -796,6 +825,7 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
                 </span>
               </button>
               <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={uploadPhoto} />
+              {cropFile && <ImageCropDialog file={cropFile} title="Cadre la photo du cercle" onCancel={() => setCropFile(null)} onDone={uploadCropped} />}
             </div>
 
             <div>
@@ -829,7 +859,7 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
                 {sorted.map((m) => (
                   <div key={m.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-purple-900/25">
                     <button onClick={() => openProfile(m.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
-                      <img src={thumb(m.profile_album_cover_url, 64) || defaultAvatar(m.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
+                      <img src={avatarThumb(m.profile_album_cover_url, 64) || defaultAvatar(m.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">{m.display_name || m.username}{m.id === currentUser?.id ? ' (toi)' : ''}</p>
                         <p className="text-xs text-purple-300/60 truncate">@{m.username}</p>
@@ -850,7 +880,7 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
               </div>
               {searchRes.filter((u) => !members.some((m: any) => m.id === u.id)).slice(0, 5).map((u) => (
                 <button key={u.id} onClick={() => add(u)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg text-sm">
-                  <img src={thumb(u.profile_album_cover_url, 64) || defaultAvatar(u.username)} className="w-7 h-7 rounded-full object-cover" alt="" />
+                  <img src={avatarThumb(u.profile_album_cover_url, 64) || defaultAvatar(u.username)} className="w-7 h-7 rounded-full object-cover" alt="" />
                   @{u.username}
                   <span className="ml-auto text-purple-300 text-xs flex items-center gap-1"><Plus className="w-3 h-3" /> Ajouter</span>
                 </button>

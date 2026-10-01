@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { X, Search, Loader2, UserPlus, UserCheck } from 'lucide-react';
 import { getFollowList, getMutualFollowers, FOLLOW_PAGE, followUser, unfollowUser, followErrorMessage, removeFollower } from '../../lib/database';
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { useBackHandler } from '../../lib/navigation';
 import { openProfile } from '../../lib/appNav';
 
@@ -134,7 +134,7 @@ export function FollowListSheet({ userId, username, kind, myId, isOwn = false, o
             {items.map((u) => (
               <div key={u.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-purple-900/25">
                 <button onClick={() => openProfile(u.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
-                  <img loading="lazy" src={thumb(u.profile_album_cover_url, 128) || defaultAvatar(u.username)} alt="" className="w-11 h-11 rounded-full object-cover flex-shrink-0" />
+                  <img loading="lazy" src={avatarThumb(u.profile_album_cover_url, 128) || defaultAvatar(u.username)} alt="" className="w-11 h-11 rounded-full object-cover flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="font-semibold text-sm text-white truncate">{u.display_name || u.username}</p>
                     <p className="text-xs text-purple-300/60 truncate flex items-center gap-1.5">
@@ -200,7 +200,7 @@ export function MutualFollowersLine({ userId, onOpen }: { userId: string; onOpen
     <button onClick={onOpen} className="mt-3 flex items-center gap-2 text-left w-full">
       <div className="flex -space-x-2 flex-shrink-0">
         {data.users.slice(0, 3).map((u) => (
-          <img key={u.id} src={thumb(u.profile_album_cover_url, 64) || defaultAvatar(u.username)} alt="" className="w-6 h-6 rounded-full object-cover ring-2 ring-[#1E1440]" />
+          <img key={u.id} src={avatarThumb(u.profile_album_cover_url, 64) || defaultAvatar(u.username)} alt="" className="w-6 h-6 rounded-full object-cover ring-2 ring-[#1E1440]" />
         ))}
       </div>
       <p className="text-xs text-purple-200/80 leading-snug">

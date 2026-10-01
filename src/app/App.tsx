@@ -23,7 +23,7 @@ import { Slogan } from './components/Slogan';
 import { InstallAppButton } from './components/InstallAppButton';
 import { FinishProfileDialog, ResetPasswordDialog } from './components/AccountDialogs';
 
-import { defaultAvatar, thumb } from '../lib/media';
+import { defaultAvatar, avatarThumb } from '../lib/media';
 import { isNotifTypeShown, loadNotifPrefs } from '../lib/notify';
 import { syncPushSubscription } from '../lib/push';
 
@@ -613,8 +613,7 @@ export default function App() {
       {isXl && <aside className="hidden xl:block w-80 border-r border-violet-900/30 overflow-hidden">
         <DesktopInbox
           currentUser={currentUser}
-          activePartnerId={currentView === 'messages' ? viewOptions?.openPartnerId : null}
-          onOpenConversation={(partner) => { setViewOptions({ initialTab: 'dms', openPartnerId: partner.id, nonce: Date.now() }); setCurrentView('messages'); }}
+          onOpenConversation={(partner) => { setViewOptions({ initialTab: 'dms', openPartnerId: partner.id, openPartner: partner, nonce: Date.now() }); setCurrentView('messages'); }}
           onOpenCircle={(circleId) => { setViewOptions({ initialTab: 'circles', openCircleId: circleId, nonce: Date.now() }); setCurrentView('messages'); }}
         />
       </aside>}
@@ -733,7 +732,7 @@ export default function App() {
           ]).map(({ view, icon: Icon, label }) => (
             <button
               key={view}
-              onClick={() => { if (view === 'messages') { setViewOptions({}); } if (view === 'feed') setRefreshFeed(p => p + 1); setCurrentView(view); }}
+              onClick={() => { if (view === 'messages') { setViewOptions({ reset: Date.now() }); } if (view === 'feed') setRefreshFeed(p => p + 1); setCurrentView(view); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors relative ${
                 currentView === view ? 'bg-purple-500/10 text-purple-400' : 'text-purple-300/60 hover:bg-violet-900/25'
               }`}
@@ -765,7 +764,7 @@ export default function App() {
               onClick={() => setCurrentView('profile')}
               className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-violet-900/25 transition-colors"
             >
-              <img loading="lazy" src={thumb(currentUser.avatar)} alt="" className="w-10 h-10 rounded-full object-cover" />
+              <img loading="lazy" src={avatarThumb(currentUser.avatar)} alt="" className="w-10 h-10 rounded-full object-cover" />
               <div className="flex-1 min-w-0 text-left">
                 <p className="font-semibold text-sm truncate">{currentUser.displayName}</p>
                 <p className="text-xs text-purple-300/60 truncate">@{currentUser.username}</p>

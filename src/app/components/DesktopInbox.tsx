@@ -1,31 +1,45 @@
 // Colonne de gauche sur ordinateur (M7) : conversations récentes et cercles,
 // avec pastilles de non-lus. Un clic ouvre la conversation ou le cercle.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MessageCircle, Users, Loader2 } from 'lucide-react';
 import { getConversations, getUserCirclesByActivity } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
-import { thumb, defaultAvatar, MediaImg } from '../../lib/media';
+import { defaultAvatar, MediaImg, avatarThumb } from '../../lib/media';
 import { formatListTime } from '../../lib/dates';
 import { circlePreviewText, dmPreviewText } from '../../lib/chat';
+import { useActiveChat } from '../../lib/activeChat';
 
 interface Props {
   currentUser: any;
-  activePartnerId?: string | null;
   onOpenConversation: (partner: any) => void;
   onOpenCircle: (circleId: string) => void;
 }
 
 
-export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation, onOpenCircle }: Props) {
+export function DesktopInbox({ currentUser, onOpenConversation, onOpenCircle }: Props) {
+  // Ce qui est ouvert au centre, vu par la même source que l'écran Messages (P13).
+  const active = useActiveChat();
+  const activePartnerId = active?.kind === 'dm' ? active.id : null;
+  const activeCircleId = active?.kind === 'circle' ? active.id : null;
   const [conversations, setConversations] = useState<any[]>([]);
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Plusieurs évènements d'affilée (message + like + lu) : un seul rechargement,
+  // et une réponse plus ancienne n'écrase jamais une plus récente.
+  const seq = useRef(0);
+  const timer = useRef<number | null>(null);
   const load = async () => {
-    const [c, g] = await Promise.all([getConversations().catch(() => []), getUserCirclesByActivity().catch(() => [])]);
-    setConversations(c);
-    setCircles(g);
+    const id = ++seq.current;
+    const [c, g] = await Promise.all([getConversations().catch(() => null), getUserCirclesByActivity().catch(() => null)]);
+    if (id !== seq.current) return;
+    if (c) setConversations(c);
+    if (g) setCircles(g);
     setLoading(false);
+  };
+  const reload = () => {
+    if (timer.current) window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(load, 250);
   };
 
   useEffect(() => {
@@ -34,11 +48,17 @@ export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation,
     // En direct : un message reçu ou une conversation lue met la liste à jour.
     const channel = supabase
       .channel(`desktop-inbox-${currentUser.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${currentUser.id}` }, () => load())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${currentUser.id}` }, reload)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, reload)
       // Un nouveau message de cercle fait remonter ce cercle en haut (P13).
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'circle_messages' }, () => load())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'circle_messages' }, reload)
+      // Ajouté à un cercle, cercle renommé ou nouvelle photo, likes reçus.
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'circle_members', filter: `user_id=eq.${currentUser.id}` }, reload)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'circles' }, reload)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_likes' }, reload)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'circle_message_likes' }, reload)
       .subscribe();
-    const onRead = () => load();
+    const onRead = () => reload();
     window.addEventListener('shakemoi:messages-read', onRead);
     window.addEventListener('shakemoi:circles-changed', onRead);
     return () => { supabase.removeChannel(channel); window.removeEventListener('shakemoi:messages-read', onRead); window.removeEventListener('shakemoi:circles-changed', onRead); };
@@ -59,11 +79,12 @@ export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation,
             {conversations.slice(0, 12).map((c) => (
               <button
                 key={c.partnerId}
+                data-testid="inbox-item" data-title={c.partner?.display_name || c.partner?.username}
                 onClick={() => onOpenConversation(c.partner)}
                 className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-left transition-colors ${activePartnerId === c.partnerId ? 'bg-violet-900/40' : 'hover:bg-violet-900/25'}`}
               >
                 <div className="relative flex-shrink-0">
-                  <img loading="lazy" src={thumb(c.partner?.profile_album_cover_url, 128) || defaultAvatar(c.partner?.username)} alt="" className="w-10 h-10 rounded-full object-cover" />
+                  <img loading="lazy" src={avatarThumb(c.partner?.profile_album_cover_url, 128) || defaultAvatar(c.partner?.username)} alt="" className="w-10 h-10 rounded-full object-cover" />
                   {c.unreadCount > 0 && !c.muted && (
                     <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 bg-pink-500 border-2 border-[#1E1440] rounded-full text-[9px] font-bold flex items-center justify-center text-white">
                       {c.unreadCount > 9 ? '9+' : c.unreadCount}
@@ -96,8 +117,9 @@ export function DesktopInbox({ currentUser, activePartnerId, onOpenConversation,
             {circles.map((g) => (
               <button
                 key={g.id}
+                data-testid="inbox-item" data-title={g.name}
                 onClick={() => onOpenCircle(g.id)}
-                className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-left hover:bg-violet-900/25 transition-colors"
+                className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-left transition-colors ${activeCircleId === g.id ? 'bg-violet-900/40' : 'hover:bg-violet-900/25'}`}
               >
                 <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
                   {g.photo_url ? (

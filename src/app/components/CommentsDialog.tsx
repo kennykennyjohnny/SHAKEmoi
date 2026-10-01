@@ -8,7 +8,7 @@ import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { MyAppLogo } from './PlatformLogo';
 import { useBackHandler } from '../../lib/navigation';
 import { openProfile } from '../../lib/appNav';
@@ -188,7 +188,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
                   <div key={comment.id} className="flex gap-3">
                     <button onClick={() => openProfile(comment.user_id || comment.user?.id)} aria-label={`Profil de @${comment.user?.username || ''}`} className="flex-shrink-0 self-start">
                       <img loading="lazy"
-                        src={thumb(comment.user?.profile_album_cover_url) || defaultAvatar(comment.user?.username || 'U')}
+                        src={avatarThumb(comment.user?.profile_album_cover_url) || defaultAvatar(comment.user?.username || 'U')}
                         alt=""
                         className="w-8 h-8 rounded-full object-cover ring-1 ring-purple-700/30"
                       />
@@ -248,7 +248,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
                   <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <button onClick={() => openProfile(r.user_id || r.user?.id)} className="flex items-center gap-2">
-                        <img loading="lazy" src={thumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full" alt="" />
+                        <img loading="lazy" src={avatarThumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full object-cover" alt="" />
                         <span className="text-xs font-medium hover:underline">@{r.user?.username}</span>
                       </button>
                       {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}

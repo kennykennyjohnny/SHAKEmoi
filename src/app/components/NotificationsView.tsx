@@ -7,7 +7,7 @@ import { getUserNotifications, followUser, followErrorMessage, unfollowUser, get
 import { supabase } from '../../lib/supabase';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { thumb, defaultAvatar, avatarThumb } from '../../lib/media';
 interface NotificationsViewProps {
   currentUser: any;
   onNavigateToPost?: (postId: string) => void;
@@ -198,7 +198,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
                 className="flex-shrink-0"
               >
                 <img loading="lazy"
-                  src={thumb(notif.actor_avatar) || defaultAvatar(notif.actor_username)}
+                  src={avatarThumb(notif.actor_avatar) || defaultAvatar(notif.actor_username)}
                   alt={notif.actor_username}
                   className="w-9 h-9 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-fuchsia-500 transition-all"
                 />

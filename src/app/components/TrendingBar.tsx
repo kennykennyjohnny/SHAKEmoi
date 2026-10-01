@@ -6,6 +6,7 @@ import { AnimatePresence } from 'motion/react';
 import { getTopPosts } from '../../lib/database';
 import { SendSongDialog } from './SendSongDialog';
 import { SongCover } from './SongCover';
+import { openPost } from '../../lib/appNav';
 
 export function TrendingBar({ limit = 10, onSeeAll }: { limit?: number; onSeeAll?: () => void }) {
   const [items, setItems] = useState<any[]>([]);
@@ -56,14 +57,15 @@ export function TrendingBar({ limit = 10, onSeeAll }: { limit?: number; onSeeAll
                 previewUrl={post.preview_url} spotifyId={post.track_id} spotifyUrl={post.spotify_url}
                 className="w-10 h-10" rounded="rounded-md" iconSize="sm"
               />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-white truncate">{post.track_name}</p>
+              {/* Toucher le titre ouvre le post complet (P2). */}
+              <button onClick={() => openPost(post.id)} className="flex-1 min-w-0 text-left">
+                <p className="text-xs font-semibold text-white truncate hover:underline">{post.track_name}</p>
                 <p className="text-[11px] text-purple-300/60 truncate">{post.artist}</p>
                 <div className="flex items-center gap-2 text-[10px] text-purple-300/60">
                   <span className="flex items-center gap-0.5 text-pink-400/80"><Heart className="w-2.5 h-2.5" />{post.likes_count || 0}</span>
                   <span className="flex items-center gap-0.5"><MessageCircle className="w-2.5 h-2.5" />{post.comments_count || 0}</span>
                 </div>
-              </div>
+              </button>
               <button
                 onClick={() => setSendSongTrack({ id: post.track_id, title: post.track_name, artist: post.artist, coverUrl: post.cover_url, spotifyUrl: post.spotify_url })}
                 aria-label="Envoyer à quelqu'un"

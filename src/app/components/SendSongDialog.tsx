@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { searchUsers, sendSongNotification } from '../../lib/database';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { useBackHandler } from '../../lib/navigation';
 interface SendSongDialogProps {
   track: any;
@@ -132,7 +132,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
                   }`}
                 >
                   <img loading="lazy"
-                    src={thumb(user.profile_album_cover_url) || defaultAvatar(user.username)}
+                    src={avatarThumb(user.profile_album_cover_url) || defaultAvatar(user.username)}
                     alt={user.username}
                     className="w-10 h-10 rounded-full object-cover"
                   />

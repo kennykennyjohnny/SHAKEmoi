@@ -3,9 +3,10 @@ import { motion } from 'motion/react';
 import { useState, useRef } from 'react';
 import { updateUserProfile } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
-import { compressImage, extFor, thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { normalizeUsername, usernameError, isUsernameTaken } from '../../lib/username';
 import { useBackHandler } from '../../lib/navigation';
+import { ImageCropDialog } from './ImageCropDialog';
 
 interface EditProfileDialogProps {
   currentUser: any;
@@ -27,21 +28,24 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // P11 : on cadre d'abord la photo (carré), puis on envoie l'image recadrée.
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
+    e.target.value = '';
+    if (file) setCropFile(file);
+  };
+  const uploadCropped = async (cropped: Blob) => {
+    setCropFile(null);
     try {
       setLoading(true);
       setError(null);
-      // Photo de profil : 256 px suffisent (affichée en 28 à 96 px).
-      const small = await compressImage(file, 256, 0.82);
-      // Dossier à son nom : la base refuse d'écrire ailleurs (sécurité).
-      const filePath = `${currentUser.id}/avatar-${Date.now()}.${extFor(small, file.name)}`;
+      // Carré 512 px déjà cadré ; dossier à son nom (la base refuse ailleurs).
+      const filePath = `${currentUser.id}/avatar-${Date.now()}.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, small, { cacheControl: '31536000', upsert: false, contentType: small.type || undefined });
+        .upload(filePath, cropped, { cacheControl: '31536000', upsert: false, contentType: 'image/jpeg' });
 
       if (uploadError) throw uploadError;
 
@@ -133,7 +137,7 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
             </label>
             <div className="flex items-center gap-4">
               <img loading="lazy"
-                src={thumb(formData.avatar) || defaultAvatar(formData.username)}
+                src={avatarThumb(formData.avatar) || defaultAvatar(formData.username)}
                 alt="Avatar"
                 className="w-20 h-20 rounded-full object-cover ring-2 ring-purple-500"
               />
@@ -269,6 +273,7 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
           </div>
         </form>
       </motion.div>
+      {cropFile && <ImageCropDialog file={cropFile} title="Cadre ta photo de profil" onCancel={() => setCropFile(null)} onDone={uploadCropped} />}
     </div>
   );
 }

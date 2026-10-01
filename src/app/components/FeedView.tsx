@@ -18,7 +18,7 @@ import { circleLink, postLink } from '../../lib/links';
 import { SongShareSheet } from './SongShareSheet';
 import { openExternal, normalizePlatform, PLATFORM_LABELS } from '../../lib/platforms';
 import { LikersSheet } from './LikersSheet';
-import { MediaImg, thumb, defaultAvatar, compressImage } from '../../lib/media';
+import { MediaImg, defaultAvatar, compressImage, avatarThumb } from '../../lib/media';
 import { searchGifs, GIF_ERROR_TEXT } from '../../lib/gifs';
 import { friendlyError } from '../../lib/errors';
 import { MyAppLogo } from './PlatformLogo';
@@ -205,7 +205,7 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
                       if (!user) return null;
                       return (
                         <div key={m.user_id} className="flex items-center gap-2">
-                          <img loading="lazy" src={thumb(user.profile_album_cover_url) || defaultAvatar(user.username)} alt="" className="w-7 h-7 rounded-full object-cover" />
+                          <img loading="lazy" src={avatarThumb(user.profile_album_cover_url) || defaultAvatar(user.username)} alt="" className="w-7 h-7 rounded-full object-cover" />
                           <span className="text-sm text-white flex-1 truncate">{user.display_name || user.username}</span>
                           <span className="text-[10px] text-purple-300/60">@{user.username}</span>
                         </div>
@@ -714,12 +714,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             id: originalUser.id || '',
             username: originalUser.username || '',
             displayName: originalUser.display_name || originalUser.username || '',
-            avatar: thumb(originalUser.profile_album_cover_url) || defaultAvatar(originalUser.username)
+            avatar: avatarThumb(originalUser.profile_album_cover_url) || defaultAvatar(originalUser.username)
           } : {
             id: reshakerUser.id || '',
             username: reshakerUser.username || '',
             displayName: reshakerUser.display_name || reshakerUser.username || '',
-            avatar: thumb(reshakerUser.profile_album_cover_url) || defaultAvatar(reshakerUser.username)
+            avatar: avatarThumb(reshakerUser.profile_album_cover_url) || defaultAvatar(reshakerUser.username)
           },
           track: {
             id: displayTrack?.track_id || trackId || post.id,
@@ -1160,7 +1160,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     {hasOwn && <StoryWaveRing />}
                     <div className={`w-[62px] h-[62px] rounded-full overflow-hidden relative z-10 ${!hasOwn ? 'ring-2 ring-purple-800/50' : ''}`}>
                       <img loading="lazy"
-                        src={thumb(currentUser?.avatar) || defaultAvatar(currentUser?.username || 'M')}
+                        src={avatarThumb(currentUser?.avatar) || defaultAvatar(currentUser?.username || 'M')}
                         className="w-full h-full object-cover"
                         alt=""
                       />
@@ -1204,7 +1204,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   const user = firstStory.user;
                   const allViewed = group.every((s: any) => !!storyViewedMap[s.id]);
                   const count = group.length;
-                  const avatarSrc = thumb(user?.profile_album_cover_url) || thumb(user?.avatar) || defaultAvatar(user?.username || 'U');
+                  const avatarSrc = avatarThumb(user?.profile_album_cover_url) || avatarThumb(user?.avatar) || defaultAvatar(user?.username || 'U');
                   return (
                     <button
                       key={user?.id || firstStory.user_id}

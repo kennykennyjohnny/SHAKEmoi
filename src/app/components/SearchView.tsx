@@ -11,7 +11,7 @@ import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
 import { setPendingAction, type PendingAction } from '../../lib/pendingAction';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 interface SearchViewProps {
   currentUser?: any;
   onRefreshFeed?: () => void;
@@ -436,7 +436,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
               >
                 <button onClick={() => setProfilePreview({ userId: user.id, username: user.username })} className="flex-shrink-0">
                   <img loading="lazy"
-                    src={thumb(user.profile_album_cover_url) || defaultAvatar(user.username)}
+                    src={avatarThumb(user.profile_album_cover_url) || defaultAvatar(user.username)}
                     alt={user.username}
                     className="w-12 h-12 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-fuchsia-500 transition-all"
                   />

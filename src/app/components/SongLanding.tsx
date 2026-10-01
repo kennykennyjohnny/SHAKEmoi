@@ -14,7 +14,7 @@ import { Logo } from './Logo';
 import { Slogan } from './Slogan';
 import { SongShareSheet } from './SongShareSheet';
 import { PLATFORM_BUTTONS } from './PlatformButtons';
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 
 // SHAKEMOI - Page publique d'un son partagé : LA MÊME pour tout le monde,
 // qu'on arrive par un lien de son (/s/) ou de post (/p/), connecté ou non.
@@ -218,7 +218,7 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
         <Logo size="sm" animated={false} showText={true} href="/" />
         {currentUser ? (
           <button onClick={onOpenApp} className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold hover:bg-white/15 transition-colors">
-            <img loading="lazy" src={thumb(currentUser.avatar) || defaultAvatar(currentUser.username)} alt="" className="w-6 h-6 rounded-full object-cover" />
+            <img loading="lazy" src={avatarThumb(currentUser.avatar) || defaultAvatar(currentUser.username)} alt="" className="w-6 h-6 rounded-full object-cover" />
             Mon compte
           </button>
         ) : (
@@ -238,7 +238,7 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
           {sharer ? (
             <>
               {sharer.avatar
-                ? <img loading="lazy" src={thumb(sharer.avatar) || sharer.avatar} alt="" className="w-7 h-7 rounded-full object-cover ring-2 ring-fuchsia-500/40" />
+                ? <img loading="lazy" src={avatarThumb(sharer.avatar) || sharer.avatar} alt="" className="w-7 h-7 rounded-full object-cover ring-2 ring-fuchsia-500/40" />
                 : <span className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-xs font-bold">{sharer.username[0]?.toUpperCase()}</span>}
               <span className="text-purple-100/90">
                 {isMe ? 'Tu as partagé ce son' : <><b className="text-white">{sharerName}</b> t'a partagé ce son</>}

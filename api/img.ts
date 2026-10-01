@@ -28,9 +28,15 @@ export async function GET(req: Request) {
     const res = await fetch(src, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) return Response.redirect(src, 302);
     const input = Buffer.from(await res.arrayBuffer());
+    // sq=1 (avatars, P11) : carré recadré sur la zone la plus détaillée
+    // (« entropy » : garde le visage, testé sur les vrais avatars), au lieu du
+    // milieu d'une photo verticale qui coupait les visages.
+    const square = url.searchParams.get('sq') === '1';
     const out = await sharp(input, { failOn: 'none' })
       .rotate() // respecte l'orientation des photos de téléphone
-      .resize({ width, withoutEnlargement: true })
+      .resize(square
+        ? { width, height: width, fit: 'cover', position: sharp.strategy.entropy }
+        : { width, withoutEnlargement: true })
       .webp({ quality: 78 })
       .toBuffer();
     return new Response(new Uint8Array(out), {

@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';
 
-import { thumb, defaultAvatar } from '../../lib/media';
+import { defaultAvatar, avatarThumb } from '../../lib/media';
 interface Props {
   circleId: string;
   currentUser: any | null;
@@ -168,7 +168,7 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
                     initial={{ scale: 0, x: -20 }}
                     animate={{ scale: 1, x: 0 }}
                     transition={{ delay: 0.3 + i * 0.1 }}
-                    src={thumb(m.profile_album_cover_url) || defaultAvatar(m.username)}
+                    src={avatarThumb(m.profile_album_cover_url) || defaultAvatar(m.username)}
                     className="w-10 h-10 rounded-full object-cover border-2 border-[#1E1440]"
                     alt={m.username}
                   />
