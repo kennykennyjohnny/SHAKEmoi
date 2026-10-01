@@ -696,6 +696,23 @@ export async function getLikedCommentIds(commentIds: string[]): Promise<Set<stri
 
 // ==================== FOLLOWS ====================
 
+/** P3 : personnes que je suis et qui suivent cette personne (+ le total). */
+export async function getMutualFollowers(userId: string, limit = 3, offset = 0): Promise<{ users: any[]; total: number }> {
+  const { data, error } = await supabase.rpc('get_mutual_followers', { p_user: userId, p_limit: limit, p_offset: offset });
+  if (error) throw error;
+  return { users: data || [], total: Number(data?.[0]?.total) || 0 };
+}
+
+/** P4 : abonnés / abonnements d'un profil, avec « je suis » et « me suit ». */
+export const FOLLOW_PAGE = 30;
+export async function getFollowList(userId: string, kind: 'followers' | 'following', search = '', offset = 0): Promise<any[]> {
+  const { data, error } = await supabase.rpc('get_follow_list', {
+    p_user: userId, p_kind: kind, p_search: search.trim() || null, p_limit: FOLLOW_PAGE, p_offset: offset,
+  });
+  if (error) throw error;
+  return data || [];
+}
+
 export async function followUser(targetUserId: string) {
   try {
     const user = await getCurrentUser();

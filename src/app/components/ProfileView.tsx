@@ -1,11 +1,11 @@
-import { Archive, Pin, Settings, Loader2, Edit3, X, UserMinus, Share2, Copy, Check } from 'lucide-react';
+import { Archive, Pin, Settings, Edit3, X, Share2, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { ProfileGrid } from './ProfileGrid';
+import { FollowListSheet } from './FollowListSheet';
 import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
-import { ProfilePreviewDialog } from './ProfilePreviewDialog';
-import { getUserShakeCount, getUserFollowersCount, getUserFollowingCount, getUserFollowers, getUserFollowing, unfollowUser, followErrorMessage, removeFollower, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
+import { getUserShakeCount, getUserFollowersCount, getUserFollowingCount, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { StoryArchiveDialog } from './StoryArchiveDialog';
 import { inviteLink, profileLink } from '../../lib/links';
@@ -20,10 +20,6 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showFollowersList, setShowFollowersList] = useState<'followers' | 'following' | null>(null);
-  const [followersList, setFollowersList] = useState<any[]>([]);
-  const [followingList, setFollowingList] = useState<any[]>([]);
-  const [loadingList, setLoadingList] = useState(false);
-  const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [showShareProfile, setShowShareProfile] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [activeStories, setActiveStories] = useState<any[]>([]);
@@ -83,43 +79,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
     }
   };
 
-  const loadFollowersList = async (type: 'followers' | 'following') => {
-    setShowFollowersList(type);
-    setLoadingList(true);
-    try {
-      if (type === 'followers') {
-        const data = await getUserFollowers(user.id);
-        setFollowersList(data);
-      } else {
-        const data = await getUserFollowing(user.id);
-        setFollowingList(data);
-      }
-    } catch (err) {
-      console.error('Error loading list:', err);
-    } finally {
-      setLoadingList(false);
-    }
-  };
-
-  const handleUnfollow = async (targetUserId: string) => {
-    try {
-      const r = await unfollowUser(targetUserId); if (!r.success) { alert(followErrorMessage(r.error)); return; }
-      setFollowingList(followingList.filter(u => u.id !== targetUserId));
-      setStats({ ...stats, following: Math.max(0, stats.following - 1) });
-    } catch (err) {
-      console.error('Error unfollowing:', err);
-    }
-  };
-
-  const handleRemoveFollower = async (followerId: string) => {
-    try {
-      await removeFollower(followerId);
-      setFollowersList(followersList.filter(u => u.id !== followerId));
-      setStats({ ...stats, followers: Math.max(0, stats.followers - 1) });
-    } catch (err) {
-      console.error('Error removing follower:', err);
-    }
-  };
+  const loadFollowersList = (type: 'followers' | 'following') => setShowFollowersList(type);
 
   return (
     <div className="w-full max-w-2xl mx-auto flex-1 overflow-y-auto pb-[var(--nav-h)] lg:pb-4">
@@ -245,89 +205,18 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         onDeleted={(wasShake: boolean) => { if (wasShake) setStats(st => ({ ...st, shakes: Math.max(0, st.shakes - 1) })); }}
       />
 
-      {/* Followers / Following List Dialog */}
+      {/* Abonnés / abonnements : même feuille que pour les autres profils (P4) */}
       <AnimatePresence>
         {showFollowersList && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowFollowersList(null)}
-          >
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-[#1D0F3D] rounded-2xl w-full max-w-sm max-h-[70dvh] flex flex-col border border-purple-800/30"
-            >
-              {/* Header */}
-              <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between">
-                <h3 className="font-bold text-white">
-                  {showFollowersList === 'followers' ? `Abonnés (${stats.followers})` : `Abonnements (${stats.following})`}
-                </h3>
-                <button aria-label="Fermer" onClick={() => setShowFollowersList(null)} className="p-1.5 hover:bg-purple-900/40 rounded-full">
-                  <X className="w-5 h-5 text-purple-300/60" />
-                </button>
-              </div>
-
-              {/* List */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                {loadingList ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
-                  </div>
-                ) : (showFollowersList === 'followers' ? followersList : followingList).length === 0 ? (
-                  <p className="text-center text-purple-400/50 py-8">
-                    {showFollowersList === 'followers' ? 'Aucun abonné' : 'Aucun abonnement'}
-                  </p>
-                ) : (
-                  (showFollowersList === 'followers' ? followersList : followingList).map((person: any) => (
-                    <div key={person.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-purple-900/30 transition-colors">
-                      <button
-                        onClick={() => { setShowFollowersList(null); setProfilePreview({ userId: person.id, username: person.username }); }}
-                        className="flex items-center gap-3 flex-1 min-w-0 text-left"
-                      >
-                        <img loading="lazy"
-                          src={thumb(person.profile_album_cover_url) || defaultAvatar(person.username)}
-                          alt={person.username}
-                          className="w-10 h-10 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-purple-500 transition-all"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm text-white truncate">{person.display_name || person.username}</p>
-                          <p className="text-xs text-purple-400/50 truncate">@{person.username}</p>
-                        </div>
-                      </button>
-                      {/* Only show unfollow for "following" list, remove for "followers" */}
-                      {showFollowersList === 'following' && (
-                        <button
-                          onClick={() => {
-                            if (confirm(`Ne plus suivre @${person.username} ?`)) handleUnfollow(person.id);
-                          }}
-                          className="p-2 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg transition-colors"
-                          title="Ne plus suivre"
-                        >
-                          <UserMinus className="w-4 h-4 text-pink-400" />
-                        </button>
-                      )}
-                      {showFollowersList === 'followers' && (
-                        <button
-                          onClick={() => {
-                            if (confirm(`Retirer @${person.username} de tes abonnés ?`)) handleRemoveFollower(person.id);
-                          }}
-                          className="p-2 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg transition-colors"
-                          title="Retirer cet abonné"
-                        >
-                          <X className="w-4 h-4 text-pink-400" />
-                        </button>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
+          <FollowListSheet
+            userId={user.id}
+            username={user.username}
+            kind={showFollowersList}
+            myId={user.id}
+            isOwn
+            onClose={() => setShowFollowersList(null)}
+            onCountsChanged={loadUserData}
+          />
         )}
       </AnimatePresence>
 
@@ -348,17 +237,6 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           onUpdateUser={onUpdateUser}
         />
       )}
-
-      {/* Profile Preview */}
-      <AnimatePresence>
-        {profilePreview && (
-          <ProfilePreviewDialog
-            userId={profilePreview.userId}
-            username={profilePreview.username}
-            onClose={() => setProfilePreview(null)}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Share Profile Dialog */}
       <AnimatePresence>

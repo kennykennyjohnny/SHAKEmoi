@@ -3,7 +3,7 @@
 // fil du défilement). « Profil complet » l'agrandit en page entière.
 // Règles d'accès : jamais de post privé ou de cercle (B2, B4), géré par la base.
 import { X, UserPlus, UserCheck, ArrowLeft, Maximize2, MessageCircle } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { getUserProfile, getUserShakeCount, getUserFollowersCount, getUserFollowingCount, followUser, followErrorMessage, unfollowUser, isFollowing, getCachedTasteMatch, calculateTasteMatch, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
@@ -13,6 +13,7 @@ import { ProfileGrid } from './ProfileGrid';
 import { thumb, defaultAvatar } from '../../lib/media';
 import { useBackHandler } from '../../lib/navigation';
 import { openConversation } from '../../lib/appNav';
+import { FollowListSheet, MutualFollowersLine, type FollowListKind } from './FollowListSheet';
 
 interface ProfilePreviewDialogProps {
   userId: string;
@@ -38,6 +39,12 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
   const [isFollowingUser, setIsFollowingUser] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tasteMatch, setTasteMatch] = useState<{ percent: number; commonArtists: string[] } | null>(null);
+  const [list, setList] = useState<FollowListKind | null>(null);
+  const refreshCounts = async () => {
+    if (!profile) return;
+    const [followers, following] = await Promise.all([getUserFollowersCount(profile.id), getUserFollowingCount(profile.id)]);
+    setStats(s => ({ ...s, followers, following }));
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -162,20 +169,23 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                           <p className="text-[10px] text-purple-400/60 uppercase tracking-wider">Shakes</p>
                         </div>
                         <div className="w-px h-8 bg-purple-800/30" />
-                        <div className="text-center">
+                        <button onClick={() => !onRequireAuth && setList('followers')} className="text-center hover:opacity-80">
                           <p className="font-bold text-white text-lg leading-tight">{stats.followers}</p>
                           <p className="text-[10px] text-purple-400/60 uppercase tracking-wider">Abonnés</p>
-                        </div>
+                        </button>
                         <div className="w-px h-8 bg-purple-800/30" />
-                        <div className="text-center">
+                        <button onClick={() => !onRequireAuth && setList('following')} className="text-center hover:opacity-80">
                           <p className="font-bold text-white text-lg leading-tight">{stats.following}</p>
                           <p className="text-[10px] text-purple-400/60 uppercase tracking-wider">Suivis</p>
-                        </div>
+                        </button>
                       </div>
                     </div>
                   </div>
 
                   {profile.bio && <p className="text-sm text-purple-200/80 mt-3 leading-relaxed">{profile.bio}</p>}
+
+                  {/* P3 : abonnés en commun (connecté seulement) */}
+                  {me && !isMe && <MutualFollowersLine userId={profile.id} onOpen={() => setList('mutual')} />}
 
                   {tasteMatch && tasteMatch.percent > 0 && !isMe && (
                     <div className="mt-3 p-2.5 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-xl border border-purple-500/20">
@@ -247,6 +257,12 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
         </div>
       </motion.div>
       </div>
+
+      <AnimatePresence>
+        {list && profile && (
+          <FollowListSheet userId={profile.id} username={profile.username} kind={list} myId={me?.id} onClose={() => setList(null)} onCountsChanged={refreshCounts} />
+        )}
+      </AnimatePresence>
 
       <StoryViewerDialog
         open={!!activeStory}

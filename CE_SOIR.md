@@ -223,3 +223,15 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 3. Dans le post, touche le nom de l'auteur → son profil s'ouvre par-dessus ; retour → le post.
 4. « Profil complet » → page entière ; retour → fermé.
 5. Mon profil : touche une de mes pochettes → poubelle → supprimé, le compteur Shakes baisse.
+
+## Lot 3 — P3 + P4 : abonnés en commun, listes des autres
+| # | Statut | Explication |
+|---|---|---|
+| P3 | ✅ | Sur le profil d'une autre personne : **« Suivi par Léa, Bapt et 4 autres »** avec 3 mini-avatars. Un toucher ouvre la liste complète des abonnés en commun (avatar, nom, @, Suivre, toucher = profil). Calculé **en base** (`get_mutual_followers`), pas en chargeant les listes dans le téléphone. Testé : @kenny et @raph ont 15 abonnés en commun. |
+| P4 | ✅ | Les compteurs **Abonnés** et **Suivis** des autres sont cliquables. Une seule feuille (aussi pour mon profil) : avatar, nom, @, **badge « Vous suit »**, bouton Suivre / Suivi, **les gens que je suis en premier**, **recherche** (pseudo ou nom), pages de 30 avec chargement au défilement. Sur mon profil, la liste de mes abonnés garde « Retirer ». Calcul en base (`get_follow_list`). |
+| Accès | ✅ | Vérifié : la table des abonnements ne contient que des identifiants et une date ; les fonctions ne renvoient que pseudo, nom, avatar (aucun email). Elles sont réservées aux personnes connectées. La table reste lisible publiquement comme avant (les compteurs des pages publiques en dépendent) : rien de sensible dedans. |
+
+**Tests (lot 3)**
+1. Ouvre le profil de quelqu'un que tes potes suivent : la ligne « Suivi par … » apparaît sous la bio ; touche-la → la liste.
+2. Touche « Abonnés » sur son profil → les gens que tu suis sont en haut, « Vous suit » sur ceux qui te suivent ; tape 2 lettres dans la recherche ; suis quelqu'un depuis la liste.
+3. Sur ton profil → Abonnés → « Retirer » sur quelqu'un → il disparaît et ton compteur baisse.
