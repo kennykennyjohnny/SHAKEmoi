@@ -527,7 +527,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                   <div>
                     <label className="text-xs text-purple-300/70 font-medium flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      Durée de la story
+                      Durée du Shake éphémère
                     </label>
                     <div className="flex gap-2 mt-2">
                       {[1, 7, 30].map((days) => (

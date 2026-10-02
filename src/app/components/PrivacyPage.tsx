@@ -75,13 +75,13 @@ export function PrivacyPage({ onBack }: { onBack: () => void }) {
         <Section title="Stockage sur ton appareil">
           <p>
             L'app garde sur ton téléphone ta session de connexion et quelques préférences (plateforme d'écoute,
-            son des stories). Pas de cookie publicitaire ni de mesure d'audience tierce.
+            son des Shakes éphémères). Pas de cookie publicitaire ni de mesure d'audience tierce.
           </p>
         </Section>
 
         <Section title="Combien de temps">
           <p>
-            Tant que ton compte existe. Les stories disparaissent du fil à leur expiration mais restent dans tes
+            Tant que ton compte existe. Les Shakes éphémères disparaissent du fil à leur expiration mais restent dans tes
             archives (visibles de toi seul) jusqu'à ce que tu les supprimes. Quand tu supprimes ton compte, toutes
             tes données sont effacées immédiatement.
           </p>

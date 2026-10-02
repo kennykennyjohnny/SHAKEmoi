@@ -81,7 +81,7 @@ export function StoryArchiveDialog({ currentUser, onClose, onChanged }: Props) {
               <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 text-purple-400 animate-spin" /></div>
             ) : stories.length === 0 ? (
               <p className="text-center text-sm text-purple-300/60 py-16 px-6">
-                Pas encore de story. Publie ton premier shake éphémère : il sera gardé ici.
+                Pas encore de Shake éphémère. Publie ton premier : il sera gardé ici.
               </p>
             ) : (
               groups.map(g => (
