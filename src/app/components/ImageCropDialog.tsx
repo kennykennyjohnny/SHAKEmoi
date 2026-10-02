@@ -3,6 +3,7 @@
 // recadrée (512 × 512). Les miniatures partout montrent donc exactement le
 // cadrage choisi, plus jamais une partie qui était hors du cadre.
 import { useEffect, useRef, useState } from 'react';
+import { ensureDecodableImage } from '../../lib/media';
 import { createPortal } from 'react-dom';
 import { X, Check, ZoomIn, Move } from 'lucide-react';
 
@@ -28,12 +29,16 @@ export function ImageCropDialog({ file, title = 'Cadre ta photo', onCancel, onDo
   const gesture = useRef<{ dist?: number; z: number; pos: { x: number; y: number } } | null>(null);
 
   useEffect(() => {
-    const url = URL.createObjectURL(file);
-    setSrc(url);
-    createImageBitmap(file, { imageOrientation: 'from-image' } as any)
-      .then(setBitmap)
-      .catch(() => setError(true));
-    return () => URL.revokeObjectURL(url);
+    let url = '';
+    let alive = true;
+    // N5 : photo HEIC (iPhone) convertie en JPEG si ce navigateur ne sait pas la lire.
+    ensureDecodableImage(file).then((f) => {
+      if (!alive) return;
+      url = URL.createObjectURL(f);
+      setSrc(url);
+      return createImageBitmap(f, { imageOrientation: 'from-image' } as any).then((b) => { if (alive) setBitmap(b); });
+    }).catch(() => { if (alive) setError(true); });
+    return () => { alive = false; if (url) URL.revokeObjectURL(url); };
   }, [file]);
 
   useEffect(() => {

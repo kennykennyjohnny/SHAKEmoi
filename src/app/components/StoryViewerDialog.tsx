@@ -1,4 +1,4 @@
-import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Hourglass, Play, Pause, Pin, Volume2, VolumeX, Flag } from 'lucide-react';
+import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Hourglass, Play, Pause, Pin, Volume2, VolumeX, Flag, ImageOff } from 'lucide-react';
 import { openReport } from '../../lib/appNav';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
@@ -450,12 +450,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
             }}
           >
             {/* Photo : plein cadre, comme une story Instagram */}
-            {story.image_url && (
-              <div className="absolute inset-0 pointer-events-none">
-                <img loading="lazy" src={thumb(story.image_url, 1024)} alt="" className="w-full h-full object-cover" onLoad={() => setMediaReady(true)} onError={() => setMediaReady(true)} />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent via-60% to-black/60" />
-              </div>
-            )}
+            {story.image_url && <StoryPhoto key={story.id} url={story.image_url} onReady={() => setMediaReady(true)} />}
 
             {/* Story sans photo : fond aux couleurs de la pochette (ou thème choisi) */}
             {!story.image_url && <StoryBackdrop theme={story.theme_color} cover={story.cover_url} />}
@@ -884,5 +879,35 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/**
+ * Photo d'une story (N5) : fond de chargement propre tant qu'elle n'est pas
+ * prête, un nouvel essai automatique avec le fichier d'origine si la version
+ * redimensionnée échoue, puis un message clair (jamais d'écran noir).
+ */
+function StoryPhoto({ url, onReady }: { url: string; onReady: () => void }) {
+  const [attempt, setAttempt] = useState(0); // 0 : redimensionnée, 1 : d'origine, 2 : échec
+  const [loaded, setLoaded] = useState(false);
+  const src = attempt === 0 ? thumb(url, 1080) : `${url}${url.includes('?') ? '&' : '?'}retry=1`;
+  return (
+    <div className="absolute inset-0 pointer-events-none bg-[#140A26]">
+      {!loaded && attempt < 2 && <div className="absolute inset-0 animate-pulse bg-gradient-to-b from-purple-900/50 via-[#1E1440] to-[#0A0614]" />}
+      {attempt < 2 && (
+        <img key={attempt} src={src} alt="" decoding="async"
+          className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => { setLoaded(true); onReady(); }}
+          onError={() => { if (attempt === 0) setAttempt(1); else { setAttempt(2); onReady(); } }} />
+      )}
+      {attempt === 2 && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-10 text-center text-white/85 bg-gradient-to-b from-purple-900/60 to-[#0A0614]">
+          <ImageOff className="w-10 h-10 text-purple-300/80" />
+          <p className="font-semibold">La photo n'a pas pu se charger</p>
+          <p className="text-xs text-white/60">Vérifie ta connexion. Le son et le texte de la story restent là.</p>
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent via-60% to-black/60" />
+    </div>
   );
 }

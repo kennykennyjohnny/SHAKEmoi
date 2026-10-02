@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { createPost, createStory } from '../../lib/database';
 import { spotify } from '../../lib/spotify';
 import { supabase } from '../../lib/supabase';
-import { compressImage, extFor } from '../../lib/media';
+import { compressImage, ensureDecodableImage, extFor } from '../../lib/media';
 import { SongCover } from './SongCover';
 import { stopPreview } from '../../lib/preview';
 import { STORY_THEMES, getCoverPalette, themeCss, autoBackgroundCss, type StoryTheme, type Palette } from '../../lib/storyTheme';
@@ -42,6 +42,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
   // Photo/file upload
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false); // conversion HEIC en cours (N5)
 
   // Story-only state
   const [durationDays, setDurationDays] = useState<1 | 7 | 30>(1);
@@ -116,13 +117,21 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
     }
   };
 
-  const handlePhotoSelect = (e: any) => {
-    const file = e.target.files?.[0];
+  const handlePhotoSelect = async (e: any) => {
+    let file: File | undefined = e.target.files?.[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
       alert('Photo trop lourde (max 10 Mo)');
       return;
     }
+    // N5 : photo d'iPhone en HEIC → JPEG, sinon elle ne s'affiche pas chez les autres.
+    setPhotoBusy(true);
+    try { file = await ensureDecodableImage(file); } catch {
+      setPhotoBusy(false);
+      alert('Ce format de photo (HEIC) ne peut pas être lu sur cet appareil. Choisis une autre photo ou fais une capture d\'écran.');
+      return;
+    }
+    setPhotoBusy(false);
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
     setPhotoSize(null); // le cadrage par défaut est calculé au chargement de l'image
@@ -323,7 +332,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-900/25 border border-purple-700/30 cursor-pointer text-sm flex-shrink-0">
                       <ImageIcon className="w-4 h-4 text-purple-300/70" />
-                      {photoPreview ? 'Changer' : 'Ajouter une photo'}
+                      {photoBusy ? 'Conversion de la photo…' : photoPreview ? 'Changer' : 'Ajouter une photo'}
                       <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
                     </label>
                     {photoPreview && (
@@ -392,7 +401,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                   {composerType === 'shake' && (
                     <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-900/25 border border-purple-700/30 cursor-pointer text-sm mb-3">
                       <ImageIcon className="w-4 h-4 text-purple-300/70" />
-                      Ajouter une photo (optionnel)
+                      {photoBusy ? 'Conversion de la photo…' : 'Ajouter une photo (optionnel)'}
                       <input
                         type="file"
                         accept="image/*"
@@ -415,7 +424,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                   {composerType === 'shake' && (
                     <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-900/25 border border-purple-700/30 cursor-pointer text-sm">
                       <ImageIcon className="w-4 h-4 text-purple-300/70" />
-                      Ajouter une photo
+                      {photoBusy ? 'Conversion de la photo…' : 'Ajouter une photo'}
                       <input
                         type="file"
                         accept="image/*"

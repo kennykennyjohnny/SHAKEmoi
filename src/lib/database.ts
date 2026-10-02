@@ -1378,6 +1378,12 @@ export async function getMusicReactions(postId: string): Promise<any[]> {
 
 // Compatibilité musicale : calculée en base (P25), voir lib/social.ts.
 
+/** Compteurs réels d'un post, tenus à jour par la base (N3) : jamais de +1 côté appli. */
+export async function getPostCounts(postId: string): Promise<{ comments: number; likes: number; reshakes: number } | null> {
+  const { data } = await supabase.from('posts').select('comments_count, likes_count, reshakes_count').eq('id', postId).maybeSingle();
+  return data ? { comments: data.comments_count ?? 0, likes: data.likes_count ?? 0, reshakes: data.reshakes_count ?? 0 } : null;
+}
+
 // ==================== CIRCLES ====================
 
 export async function createCircle(name: string): Promise<any> {

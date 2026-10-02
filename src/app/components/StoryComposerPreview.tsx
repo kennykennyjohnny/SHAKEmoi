@@ -264,6 +264,7 @@ export async function composeStoryImage(opts: {
   g.drawImage(img, px, py, pw, ph);
   g.restore();
 
+  // 0,82 : ~500-700 Ko au lieu de 1,4 Mo, sans différence visible sur un téléphone (N5).
   return new Promise((resolve, reject) =>
-    canvas.toBlob(b => (b ? resolve(b) : reject(new Error('Composition impossible'))), 'image/jpeg', 0.9));
+    canvas.toBlob(b => (b ? resolve(b) : reject(new Error('Composition impossible'))), 'image/jpeg', 0.82));
 }

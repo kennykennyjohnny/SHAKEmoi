@@ -104,12 +104,38 @@ export function defaultAvatar(name?: string | null): string {
  * limité à `maxSize` px, JPEG qualité ~0,8. Une photo de 10 Mo tombe à ~200 Ko.
  * Les GIF (animés) et les petites images passent telles quelles.
  */
+/** Photo HEIC/HEIF (iPhone) ? Le type est parfois vide : on regarde aussi le nom. */
+export function isHeic(file: File | Blob): boolean {
+  const name = (file as File).name || '';
+  return /image\/hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(name);
+}
+
+/**
+ * N5 : une photo HEIC n'est lisible que par Safari. Si le navigateur ne sait
+ * pas la décoder, on la convertit en JPEG (bibliothèque chargée seulement à
+ * ce moment-là). Les autres photos sont rendues telles quelles.
+ */
+export async function ensureDecodableImage<T extends File | Blob>(file: T): Promise<T | File> {
+  if (!isHeic(file)) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    bitmap.close?.();
+    return file; // Safari : il sait la lire, la compression la passera en JPEG
+  } catch { /* pas lisible ici : conversion */ }
+  const { default: heic2any } = await import('heic2any');
+  const out = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 });
+  const jpeg = Array.isArray(out) ? out[0] : out;
+  const base = ((file as File).name || 'photo').replace(/\.hei[cf]$/i, '');
+  return new File([jpeg], `${base}.jpg`, { type: 'image/jpeg' });
+}
+
 export async function compressImage(file: File | Blob, maxSize = 1280, quality = 0.8): Promise<Blob> {
+  try { file = await ensureDecodableImage(file); } catch { /* conversion impossible : on tente quand même */ }
   if (!file.type.startsWith('image/') || file.type === 'image/gif') return file;
   try {
     const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' } as any);
     const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
-    if (scale === 1 && file.size < 400 * 1024) { bitmap.close?.(); return file; }
+    if (scale === 1 && file.size < 400 * 1024 && !isHeic(file)) { bitmap.close?.(); return file; }
     const w = Math.round(bitmap.width * scale);
     const h = Math.round(bitmap.height * scale);
     const canvas = document.createElement('canvas');
@@ -120,7 +146,7 @@ export async function compressImage(file: File | Blob, maxSize = 1280, quality =
     ctx.drawImage(bitmap, 0, 0, w, h);
     bitmap.close?.();
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
-    return blob && blob.size < file.size ? blob : file;
+    return blob && (blob.size < file.size || isHeic(file)) ? blob : file;
   } catch {
     return file;
   }

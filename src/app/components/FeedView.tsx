@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
 import { SuggestionsCarousel } from './SuggestionsCarousel';
+import { getPostCounts } from '../../lib/database';
 import { RecapCard } from './WeeklyRecap';
 import { formatRelative } from '../../lib/dates';
 import { createPortal } from 'react-dom';
@@ -512,6 +513,12 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   const [storyViewedMap, setStoryViewedMap] = useState<Record<string, boolean>>(() => (feedCache && feedCache.userId === currentUser?.id ? feedCache.viewed : {}));
   const [activeStory, setActiveStory] = useState<any | null>(null);
   const [loading, setLoading] = useState(() => !(feedCache && feedCache.userId === currentUser?.id && !currentFeedId));
+  // N3 : après un commentaire (texte ou musique), on relit le vrai compteur en base.
+  const syncCommentCount = (postId: string) => {
+    getPostCounts(postId).then((c) => {
+      if (c) setShakes((prev) => prev.map((x) => (x.sourcePostId === postId ? { ...x, comments: c.comments } : x)));
+    }).catch(() => {});
+  };
   const [error, setError] = useState<string | null>(null);
   const [reshakeDialogShake, setReshakeDialogShake] = useState<Shake | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
@@ -1651,16 +1658,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             postId={commentsPostId}
             onClose={() => setCommentsPostId(null)}
             currentUser={currentUser}
-            onCommentAdded={() => {
-              setShakes(shakes.map(s =>
-                s.sourcePostId === commentsPostId ? { ...s, comments: s.comments + 1 } : s
-              ));
-            }}
-            onCommentDeleted={() => {
-              setShakes(prev => prev.map(s =>
-                s.sourcePostId === commentsPostId ? { ...s, comments: Math.max(0, s.comments - 1) } : s
-              ));
-            }}
+            onCommentAdded={() => syncCommentCount(commentsPostId)}
+            onCommentDeleted={() => syncCommentCount(commentsPostId)}
           />
         )}
       </AnimatePresence>

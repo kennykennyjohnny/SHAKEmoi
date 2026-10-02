@@ -44,6 +44,15 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
     loadMusicReactions();
   }, [postId]);
 
+  // N3 : le compteur du post additionne commentaires ET réponses en musique.
+  // Si le post n'a que des réponses en musique, on ouvre directement cet onglet.
+  const [autoTabDone, setAutoTabDone] = useState(false);
+  useEffect(() => {
+    if (autoTabDone || loading) return;
+    setAutoTabDone(true);
+    if (comments.length === 0 && musicReactions.length > 0) setTab('music');
+  }, [loading, comments.length, musicReactions.length, autoTabDone]);
+
   useEffect(() => {
     if (musicQuery.length < 2) { setMusicResults([]); return; }
     const t = setTimeout(async () => {
@@ -178,6 +187,13 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
           <>
             {/* Comments list */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {!loading && musicReactions.length > 0 && (
+                <button onClick={() => setTab('music')} className="w-full flex items-center gap-2 rounded-xl bg-pink-500/10 border border-pink-500/25 px-3 py-2 text-left text-xs text-pink-200">
+                  <Music className="w-4 h-4 flex-shrink-0" />
+                  <span className="flex-1">+ {musicReactions.length} réponse{musicReactions.length > 1 ? 's' : ''} en musique</span>
+                  <span className="font-semibold">Écouter</span>
+                </button>
+              )}
               {loading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />

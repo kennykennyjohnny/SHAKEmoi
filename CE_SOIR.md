@@ -433,3 +433,27 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 3. Regarde la vidéo jusqu'au bout : 15 s de musique qui démarre et finit en douceur, puis « Écoute sur shakemoi.fr » ; scanne le QR avec un autre téléphone → la page du son.
 4. Essaie sur 3 sons très différents (pochette claire, sombre, colorée) : le fond prend les couleurs de chaque pochette.
 5. Mardi après 9 h (11 h l'été, heure de Paris), si tu as publié la semaine d'avant : carte « Ton récap de la semaine est prêt » en haut du fil → les écrans défilent → Partager → crée la vidéo. (Exemple réel de la semaine du 22 au 29 septembre : @raph 2 Shakes, 1 like, Rap, meilleur match @kenny 88 %, série 3.)
+
+# Section N (prompt du 29/09)
+
+## N3 — Compteurs de commentaires
+| # | Statut | Explication |
+|---|---|---|
+| Diagnostic Bapt | ✅ | Post de @bapt22 « **Fall Back** » (Lithe, 29/09) : le compteur dit **2**, et **la base est juste** : 1 commentaire texte de @raph (« Ouaiiis ouais », 29/09 21 h 51) **+ 1 réponse en musique** de @raph (« 444 » de Lithe, 30/09 8 h 51). **Cause de la confusion** : la fenêtre des commentaires a deux onglets et s'ouvre sur « Commentaires (1) » ; la réponse en musique est dans l'onglet « Sons (1) », sans rien qui le signale. Même cas que le post de Fawn (Blinding Lights : 1 + 1 = 2). |
+| Règle | ✅ | Compteur = commentaires texte + réponses en musique, supprimés exclus. Tenu par la base (déclencheurs qui **recomptent** à chaque ajout/suppression, posés la nuit dernière), jamais un +1 seul côté appli. |
+| Appli | ✅ | Le fil faisait encore un **+1 / -1 local** après un commentaire : remplacé par une **relecture du vrai compteur** en base. Dans la fenêtre : bandeau « **+ 1 réponse en musique · Écouter** » sur l'onglet texte, et ouverture directe sur l'onglet Sons quand il n'y a que des réponses en musique. |
+| Recalcul | ✅ | Script `scripts/recount_counters.sql` (rejouable dans Supabase → SQL Editor) : recalcule commentaires, likes et reshakes de tous les posts et dit combien étaient faux. Lancé ce soir : **121 posts, 0 compteur faux** (commentaires 0, likes 0, reshakes 0). |
+| Likes / reshakes | ✅ | Même vérification : justes partout (likes et reshakes recomptés par déclencheur). |
+| Cas limite | 🟡 | Si tu as **bloqué** quelqu'un qui avait commenté un post, son commentaire t'est caché mais reste dans le compteur (vu par tous). Très rare ; à revoir si besoin. |
+
+**Tests (N3)** : ouvre le post « Fall Back » de Bapt → fenêtre des commentaires : 1 commentaire + le bandeau « + 1 réponse en musique » → « Écouter » montre « 444 ». Ajoute un commentaire sur un post du fil → le chiffre passe de N à N+1 (lu en base) ; supprime-le → retour à N.
+
+## N5 — Photos de stories qui ne se chargent pas
+| # | Statut | Explication |
+|---|---|---|
+| Cause | ✅ | Sur les **4 stories avec photo** en base : 1 photo **HEIC de 4,3 Mo** (iPhone, avril) **illisible** dans Chrome / Android (seul Safari lit le HEIC) et que le redimensionneur serveur ne sait pas lire non plus ; 1 photo de **1,4 Mo** (story composée de septembre, JPEG qualité 0,9 en 1080×1920) lente à charger. Les liens sont bons (dossier public, pas de lien signé expiré) et tous les fichiers existent. |
+| Envoi | ✅ | Photo **HEIC/HEIF convertie en JPEG** dès qu'on la choisit (« Conversion de la photo… » pendant quelques secondes), si le navigateur ne sait pas la lire ; sur iPhone, la compression habituelle la passe en JPEG. Testé avec la vraie photo HEIC : **4,3 Mo → JPEG 239 Ko**, 960×1280. Vaut pour stories, Shakes, messages, cercles **et la photo de profil** (outil de cadrage). Story composée : qualité 0,82 (≈ 2× plus légère). Le convertisseur n'est téléchargé que si besoin. |
+| Rotation | ✅ | L'orientation EXIF est appliquée à la compression (`imageOrientation: from-image`) et par le navigateur à l'affichage : rien à corriger. |
+| Affichage | ✅ | **Fond de chargement** propre tant que la photo n'est pas prête (le minuteur attend, E1), **nouvel essai automatique** avec le fichier d'origine si la version redimensionnée échoue, puis message « **La photo n'a pas pu se charger** — vérifie ta connexion, le son et le texte restent là ». Plus jamais d'écran noir. |
+
+**Tests (N5)** : sur un **Android** (ou Chrome ordinateur), publie une story avec une photo **HEIC** envoyée depuis un iPhone (AirDrop/mail) → « Conversion de la photo… » puis l'aperçu ; la story s'affiche partout. Coupe le réseau en ouvrant une story photo → fond violet qui pulse, puis le message clair.
