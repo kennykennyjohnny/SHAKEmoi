@@ -293,3 +293,19 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 2. Pendant qu'un cercle est ouvert, quelqu'un le renomme → la colonne et l'en-tête changent tout seuls.
 3. Ton profil → Modifier → change de photo : une fenêtre de cadrage s'ouvre, place ton visage dans le rond → OK. Partout (fil, commentaires, messages), le rond montre exactement ce cadrage.
 4. Regarde l'avatar de @bapt22 dans le fil : on voit tout le visage (plus seulement le chapeau).
+
+## Lot 6 — P14 : TOP « Amis » / « Tout SHAKEMOI »
+| # | Statut | Explication |
+|---|---|---|
+| Onglets | ✅ | **Amis** (moi + les gens que je suis, ouvert par défaut) et **Tout SHAKEMOI**. On touche ou on **glisse** : la page et l'indicateur suivent le doigt (même mécanique que Messages / Cercles). Onglet et période gardés à l'actualisation ; la période est la même dans les deux onglets. |
+| Périodes | ✅ | 7 jours, 30 jours, **Depuis toujours**. (Bug trouvé en testant : sans réglage enregistré, le TOP démarrait sur « Depuis toujours » ; corrigé, 7 jours par défaut.) |
+| Calcul | ✅ | **Tout est calculé en base** en une requête (`get_top`) au lieu de télécharger jusqu'à 3 000 posts dans le téléphone. Petit cache de 2 min : changer d'onglet ou de période ne recharge pas en 4G. **Jamais de post privé ni de cercle.** |
+| Sons les plus shakés | ✅ | Nombre de fois qu'un son a été **publié + reshaké**, toutes personnes confondues. Un « même son » = même titre (sans « (feat. …) », « - Remastered »…) + même premier artiste : l'album et le single ne comptent qu'une fois. (L'ISRC n'est pas enregistré sur les posts ; l'identifiant Spotify seul séparait le même titre en deux.) Podium + suite du classement, avec qui l'a partagé. |
+| Autres classements | ✅ | **Sons les plus likés**, **artistes les plus partagés** (avec le nombre de personnes), **les plus actifs** (un toucher = profil). Chiffres réels vérifiés en base : Tout SHAKEMOI depuis toujours → « Ailleurs » 4×, « Convaincu » 3× ; artistes Krakow 5, Orelsan 4 ; actifs @kenny 16, @raph 15. |
+| Lecture / post | ✅ | Chaque son : pochette = notre lecteur (M2), logo de mon appli, bouton Shake. **Toucher une ligne** ouvre le post (s'il n'y en a qu'un) ou **la liste de tous les posts de ce son** (« @léa a shaké », « @bapt a reshaké »), un toucher ouvre le post complet (P2). |
+| Genres du moment | ⏭️ | Demande les genres des sons, qui arrivent avec la compatibilité retravaillée (P25 / N6) : à ajouter à ce moment-là. |
+
+**Tests (lot 6)**
+1. TOP : glisse vers la gauche → « Tout SHAKEMOI » (le trait rose suit ton doigt). Choisis « Depuis toujours », reviens sur Amis : la période est gardée.
+2. Touche le titre d'un son du podium → la liste des personnes qui l'ont shaké ; touche une ligne → le post complet.
+3. Touche la pochette → l'extrait joue ; « Shake » → il est publié sur ton fil.
