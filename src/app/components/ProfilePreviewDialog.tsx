@@ -8,12 +8,14 @@ import { openReport, openBugReport } from '../../lib/appNav';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { getUserProfile, getUserShakeCount, getUserFollowersCount, getUserFollowingCount, followUser, followErrorMessage, unfollowUser, isFollowing, getCachedTasteMatch, calculateTasteMatch, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
+import { getUserProfile, getUserShakeCount, getUserFollowersCount, getUserFollowingCount, followUser, followErrorMessage, unfollowUser, isFollowing, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { ProfileGrid } from './ProfileGrid';
 import { StreakBadge } from './Streak';
 import { PinnedSongs } from './PinnedSongs';
+import { SuggestionsCarousel } from './SuggestionsCarousel';
+import { getTaste, tasteExplanation, type Taste } from '../../lib/social';
 import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { useBackHandler } from '../../lib/navigation';
 import { openConversation } from '../../lib/appNav';
@@ -42,7 +44,8 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
   const [stats, setStats] = useState({ followers: 0, following: 0, posts: 0 });
   const [isFollowingUser, setIsFollowingUser] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [tasteMatch, setTasteMatch] = useState<{ percent: number; commonArtists: string[] } | null>(null);
+  const [taste, setTaste] = useState<Taste | null>(null);
+  const [justFollowed, setJustFollowed] = useState(false);
   const [list, setList] = useState<FollowListKind | null>(null);
   // P17 : blocage (imposé par la base ; ici l'affichage).
   const [block, setBlock] = useState<BlockStatus>('none');
@@ -101,9 +104,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
       // Vrai nombre de shakes (sans les reshakes).
       setStats({ followers: followersCount, following: followingCount, posts: shakeCount });
       setIsFollowingUser(followingStatus);
-      const cached = await getCachedTasteMatch(actualId);
-      if (cached) setTasteMatch(cached);
-      else calculateTasteMatch(actualId).then(setTasteMatch).catch(() => {});
+      if (!onRequireAuth) getTaste(actualId).then(setTaste).catch(() => {});
     } catch (error) {
       console.error('Error loading profile preview:', error);
     } finally {
@@ -125,6 +126,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
       if (!r.success) { alert(followErrorMessage(r.error)); return; }
       setIsFollowingUser(true);
       setStats(s => ({ ...s, followers: s.followers + 1 }));
+      setJustFollowed(true);
     }
   };
 
@@ -235,15 +237,17 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                   {/* P3 : abonnés en commun (connecté seulement) */}
                   {me && !isMe && <MutualFollowersLine userId={profile.id} onOpen={() => setList('mutual')} />}
 
-                  {tasteMatch && tasteMatch.percent > 0 && !isMe && (
+                  {/* Compatibilité musicale (P25), avec son explication. */}
+                  {taste && !isMe && (
                     <div className="mt-3 p-2.5 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-xl border border-purple-500/20">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-purple-300/80">Compatibilité musicale</span>
-                        <span className="text-sm font-bold text-pink-400">{tasteMatch.percent}%</span>
+                        {taste.status === 'ok'
+                          ? <span className="text-sm font-bold text-pink-400">{taste.score} %</span>
+                          : <span className="text-[11px] text-purple-300/70">Pas encore assez de sons</span>}
                       </div>
-                      {tasteMatch.commonArtists.length > 0 && (
-                        <p className="text-[11px] text-purple-300/60 mt-1 truncate">En commun : {tasteMatch.commonArtists.slice(0, 5).join(', ')}</p>
-                      )}
+                      {taste.status === 'ok' && tasteExplanation(taste) && <p className="text-[11px] text-purple-200/70 mt-1">{tasteExplanation(taste)}</p>}
+                      {taste.status === 'not_enough' && <p className="text-[11px] text-purple-300/60 mt-1">Il faut au moins 5 sons partagés chacun (toi : {taste.mine}, @{profile.username} : {taste.theirs}).</p>}
                     </div>
                   )}
 
@@ -267,6 +271,9 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                       )}
                     </div>
                   )}
+
+                  {/* P18 : « Suis aussi… » juste après un abonnement. */}
+                  {justFollowed && <SuggestionsCarousel title="Suis aussi…" exclude={[profile.id]} compact className="mt-4" />}
 
                   {(stories.length > 0 || pinnedStories.length > 0) && (
                     <div className="mt-4">

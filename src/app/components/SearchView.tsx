@@ -12,6 +12,7 @@ import { SendSongDialog } from './SendSongDialog';
 import { setPendingAction, type PendingAction } from '../../lib/pendingAction';
 
 import { defaultAvatar, avatarThumb } from '../../lib/media';
+import { SuggestionsCarousel } from './SuggestionsCarousel';
 interface SearchViewProps {
   currentUser?: any;
   onRefreshFeed?: () => void;
@@ -270,6 +271,8 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
         onTouchMove={onScrollDismissKeyboard}
         className="flex-1 min-h-0 overflow-y-auto px-4 pb-[var(--nav-h)] lg:pb-4"
       >
+      {/* P18 : suggestions quand le champ est vide. */}
+      {!hasQuery && currentUser && <SuggestionsCarousel className="mb-5 mt-1" />}
       {loading && (
         <div className="flex justify-center py-8">
           <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />

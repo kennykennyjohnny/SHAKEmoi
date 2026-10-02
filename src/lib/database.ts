@@ -1376,72 +1376,7 @@ export async function getMusicReactions(postId: string): Promise<any[]> {
 
 // ==================== TOP PERSONNALISÉ (Friends Trending) ====================
 
-// ==================== TASTE MATCH ====================
-
-export async function calculateTasteMatch(otherUserId: string): Promise<{ percent: number; commonArtists: string[] }> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) return { percent: 0, commonArtists: [] };
-
-    // Get recent posts from both users
-    const [myPosts, theirPosts] = await Promise.all([
-      getUserPosts(user.id, 100, true),
-      getUserPosts(otherUserId, 100, true)
-    ]);
-
-    // Extract artists
-    const myArtists = new Set(myPosts.map((p: any) => p.artist?.toLowerCase()).filter(Boolean));
-    const theirArtists = new Set(theirPosts.map((p: any) => p.artist?.toLowerCase()).filter(Boolean));
-
-    // Intersection
-    const common = [...myArtists].filter(a => theirArtists.has(a));
-    const union = new Set([...myArtists, ...theirArtists]);
-
-    const percent = union.size > 0 ? Math.round((common.length / union.size) * 100) : 0;
-
-    // Cache the result
-    const [idA, idB] = [user.id, otherUserId].sort();
-    await supabase
-      .from('taste_match_cache')
-      .upsert({
-        user_a_id: idA,
-        user_b_id: idB,
-        match_percent: percent,
-        common_artists: common,
-        calculated_at: new Date().toISOString()
-      }, { onConflict: 'user_a_id,user_b_id' });
-
-    return { percent, commonArtists: common };
-  } catch (error) {
-    console.error('Error calculating taste match:', error);
-    return { percent: 0, commonArtists: [] };
-  }
-}
-
-export async function getCachedTasteMatch(otherUserId: string): Promise<{ percent: number; commonArtists: string[] } | null> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) return null;
-
-    const [idA, idB] = [user.id, otherUserId].sort();
-    const { data } = await supabase
-      .from('taste_match_cache')
-      .select('*')
-      .eq('user_a_id', idA)
-      .eq('user_b_id', idB)
-      .maybeSingle();
-
-    if (!data) return null;
-
-    // Check if cache is older than 7 days
-    const cacheAge = Date.now() - new Date(data.calculated_at).getTime();
-    if (cacheAge > 7 * 24 * 60 * 60 * 1000) return null;
-
-    return { percent: data.match_percent, commonArtists: data.common_artists || [] };
-  } catch (error) {
-    return null;
-  }
-}
+// Compatibilité musicale : calculée en base (P25), voir lib/social.ts.
 
 // ==================== CIRCLES ====================
 

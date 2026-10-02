@@ -30,6 +30,8 @@ import { setSentryUser } from '../lib/sentry';
 import { ReportSheet, BugReportSheet, BlockedUsersSheet } from './components/ModerationSheets';
 import { AdminView } from './components/AdminView';
 import { HeaderFlame, StreakSheet } from './components/Streak';
+import { FollowStarter } from './components/FollowStarter';
+import { acceptInvite } from '../lib/social';
 
 // Écrans chargés à la demande (perf 4G), préchargés ensuite en arrière-plan.
 const ProfileView = lazyView(() => import('./components/ProfileView'), (m) => m.ProfileView, ViewSpinner);
@@ -95,6 +97,9 @@ export default function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   // P23 : petite fenêtre de la flamme (série, temps restant, publier).
   const [showStreak, setShowStreak] = useState(false);
+  // P29 : « Suis au moins 3 personnes » à la fin du tuto (nouveau compte).
+  const [showStarter, setShowStarter] = useState(false);
+  const [inviterId, setInviterId] = useState<string | null>(null);
   useEffect(() => {
     const onReport = (e: Event) => setReportTarget((e as CustomEvent).detail);
     const onBug = () => setShowBug(true);
@@ -387,13 +392,16 @@ export default function App() {
       setCurrentView('search');
     }
 
-    // Auto-follow referrer if one exists
+    // Arrivée par une invitation (P19) : on se suit mutuellement, l'inviteur
+    // est prévenu ; compte plus ancien : on suit simplement la personne.
     const ref = localStorage.getItem('shakemoi_referrer');
     if (ref) {
       try {
-        const refId = await resolveUserId(ref);
-        if (refId && refId !== user.id) {
-          await followUser(refId);
+        const inviter = await acceptInvite(ref);
+        if (inviter) setInviterId(inviter);
+        else {
+          const refId = await resolveUserId(ref);
+          if (refId && refId !== user.id) await followUser(refId);
         }
       } catch (err) {
         console.error('Auto-follow referrer error:', err);
@@ -407,6 +415,8 @@ export default function App() {
   // après une déconnexion ou sur un autre appareil.
   const handleOnboardingComplete = async (service: PlatformKey) => {
     setShowOnboarding(false);
+    // Plus jamais de fil vide (P29).
+    setShowStarter(true);
     const done = new Date().toISOString();
     setCurrentUser((u: any) => u ? { ...u, musicService: service, preferred_streaming_app: service, onboarding_completed_at: done } : u);
     try {
@@ -448,6 +458,7 @@ export default function App() {
         onSignUp={() => { leaveRoute(); setShowAuth(true); }}
         onLogin={() => { leaveRoute(); setShowAuth(true); }}
         onExplore={leaveRoute}
+        invite={route.type === 'invite'}
       />
     );
   }
@@ -870,6 +881,7 @@ export default function App() {
         {showBlocked && <BlockedUsersSheet onClose={() => setShowBlocked(false)} />}
       </AnimatePresence>
       {showAdmin && <AdminView onClose={() => setShowAdmin(false)} />}
+      {showStarter && currentUser && <FollowStarter inviterId={inviterId} onDone={() => { setShowStarter(false); setRefreshFeed(p => p + 1); }} />}
       {showStreak && currentUser && <StreakSheet userId={currentUser.id} onClose={() => setShowStreak(false)} onPublish={() => setShowCreateShake(true)} />}
       {/* Story ouverte depuis une notification (M10) */}
       {notifStory && (

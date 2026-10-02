@@ -106,6 +106,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
         return <MessageCircle className="w-3.5 h-3.5 text-fuchsia-400" />;
       case 'follow':
       case 'feel':
+      case 'invite_joined':
         return <UserPlus className="w-3.5 h-3.5 text-purple-400" />;
       case 'circle_join':
       case 'circle_add':
@@ -168,7 +169,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
           const isCircleNotif = notif.type.startsWith('circle_');
           const isStoryLike = notif.type === 'story_like' && !!notif.story_id;
           const isMessageNotif = ['message', 'song_share', 'story_comment'].includes(notif.type) || (notif.type === 'story_like' && !notif.story_id);
-          const canNavigate = isPostNotif || isFollowNotif || isCircleNotif || isMessageNotif || isStoryLike;
+          const canNavigate = isPostNotif || isFollowNotif || notif.type === 'invite_joined' || isCircleNotif || isMessageNotif || isStoryLike;
 
           const handleNotifClick = () => {
             if (isStoryLike) onOpenStory?.(notif.story_id);

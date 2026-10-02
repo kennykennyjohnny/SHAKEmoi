@@ -7,6 +7,8 @@ import { Logo } from './Logo';
 import { Slogan } from './Slogan';
 
 import { defaultAvatar, avatarThumb } from '../../lib/media';
+import { getInviteCard } from '../../lib/social';
+import { SongCover } from './SongCover';
 // SHAKEMOI - Arrivée d'un visiteur sur un profil partagé (/u/<pseudo> ou
 // l'invitation /i/<pseudo>) : on voit tout de suite qui invite, ses derniers
 // sons, et on peut créer son compte pour l'ajouter en ami d'un geste.
@@ -16,12 +18,20 @@ interface Props {
   onSignUp: () => void;
   onLogin: () => void;
   onExplore: () => void;
+  /** Lien d'invitation /i/<pseudo> (P19) : « X t'invite », 3 sons à écouter, Rejoindre. */
+  invite?: boolean;
 }
 
-export function ProfileLanding({ username, onSignUp, onLogin, onExplore }: Props) {
+export function ProfileLanding({ username, onSignUp, onLogin, onExplore, invite = false }: Props) {
   const [profile, setProfile] = useState<any | null | undefined>(undefined);
   const [stats, setStats] = useState({ shakes: 0, followers: 0 });
   const [recent, setRecent] = useState<any[]>([]);
+  const [songs, setSongs] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!invite) return;
+    getInviteCard(username).then((c) => setSongs(c?.songs || [])).catch(() => {});
+  }, [invite, username]);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,7 +87,42 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore }: Props
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10 w-full max-w-md mx-auto px-5 pb-10 text-center"
       >
-        {profile ? (
+        {profile && invite ? (
+          <>
+            <div className="mt-8 mx-auto w-24 h-24 rounded-full p-[3px] bg-gradient-to-br from-purple-500 to-pink-500">
+              <img loading="lazy" src={avatar} alt="" className="w-full h-full rounded-full object-cover border-4 border-[#1E1440]" />
+            </div>
+            <h1 className="mt-5 text-3xl font-black leading-tight">{name} t'invite sur SHAKEmoi</h1>
+            <p className="mt-2 text-sm text-purple-100/80">Le réseau où on partage les sons qu'on écoute vraiment. Vous vous suivrez automatiquement.</p>
+
+            {songs.length > 0 && (
+              <div className="mt-6 text-left">
+                <p className="text-[11px] uppercase tracking-wider text-purple-300/60 font-semibold mb-2">Ce que {name} écoute en ce moment</p>
+                <div className="space-y-2">
+                  {songs.map((s) => (
+                    <div key={s.id} className="flex items-center gap-3 p-2 rounded-2xl bg-white/5 border border-white/10">
+                      <SongCover songKey={`invite-${s.id}`} title={s.track_name} artist={s.artist} cover={s.cover_url} previewUrl={s.preview_url} spotifyId={s.track_id} spotifyUrl={s.spotify_url} className="w-14 h-14 flex-shrink-0" rounded="rounded-xl" iconSize="sm" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">{s.track_name}</p>
+                        <p className="text-xs text-purple-200/70 truncate">{s.artist}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={onSignUp}
+              className="mt-6 w-full py-3.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90"
+            >
+              <UserPlus className="w-4 h-4" /> Rejoindre
+            </button>
+            <button onClick={onLogin} className="w-full mt-2 py-2 text-xs text-purple-200/80 hover:text-white">
+              J'ai déjà un compte
+            </button>
+          </>
+        ) : profile ? (
           <>
             <div className="mt-6 mx-auto w-28 h-28 rounded-full p-[3px] bg-gradient-to-br from-purple-500 to-pink-500">
               <img loading="lazy" src={avatar} alt="" className="w-full h-full rounded-full object-cover border-4 border-[#1E1440]" />

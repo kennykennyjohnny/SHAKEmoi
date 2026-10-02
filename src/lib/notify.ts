@@ -21,7 +21,8 @@ export function notificationText(type: string): string {
     case 'circle_invite': return 't\'a invité·e dans un cercle';
     case 'message': return 't\'a envoyé un message';
     case 'song_share': return 't\'a envoyé un son';
-    case 'story_like': return 'a aimé ta story';
+    case 'story_like': return 'a aimé ton Shake éphémère';
+    case 'invite_joined': return 'a rejoint SHAKEmoi grâce à toi 🎉 Vous vous suivez';
     case 'story_comment': return 'a répondu à ton shake éphémère';
     default: return 'a interagi avec toi';
   }
@@ -37,7 +38,7 @@ const PREF_OF_TYPE: Record<string, keyof Prefs> = {
   like: 'likes', comment_like: 'likes', story_like: 'likes',
   comment: 'comments', music_reaction: 'comments',
   reshake: 'reshakes',
-  follow: 'follows', feel: 'follows',
+  follow: 'follows', feel: 'follows', invite_joined: 'follows',
   circle_join: 'circles', circle_add: 'circles', circle_invite: 'circles',
 };
 const PREFS_KEY = 'shakemoi_notif_prefs';

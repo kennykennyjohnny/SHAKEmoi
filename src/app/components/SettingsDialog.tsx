@@ -6,7 +6,8 @@ import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { PushToggle, NotifPrefsList } from './PushToggle';
 import { openBugReport, openBlockedUsers, openAdmin } from '../../lib/appNav';
 import { isAdmin } from '../../lib/moderation';
-import { Bug, Ban, ShieldCheck } from 'lucide-react';
+import { Bug, Ban, ShieldCheck, UserPlus } from 'lucide-react';
+import { InviteSheet } from './InviteSheet';
 import { forgetPushOnLogout } from '../../lib/push';
 import { normalizePlatform, PLATFORM_LABELS, STREAMING_APPS, type PlatformKey } from '../../lib/platforms';
 import { PlatformLogo } from './PlatformLogo';
@@ -40,6 +41,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
   const [saveError, setSaveError] = useState<string | null>(null);
   // Ligne « Admin » : seulement pour le compte de Kenny (la base vérifie aussi).
   const [admin, setAdmin] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
   useEffect(() => { isAdmin().then(setAdmin).catch(() => {}); }, []);
   // L'email n'est plus copié dans users_profile (profil public) : on le lit
   // dans la session, seul endroit où il est visible par son propriétaire.
@@ -266,7 +268,11 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
 
           {/* Aide et sécurité (P15 / P17) */}
           <div className="bg-purple-950/40 rounded-xl divide-y divide-purple-800/20">
-            <button onClick={() => { onClose(); openBugReport(); }} className="w-full flex items-center justify-between px-3 py-3 text-sm text-white hover:bg-white/5 rounded-t-xl">
+            <button onClick={() => setShowInvite(true)} className="w-full flex items-center justify-between px-3 py-3 text-sm text-white hover:bg-white/5 rounded-t-xl">
+              <span className="flex items-center gap-2"><UserPlus className="w-4 h-4 text-fuchsia-400" /> Inviter des amis</span>
+              <ChevronRight className="w-4 h-4 text-purple-300/60" />
+            </button>
+            <button onClick={() => { onClose(); openBugReport(); }} className="w-full flex items-center justify-between px-3 py-3 text-sm text-white hover:bg-white/5">
               <span className="flex items-center gap-2"><Bug className="w-4 h-4 text-fuchsia-400" /> Signaler un bug</span>
               <ChevronRight className="w-4 h-4 text-purple-300/60" />
             </button>
@@ -340,6 +346,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
           />
         </div>
       )}
+      {showInvite && <InviteSheet user={currentUser} onClose={() => setShowInvite(false)} />}
     </div>
   );
 }

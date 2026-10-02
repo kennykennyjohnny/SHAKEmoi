@@ -5,6 +5,8 @@ import { ProfileGrid } from './ProfileGrid';
 import { FollowListSheet } from './FollowListSheet';
 import { StreakBadge } from './Streak';
 import { PinnedSongs } from './PinnedSongs';
+import { InviteSheet } from './InviteSheet';
+import { UserPlus } from 'lucide-react';
 import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
 import { getUserShakeCount, getUserFollowersCount, getUserFollowingCount, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
@@ -23,6 +25,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showFollowersList, setShowFollowersList] = useState<'followers' | 'following' | null>(null);
   const [showShareProfile, setShowShareProfile] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [activeStories, setActiveStories] = useState<any[]>([]);
   const [pinnedStories, setPinnedStories] = useState<any[]>([]);
@@ -188,6 +191,13 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           >
             <Edit3 className="w-3.5 h-3.5" />
             Modifier le profil
+          </button>
+          <button
+            onClick={() => setShowInvite(true)}
+            className="px-3 py-2 bg-purple-950/50 border border-purple-800/30 hover:bg-purple-900/40 rounded-xl transition-colors flex items-center gap-1.5 text-sm font-semibold text-purple-100"
+            title="Inviter des amis"
+          >
+            <UserPlus className="w-4 h-4 text-fuchsia-300" /> Inviter
           </button>
           <button
             onClick={() => setShowShareProfile(true)}
@@ -390,6 +400,8 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showInvite && <InviteSheet user={user} onClose={() => setShowInvite(false)} />}
 
       <StoryViewerDialog
         open={!!selectedStory}

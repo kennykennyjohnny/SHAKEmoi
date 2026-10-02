@@ -361,3 +361,55 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 3. Lundi soir vers 19 h (téléphone avec notifs activées, série ≥ 1, pas de Shake cette semaine) → notif « Ta série … est en jeu ! ».
 4. Ton profil → « Épingler un son » → cherche un son → il apparaît en haut avec l'épingle ; touche son titre → déplace-le / désépingle-le. Ouvre un de tes posts → bouton épingle → « Épinglé sur ton profil 📌 ».
 5. Un cercle → icône Playlist → « Tout écouter » : les extraits s'enchaînent ; verrouille le téléphone : la pochette et les boutons sont sur l'écran verrouillé ; appui long sur un son → le message d'origine clignote dans la conversation.
+
+
+## Lot 9 — P25 (compatibilité), P18 (suggestions), P19 (inviter), P29 (jamais de fil vide)
+| # | Statut | Explication |
+|---|---|---|
+| P25 / N6 | ✅ | Compatibilité musicale **refaite et calculée en base** (avant : calcul dans le téléphone, à partir des seuls noms d'artistes, souvent 0 % ou 100 %). Voir la conception ci-dessous. Recalcul de toutes les paires **toutes les 30 min** (tâche planifiée), lecture instantanée. |
+| P25 artistes | ✅ | Nouvelle fonction serveur `enrich-artists` : pour chaque artiste partagé, ses **genres** (Spotify) et ses **artistes proches** (Deezer), rangés dans `artist_profiles`. **87 artistes enrichis**. Repasse toute seule pour les nouveaux artistes. |
+| P25 affichage | ✅ | Aperçu de profil : « Compatibilité musicale **88 %** » + **l'explication** (« Vous aimez tous les deux le Rap et la Pop · Romsii, HOUDI, Favé en commun »). Si l'un des deux a moins de 5 sons : « **Pas encore assez de sons** » (avec le nombre de chacun). |
+| P18 | ✅ | **Suggestions** dans un seul carrousel discret, avec une bascule « **Amis d'amis** / **Mêmes goûts** » et la raison sous chaque personne (« Suivi·e par @raph et 2 autres », « 88 % de goûts en commun », « Dans ton cercle Potes »). Croix pour masquer (définitif), flamme si la personne a une série. Places : **Recherche** (champ vide), **fil** (une seule fois, après le 4e shake), **aperçu de profil** juste après « Suivre » (« **Suis aussi…** »). Les comptes bloqués et ceux que je suis déjà n'apparaissent jamais (imposé en base). |
+| P19 | ✅ | **Inviter des amis** : bouton « Inviter » sur mon profil + « Inviter des amis » dans Paramètres. Lien perso **shakemoi.fr/i/&lt;pseudo&gt;** partagé par la feuille de partage du téléphone (WhatsApp, Insta, SMS…) avec un petit texte, bouton copier, et **QR code plein écran** aux couleurs SHAKEmoi (avatar au centre) pour le montrer en soirée. |
+| P19 arrivée | ✅ | Page d'arrivée du lien : « **Kenny t'invite sur SHAKEmoi** », ses **3 derniers sons écoutables**, bouton **Rejoindre**. À l'inscription : **on se suit mutuellement** automatiquement, et l'inviteur reçoit « **@léa a rejoint SHAKEmoi grâce à toi 🎉** » (cloche + notif push). Une seule fois par compte, seulement pour un compte créé il y a moins de 2 jours (pas de triche avec un vieux compte). |
+| P29 | ✅ | **Plus jamais de fil vide** : à la fin du tuto d'un nouveau compte, écran « **Suis au moins 3 personnes** » (la personne qui a invité en premier, déjà suivie, puis amis d'amis, mêmes goûts, comptes populaires), un toucher par personne, « Encore 2 » → « C'est parti 🎧 », et **Passer** toujours possible. |
+
+### N6 — la compatibilité en 10 lignes
+1. On prend les sons de chacun : posts, reshakes (×0,6), Shakes éphémères et réponses en musique (×0,7), sons **épinglés ×2**, sons des 3 derniers mois ×1,5.
+2. Il faut **au moins 5 sons différents** chacun, sinon « Pas encore assez de sons ».
+3. Chaque son donne : sa **famille** (Rap, Pop, Rock / Indé… 14 familles), ses **genres fins** (drill, afro trap…), son **artiste**, et le **titre**.
+4. Les **artistes proches** comptent aussi, à 35 % (aimer SDM et Leto rapproche, même sans artiste en commun).
+5. Un genre que tout le monde a (« pop ») pèse moins qu'un genre rare (méthode TF-IDF).
+6. On normalise : quelqu'un qui a 200 sons n'écrase plus quelqu'un qui en a 10.
+7. Pour chaque paire, on compare les profils type par type (cosinus).
+8. Score brut = 35 % familles + 25 % genres + 25 % artistes + 15 % titres.
+9. On l'étale sur 0-100 selon le rang parmi toutes les paires (90+ = les 3 % les plus proches), mélangé à 30 % avec la valeur brute : fini les 0 % et 100 % absurdes.
+10. On garde l'explication (familles, artistes en commun, artistes proches) pour l'afficher.
+
+**Scores réels entre les 10 comptes les plus actifs** (7 ont assez de sons ; @coucou 4 sons, @aryamoon 3, @krakow_48 4 : « pas encore assez ») :
+
+| Paire | Score | Pourquoi |
+|---|---|---|
+| @kenny × @raph | **88** | Rap, Pop, Folk ; Romsii, HOUDI, Favé en commun |
+| @kenny × @johnny | 77 | Rap, R&B / Soul, Pop ; HOUDI, Aswell |
+| @raph × @johnny | 70 | Rap, Rock / Indé, Pop ; HOUDI ; proches : Stony Stone ↔ HOUDI |
+| @kenny × @shakemoi | 66 | Rap, Pop, Afro ; Bad Bunny, C. Tangana, Leto ; proches : SDM ↔ Leto |
+| @shakemoi × @raph | 62 | Rap, Pop, Chanson ; Bad Bunny ; proches : Johnny Hallyday ↔ Goldman |
+| @raph × @bapt22 | 57 | Rap, Chanson, R&B ; Lithe, Natalia Krakowiak |
+| @kenny × @bapt22 | 54 | Rap, R&B, Électro ; Natalia Krakowiak, 808NOCHE |
+| @lil_mga × @theov | 42 | Rock / Indé, Reggae, Jazz / Funk (aucun artiste commun) |
+| @kenny × @theov | 35 | Rap, R&B, Électro ; Trinix |
+| @kenny × @lil_mga | 15 | Rock / Indé, Chanson, Reggae ; Tryo — mais peu de choses en commun |
+| @lil_mga × @bapt22 | 8 | juste un peu de Chanson |
+
+**3 exemples expliqués**
+- **@kenny × @raph = 88** : mêmes familles en tête (Rap, Pop) et **3 artistes en commun** pas très répandus (Romsii, HOUDI, Favé) → c'est la paire la plus proche de tout SHAKEmoi.
+- **@raph × @johnny = 70** : un seul artiste en commun (HOUDI), mais SHAKEmoi sait que **Stony Stone est proche de HOUDI** → ça compte.
+- **@kenny × @lil_mga = 15** : @lil_mga écoute surtout chanson, rock et reggae, @kenny surtout du rap : seul Tryo les relie → score bas, et c'est juste.
+
+**Tests (lot 9)**
+1. Recherche, champ vide : le carrousel « Personnes que tu pourrais connaître » est en haut ; bascule « Mêmes goûts » ; la croix fait disparaître quelqu'un pour de bon.
+2. Ouvre l'aperçu de @raph : « Compatibilité musicale 88 % » + l'explication. Sur un compte avec moins de 5 sons : « Pas encore assez de sons ».
+3. Suis quelqu'un depuis son aperçu → « Suis aussi… » apparaît dessous.
+4. Profil → « Inviter » → « Partager mon lien » (WhatsApp) ; « Montrer mon QR code » → scanne-le avec un autre téléphone → page « Kenny t'invite sur SHAKEmoi » avec 3 sons qui se jouent → Rejoindre → crée un compte → tuto → « Suis au moins 3 personnes » (tu es en premier, déjà suivi) → toi, tu reçois « … a rejoint SHAKEmoi grâce à toi 🎉 » et vous vous suivez. (Testé en base : abonnement dans les 2 sens, une seule notif, pas de doublon si on recommence.)
+5. Fil : après le 4e shake, une seule fois, le petit carrousel de suggestions.

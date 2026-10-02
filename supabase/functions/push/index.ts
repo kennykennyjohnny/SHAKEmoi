@@ -98,6 +98,9 @@ async function fromNotification(n: any, old: any | null): Promise<Push[]> {
     case 'feel':
       return [{ userId: n.user_id, pref: 'follows', title: 'SHAKEmoi', body: `${who} s’est abonné·e à toi`,
         url: `/?open=profile:${n.from_user_id}`, tag: `follow-${n.from_user_id}` }];
+    case 'invite_joined':
+      return [{ userId: n.user_id, pref: 'follows', title: 'SHAKEmoi', body: `${who} a rejoint SHAKEmoi grâce à toi 🎉`,
+        url: `/?open=profile:${n.from_user_id}`, tag: `invite-${n.from_user_id}` }];
     case 'story_like': {
       const others = Math.max(0, (n.actor_ids || []).length - 1);
       return [{ userId: n.user_id, pref: 'likes', title: 'SHAKEmoi',

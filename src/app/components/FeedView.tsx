@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
+import { SuggestionsCarousel } from './SuggestionsCarousel';
 import { formatRelative } from '../../lib/dates';
 import { createPortal } from 'react-dom';
 import { Heart, MessageCircle, Repeat2, Play, Pause, MoreHorizontal, Loader2, Send, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Copy, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
@@ -1329,8 +1330,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             const isSounding = preview.key === shake.id && preview.playing;
 
             return (
+              <Fragment key={shake.id}>
               <motion.article
-                key={shake.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
@@ -1553,6 +1554,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   </button>
                 </div>
               </motion.article>
+              {index === 3 && <SuggestionsCarousel className="mb-5" compact />}
+              </Fragment>
             );
           })
         )}
