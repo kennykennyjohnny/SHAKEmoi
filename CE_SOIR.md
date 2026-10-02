@@ -492,3 +492,16 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 | # | Statut | Explication |
 |---|---|---|
 | N6 | ✅ | Couvert par **P25** (lot 9) : profil musical par artistes, genres fins (TF-IDF), familles, artistes proches, récence, sons épinglés, explication affichée. |
+
+## Lot 12 — P31 (décisions appliquées) + P30 (pages légales, brouillon)
+| # | Statut | Explication |
+|---|---|---|
+| P31 vocabulaire | ✅ | Passé en revue **tous les textes visibles** (appli, notifications, notifs push, partage, aide, page Confidentialité de l'appli) : les « story / stories » restants sont devenus « **Shake éphémère / Shakes éphémères** » (15 textes : ajouter, supprimer, épingler, « Personne n'a encore vu ce Shake éphémère », rubrique du profil, suppression du compte, notif « ont aimé ton Shake éphémère »…). Gardé exprès : les mentions des **stories Instagram** (vidéo de partage : « Vidéo pour ta story Insta », sticker Lien). Rien changé dans les noms de tables ni de variables. |
+| P31 lien de cercle | ✅ | Le lien d'invitation porte maintenant le **code du cercle** : `shakemoi.fr/c/<code>` (au lieu de l'id). Dans les infos du cercle : « **Générer un nouveau lien** » (avec confirmation) → nouveau code de 8 caractères tiré au hasard de façon sûre (sans O/0 ni I/1), **l'ancien lien et l'ancien code ne marchent plus**. **Tous les membres** peuvent le faire. Les **anciens liens `/c/<id>`** et les codes remplacés affichent « **Ce lien n'est plus valide** — demande un nouveau lien à un membre du cercle ». La page d'invitation montre aussi la photo du cercle, et « Rejoindre » ouvre directement le cercle. Aperçu de lien (WhatsApp…) : nom, photo et nombre de membres via le code. |
+| P31 règles en base | ✅ | Imposé en base : on ne **rejoint qu'avec un code valide** (l'ancienne fonction par id ne fait plus entrer personne), seul un **membre** peut régénérer, le code ne peut pas être modifié directement, chaque nouveau cercle reçoit un code sûr. **Testé** (transaction annulée) : non-membre → refus pour régénérer et pour entrer par l'id ; ancien code → « lien expiré » ; nouveau code → entre ; changement direct du code → ignoré ; nouveau cercle → code `F5CNKG2V`. Les codes actuels des 19 cercles sont gardés (ceux que vous avez déjà partagés en texte marchent toujours). |
+| P31 reshakes | ✅ | Anciens likes / commentaires sur des reshakes : **rien fait**, comme décidé. |
+
+**Tests (P31)**
+1. Fais le tour de l'appli (Shake éphémère : publier, voir, supprimer, épingler, archive, profil, notifs) : plus aucun « story » à l'écran, sauf pour Instagram.
+2. Un cercle → infos → copie le lien (`/c/XXXXXXXX`) → ouvre-le dans une fenêtre privée : page d'invitation avec la photo. Reviens → « Générer un nouveau lien » → recharge l'ancien lien : « Ce lien n'est plus valide ». Le nouveau marche.
+3. Un vieux lien `/c/<long id>` reçu avant ce soir → « Ce lien n'est plus valide ».

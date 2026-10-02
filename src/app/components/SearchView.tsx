@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Search as SearchIcon, Play, Pause, User, Music, Loader2, Sparkles, UserPlus, UserCheck, Send, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
-import { searchUsers, createPost, searchCircles, joinCircle, followUser, followErrorMessage, unfollowUser, getFollowingIds } from '../../lib/database';
+import { searchUsers, createPost, searchCircles, joinCircleByCode, followUser, followErrorMessage, unfollowUser, getFollowingIds } from '../../lib/database';
 import { resolvePreviewUrl, playPreview, togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
 import { createSongShare } from '../../lib/shares';
 import { openExternal } from '../../lib/platforms';
@@ -507,7 +507,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                 ) : (
                   <button
                     onClick={async () => {
-                      const r = await joinCircle(circle.id);
+                      const r = await joinCircleByCode(circle.invite_code || searchQuery);
                       if (r.success) setJoinedCircleIds(new Set([...joinedCircleIds, circle.id]));
                     }}
                     className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-xs font-bold hover:opacity-90"

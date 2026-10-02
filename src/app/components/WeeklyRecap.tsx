@@ -197,7 +197,7 @@ export function RecapViewer({ recap, user, onClose }: { recap: WeeklyRecap; user
             {screen === 'share' && (
               <div className="text-left" data-no-tap>
                 <h2 className="text-2xl font-black text-center mb-1">Partage ton récap</h2>
-                <p className="text-sm text-purple-100/75 text-center mb-5">Une vidéo story avec ta semaine, sur ton son le plus liké.</p>
+                <p className="text-sm text-purple-100/75 text-center mb-5">Une vidéo à mettre en story Insta ou TikTok, avec ta semaine et ton son le plus liké.</p>
                 <StoryVideoMaker
                   url={inviteLink(username)}
                   shareText="Mon récap de la semaine sur SHAKEmoi 🎧 Fais le tien :"

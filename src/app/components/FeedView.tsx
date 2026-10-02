@@ -79,7 +79,7 @@ function CircleHeader({ circle, onBack, onLeaveCircle, onRenameCircle, currentUs
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
 
-  const shareLink = circleLink(circle.id, currentUser?.username);
+  const shareLink = circleLink(circle.invite_code || circle.id, currentUser?.username);
 
   const copyCode = () => {
     navigator.clipboard.writeText(circle.invite_code || '');
@@ -1178,7 +1178,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   <button
                     onClick={onShowEphemeralShake}
                     className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-full border-2 border-[#1E1440] flex items-center justify-center shadow-md z-10"
-                    title="Ajouter une story"
+                    title="Ajouter un Shake éphémère"
                   >
                     <Plus className="w-3 h-3 text-white" strokeWidth={3} />
                   </button>

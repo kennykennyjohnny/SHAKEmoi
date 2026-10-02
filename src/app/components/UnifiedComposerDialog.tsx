@@ -246,7 +246,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
       }, 500);
     } catch (error: any) {
       console.error('Error creating story:', error);
-      alert(friendlyError(error, "Ta story n'a pas pu être publiée. Vérifie ta connexion et réessaie."));
+      alert(friendlyError(error, "Ton Shake éphémère n'a pas pu être publié. Vérifie ta connexion et réessaie."));
       setIsCreating(false);
     }
   };

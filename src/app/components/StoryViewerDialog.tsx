@@ -394,14 +394,14 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
 
   const handleDelete = async () => {
     if (!story || !currentUser || story.user_id !== currentUser.id) return;
-    if (confirm('Supprimer cette story?')) {
+    if (confirm('Supprimer ce Shake éphémère ?')) {
       try {
         const { error } = await supabase.from('stories').delete().eq('id', story.id);
         if (error) throw error;
         onClose();
       } catch (err) {
         console.error('Error deleting story:', err);
-        alert('Impossible de supprimer la story.');
+        alert('Impossible de supprimer le Shake éphémère.');
       }    }
   };
 
@@ -520,7 +520,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                 {/* M3 : temps restant, en direct. */}
                 {timeRemaining && (
                   <span
-                    title="Temps restant avant que la story disparaisse"
+                    title="Temps restant avant que le Shake éphémère disparaisse"
                     className="flex items-center gap-1 px-2 py-1 rounded-full bg-black/35 backdrop-blur-sm text-[11px] font-semibold text-white tabular-nums"
                   >
                     <Hourglass className="w-3 h-3" /> {timeRemaining}
@@ -750,7 +750,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                           <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         </div>
                       ) : likers.length === 0 ? (
-                        <p className="text-center text-sm text-white/40 py-6">Pas encore de like sur cette story</p>
+                        <p className="text-center text-sm text-white/40 py-6">Pas encore de like sur ce Shake éphémère</p>
                       ) : (
                         likers.map((u: any) => (
                           <div key={u.id} className="flex items-center gap-3 px-4 py-2.5">
@@ -772,7 +772,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       </div>
                     ) : viewers.length === 0 ? (
-                      <p className="text-center text-sm text-white/40 py-6">Personne n'a encore vu cette story</p>
+                      <p className="text-center text-sm text-white/40 py-6">Personne n'a encore vu ce Shake éphémère</p>
                     ) : (
                       viewers.map((viewer: any) => (
                         <div key={viewer.id} className="flex items-center gap-3 px-4 py-2.5">
@@ -894,7 +894,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                 {isOwner && (
                   <button
                     onClick={toggleViewers}
-                    aria-label="Voir qui a vu ta story"
+                    aria-label="Voir qui a vu ton Shake éphémère"
                     className={`ml-auto flex items-center gap-1.5 px-3 py-2 rounded-full backdrop-blur-sm text-sm font-semibold transition-colors ${showViewers ? 'bg-white/25 text-white' : 'bg-black/35 text-white/90 hover:bg-white/15'}`}
                   >
                     <Eye className="w-4 h-4" /> {viewCount ?? '…'}
@@ -931,7 +931,7 @@ function StoryPhoto({ url, onReady }: { url: string; onReady: () => void }) {
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-10 text-center text-white/85 bg-gradient-to-b from-purple-900/60 to-[#0A0614]">
           <ImageOff className="w-10 h-10 text-purple-300/80" />
           <p className="font-semibold">La photo n'a pas pu se charger</p>
-          <p className="text-xs text-white/60">Vérifie ta connexion. Le son et le texte de la story restent là.</p>
+          <p className="text-xs text-white/60">Vérifie ta connexion. Le son et le texte du Shake éphémère restent là.</p>
         </div>
       )}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent via-60% to-black/60" />

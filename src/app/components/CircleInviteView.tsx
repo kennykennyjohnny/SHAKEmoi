@@ -1,20 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Users, Loader2, UserPlus, Music, Sparkles, Disc3 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { getCircleById, getCircleMembers, getCircleFeed, joinCircle } from '../../lib/database';
+import { getCircleMembers, getCircleFeed, joinCircleByCode } from '../../lib/database';
+import { isLegacyCircleLink } from '../../lib/links';
 import { supabase } from '../../lib/supabase';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';
 
 import { defaultAvatar, avatarThumb } from '../../lib/media';
 interface Props {
-  circleId: string;
+  /** Code d'invitation du lien /c/<code> (ou un ancien id : lien expiré, P31). */
+  code: string;
   currentUser: any | null;
-  onJoin: () => void;
+  onJoin: (circleId?: string) => void;
   onSignUp: () => void;
 }
 
-export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Props) {
+export function CircleInviteView({ code, currentUser, onJoin, onSignUp }: Props) {
   const [circle, setCircle] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [recentTracks, setRecentTracks] = useState<any[]>([]);
@@ -23,34 +25,30 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
   const [joined, setJoined] = useState(false);
   const [error, setError] = useState('');
   const [memberCount, setMemberCount] = useState(0);
+  const [isMember, setIsMember] = useState(false);
+  // Ancien lien avec l'id du cercle, ou code remplacé par un nouveau lien.
+  const [expired, setExpired] = useState(isLegacyCircleLink(code));
 
   useEffect(() => {
     loadCircle();
-  }, [circleId]);
+  }, [code, currentUser?.id]);
 
   const loadCircle = async () => {
+    if (isLegacyCircleLink(code)) { setExpired(true); setLoading(false); return; }
     try {
-      const [circleData, membersData, feedData] = await Promise.all([
-        getCircleById(circleId),
-        getCircleMembers(circleId),
-        getCircleFeed(circleId, 6),
-      ]);
-      if (circleData) {
-        setCircle(circleData);
-      } else {
-        // Sans compte, les cercles ne sont pas lisibles : on se contente de
-        // l'aperçu public (nom, photo, nombre de membres).
-        const { data } = await supabase.rpc('get_circle_preview', { p_circle_id: circleId });
-        const preview = Array.isArray(data) ? data[0] : data;
-        if (preview?.name) {
-          setCircle({ id: circleId, name: preview.name, photo_url: preview.photo_url });
-          setMemberCount(Number(preview.member_count) || 0);
-        }
+      // Aperçu par le code (nom, photo, nombre de membres), lisible sans compte.
+      const { data } = await supabase.rpc('get_circle_invite', { p_code: code });
+      const preview = Array.isArray(data) ? data[0] : data;
+      if (!preview?.id) { setExpired(true); setLoading(false); return; }
+      setCircle({ id: preview.id, name: preview.name, photo_url: preview.photo_url });
+      setMemberCount(Number(preview.member_count) || 0);
+      setIsMember(!!preview.is_member);
+      // Membres et derniers sons : seulement lisibles par les membres.
+      if (preview.is_member) {
+        const [membersData, feedData] = await Promise.all([getCircleMembers(preview.id), getCircleFeed(preview.id, 6)]);
+        setMembers(membersData || []);
+        setRecentTracks((feedData || []).filter((p: any) => p.cover_url).slice(0, 4));
       }
-      setMembers(membersData || []);
-      // Get unique tracks with covers
-      const tracks = (feedData || []).filter((p: any) => p.cover_url).slice(0, 4);
-      setRecentTracks(tracks);
     } catch {}
     setLoading(false);
   };
@@ -63,11 +61,11 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
     setJoining(true);
     setError('');
     try {
-      const result = await joinCircle(circleId);
+      const result = await joinCircleByCode(code);
       if (result.success) {
         setJoined(true);
         setTimeout(() => {
-          onJoin();
+          onJoin(result.circleId);
         }, 1500);
       } else {
         setError(result.error || 'Erreur lors de la jonction');
@@ -84,16 +82,18 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
     </div>
   );
 
-  if (!circle) return (
+  if (expired || !circle) return (
     <div className="h-[100dvh] bg-[#1E1440] flex flex-col items-center justify-center gap-4 p-4">
-      <p className="text-purple-300/60 text-center">Ce cercle n'existe pas ou a été supprimé</p>
+      <Users className="w-10 h-10 text-purple-400/60" />
+      <p className="text-white font-semibold text-center">Ce lien n'est plus valide</p>
+      <p className="text-purple-300/70 text-sm text-center max-w-xs">Demande un nouveau lien à un membre du cercle.</p>
       <button onClick={() => { onJoin(); }} className="px-5 py-2.5 bg-purple-600/30 rounded-full text-sm text-purple-300 hover:bg-purple-600/40 transition-colors">
         Retour à l'accueil
       </button>
     </div>
   );
 
-  const alreadyMember = currentUser && members.some((m: any) => m.id === currentUser.id);
+  const alreadyMember = !!currentUser && isMember;
   const creator = members.find((m: any) => m.id === circle.created_by);
 
   return (
@@ -147,7 +147,9 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
               transition={{ delay: 0.2, type: 'spring' }}
               className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-fuchsia-500/30 to-purple-600/30 rounded-2xl flex items-center justify-center border border-fuchsia-500/20"
             >
-              <Users className="w-10 h-10 text-fuchsia-400" />
+              {circle.photo_url
+                ? <img src={avatarThumb(circle.photo_url, 160) || circle.photo_url} alt="" className="w-full h-full rounded-2xl object-cover" />
+                : <Users className="w-10 h-10 text-fuchsia-400" />}
             </motion.div>
             <h2 className="text-xl font-bold text-white mb-1">{circle.name}</h2>
             {creator && (
@@ -230,7 +232,7 @@ export function CircleInviteView({ circleId, currentUser, onJoin, onSignUp }: Pr
               </motion.div>
             ) : alreadyMember ? (
               <button
-                onClick={() => { onJoin(); }}
+                onClick={() => { onJoin(circle.id); }}
                 className="w-full py-3.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 <Music className="w-4 h-4" />

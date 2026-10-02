@@ -69,7 +69,7 @@ export function StoryArchiveDialog({ currentUser, onClose, onChanged }: Props) {
             <Archive className="w-5 h-5 text-purple-300" />
             <div className="flex-1">
               <p className="font-bold leading-tight">Mes archives</p>
-              <p className="text-[11px] text-purple-300/60">Épingle une story pour la garder « À la une » sur ton profil</p>
+              <p className="text-[11px] text-purple-300/60">Épingle un Shake éphémère pour le garder « À la une » sur ton profil</p>
             </div>
             <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10" aria-label="Fermer">
               <X className="w-5 h-5 text-purple-300/70" />
@@ -93,12 +93,12 @@ export function StoryArchiveDialog({ currentUser, onClose, onChanged }: Props) {
                       const visual = s.image_url || s.cover_url;
                       return (
                         <div key={s.id} className="relative aspect-[9/16] rounded-xl overflow-hidden bg-[#2A1852] group">
-                          <button onClick={() => setViewing(s)} className="absolute inset-0 w-full h-full" aria-label="Voir la story">
+                          <button onClick={() => setViewing(s)} className="absolute inset-0 w-full h-full" aria-label="Voir le Shake éphémère">
                             {visual
                               ? <img loading="lazy" src={visual} alt="" className={`w-full h-full object-cover ${expired ? 'opacity-80' : ''}`} />
                               : <span className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-700 to-pink-700"><Music2 className="w-8 h-8 text-white/70" /></span>}
                             <span className="absolute inset-x-0 bottom-0 p-1.5 pt-6 bg-gradient-to-t from-black/80 to-transparent text-left">
-                              <span className="block text-[10px] font-bold truncate">{s.track_name || 'Story'}</span>
+                              <span className="block text-[10px] font-bold truncate">{s.track_name || 'Shake éphémère'}</span>
                               <span className="block text-[9px] text-white/60">
                                 {new Date(s.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                                 {!expired && ' · en cours'}

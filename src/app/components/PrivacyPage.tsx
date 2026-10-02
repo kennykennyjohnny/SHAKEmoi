@@ -43,8 +43,8 @@ export function PrivacyPage({ onBack }: { onBack: () => void }) {
         <Section title="Ce que nous collectons">
           <ul className="list-disc pl-5 space-y-1.5">
             <li><b>Compte</b> : adresse email et mot de passe (chiffré), pseudo, nom affiché, photo de profil, bio.</li>
-            <li><b>Ce que tu publies</b> : shakes, stories (photos comprises), commentaires, réactions, messages privés et messages de cercles.</li>
-            <li><b>Ton activité sociale</b> : abonnements, likes, vues de stories, cercles rejoints.</li>
+            <li><b>Ce que tu publies</b> : shakes, Shakes éphémères (photos comprises), commentaires, réactions, messages privés et messages de cercles.</li>
+            <li><b>Ton activité sociale</b> : abonnements, likes, vues de Shakes éphémères, cercles rejoints.</li>
             <li><b>Préférences</b> : plateforme d'écoute préférée, réglages de notifications.</li>
             <li><b>Liens partagés</b> : quand tu partages un son, on enregistre le son et le nombre d'ouvertures du lien (sans identifier qui l'ouvre).</li>
           </ul>

@@ -513,11 +513,11 @@ export default function App() {
     }
     return (
       <CircleInviteView
-        circleId={route.id}
+        code={route.id}
         currentUser={currentUser}
-        onJoin={() => {
+        onJoin={(circleId) => {
           leaveRoute();
-          setViewOptions({ initialTab: 'circles' });
+          setViewOptions(circleId ? { initialTab: 'circles', openCircleId: circleId, nonce: Date.now() } : { initialTab: 'circles' });
           setCurrentView('messages');
         }}
         onSignUp={() => {

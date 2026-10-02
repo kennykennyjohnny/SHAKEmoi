@@ -102,11 +102,11 @@ export function StoryVideoMaker({ make, url, shareText, fileName, title, subtitl
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="font-bold leading-tight">{title || (canRecord ? 'Vidéo pour ta story' : 'Image pour ta story')}</p>
+          <p className="font-bold leading-tight">{title || (canRecord ? 'Vidéo pour ta story Insta' : 'Image pour ta story Insta')}</p>
           <p className="text-xs text-purple-200/70 mt-1">
             {subtitle || (canRecord
               ? `${VIDEO_SECONDS} s avec le son, prête pour Insta, TikTok, Snap ou WhatsApp.`
-              : 'Ta story avec la pochette et le lien.')}
+              : 'Ta story Insta avec la pochette et le lien.')}
           </p>
 
           {state === 'idle' && (

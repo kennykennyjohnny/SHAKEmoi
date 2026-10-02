@@ -6,7 +6,8 @@
 //   /p/<postId>      post / shake
 //   /u/<pseudo>      profil
 //   /i/<pseudo>      invitation sur SHAKEmoi
-//   /c/<id>?by=<p>   cercle (invitation si `by`)
+//   /c/<code>?by=<p> invitation dans un cercle (code régénérable, P31 ;
+//                    les anciens liens /c/<id> s'affichent comme expirés)
 //   /m               conversation (aperçu neutre, aucun contenu privé)
 //
 // Les anciens formats (#/s/, #/circle/, ?song=, ?ref=) restent reconnus.
@@ -27,6 +28,10 @@ export interface Route {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SLUG = /^[a-z0-9]{6,32}$/i;
 const USERNAME = /^[a-z0-9._-]{1,40}$/i;
+const CIRCLE_CODE = /^[a-z0-9]{4,12}$/i;
+
+/** Ancien lien de cercle (avec l'id) : il n'est plus valide (P31). */
+export const isLegacyCircleLink = (id: string) => UUID.test(id);
 
 export function routePath(r: Route): string {
   const id = encodeURIComponent(r.id);
@@ -63,7 +68,7 @@ export function parseRoute(pathname: string, search: string, hash: string): Rout
   if (head === 'p' && UUID.test(id)) return { type: 'post', id };
   if (head === 'u' && USERNAME.test(id)) return { type: 'profile', id };
   if (head === 'i' && USERNAME.test(id)) return { type: 'invite', id };
-  if (head === 'c' && UUID.test(id)) return { type: 'circle', id, by: q.get('by') };
+  if (head === 'c' && (UUID.test(id) || CIRCLE_CODE.test(id))) return { type: 'circle', id, by: q.get('by') };
   if (head === 'm') return { type: 'conversation', id: '' };
 
   // Anciens formats.

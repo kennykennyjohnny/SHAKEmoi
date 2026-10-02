@@ -1108,7 +1108,7 @@ export async function getUserNotifications(userId: string) {
         story: notif.story || null,
         // M10 : « Léa et 4 autres ont aimé ta story ».
         content: notif.type === 'story_like' && (notif.actor_ids?.length || 0) > 1
-          ? `et ${notif.actor_ids.length - 1} autre${notif.actor_ids.length > 2 ? 's' : ''} ont aimé ta story`
+          ? `et ${notif.actor_ids.length - 1} autre${notif.actor_ids.length > 2 ? 's' : ''} ont aimé ton Shake éphémère`
           : notificationText(notif.type),
         created_at: notif.created_at,
         is_read: notif.is_read
@@ -1604,18 +1604,21 @@ export async function findCircleByCode(code: string): Promise<any | null> {
   return (Array.isArray(data) ? data[0] : data) || null;
 }
 
-export async function joinCircleByCode(inviteCode: string): Promise<any> {
-  try {
-    const circle = await findCircleByCode(inviteCode);
-    if (!circle) throw new Error('Cercle introuvable');
-    if (circle.is_member) throw new Error('Tu es déjà membre de ce cercle');
-    const r = await joinCircle(circle.id);
-    if (!r.success) throw new Error(r.error);
-    return { success: true, data: circle };
-  } catch (error: any) {
-    console.error('Error joining circle by code:', error);
-    return { success: false, error: error.message };
-  }
+/** Rejoindre un cercle avec son code d'invitation (le seul moyen, P31). */
+export async function joinCircleByCode(inviteCode: string): Promise<{ success: boolean; circleId?: string; error?: string }> {
+  const { data, error } = await supabase.rpc('join_circle_by_code', { p_code: inviteCode.trim() });
+  if (!error && data) return { success: true, circleId: data as string };
+  const msg = error?.message || '';
+  return { success: false, error: /expired/i.test(msg) ? 'Ce lien n\'est plus valide, demande un nouveau lien à un membre.'
+    : /removed/i.test(msg) ? 'Tu as été retiré·e de ce cercle. Demande à un membre de te rajouter.'
+    : 'Impossible de rejoindre le cercle, réessaie' };
+}
+
+/** Nouveau lien d'invitation : l'ancien ne marche plus. Tout membre peut le faire. */
+export async function regenerateCircleInvite(circleId: string): Promise<{ code?: string; error?: string }> {
+  const { data, error } = await supabase.rpc('regenerate_circle_invite', { p_circle_id: circleId });
+  if (error || !data) return { error: error?.message || 'Impossible de changer le lien, réessaie.' };
+  return { code: data as string };
 }
 
 /**

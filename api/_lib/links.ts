@@ -201,17 +201,17 @@ export async function resolveLink({ type, id, by }: LinkParams): Promise<LinkMet
         return (id && (await inviteMeta(id, null))) || HOME;
 
       case 'circle': {
-        if (!id || !UUID.test(id)) return HOME;
-        // Les cercles ne sont lisibles que connecté : une fonction dédiée
-        // n'expose que le nom, la photo et le nombre de membres.
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_circle_preview`, {
+        // P31 : le lien porte le code d'invitation (les anciens liens avec l'id ne
+        // marchent plus). La fonction n'expose que le nom, la photo et le nombre de membres.
+        if (!id || !/^[a-z0-9]{4,12}$/i.test(id)) return HOME;
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_circle_invite`, {
           method: 'POST',
           headers: {
             apikey: SUPABASE_ANON_KEY,
             Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ p_circle_id: id }),
+          body: JSON.stringify({ p_code: id }),
         });
         const rows = res.ok ? await res.json() : [];
         const circle = Array.isArray(rows) ? rows[0] : rows;

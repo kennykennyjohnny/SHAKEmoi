@@ -4,8 +4,7 @@ import { ArrowLeft, Send, Search, Loader2, Users, Plus, Copy, Check, X, Settings
 import { motion, AnimatePresence } from 'motion/react';
 import {
   getConversations, getUserFollowing, createCircle, getUserCirclesByActivity, getCircleMembers,
-  searchUsers, addCircleMember, removeCircleMember, updateCirclePhoto, updateCircleName, deleteCircle,
-} from '../../lib/database';
+  searchUsers, addCircleMember, removeCircleMember, updateCirclePhoto, updateCircleName, deleteCircle, regenerateCircleInvite } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { useBackHandler } from '../../lib/navigation';
 import { circleLink } from '../../lib/links';
@@ -503,7 +502,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
     setStep(3);
   };
 
-  const shareLink = createdCircle ? circleLink(createdCircle.id, currentUser?.username) : '';
+  const shareLink = createdCircle ? circleLink(createdCircle.invite_code || createdCircle.id, currentUser?.username) : '';
 
   const copyLink = () => {
     navigator.clipboard.writeText(shareLink);
@@ -751,7 +750,18 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
   const [uploading, setUploading] = useState(false);
   const [copied, setCopied] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
-  const link = circleLink(circle.id, currentUser?.username);
+  // P31 : le lien porte le code du cercle ; « Générer un nouveau lien » rend l'ancien invalide.
+  const [code, setCode] = useState<string | null>(circle.invite_code || null);
+  const [regenerating, setRegenerating] = useState(false);
+  const link = circleLink(code || circle.id, currentUser?.username);
+  const regenerate = async () => {
+    if (!confirm("Générer un nouveau lien ? L'ancien lien et l'ancien code ne marcheront plus.")) return;
+    setRegenerating(true);
+    const r = await regenerateCircleInvite(circle.id);
+    setRegenerating(false);
+    if (r.code) { setCode(r.code); circle.invite_code = r.code; setMsg("Nouveau lien prêt. L'ancien ne marche plus."); }
+    else setMsg(r.error || 'Impossible de changer le lien, réessaie.');
+  };
 
   useEffect(() => {
     if (searchQ.trim().length < 2) { setSearchRes([]); return; }
@@ -874,7 +884,10 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
                   {copied ? <><Check className="w-3.5 h-3.5" /> Copié</> : <><Copy className="w-3.5 h-3.5" /> Partager</>}
                 </button>
               </div>
-              {circle.invite_code && <p className="text-[11px] text-purple-300/60 mt-2">Code : <span className="font-mono font-bold tracking-widest text-white select-all">{circle.invite_code}</span></p>}
+              {code && <p className="text-[11px] text-purple-300/60 mt-2">Code : <span className="font-mono font-bold tracking-widest text-white select-all">{code}</span></p>}
+              <button onClick={regenerate} disabled={regenerating} className="mt-2 text-xs font-semibold text-pink-300 hover:text-pink-200 disabled:opacity-50">
+                {regenerating ? 'Génération…' : 'Générer un nouveau lien'}
+              </button>
             </div>
 
             <div>

@@ -98,7 +98,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
   const [deleting, setDeleting] = useState(false);
   const handleDeleteAccount = async () => {
     const typed = prompt(
-      'Supprimer ton compte efface définitivement ton profil, tes shakes, stories, messages et abonnements.\n\nTape SUPPRIMER pour confirmer.'
+      'Supprimer ton compte efface définitivement ton profil, tes Shakes, Shakes éphémères, messages et abonnements.\n\nTape SUPPRIMER pour confirmer.'
     );
     if (typed?.trim().toUpperCase() !== 'SUPPRIMER') return;
     setDeleting(true);

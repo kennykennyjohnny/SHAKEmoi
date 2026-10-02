@@ -150,7 +150,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
         {/* Stories : en cours, « À la une » (épinglées) et accès aux archives */}
         <div className="mt-4">
-          <p className="text-[11px] text-purple-300/60 uppercase tracking-wider mb-2">Stories</p>
+          <p className="text-[11px] text-purple-300/60 uppercase tracking-wider mb-2">Shakes éphémères</p>
           <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {activeStories.map((story: any) => (
               <button key={story.id} onClick={() => { setStoryList(activeStories); setSelectedStory(story); }} className="flex-shrink-0 flex flex-col items-center gap-1 w-16">
