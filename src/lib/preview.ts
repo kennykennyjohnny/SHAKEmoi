@@ -157,6 +157,13 @@ let muted = false;
 // coupe, le choix vaut pour les stories suivantes jusqu'au rechargement.
 let sessionUnmuted = true;
 const listeners = new Set<() => void>();
+// Fin d'un extrait (playlist du cercle, P21 : on enchaîne le suivant).
+const endedListeners = new Set<(key: string) => void>();
+const progressListeners = new Set<() => void>();
+export function onPreviewProgress(cb: () => void): () => void {
+  progressListeners.add(cb);
+  return () => { progressListeners.delete(cb); };
+}
 
 function emit() { listeners.forEach(l => l()); }
 
@@ -166,7 +173,14 @@ function ensureAudio(): HTMLAudioElement {
     audio.volume = 0.9;
     audio.onplay = () => { playing = true; emit(); };
     audio.onpause = () => { playing = false; emit(); };
-    audio.onended = () => { playing = false; currentKey = null; emit(); };
+    audio.onended = () => {
+      const ended = currentKey;
+      playing = false; currentKey = null; emit();
+      if (ended) endedListeners.forEach((l) => l(ended));
+    };
+    // Progression (barre du mini-lecteur) : canal à part, pour ne pas
+    // redessiner toutes les pochettes 4 fois par seconde.
+    audio.ontimeupdate = () => progressListeners.forEach((l) => l());
   }
   return audio;
 }
@@ -208,6 +222,24 @@ if (typeof window !== 'undefined') {
 export function onPreviewChange(cb: () => void): () => void {
   listeners.add(cb);
   return () => { listeners.delete(cb); };
+}
+
+/** S'abonner à la fin d'un extrait (lecture enchaînée). */
+export function onPreviewEnded(cb: (key: string) => void): () => void {
+  endedListeners.add(cb);
+  return () => { endedListeners.delete(cb); };
+}
+
+/** Avancement de l'extrait en cours (secondes). */
+export function getPreviewProgress(): { current: number; duration: number } {
+  if (!audio || !currentKey) return { current: 0, duration: 0 };
+  return { current: audio.currentTime || 0, duration: Number.isFinite(audio.duration) ? audio.duration : 0 };
+}
+
+/** Aller à une position (0 → 1) de l'extrait en cours. */
+export function seekPreview(fraction: number) {
+  if (!audio || !Number.isFinite(audio.duration)) return;
+  audio.currentTime = Math.max(0, Math.min(1, fraction)) * audio.duration;
 }
 
 export function getPreviewState(): PreviewState {

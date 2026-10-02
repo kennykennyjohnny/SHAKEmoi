@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { formatRelative } from '../../lib/dates';
-import { X, Heart, MessageCircle, Loader2, Send, Trash2, Share2, Music, Search, Repeat2, Flag } from 'lucide-react';
+import { X, Heart, MessageCircle, Loader2, Send, Trash2, Share2, Music, Search, Repeat2, Flag, Pin } from 'lucide-react';
+import { pinSong } from './PinnedSongs';
 import { motion, AnimatePresence } from 'motion/react';
 import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment, reshakePost, unreshakePost, hasReshaked } from '../../lib/database';
 import { ReshakeDialog } from './ReshakeDialog';
@@ -350,6 +351,13 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
               <span className="text-xs font-medium text-fuchsia-400">Écouter</span>
             </button>
 
+            {isOwner && (
+              <button aria-label="Épingler sur mon profil" title="Épingler sur mon profil"
+                onClick={async () => { const err = await pinSong(null, post); notice(err || 'Épinglé sur ton profil 📌'); }}
+                className="p-1.5 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/20 rounded-lg transition-colors">
+                <Pin className="w-4 h-4 text-fuchsia-300" />
+              </button>
+            )}
             {isOwner && onDeletePost && (
               <button aria-label="Supprimer"
                 onClick={() => { if (confirm('Supprimer ce shake ?')) { onDeletePost(post.id); onClose(); } }}

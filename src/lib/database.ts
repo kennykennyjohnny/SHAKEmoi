@@ -339,6 +339,8 @@ export async function createPost(
       .single();
 
     if (error) throw error;
+    // Flamme de l'en-tête (P23) : elle se rallume tout de suite.
+    if (typeof window !== 'undefined' && !circleId) window.dispatchEvent(new Event('shakemoi:posted'));
 
     return { success: true, data };
   } catch (error: any) {

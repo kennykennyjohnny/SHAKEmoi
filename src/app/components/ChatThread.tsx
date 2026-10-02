@@ -41,6 +41,8 @@ interface ChatThreadProps {
   onBack: () => void;
   onHeaderClick?: () => void;
   headerActions?: ReactNode;
+  /** Ouvrir la conversation sur ce message (depuis la playlist du cercle, P21). */
+  jumpToId?: string | null;
 }
 
 const isTemp = (m: any) => String(m.id).startsWith('temp-');
@@ -48,7 +50,7 @@ const INTERACTIVE = 'button, a, input, textarea, [data-no-gesture]';
 
 export function ChatThread({
   chat, currentUser, title, avatarUrl, avatarName, circlePhoto, subtitle, members = [], isCircleOwner = false,
-  initialUnread = 0, onBack, onHeaderClick, headerActions,
+  initialUnread = 0, onBack, onHeaderClick, headerActions, jumpToId,
 }: ChatThreadProps) {
   const me = currentUser?.id as string;
   const isCircle = chat.kind === 'circle';
@@ -194,6 +196,11 @@ export function ChatThread({
       setTimeout(() => { if (!firstUnreadId) scrollToBottom(); }, 200);
     });
   }, [loading, firstUnreadId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Arrivée depuis la playlist : on remonte jusqu'au message et on le surligne.
+  useEffect(() => {
+    if (!loading && jumpToId) setTimeout(() => jumpTo(jumpToId), 150);
+  }, [loading, jumpToId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------- Temps réel ----------
   useEffect(() => {

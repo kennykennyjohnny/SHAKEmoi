@@ -29,6 +29,7 @@ import { syncPushSubscription } from '../lib/push';
 import { setSentryUser } from '../lib/sentry';
 import { ReportSheet, BugReportSheet, BlockedUsersSheet } from './components/ModerationSheets';
 import { AdminView } from './components/AdminView';
+import { HeaderFlame, StreakSheet } from './components/Streak';
 
 // Écrans chargés à la demande (perf 4G), préchargés ensuite en arrière-plan.
 const ProfileView = lazyView(() => import('./components/ProfileView'), (m) => m.ProfileView, ViewSpinner);
@@ -92,6 +93,8 @@ export default function App() {
   const [showBug, setShowBug] = useState(false);
   const [showBlocked, setShowBlocked] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  // P23 : petite fenêtre de la flamme (série, temps restant, publier).
+  const [showStreak, setShowStreak] = useState(false);
   useEffect(() => {
     const onReport = (e: Event) => setReportTarget((e as CustomEvent).detail);
     const onBug = () => setShowBug(true);
@@ -327,6 +330,7 @@ export default function App() {
     else if (kind === 'circle') { setViewOptions({ initialTab: 'circles', openCircleId: id, nonce: Date.now() }); setCurrentView('messages'); }
     else if (kind === 'profile') setProfilePreview({ userId: id, username: '' });
     else if (kind === 'notifications') setCurrentView('notifications');
+    else if (kind === 'streak') setShowStreak(true);
     else if (kind === 'story') {
       const s = await getStoryById(id);
       if (!s) return;
@@ -680,6 +684,8 @@ export default function App() {
                 </button>
               )}
 
+              {currentUser && <HeaderFlame userId={currentUser.id} onOpen={() => setShowStreak(true)} />}
+
               <button
                 onClick={() => setShowCreateShake(true)}
                 className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
@@ -864,6 +870,7 @@ export default function App() {
         {showBlocked && <BlockedUsersSheet onClose={() => setShowBlocked(false)} />}
       </AnimatePresence>
       {showAdmin && <AdminView onClose={() => setShowAdmin(false)} />}
+      {showStreak && currentUser && <StreakSheet userId={currentUser.id} onClose={() => setShowStreak(false)} onPublish={() => setShowCreateShake(true)} />}
       {/* Story ouverte depuis une notification (M10) */}
       {notifStory && (
         <StoryViewerDialog

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { ProfileGrid } from './ProfileGrid';
 import { FollowListSheet } from './FollowListSheet';
+import { StreakBadge } from './Streak';
+import { PinnedSongs } from './PinnedSongs';
 import { SettingsDialog } from './SettingsDialog';
 import { EditProfileDialog } from './EditProfileDialog';
 import { getUserShakeCount, getUserFollowersCount, getUserFollowingCount, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
@@ -100,7 +102,10 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
           {/* Info + Stats */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-white truncate">{user.displayName}</h1>
+            <h1 className="text-lg font-bold text-white truncate flex items-center gap-2">
+              <span className="truncate">{user.displayName}</span>
+              <StreakBadge userId={user.id} />
+            </h1>
             <p className="text-sm text-purple-400/70 mb-3">@{user.username}</p>
 
             {/* Stats Row - clickable for own profile */}
@@ -127,6 +132,9 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         {user.bio && (
           <p className="text-sm text-purple-200/70 mt-3 leading-relaxed">{user.bio}</p>
         )}
+
+        {/* Sons épinglés (P24) */}
+        <PinnedSongs userId={user.id} isOwn />
 
         {/* Stories : en cours, « À la une » (épinglées) et accès aux archives */}
         <div className="mt-4">

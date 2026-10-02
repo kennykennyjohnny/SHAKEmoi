@@ -15,6 +15,8 @@ import { formatListTime } from '../../lib/dates';
 import { openProfile } from '../../lib/appNav';
 import { ChatThread } from './ChatThread';
 import { ImageCropDialog } from './ImageCropDialog';
+import { CirclePlaylist } from './CirclePlaylist';
+import { ListMusic } from 'lucide-react';
 import { circlePreviewText, dmPreviewText } from '../../lib/chat';
 import { useSwipeTabs } from '../../lib/useSwipeTabs';
 
@@ -656,6 +658,10 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
   const [members, setMembers] = useState<any[]>([]);
   const [showInfo, setShowInfo] = useState(false);
   const isOwner = circle.created_by === currentUser?.id;
+  // P21 : la playlist remplace la conversation (même en-tête) ; le retour y revient.
+  const [view, setView] = useState<'chat' | 'playlist'>('chat');
+  const [jumpId, setJumpId] = useState<string | null>(null);
+  useBackHandler(view === 'playlist', () => setView('chat'));
 
   const loadMembers = async () => setMembers(await getCircleMembers(circle.id));
   useEffect(() => { loadMembers(); }, [circle.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -674,10 +680,23 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
 
   useBackHandler(showInfo, () => setShowInfo(false));
 
+  const memberLabel = `${members.length || circle.member_count || 0} membre${(members.length || circle.member_count) > 1 ? 's' : ''}`;
+  if (view === 'playlist') {
+    return (
+      <CirclePlaylist
+        circleId={circle.id} name={name} photoUrl={photoUrl} subtitle={memberLabel}
+        onBack={() => onBack()}
+        onChat={() => setView('chat')}
+        onOpenMessage={(id) => { setJumpId(id); setView('chat'); }}
+      />
+    );
+  }
+
   return (
     <>
       <ChatThread
         key={circle.id}
+        jumpToId={jumpId}
         chat={{ kind: 'circle', id: circle.id }}
         currentUser={currentUser}
         title={name}
@@ -689,9 +708,14 @@ function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser:
         onBack={() => onBack()}
         onHeaderClick={() => setShowInfo(true)}
         headerActions={
-          <button aria-label="Infos du cercle" onClick={() => setShowInfo(true)} className="p-2 rounded-full text-purple-300/70 hover:text-white hover:bg-violet-900/25">
-            <Settings className="w-4 h-4" />
-          </button>
+          <>
+            <button aria-label="Playlist du cercle" title="Playlist" onClick={() => setView('playlist')} className="p-2 rounded-full text-purple-200 hover:text-white hover:bg-violet-900/25">
+              <ListMusic className="w-4 h-4" />
+            </button>
+            <button aria-label="Infos du cercle" onClick={() => setShowInfo(true)} className="p-2 rounded-full text-purple-300/70 hover:text-white hover:bg-violet-900/25">
+              <Settings className="w-4 h-4" />
+            </button>
+          </>
         }
       />
       <AnimatePresence>

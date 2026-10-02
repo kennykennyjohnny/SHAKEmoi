@@ -12,6 +12,8 @@ import { getUserProfile, getUserShakeCount, getUserFollowersCount, getUserFollow
 import { supabase } from '../../lib/supabase';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { ProfileGrid } from './ProfileGrid';
+import { StreakBadge } from './Streak';
+import { PinnedSongs } from './PinnedSongs';
 import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { useBackHandler } from '../../lib/navigation';
 import { openConversation } from '../../lib/appNav';
@@ -202,7 +204,10 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                   <div className="flex items-start gap-4">
                     <img src={avatar} alt="" className="w-20 h-20 rounded-full object-cover ring-2 ring-purple-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-lg font-bold text-white truncate">{displayName}</h2>
+                      <h2 className="text-lg font-bold text-white flex items-center gap-2 min-w-0">
+                        <span className="truncate">{displayName}</span>
+                        <StreakBadge userId={profile.id} />
+                      </h2>
                       <p className="text-sm text-purple-400/80 mb-3">@{profile.username}</p>
                       <div className="flex items-center gap-5">
                         <div className="text-center">
@@ -224,6 +229,8 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                   </div>
 
                   {profile.bio && <p className="text-sm text-purple-200/80 mt-3 leading-relaxed">{profile.bio}</p>}
+
+                  <PinnedSongs userId={profile.id} isOwn={isMe} />
 
                   {/* P3 : abonnés en commun (connecté seulement) */}
                   {me && !isMe && <MutualFollowersLine userId={profile.id} onOpen={() => setList('mutual')} />}
