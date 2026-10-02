@@ -6,7 +6,7 @@
 // - pas d'extrait nulle part (M1) : petit bouton « Écouter sur <mon appli> » (O1).
 import { useEffect, useState } from 'react';
 import { Play, Pause, Loader2 } from 'lucide-react';
-import { resolvePreviewUrl, togglePreview, playPreview, getPreviewState, onPreviewChange } from '../../lib/preview';
+import { resolvePreviewUrl, togglePreview, playPreview, getPreviewState, onPreviewChange, setPreviewMeta } from '../../lib/preview';
 import { openExternal, PLATFORM_LABELS, searchUrl } from '../../lib/platforms';
 import { MyAppLogo, useMyStreamingApp } from './PlatformLogo';
 import { thumb } from '../../lib/media';
@@ -54,7 +54,7 @@ export function SongCover({
     setLoading(true);
     const url = await resolvePreviewUrl(title || '', artist || '', previewUrl, trackId).catch(() => null);
     setLoading(false);
-    if (url) { setNoPreview(false); playPreview(songKey, url); }
+    if (url) { setNoPreview(false); if (title) setPreviewMeta(songKey, { title, artist: artist || '', source: songKey.split('-')[0] }); playPreview(songKey, url); }
     else setNoPreview(true);
   };
 

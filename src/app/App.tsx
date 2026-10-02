@@ -19,6 +19,7 @@ import { lazyView, preloadViews, ViewSpinner } from '../lib/lazyView';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getInboxCounts, getCurrentShakeWeekStart, getStoryById } from '../lib/database';
 import { useBackHandler, setBasePath, TabActiveContext } from '../lib/navigation';
 import { takePostList } from '../lib/appNav';
+import { startListenLog } from '../lib/listenLog';
 import { parseRoute, type Route } from '../lib/links';
 import { Slogan } from './components/Slogan';
 import { InstallAppButton } from './components/InstallAppButton';
@@ -32,6 +33,7 @@ import { ReportSheet, BugReportSheet, BlockedUsersSheet } from './components/Mod
 import { AdminView } from './components/AdminView';
 import { HeaderFlame, StreakSheet } from './components/Streak';
 import { FollowStarter } from './components/FollowStarter';
+import { ArtistPicker } from './components/ArtistPicker';
 import { acceptInvite } from '../lib/social';
 
 // Écrans chargés à la demande (perf 4G), préchargés ensuite en arrière-plan.
@@ -141,6 +143,8 @@ export default function App() {
   const [showStreak, setShowStreak] = useState(false);
   // P29 : « Suis au moins 3 personnes » à la fin du tuto (nouveau compte).
   const [showStarter, setShowStarter] = useState(false);
+  // Q9 : « Choisis au moins 3 artistes » entre l'appli d'écoute et « Suis 3 personnes ».
+  const [showArtists, setShowArtists] = useState(false);
   const [inviterId, setInviterId] = useState<string | null>(null);
   useEffect(() => {
     const onReport = (e: Event) => setReportTarget((e as CustomEvent).detail);
@@ -362,6 +366,7 @@ export default function App() {
   useEffect(() => {
     if (!currentUser?.id) return;
     syncPushSubscription();
+    startListenLog(); // Q8 : écoutes → goûts
     // Sentry : l'identifiant seulement (jamais l'email ni le pseudo).
     setSentryUser(currentUser.id);
     loadNotifPrefs();
@@ -457,8 +462,8 @@ export default function App() {
   // après une déconnexion ou sur un autre appareil.
   const handleOnboardingComplete = async (service: PlatformKey) => {
     setShowOnboarding(false);
-    // Plus jamais de fil vide (P29).
-    setShowStarter(true);
+    // Q9 puis plus jamais de fil vide (P29).
+    setShowArtists(true);
     const done = new Date().toISOString();
     setCurrentUser((u: any) => u ? { ...u, musicService: service, preferred_streaming_app: service, onboarding_completed_at: done } : u);
     try {
@@ -922,6 +927,7 @@ export default function App() {
         {showBlocked && <BlockedUsersSheet onClose={() => setShowBlocked(false)} />}
       </AnimatePresence>
       {showAdmin && <AdminView onClose={() => setShowAdmin(false)} />}
+      {showArtists && currentUser && <ArtistPicker onDone={() => { setShowArtists(false); setShowStarter(true); }} />}
       {showStarter && currentUser && <FollowStarter inviterId={inviterId} onDone={() => { setShowStarter(false); setRefreshFeed(p => p + 1); }} />}
       {showStreak && currentUser && <StreakSheet userId={currentUser.id} onClose={() => setShowStreak(false)} onPublish={() => setShowCreateShake(true)} />}
       {/* Story ouverte depuis une notification (M10) */}

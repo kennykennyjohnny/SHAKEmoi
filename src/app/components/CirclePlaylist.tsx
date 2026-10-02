@@ -4,14 +4,11 @@
 // fois »). « Tout écouter » enchaîne les extraits (un seul son à la fois, M2),
 // mini-lecteur fixe en bas, commandes sur l'écran verrouillé (Media Session).
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, MessageCircle, Play, Pause, SkipBack, SkipForward, Loader2, Users, Music, ListMusic } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Play, Pause, Loader2, Users, Music, ListMusic } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { MediaImg, thumb } from '../../lib/media';
 import { formatRelative } from '../../lib/dates';
-import {
-  resolvePreviewUrl, playPreview, togglePreview, getPreviewState, onPreviewChange, onPreviewEnded,
-  onPreviewProgress, getPreviewProgress, seekPreview,
-} from '../../lib/preview';
+import { useQueuePlayer, MiniPlayer } from './QueuePlayer';
 
 interface Entry {
   key: string;
@@ -35,13 +32,9 @@ export function CirclePlaylist({ circleId, name, photoUrl, subtitle, onBack, onC
   onBack: () => void; onChat: () => void; onOpenMessage: (messageId: string) => void;
 }) {
   const [entries, setEntries] = useState<Entry[] | null>(null);
-  const [current, setCurrent] = useState<number>(-1);
-  const [, setTick] = useState(0);
-  const [loadingIdx, setLoadingIdx] = useState<number | null>(null);
-  const entriesRef = useRef<Entry[]>([]);
-  const currentRef = useRef(-1);
-  entriesRef.current = entries || [];
-  currentRef.current = current;
+  // Lecteur enchaîné partagé avec Découvrir (QueuePlayer).
+  const q = useQueuePlayer(entries, `pl-${circleId}`, { album: name });
+  const { current, isPlaying, loadingIdx, playAt, toggle } = q;
   const press = useRef<number | null>(null);
 
   useEffect(() => {
@@ -64,63 +57,6 @@ export function CirclePlaylist({ circleId, name, photoUrl, subtitle, onBack, onC
       }, () => { if (!off) setEntries([]); });
     return () => { off = true; };
   }, [circleId]);
-
-  const keyOf = (i: number) => `pl-${circleId}-${entriesRef.current[i]?.key}`;
-  // Lecture du son i ; s'il n'a pas d'extrait, on passe au suivant.
-  const playAt = async (i: number, tries = 0) => {
-    const list = entriesRef.current;
-    if (i < 0 || i >= list.length || tries > list.length) return;
-    const e = list[i];
-    setCurrent(i);
-    setLoadingIdx(i);
-    const url = await resolvePreviewUrl(e.track_name, e.artist, e.preview_url, e.track_id).catch(() => null);
-    setLoadingIdx(null);
-    if (currentRef.current !== i) return; // on a changé de son entre-temps
-    if (!url) { playAt(i + 1, tries + 1); return; }
-    playPreview(keyOf(i), url);
-  };
-  const next = () => { if (currentRef.current + 1 < entriesRef.current.length) playAt(currentRef.current + 1); };
-  const prev = () => {
-    if (getPreviewProgress().current > 3) { seekPreview(0); return; }
-    if (currentRef.current > 0) playAt(currentRef.current - 1);
-  };
-  const toggle = () => {
-    if (current < 0) { playAt(0); return; }
-    togglePreview(keyOf(current));
-  };
-
-  // Lecture enchaînée + redessin sur lecture / pause / progression.
-  useEffect(() => {
-    const a = onPreviewChange(() => setTick((n) => n + 1));
-    const b = onPreviewProgress(() => setTick((n) => n + 1));
-    const c = onPreviewEnded((k) => { if (k === keyOf(currentRef.current)) next(); });
-    return () => { a(); b(); c(); };
-  }, [circleId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const st = getPreviewState();
-  const isPlaying = current >= 0 && st.key === keyOf(current) && st.playing;
-  const cur = current >= 0 ? (entries || [])[current] : null;
-  const prog = getPreviewProgress();
-
-  // Écran verrouillé / centre de contrôle (Media Session).
-  useEffect(() => {
-    const ms = (navigator as any).mediaSession;
-    if (!ms || !cur) return;
-    try {
-      ms.metadata = new (window as any).MediaMetadata({
-        title: cur.track_name, artist: cur.artist, album: name,
-        artwork: cur.cover_url ? [{ src: thumb(cur.cover_url, 512) || cur.cover_url, sizes: '512x512', type: 'image/jpeg' }] : [],
-      });
-      ms.setActionHandler('play', toggle);
-      ms.setActionHandler('pause', toggle);
-      ms.setActionHandler('previoustrack', prev);
-      ms.setActionHandler('nexttrack', next);
-    } catch { /* navigateur sans Media Session complète */ }
-  }, [cur?.key, name]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => () => {
-    const ms = (navigator as any).mediaSession;
-    try { ['play', 'pause', 'previoustrack', 'nexttrack'].forEach((a) => ms?.setActionHandler(a, null)); } catch { /* rien */ }
-  }, []);
 
   const total = useMemo(() => (entries || []).reduce((n, e) => n + e.count, 0), [entries]);
 
@@ -187,22 +123,8 @@ export function CirclePlaylist({ circleId, name, photoUrl, subtitle, onBack, onC
       </div>
 
       {/* Mini-lecteur fixe */}
-      <div className="flex-shrink-0 border-t border-purple-500/25 bg-[#1D0F3D] pb-[var(--nav-h)] lg:pb-0">
-        <div className="h-1 bg-purple-900/60 cursor-pointer" onClick={(ev) => { const r = (ev.currentTarget as HTMLDivElement).getBoundingClientRect(); seekPreview((ev.clientX - r.left) / r.width); }}>
-          <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500" style={{ width: `${prog.duration ? (prog.current / prog.duration) * 100 : 0}%` }} />
-        </div>
-        <div className="flex items-center gap-3 px-3 py-2">
-          {cur?.cover_url ? <img src={thumb(cur.cover_url, 128)} alt="" className="w-11 h-11 rounded-md object-cover" /> : <div className="w-11 h-11 rounded-md bg-violet-900/50 flex items-center justify-center"><Music className="w-4 h-4 text-purple-300" /></div>}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate">{cur?.track_name || 'Rien en cours'}</p>
-            <p className="text-xs text-purple-300/90 truncate">{cur?.artist || 'Touche « Tout écouter »'}</p>
-          </div>
-          <button aria-label="Précédent" onClick={prev} disabled={current <= 0} className="p-2 rounded-full disabled:opacity-30"><SkipBack className="w-5 h-5 fill-white" /></button>
-          <button aria-label={isPlaying ? 'Pause' : 'Lecture'} onClick={toggle} disabled={!entries?.length} className="p-3 rounded-full bg-white text-[#1E1440] disabled:opacity-40">
-            {loadingIdx !== null ? <Loader2 className="w-5 h-5 animate-spin" /> : isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}
-          </button>
-          <button aria-label="Suivant" onClick={next} disabled={current >= (entries?.length || 0) - 1} className="p-2 rounded-full disabled:opacity-30"><SkipForward className="w-5 h-5 fill-white" /></button>
-        </div>
+      <div className="flex-shrink-0 pb-[var(--nav-h)] lg:pb-0 bg-[#1D0F3D]">
+        <MiniPlayer q={q} count={entries?.length || 0} />
       </div>
     </div>
   );

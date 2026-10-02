@@ -12,6 +12,8 @@ import { forgetPushOnLogout } from '../../lib/push';
 import { normalizePlatform, PLATFORM_LABELS, STREAMING_APPS, type PlatformKey } from '../../lib/platforms';
 import { PlatformLogo } from './PlatformLogo';
 import { OnboardingDialog } from './OnboardingDialog';
+import { ArtistPicker } from './ArtistPicker';
+import { Heart } from 'lucide-react';
 import { useBackHandler } from '../../lib/navigation';
 type MusicPlatform = PlatformKey;
 
@@ -38,6 +40,8 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
   const [initialMusicService, setInitialMusicService] = useState<MusicPlatform>(() => savedPlatform(currentUser));
   // « Revoir le tuto » : s'ouvre par-dessus, on revient ici à la fin (O1).
   const [replay, setReplay] = useState(false);
+  // Q9 : « Mes artistes préférés » (et l'étape du tuto rejoué).
+  const [artists, setArtists] = useState<null | 'settings' | 'onboarding'>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   // Ligne « Admin » : seulement pour le compte de Kenny (la base vérifie aussi).
   const [admin, setAdmin] = useState(false);
@@ -67,6 +71,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
 
   const handleReplayDone = async (service: MusicPlatform) => {
     setReplay(false);
+    setArtists('onboarding'); // le tuto continue sur « Choisis 3 artistes » (Q9)
     setMusicService(service);
     if (service === initialMusicService) return;
     try {
@@ -230,6 +235,13 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
               <span className="flex items-center gap-2"><PlayCircle className="w-4 h-4 text-fuchsia-400" /> Revoir le tuto</span>
               <ChevronRight className="w-4 h-4 text-purple-300/85" />
             </button>
+            <button
+              onClick={() => setArtists('settings')}
+              className="mt-2 w-full flex items-center justify-between px-3 py-3 rounded-xl bg-purple-950/40 hover:bg-purple-900/40 text-sm text-white transition-colors"
+            >
+              <span className="flex items-center gap-2"><Heart className="w-4 h-4 text-fuchsia-400" /> Mes artistes préférés</span>
+              <ChevronRight className="w-4 h-4 text-purple-300/85" />
+            </button>
           </div>
 
           {/* Notifications */}
@@ -347,6 +359,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
         </div>
       )}
       {showInvite && <InviteSheet user={currentUser} onClose={() => setShowInvite(false)} />}
+      {artists && <div onClick={(e) => e.stopPropagation()}><ArtistPicker mode={artists} onDone={() => setArtists(null)} /></div>}
     </div>
   );
 }

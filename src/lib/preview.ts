@@ -167,14 +167,57 @@ export function onPreviewProgress(cb: () => void): () => void {
 
 function emit() { listeners.forEach(l => l()); }
 
+// ---- Journal d'écoute (Q8) : combien de temps chaque son a vraiment été
+// écouté (avec le son), et comment ça s'est fini. Une écoute de plus de 15 s
+// compte un peu dans les goûts, un son passé en moins de 5 s compte un peu contre.
+export interface ListenMeta { title: string; artist: string; source?: string }
+export interface ListenRecord extends ListenMeta { key: string; listenedMs: number; ended: 'end' | 'skip' | 'pause' | 'switch' | 'close' }
+const metaByKey = new Map<string, ListenMeta>();
+/** À appeler avant de lancer un son (titre + artiste pour le journal). */
+export function setPreviewMeta(key: string, meta: ListenMeta) { metaByKey.set(key, meta); }
+const listenListeners = new Set<(r: ListenRecord) => void>();
+export function onListen(cb: (r: ListenRecord) => void): () => void {
+  listenListeners.add(cb);
+  return () => { listenListeners.delete(cb); };
+}
+let session: { key: string; ms: number; since: number | null } | null = null;
+function sessionTick(nowPlaying: boolean) {
+  if (!session) return;
+  const now = Date.now();
+  if (session.since != null) session.ms += now - session.since;
+  session.since = nowPlaying ? now : null;
+}
+function sessionEnd(ended: ListenRecord['ended']) {
+  if (!session) return;
+  sessionTick(false);
+  const s = session;
+  session = null;
+  const meta = metaByKey.get(s.key);
+  if (!meta || s.ms < 300) return; // pas de titre connu, ou rien entendu
+  const r: ListenRecord = { key: s.key, ...meta, listenedMs: Math.round(s.ms), ended: ended === 'switch' && s.ms < 5000 ? 'skip' : ended };
+  listenListeners.forEach((l) => { try { l(r); } catch { /* journal : jamais bloquant */ } });
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => sessionEnd('close'));
+}
+
 function ensureAudio(): HTMLAudioElement {
   if (!audio) {
     audio = new Audio();
     audio.volume = 0.9;
-    audio.onplay = () => { playing = true; emit(); };
-    audio.onpause = () => { playing = false; emit(); };
+    audio.onplay = () => {
+      playing = true;
+      if (currentKey && !muted) {
+        if (session && session.key !== currentKey) sessionEnd('switch');
+        if (!session) session = { key: currentKey, ms: 0, since: null };
+        sessionTick(true);
+      }
+      emit();
+    };
+    audio.onpause = () => { playing = false; sessionTick(false); emit(); };
     audio.onended = () => {
       const ended = currentKey;
+      sessionEnd('end');
       playing = false; currentKey = null; emit();
       if (ended) endedListeners.forEach((l) => l(ended));
     };

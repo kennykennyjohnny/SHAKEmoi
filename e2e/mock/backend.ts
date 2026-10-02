@@ -96,6 +96,14 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
   }, [JSON.stringify(session)]);
 
   const unhandled = new Set<string>();
+  // Relais Vercel (/api/…) : n'existent pas avec vite en local → simulés.
+  await page.route('**/api/artists**', async (route: Route) => {
+    const u = new URL(route.request().url());
+    const names = u.searchParams.get('related') ? ['Gazo', 'Zola', 'Leto', 'Ninho'] : u.searchParams.get('q')
+      ? [u.searchParams.get('q')!, 'Tiakola', 'Tayc'] : ['Ninho', 'Aya Nakamura', 'Bad Bunny', 'SZA', 'Taylor Swift', 'David Guetta', 'Arctic Monkeys', 'Tiakola', 'Burna Boy', 'Karol G', 'The Weeknd', 'Angèle'];
+    const artists = names.map((n, i) => ({ id: String(1000 + n.length * 37 + i), name: n, picture: img(250, 250, ['7B2CBF', 'E91E80', '2DD4BF', 'FFB800'][i % 4]) }));
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ artists }) });
+  });
   await page.route(`${MOCK_HOST}/**`, async (route: Route) => {
     const req = route.request();
     const url = new URL(req.url());
@@ -153,6 +161,18 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
             stories: [], pinned_stories: [],
           });
         }
+        case 'get_my_recos': {
+          const reasons: [string, string][] = [['Parce que tu as shaké Tiakola', 'rel'], ['Aimé par Bapt · 92 % compatibles', 'social'], ['Dans ton style Afro', 'style'],
+            ['Plus de Tiakola', 'top'], ['Pour sortir de ta bulle · Électro', 'explore'], ['Nouveauté Rap', 'fresh'], ['Léa écoute Gazo · 88 % compatibles', 'crowd'], ['Tendance sur SHAKEmoi', 'trend']];
+          const titles = ['MELROSE PLACE', 'Coco', 'Djadja', 'Meuda', 'Calm Down', 'Tchikita', 'Pookie', 'Sapés comme jamais', 'Bande organisée', 'Dans la zone', 'Kilos', 'Toucher', 'Sasuke', 'Fendi', 'Ma meilleure ennemie', 'Popcorn salé', 'Lumière', 'Bijou', 'Contrôle', 'Mi Gente'];
+          const artistsR = ['Tiakola', 'Burna Boy', 'Aya Nakamura', 'Gazo', 'Rema', 'Jul', 'Aya Nakamura', 'GIMS', 'Jul', 'SDM', 'Ninho', 'Tiakola', 'Werenoi', 'Gazo', 'Stromae', 'Santa', 'Tayc', 'Dadju', 'Zola', 'J Balvin'];
+          const s0 = Number(body.p_series || 0);
+          return json({ series: s0, generated_at: new Date().toISOString(), items: titles.map((t, i) => ({
+            rank: i + 1 + s0 * 20, song_key: `${t.toLowerCase()}|${artistsR[i].toLowerCase()}|${s0}`, reason: reasons[i % reasons.length][0], reason_kind: reasons[i % reasons.length][1],
+            track: { title: s0 ? t + ' (série 2)' : t, artist: artistsR[i], cover_url: cover(i), preview_url: img(10, 10), deezer_id: 1000 + i, spotify_url: null, deezer_url: null, post_id: null },
+          })) });
+        }
+        case 'save_artist_picks': return json((body.p_picks || []).length);
         case 'get_taste':
           return json({ status: 'ok', score: 88, families: ['Rap', 'Afro'], artists: ['Tiakola', 'SDM'], close: [], mine: 12, theirs: 15 });
         case 'get_mutual_followers':
