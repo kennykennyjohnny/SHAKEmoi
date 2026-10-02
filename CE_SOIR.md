@@ -117,9 +117,15 @@ Trouvailles en plus :
 | L2 | ✅ | (fini au passage) 0 erreur de types ; vérification automatique à chaque push (`.github/workflows/check.yml` : types + compilation). |
 
 ## Backlog v2 (hors périmètre ce soir)
-- J1 Bloquer / Signaler (personne, post, message) — exigé par les stores.
-- D4 / D6 vraies notifications push (appli fermée) — nécessite Web Push + service worker + clés VAPID.
+- ~~J1 Bloquer / Signaler~~ → fait (P17, 02/10).
+- ~~D4 / D6 vraies notifications push~~ → fait (P7, 01/10).
 - G9 Connexion Google / Apple.
+- **Idées validées pour plus tard (prompt du 01/10)** :
+  - Lecture continue façon Reels dans le fil : à la fin d'un son, le suivant se lance et le fil défile jusqu'au post ; passer au suivant (bouton + écran verrouillé) ; aucune barre ajoutée (au plus une petite pochette ronde flottante pendant la lecture quand on change d'onglet). Le moteur d'enchaînement de la playlist du cercle (P21) est réutilisable.
+  - « Il y a 1 an, tu partageais… ».
+  - Blind test dans les cercles.
+- **À planifier pour une nuit dédiée** : analyse d'usage (PostHog), sauvegarde hebdomadaire de la base, limites anti-spam, optimisation des 71 règles d'accès.
+- Thèmes du Shake de la semaine (P23) : il faut une petite table « thème de la semaine » — décision de Kenny.
 
 ## Scripts validés par Kenny (nuit du 29 au 30/09)
 | # | Statut | Explication |
@@ -303,7 +309,7 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 | Sons les plus shakés | ✅ | Nombre de fois qu'un son a été **publié + reshaké**, toutes personnes confondues. Un « même son » = même titre (sans « (feat. …) », « - Remastered »…) + même premier artiste : l'album et le single ne comptent qu'une fois. (L'ISRC n'est pas enregistré sur les posts ; l'identifiant Spotify seul séparait le même titre en deux.) Podium + suite du classement, avec qui l'a partagé. |
 | Autres classements | ✅ | **Sons les plus likés**, **artistes les plus partagés** (avec le nombre de personnes), **les plus actifs** (un toucher = profil). Chiffres réels vérifiés en base : Tout SHAKEMOI depuis toujours → « Ailleurs » 4×, « Convaincu » 3× ; artistes Krakow 5, Orelsan 4 ; actifs @kenny 16, @raph 15. |
 | Lecture / post | ✅ | Chaque son : pochette = notre lecteur (M2), logo de mon appli, bouton Shake. **Toucher une ligne** ouvre le post (s'il n'y en a qu'un) ou **la liste de tous les posts de ce son** (« @léa a shaké », « @bapt a reshaké »), un toucher ouvre le post complet (P2). |
-| Genres du moment | ⏭️ | Demande les genres des sons, qui arrivent avec la compatibilité retravaillée (P25 / N6) : à ajouter à ce moment-là. |
+| Genres du moment | ✅ (fini au lot 13) | Nouvelle rubrique **Genres du moment** : familles de genres (Rap, Pop, R&B / Soul, Rock / Indé, Électro…) des sons partagés sur la période, avec le nombre de sons, de personnes, une barre et les 3 artistes phares. Calculé en base dans `get_top` à partir des profils d'artistes de P25. Réel, Tout SHAKEMOI depuis toujours : **Rap 50 sons / 13 pers. (Orelsan, Bad Bunny, HOUDI)**, Pop 12, R&B / Soul 12, Rock / Indé 11, Électro 10, Chanson 9. |
 
 **Tests (lot 6)**
 1. TOP : glisse vers la gauche → « Tout SHAKEMOI » (le trait rose suit ton doigt). Choisis « Depuis toujours », reviens sur Amis : la période est gardée.
@@ -352,7 +358,7 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 | P23 thème | ⏭️ | Il n'existe **aucun thème** de Shake de la semaine en base aujourd'hui (juste « Mon shake de la semaine ») : rien à rappeler dans l'écran de création. Quand tu voudras des thèmes, il faudra une petite table « thème de la semaine » (à décider). |
 | P24 | ✅ | **Jusqu'à 3 sons épinglés** en haut du profil (sous la bio) : grandes pochettes jouables (M2), titre + artiste, petite **épingle violette**. Deux façons : **« Épingler un son »** (recherche, pour « En ce moment j'écoute ») ou depuis un de mes posts (bouton épingle dans le post). Toucher un titre épinglé : déplacer à gauche / à droite ou désépingler. Visible par tous ceux qui voient le profil (et aussi dans l'aperçu de profil). En base : table `pinned_songs`, **seul le propriétaire modifie**, 3 maximum, imposé en base (testé). Le poids dans la compatibilité (P25) sera ajouté avec P25. |
 | P21 | ✅ | Dans chaque cercle, icône **Playlist** dans l'en-tête : l'écran passe sur la **liste de tous les sons partagés** (plus récent en haut ; pochette, titre, artiste, qui l'a partagé, quand) **en gardant l'en-tête du cercle** ; l'icône bulle (ou le retour du téléphone) revient à la conversation. **« Tout écouter »** enchaîne les extraits (un seul son à la fois, M2 ; un son sans extrait est sauté). **Mini-lecteur fixe** : pochette, titre, artiste, barre de progression (touchable), précédent / lecture-pause / suivant. Un son partagé plusieurs fois n'apparaît qu'une fois (« partagé 3 fois », même titre en « feat. » regroupé). **Appui long** sur un son → le message d'origine dans la conversation, surligné. **Écran verrouillé / centre de contrôle** : pochette, titre, précédent, pause, suivant (Media Session). |
-| P21 adresse | ⏭️ | L'adresse `/cercles/:id/playlist` (actualiser = rester sur la playlist) arrive avec la navigation par adresses (N2). |
+| P21 adresse | ✅ (fait avec N2) | `/cercles/<id>/playlist` : actualiser reste sur la playlist, le retour revient à la conversation. |
 | P21 limite | 🟡 | Enchaîner quand le téléphone est verrouillé dépend du navigateur (Safari iPhone peut bloquer le son suivant sans geste) : marche bien appli ouverte. |
 
 **Tests (lot 8)**
@@ -507,3 +513,15 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 3. Un vieux lien `/c/<long id>` reçu avant ce soir → « Ce lien n'est plus valide ».
 | P31 vocabulaire (suite) | ✅ | 4 textes de plus trouvés en relisant ligne par ligne (page Confidentialité de l'appli ×2, « Durée du Shake éphémère » à la création, archive vide). |
 | P30 | ✅ brouillon | Premier jet dans **`docs/legal_brouillon.md`** : **Confidentialité** mise à jour (Sentry, notifications push chiffrées, blocage et signalements avec copie du contenu signalé, invitations, compatibilité musicale calculée **uniquement** à partir de ce qui est publié dans SHAKEmoi, série, récap, vidéos fabriquées sur le téléphone, bouton Signaler un bug, GIF, âge minimum 15 ans) et **CGU** entièrement nouvelles (compte, contenus, extraits 30 s, interdits, modération, invitations et cercles, fonctions calculées, suppression). **Rien n'est publié.** Les infos qui me manquent sont marquées **[À COMPLÉTER]** (éditeur, adresse, durées de conservation, régions Vercel / Sentry, délai de modération). Quand tu dis « OK publie » : page `/confidentialite` mise à jour, nouvelle page `/cgu`, liens dans Paramètres et à l'inscription. |
+
+## Lot 13 — Restes P / N et audit de cohérence
+| # | Statut | Explication |
+|---|---|---|
+| Reste P14 | ✅ | « Genres du moment » ajouté au TOP (voir lot 6). |
+| Reste P21 | ✅ | Adresse de la playlist faite avec N2. |
+| Étape 0 | ✅ | Revérifié : règles SQL en attente appliquées (dossier `supabase/pending/` vide et supprimé), renommage de cercle avec message « a renommé le cercle », double-tap en privé (P9, lot 4), lecture des posts publics pour « Tout SHAKEMOI ». |
+| Visites | ✅ | Tour des pages publiques dans le navigateur, sans erreur : `/` (visiteur), `/top`, `/u/raph`, `/i/kenny` (page d'invitation avec 3 sons), `/c/ktay69` (vrai cercle, minuscules acceptées), `/c/ZZZZZZZZ` et un ancien `/c/<id>` (« Ce lien n'est plus valide »). |
+| Cohérence | ✅ | Revu ce qui se croise ce soir : les onglets gardés en mémoire (N2) avec la messagerie, les aperçus, le récap et les stories (les vues d'un onglet caché libèrent le retour) ; le profil se met à jour après une publication ; la notif « a rejoint grâce à toi » (cloche + push, réglage « abonnements ») ; liens de cercle par code partout (en-tête de cercle, création, infos, recherche par code, aperçus WhatsApp) ; vocabulaire « Shake éphémère ». |
+| Bloqué par toi | 🟡 | Test Playwright ordinateur (P13) et tests connectés : **compte de test** à créer. Sentry (P16) : **clé**. Thèmes du Shake de la semaine (P23) : **décision**. Tests téléphone des vidéos (P20). Publication des pages légales (P30) : **ton OK**. Voir MATIN.md. |
+
+**Bilan de la nuit (sections P et N)** : P1 → P31 et N1 → N6 traités. Restent seulement les points bloqués ci-dessus (clé, compte de test, décision, ton OK, tests sur téléphone).

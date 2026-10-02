@@ -214,6 +214,30 @@ function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scop
         </section>
       )}
 
+      {/* Genres du moment (P14) : familles de genres des sons partagés. */}
+      {(data?.genres || []).length > 0 && (
+        <section>
+          <SectionTitle icon={<BarChart3 className="w-4 h-4 text-purple-300" />} title="Genres du moment" sub={label} />
+          <div className="space-y-2">
+            {data.genres.map((g: any) => {
+              const max = Math.max(...data.genres.map((x: any) => x.shakes), 1);
+              return (
+                <div key={g.family} className="rounded-xl bg-violet-950/30 border border-purple-800/20 px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <p className="flex-1 text-sm font-semibold text-white">{g.family}</p>
+                    <p className="text-[11px] text-purple-300/70">{g.shakes} son{g.shakes > 1 ? 's' : ''} · {g.people} pers.</p>
+                  </div>
+                  <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500" style={{ width: `${Math.round((g.shakes / max) * 100)}%` }} />
+                  </div>
+                  {g.artists?.length > 0 && <p className="text-[11px] text-purple-300/60 mt-1.5 truncate">{g.artists.join(' · ')}</p>}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Les plus actifs */}
       {(data?.people || []).length > 0 && (
         <section>
