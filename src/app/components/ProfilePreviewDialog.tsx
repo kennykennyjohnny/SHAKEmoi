@@ -5,7 +5,7 @@
 import { X, UserPlus, UserCheck, ArrowLeft, Maximize2, MessageCircle, MoreHorizontal, Ban, Flag, Bug } from 'lucide-react';
 import { getBlockStatus, blockUser, unblockUser, type BlockStatus } from '../../lib/moderation';
 import { openReport, openBugReport } from '../../lib/appNav';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useDragControls } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { getUserProfile, getUserShakeCount, getUserFollowersCount, getUserFollowingCount, followUser, followErrorMessage, unfollowUser, isFollowing, getUserActiveStories, getUserPinnedStories } from '../../lib/database';
@@ -29,9 +29,14 @@ interface ProfilePreviewDialogProps {
   onRequireAuth?: (user: { id: string; username: string }) => void;
   /** Ouvrir directement en page complète. */
   startExpanded?: boolean;
+  /** Au-dessus d'une story ouverte (N1). */
+  elevated?: boolean;
 }
 
-export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth, startExpanded = false }: ProfilePreviewDialogProps) {
+export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth, startExpanded = false, elevated = false }: ProfilePreviewDialogProps) {
+  // N1 : le panneau se ferme aussi en le glissant vers le bas (par sa barre du haut).
+  const dragControls = useDragControls();
+  const layer = elevated ? 'z-[80]' : 'z-50';
   // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
   const [expanded, setExpanded] = useState(startExpanded);
   const [me, setMe] = useState<any>(null);
@@ -144,18 +149,25 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
     <>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+        className={`fixed inset-0 ${layer} bg-black/70 backdrop-blur-sm`}
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
+      <div className={`fixed inset-0 ${layer} flex items-end sm:items-center justify-center pointer-events-none`}>
       <motion.div
         initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
         transition={{ type: 'tween', duration: 0.22 }}
+        drag={expanded ? false : 'y'}
+        dragListener={false}
+        dragControls={dragControls}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 0.7 }}
+        onDragEnd={(_, info) => { if (info.offset.y > 110 || info.velocity.y > 650) onClose(); }}
         className={panelClass}
         role="dialog" aria-label={`Profil de @${profile?.username || username}`}
       >
         {/* Barre du haut */}
-        <div className="flex items-center gap-2 px-3 py-2.5 border-b border-purple-800/30 flex-shrink-0 pt-[max(0.625rem,env(safe-area-inset-top))]">
+        <div onPointerDown={(e) => { if (!expanded) dragControls.start(e); }} style={{ touchAction: expanded ? undefined : 'none' }}
+          className="flex items-center gap-2 px-3 py-2.5 border-b border-purple-800/30 flex-shrink-0 pt-[max(0.625rem,env(safe-area-inset-top))]">
           <button aria-label={expanded ? 'Retour' : 'Fermer'} onClick={onClose} className="p-2 rounded-full hover:bg-purple-900/40">
             {expanded ? <ArrowLeft className="w-5 h-5" /> : <X className="w-5 h-5" />}
           </button>

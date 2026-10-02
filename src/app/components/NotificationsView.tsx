@@ -216,7 +216,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
                   </button>
                   {' '}
                   <span className="text-purple-200/70 text-xs">{notif.content}</span>
-                  {notif.post_track_name && <span className="text-purple-300/60 text-xs"> · {notif.post_track_name}</span>}
+                  {notif.post_track_name && <span className="text-purple-300/60 text-xs"> · {notif.post_track_name}{notif.post_artist ? ` — ${notif.post_artist}` : ''}</span>}
                 </p>
                 <p className="text-[10px] text-purple-500/40 mt-0.5">{formatTimestamp(notif.created_at)}</p>
               </div>

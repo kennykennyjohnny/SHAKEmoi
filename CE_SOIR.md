@@ -475,3 +475,20 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 4. Fil : descends loin → va sur TOP → reviens sur Accueil : tu es au même endroit. Touche Accueil encore : remonte en haut.
 5. Dans le fil, ouvre l'aperçu d'un ami (`/u/pseudo`) → retour : l'aperçu se ferme, tu restes sur le fil.
 6. Sur l'appli installée (écran d'accueil du téléphone), refais 2 et 5.
+
+## N1 — Story : toucher l'auteur ouvre un aperçu, puis on revient à la story
+| # | Statut | Explication |
+|---|---|---|
+| N1 | ✅ | Dans une story, **toucher l'avatar ou le pseudo** en haut à gauche **met la story en pause** (minuteur, barre de progression **et son**) et ouvre **l'aperçu du profil** qui monte du bas, **par-dessus la story** : avatar, nom, pseudo, abonnés / abonnements, Suivre, compatibilité expliquée (P25), derniers Shakes, bouton « Profil complet ». **Fermer** (croix, **retour** du téléphone ou **glisser vers le bas** par la barre du haut) → on retrouve **la même story au même endroit**, qui reprend (le son aussi s'il jouait). Depuis le profil complet ouvert ainsi, le retour ramène aussi à la story. L'adresse passe à `/u/<pseudo>` le temps de l'aperçu. Testé : aperçu ouvert au-dessus (couche 80 > story 60), story toujours ouverte, retour → aperçu fermé, adresse rendue. |
+
+**Test (N1)** : ouvre la story d'un ami avec un son → touche son avatar : la barre s'arrête, le son se coupe, l'aperçu monte → glisse-le vers le bas → la story reprend où elle était, avec le son.
+
+## N4 — Titre + artiste partout
+| # | Statut | Explication |
+|---|---|---|
+| N4 | ✅ | La story « son seul » affichait déjà titre + artiste quand l'artiste est en base ; **toutes les stories, posts, messages, messages de cercle et réponses en musique ont un artiste** (vérifié en base : 0 manquant). Les 9 vieilles stories sans titre le récupèrent à l'affichage. Passé en revue les **31 endroits** qui affichent un son : 2 n'affichaient que le titre → corrigés : la ligne des **notifications** (« · Fall Back — Lithe ») et les vignettes de la **page d'arrivée d'un profil** partagé (titre + artiste). |
+
+## N6 — Compatibilité plus intelligente
+| # | Statut | Explication |
+|---|---|---|
+| N6 | ✅ | Couvert par **P25** (lot 9) : profil musical par artistes, genres fins (TF-IDF), familles, artistes proches, récence, sons épinglés, explication affichée. |

@@ -159,8 +159,9 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore, invite 
                   {recent.map(p => (
                     <div key={p.id} className="relative aspect-square rounded-xl overflow-hidden bg-purple-900/40">
                       <img loading="lazy" src={p.cover_url} alt="" className="w-full h-full object-cover" />
-                      <span className="absolute inset-x-0 bottom-0 p-1.5 pt-5 bg-gradient-to-t from-black/80 to-transparent text-[10px] font-semibold truncate">
-                        {p.track_name}
+                      <span className="absolute inset-x-0 bottom-0 p-1.5 pt-5 bg-gradient-to-t from-black/80 to-transparent text-left">
+                        <span className="block text-[10px] font-semibold truncate">{p.track_name}</span>
+                        {p.artist && <span className="block text-[9px] text-white/70 truncate">{p.artist}</span>}
                       </span>
                     </div>
                   ))}

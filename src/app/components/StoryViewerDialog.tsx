@@ -12,6 +12,7 @@ import { openExternal } from '../../lib/platforms';
 
 import { thumb, defaultAvatar, avatarThumb } from '../../lib/media';
 import { MyAppLogo } from './PlatformLogo';
+import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 interface StoryViewerDialogProps {
   open: boolean;
   story: any | null;
@@ -53,6 +54,8 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   const [likeAnimations, setLikeAnimations] = useState<{ id: string; x: number; y: number }[]>([]);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  // N1 : aperçu du profil de l'auteur par-dessus la story (qui se met en pause).
+  const [authorPreview, setAuthorPreview] = useState(false);
   const [showViewers, setShowViewers] = useState(false);
   // Panneau du propriétaire : qui a vu / qui a liké.
   const [panelMode, setPanelMode] = useState<'views' | 'likes'>('views');
@@ -157,7 +160,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     elapsedRef.current = 0;
   }, [story?.id, open]);
 
-  const blocked = isPaused || showCommentInput || showViewers || !mediaReady || appHidden;
+  const blocked = isPaused || showCommentInput || showViewers || !mediaReady || appHidden || authorPreview;
   useEffect(() => {
     if (!open || !story) return;
     if (blocked) pauseProgress();
@@ -240,6 +243,20 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
       if (getPreviewState().key === storyKey && !getPreviewState().playing) togglePreview(storyKey, storyPreviewUrl);
     }
   }, [appHidden]);
+
+  const resumeAfterPreviewRef = useRef(false);
+  useEffect(() => {
+    if (!open || !storyKey) return;
+    const state = getPreviewState();
+    if (authorPreview && state.key === storyKey && state.playing) {
+      resumeAfterPreviewRef.current = true;
+      togglePreview(storyKey);
+    } else if (!authorPreview && resumeAfterPreviewRef.current) {
+      resumeAfterPreviewRef.current = false;
+      if (getPreviewState().key === storyKey && !getPreviewState().playing) togglePreview(storyKey, storyPreviewUrl);
+    }
+  }, [authorPreview]);
+  useEffect(() => { setAuthorPreview(false); }, [story?.id]);
 
   const trackTitle: string | null = story?.track_name || fetchedTitle || null;
   const trackArtist: string | null = story?.artist || null;
@@ -398,6 +415,10 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
 
   return (
     <AnimatePresence>
+      {/* N1 : aperçu de l'auteur par-dessus la story ; fermer (retour, croix, glisser) la fait reprendre. */}
+      {open && authorPreview && story?.user_id && (
+        <ProfilePreviewDialog key="author-preview" userId={story.user_id} username={user?.username || ''} elevated onClose={() => setAuthorPreview(false)} />
+      )}
       {open && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -474,7 +495,13 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
 
             {/* Header */}
             <div className="absolute top-7 left-0 right-0 px-3 py-2 z-20 flex items-center justify-between">
-              <div className="flex items-center gap-2.5 min-w-0">
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); if (story?.user_id) setAuthorPreview(true); }}
+                aria-label={user?.username ? `Voir le profil de @${user.username}` : 'Voir le profil'}
+                className="flex items-center gap-2.5 min-w-0 text-left rounded-full pr-2 active:opacity-80"
+              >
                 <img loading="lazy"
                   src={avatarSrc}
                   className="w-8 h-8 rounded-full object-cover ring-2 ring-white/40 flex-shrink-0"
@@ -488,7 +515,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                     {user?.username && <p className="text-[10px] text-white/60 truncate">@{user.username}</p>}
                   </div>
                 </div>
-              </div>
+              </button>
               <div className="flex items-center gap-1 flex-shrink-0">
                 {/* M3 : temps restant, en direct. */}
                 {timeRemaining && (

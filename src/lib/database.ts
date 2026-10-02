@@ -1075,7 +1075,7 @@ export async function getUserNotifications(userId: string) {
       .select(`
         *,
         from_user:users_profile!notifications_from_user_id_fkey(id, username, profile_album_cover_url),
-        post:posts!notifications_post_id_fkey(id, track_name, cover_url),
+        post:posts!notifications_post_id_fkey(id, track_name, artist, cover_url),
         story:stories!notifications_story_id_fkey(id, image_url, cover_url, expires_at, is_pinned)
       `)
       .eq('user_id', userId)
@@ -1101,6 +1101,7 @@ export async function getUserNotifications(userId: string) {
         post_id: notif.post?.id || null,
         post_cover_url: notif.post?.cover_url,
         post_track_name: notif.post?.track_name || null,
+        post_artist: notif.post?.artist || null,
         circle_id: notif.circle_id || null,
         comment_id: notif.comment_id || null,
         story_id: notif.story_id || null,
