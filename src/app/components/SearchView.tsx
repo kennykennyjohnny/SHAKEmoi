@@ -14,6 +14,7 @@ import { setPendingAction, type PendingAction } from '../../lib/pendingAction';
 import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { SuggestionsCarousel } from './SuggestionsCarousel';
 import { IS_TOUCH } from '../../lib/useMediaQuery';
+import { profileProps } from '../../lib/profileCache';
 interface SearchViewProps {
   currentUser?: any;
   onRefreshFeed?: () => void;
@@ -438,14 +439,14 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                 transition={{ delay: index * 0.03 }}
                 className="w-full bg-violet-950/20 hover:bg-violet-950/25 rounded-xl p-3 flex items-center gap-3 transition-colors border border-purple-500/25"
               >
-                <button onClick={() => setProfilePreview({ userId: user.id, username: user.username })} className="flex-shrink-0">
+                <button {...profileProps(user)} onClick={() => setProfilePreview({ userId: user.id, username: user.username })} className="flex-shrink-0">
                   <img loading="lazy"
                     src={avatarThumb(user.profile_album_cover_url) || defaultAvatar(user.username)}
                     alt={user.username}
                     className="w-12 h-12 rounded-full object-cover ring-1 ring-purple-700/30 hover:ring-2 hover:ring-fuchsia-500 transition-all"
                   />
                 </button>
-                <button onClick={() => setProfilePreview({ userId: user.id, username: user.username })} className="flex-1 min-w-0 text-left">
+                <button {...profileProps(user)} onClick={() => setProfilePreview({ userId: user.id, username: user.username })} className="flex-1 min-w-0 text-left">
                   <h3 className="font-semibold text-sm text-white truncate">{user.display_name || user.username}</h3>
                   <p className="text-xs text-purple-400">@{user.username}</p>
                 </button>

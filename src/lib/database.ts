@@ -212,7 +212,8 @@ export async function getUserShakeCount(userId: string): Promise<number> {
  * pour mon profil et celui des autres. Jamais de post privé ni de cercle (B2,
  * B4). Un reshake porte le post d'origine (pochette, likes) comme dans le fil.
  */
-export const PROFILE_PAGE = 24;
+// Q5 : pages de 12 (4 lignes) : la 1re arrive vite, la suite au défilement.
+export const PROFILE_PAGE = 12;
 export async function getProfileGridPage(userId: string, kind: 'shakes' | 'reshakes', before: string | null): Promise<any[]> {
   let query = supabase
     .from('posts')

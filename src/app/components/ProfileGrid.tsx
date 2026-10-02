@@ -8,6 +8,7 @@ import { AnimatePresence } from 'motion/react';
 import { Heart, Loader2, Music, Repeat2, RefreshCw } from 'lucide-react';
 import { getProfileGridPage, PROFILE_PAGE, deletePost } from '../../lib/database';
 import { thumb } from '../../lib/media';
+import { fetchProfileFirstPage, peekProfileFirstPage } from '../../lib/profileCache';
 import { PostDetailModal } from './PostDetailModal';
 
 type Tab = 'shakes' | 'reshakes';
@@ -41,7 +42,8 @@ export function ProfileGrid({ userId, currentUser, isOwn = false, onDeleted, ref
     try {
       const items = stateRef.current[which].items;
       const before = reset ? null : items[items.length - 1]?.created_at || null;
-      const page = await getProfileGridPage(userId, which, before);
+      // 1re page des Shakes : partagée avec le préchargement (Q5).
+      const page = which === 'shakes' && !before ? await fetchProfileFirstPage(userId, reset && refreshKey > 0) : await getProfileGridPage(userId, which, before);
       setState(s => {
         const prev = reset ? [] : s[which].items;
         const seen = new Set(prev.map((p: any) => p.id));
@@ -51,14 +53,17 @@ export function ProfileGrid({ userId, currentUser, isOwn = false, onDeleted, ref
       setState(s => ({ ...s, [which]: { ...s[which], loading: false, error: true } }));
     }
     busy.current[which] = false;
-  }, [userId]);
+  }, [userId, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Nouveau profil ou rechargement demandé : on repart de zéro.
+  // Nouveau profil ou rechargement demandé : on repart de zéro. Si la 1re page
+  // est déjà là (préchargée au toucher, Q5), elle s'affiche tout de suite.
   useEffect(() => {
-    setState({ shakes: EMPTY, reshakes: EMPTY });
-    stateRef.current = { shakes: EMPTY, reshakes: EMPTY };
+    const cached = refreshKey === 0 ? peekProfileFirstPage(userId) : null;
+    const first: TabState = cached ? { items: cached.data, done: cached.data.length < PROFILE_PAGE, loading: false, error: false } : EMPTY;
+    setState({ shakes: first, reshakes: EMPTY });
+    stateRef.current = { shakes: first, reshakes: EMPTY };
     busy.current = { shakes: false, reshakes: false };
-    loadMore('shakes', true);
+    if (!cached?.fresh) loadMore('shakes', true);
   }, [userId, refreshKey, loadMore]);
 
   useEffect(() => {

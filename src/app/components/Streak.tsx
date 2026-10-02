@@ -21,8 +21,14 @@ export async function fetchStreak(userId: string, force = false): Promise<Streak
   return s;
 }
 
+/** Q5 : série déjà reçue avec l'en-tête du profil (pas de 2e requête). */
+export function primeStreak(userId: string, s: Omit<StreakInfo, 'week_ends_at'> & { week_ends_at?: string } | null | undefined) {
+  if (!s) return;
+  cache.set(userId, { at: Date.now(), s: { current: Number(s.current) || 0, best: Number(s.best) || 0, this_week: !!s.this_week, week_ends_at: s.week_ends_at || '' } });
+}
+
 export function useStreak(userId?: string | null) {
-  const [s, setS] = useState<StreakInfo | null>(null);
+  const [s, setS] = useState<StreakInfo | null>(() => (userId && cache.get(userId)?.s) || null);
   useEffect(() => {
     if (!userId) return;
     let off = false;

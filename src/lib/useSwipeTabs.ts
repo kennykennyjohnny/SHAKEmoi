@@ -3,6 +3,7 @@
 // direct. Gestes natifs, sans bibliothèque. Les bords de l'écran sont laissés
 // au geste retour (iPhone / Android) et un geste surtout vertical fait défiler.
 import { useRef, useState, type CSSProperties } from 'react';
+import { transitionCss } from './motion';
 
 const EDGE = 24;
 
@@ -50,13 +51,13 @@ export function useSwipeTabs<T extends string>(tabs: readonly T[], tab: T, setTa
   const progress = Math.min(tabs.length - 1, Math.max(0, idx - dx / width));
   const trackStyle: CSSProperties = {
     transform: `translateX(calc(${-idx * 100}% + ${dx}px))`,
-    transition: dragging ? 'none' : 'transform .28s cubic-bezier(.2,.8,.2,1)',
+    transition: dragging ? 'none' : transitionCss('transform'),
     touchAction: 'pan-y',
   };
   const indicatorStyle: CSSProperties = {
     width: `${100 / tabs.length}%`,
     transform: `translateX(${progress * 100}%)`,
-    transition: dragging ? 'none' : 'transform .28s cubic-bezier(.2,.8,.2,1)',
+    transition: dragging ? 'none' : transitionCss('transform'),
   };
   return { ref, handlers: { onTouchStart, onTouchMove, onTouchEnd, onTouchCancel: onTouchEnd }, trackStyle, indicatorStyle, dragging };
 }

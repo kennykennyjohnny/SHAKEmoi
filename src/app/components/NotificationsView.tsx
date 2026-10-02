@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 
 import { thumb, defaultAvatar, avatarThumb } from '../../lib/media';
+import { profileProps } from '../../lib/profileCache';
 interface NotificationsViewProps {
   currentUser: any;
   onNavigateToPost?: (postId: string) => void;
@@ -194,7 +195,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
               </div>
 
               {/* Avatar */}
-              <button
+              <button {...profileProps({ id: notif.actor_id, username: notif.actor_username, profile_album_cover_url: notif.actor_avatar })}
                 onClick={(e) => { e.stopPropagation(); setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username }); }}
                 className="flex-shrink-0"
               >
@@ -208,7 +209,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-white leading-snug">
-                  <button
+                  <button {...profileProps({ id: notif.actor_id, username: notif.actor_username, profile_album_cover_url: notif.actor_avatar })}
                     onClick={(e) => { e.stopPropagation(); setProfilePreview({ userId: notif.actor_id || notif.actor_username, username: notif.actor_username }); }}
                     className="font-bold hover:underline text-fuchsia-400"
                   >

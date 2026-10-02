@@ -19,6 +19,7 @@ import { formatDayLabel, isSameDay, formatTime } from '../../lib/dates';
 import { MyAppLogo } from './PlatformLogo';
 import { openProfile, openReport } from '../../lib/appNav';
 import { setActiveChat, getActiveChat } from '../../lib/activeChat';
+import { profileProps } from '../../lib/profileCache';
 import {
   type ChatRef, CHAT_PAGE, fetchChatPage, fetchChatMessage, sendChatMessage, uploadChatPhoto, likedMessageIds,
   setMessageLike, messageLikers, retractMessage, markChatRead, fetchDmPartnerRead, fetchCircleReads,
@@ -632,12 +633,12 @@ export function ChatThread({
                 {/* Glisser pour répondre : la flèche apparaît à mesure. */}
                 {sw > 0 && <Reply className="w-4 h-4 text-pink-300 self-center flex-shrink-0" style={{ opacity: Math.min(1, sw / 55) }} />}
                 {isCircle && !mine && (
-                  <button data-no-gesture onClick={() => sender && openProfile(sender.id)} className={`w-7 h-7 flex-shrink-0 self-end ${showName ? '' : 'invisible'}`} aria-label={`Profil de @${sender?.username || ''}`}>
+                  <button {...profileProps(sender)} data-no-gesture onClick={() => sender && openProfile(sender.id)} className={`w-7 h-7 flex-shrink-0 self-end ${showName ? '' : 'invisible'}`} aria-label={`Profil de @${sender?.username || ''}`}>
                     <img src={avatarThumb(sender?.profile_album_cover_url, 64) || defaultAvatar(sender?.username)} className="w-7 h-7 rounded-full object-cover" alt="" />
                   </button>
                 )}
                 <div className={`flex flex-col max-w-[78%] ${mine ? 'items-end' : 'items-start'}`}>
-                  {showName && <button data-no-gesture onClick={() => sender && openProfile(sender.id)} className="text-[11px] text-purple-300/80 mb-0.5 ml-1 font-medium">@{sender?.username || '…'}</button>}
+                  {showName && <button {...profileProps(sender)} data-no-gesture onClick={() => sender && openProfile(sender.id)} className="text-[11px] text-purple-300/80 mb-0.5 ml-1 font-medium">@{sender?.username || '…'}</button>}
                   <div
                     onClick={(e) => onBubbleClick(e, msg)}
                     onContextMenu={(e) => { if (msg.deleted_at || isTemp(msg)) return; e.preventDefault(); setMenuMsg(msg); }}

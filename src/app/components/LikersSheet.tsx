@@ -7,6 +7,7 @@ import { useBackHandler } from '../../lib/navigation';
 
 import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { openProfile } from '../../lib/appNav';
+import { profileProps } from '../../lib/profileCache';
 // SHAKEMOI - Qui a liké ce shake (visible par l'auteur du post).
 // Même feuille partout : fil, profil, détail d'un post.
 
@@ -59,7 +60,7 @@ export function LikersSheet({ postId, onClose, onOpenProfile }: Props) {
         ) : (
           <div className="overflow-y-auto overscroll-contain flex-1 py-1">
             {likers.map((u: any) => (
-              <button
+              <button {...profileProps(u)}
                 key={u.id}
                 onClick={() => (onOpenProfile ? onOpenProfile({ id: u.id, username: u.username }) : openProfile(u.id))}
                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-purple-900/20 transition-colors text-left disabled:cursor-default"

@@ -13,6 +13,7 @@ import { MyAppLogo } from './PlatformLogo';
 import { useBackHandler } from '../../lib/navigation';
 import { openProfile, openReport } from '../../lib/appNav';
 import { Flag } from 'lucide-react';
+import { profileProps } from '../../lib/profileCache';
 interface CommentsDialogProps {
   postId: string;
   onClose: () => void;
@@ -203,7 +204,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
               ) : (
                 comments.map((comment: any) => (
                   <div key={comment.id} className="flex gap-3">
-                    <button onClick={() => openProfile(comment.user_id || comment.user?.id)} aria-label={`Profil de @${comment.user?.username || ''}`} className="flex-shrink-0 self-start">
+                    <button {...profileProps({ ...comment.user, id: comment.user_id || comment.user?.id })} onClick={() => openProfile(comment.user_id || comment.user?.id)} aria-label={`Profil de @${comment.user?.username || ''}`} className="flex-shrink-0 self-start">
                       <img loading="lazy"
                         src={avatarThumb(comment.user?.profile_album_cover_url) || defaultAvatar(comment.user?.username || 'U')}
                         alt=""
@@ -213,7 +214,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
                     <div className="flex-1 min-w-0">
                       <div className="bg-purple-950/40 rounded-xl px-3 py-2 border border-purple-800/15">
                         <div className="flex items-center gap-2">
-                          <button onClick={() => openProfile(comment.user_id || comment.user?.id)} className="font-semibold text-sm text-white hover:underline">@{comment.user?.username || 'inconnu'}</button>
+                          <button {...profileProps({ ...comment.user, id: comment.user_id || comment.user?.id })} onClick={() => openProfile(comment.user_id || comment.user?.id)} className="font-semibold text-sm text-white hover:underline">@{comment.user?.username || 'inconnu'}</button>
                           <span className="text-xs text-purple-300/75">{formatTime(comment.created_at)}</span>
                           {currentUser?.id && comment.user_id !== currentUser.id && (
                             <button onClick={() => openReport('comment', comment.id)} aria-label="Signaler le commentaire" className="ml-auto p-1 text-purple-300/80 hover:text-pink-300">
@@ -269,7 +270,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
               {musicReactions.map(r => (
                   <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <button onClick={() => openProfile(r.user_id || r.user?.id)} className="flex items-center gap-2">
+                      <button {...profileProps({ ...r.user, id: r.user_id || r.user?.id })} onClick={() => openProfile(r.user_id || r.user?.id)} className="flex items-center gap-2">
                         <img loading="lazy" src={avatarThumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full object-cover" alt="" />
                         <span className="text-xs font-medium hover:underline">@{r.user?.username}</span>
                       </button>

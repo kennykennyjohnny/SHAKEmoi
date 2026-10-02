@@ -18,6 +18,7 @@ import { CirclePlaylist } from './CirclePlaylist';
 import { ListMusic } from 'lucide-react';
 import { circlePreviewText, dmPreviewText } from '../../lib/chat';
 import { useSwipeTabs } from '../../lib/useSwipeTabs';
+import { profileProps } from '../../lib/profileCache';
 
 interface MessagesViewProps {
   currentUser: any;
@@ -897,7 +898,7 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
               <div className="space-y-1">
                 {sorted.map((m) => (
                   <div key={m.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-purple-900/25">
-                    <button onClick={() => openProfile(m.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                    <button {...profileProps(m)} onClick={() => openProfile(m.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                       <img src={avatarThumb(m.profile_album_cover_url, 64) || defaultAvatar(m.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">{m.display_name || m.username}{m.id === currentUser?.id ? ' (toi)' : ''}</p>

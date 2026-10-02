@@ -18,6 +18,7 @@ import { avatarThumb, defaultAvatar, thumb } from '../../lib/media';
 import { openPost, openProfile } from '../../lib/appNav';
 import { formatRelative } from '../../lib/dates';
 import { useBackHandler } from '../../lib/navigation';
+import { profileProps } from '../../lib/profileCache';
 
 interface TopFriendsViewProps {
   currentUser: any;
@@ -244,7 +245,7 @@ function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scop
           <SectionTitle icon={<Crown className="w-4 h-4 text-yellow-400" />} title="Les plus actifs" sub={label} />
           <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {data.people.slice(0, 10).map((u: any, i: number) => (
-              <button key={u.id} onClick={() => openProfile(u.id)} className="flex-shrink-0 w-[4.5rem] text-center">
+              <button {...profileProps(u)} key={u.id} onClick={() => openProfile(u.id)} className="flex-shrink-0 w-[4.5rem] text-center">
                 <div className="relative mx-auto w-14 h-14">
                   <img loading="lazy" src={avatarThumb(u.avatar, 128) || defaultAvatar(u.username)} alt="" className="w-14 h-14 rounded-full object-cover ring-2 ring-purple-500/40" />
                   <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 text-[10px] font-bold flex items-center justify-center border border-[#1E1440]">{i + 1}</span>

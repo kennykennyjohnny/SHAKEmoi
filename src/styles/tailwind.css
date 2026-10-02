@@ -8,6 +8,8 @@
    ~20 px passaient sous la barre sur iPhone). */
 :root {
   --nav-h: calc(3.75rem + max(0.625rem, env(safe-area-inset-bottom)));
+  /* Contrôles natifs (listes, cases, barres de défilement) en version sombre. */
+  color-scheme: dark;
 }
 
 /* A1 : sous 16 px, l'iPhone zoome tout seul quand on touche un champ, et le

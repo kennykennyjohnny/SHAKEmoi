@@ -10,6 +10,7 @@ import { getFollowList, getMutualFollowers, FOLLOW_PAGE, followUser, unfollowUse
 import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { useBackHandler } from '../../lib/navigation';
 import { openProfile } from '../../lib/appNav';
+import { profileProps } from '../../lib/profileCache';
 
 export type FollowListKind = 'followers' | 'following' | 'mutual';
 
@@ -133,7 +134,7 @@ export function FollowListSheet({ userId, username, kind, myId, isOwn = false, o
           <div className="flex-1 overflow-y-auto overscroll-contain p-2">
             {items.map((u) => (
               <div key={u.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-purple-900/25">
-                <button onClick={() => openProfile(u.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                <button {...profileProps(u)} onClick={() => openProfile(u.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                   <img loading="lazy" src={avatarThumb(u.profile_album_cover_url, 128) || defaultAvatar(u.username)} alt="" className="w-11 h-11 rounded-full object-cover flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="font-semibold text-sm text-white truncate">{u.display_name || u.username}</p>
@@ -186,13 +187,15 @@ export function FollowListSheet({ userId, username, kind, myId, isOwn = false, o
 }
 
 /** P3 : « Suivi par Léa, Bapt et 4 autres » avec mini-avatars ; un toucher ouvre la liste. */
-export function MutualFollowersLine({ userId, onOpen }: { userId: string; onOpen: () => void }) {
-  const [data, setData] = useState<{ users: any[]; total: number } | null>(null);
+export function MutualFollowersLine({ userId, onOpen, initial }: { userId: string; onOpen: () => void; initial?: { users: any[]; total: number } | null }) {
+  const [data, setData] = useState<{ users: any[]; total: number } | null>(initial ?? null);
   useEffect(() => {
+    // Q5 : déjà reçu avec l'en-tête du profil → pas de requête en plus.
+    if (initial !== undefined) { setData(initial); return; }
     let off = false;
     getMutualFollowers(userId, 3).then((d) => { if (!off) setData(d); }).catch(() => {});
     return () => { off = true; };
-  }, [userId]);
+  }, [userId, initial]);
   if (!data || data.total === 0) return null;
   const names = data.users.slice(0, 2).map((u) => u.display_name || u.username);
   const others = data.total - names.length;

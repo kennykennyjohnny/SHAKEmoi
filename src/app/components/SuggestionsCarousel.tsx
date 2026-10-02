@@ -8,6 +8,7 @@ import { followUser, followErrorMessage } from '../../lib/database';
 import { avatarThumb, defaultAvatar } from '../../lib/media';
 import { openProfile } from '../../lib/appNav';
 import { FlameIcon } from './Streak';
+import { profileProps } from '../../lib/profileCache';
 
 interface Props {
   title?: string;
@@ -74,7 +75,7 @@ export function SuggestionsCarousel({ title, exclude = [], compact = false, clas
             return (
               <div key={s.id} className={`relative flex-shrink-0 ${compact ? 'w-32' : 'w-36'} rounded-2xl bg-violet-950/40 border border-purple-500/20 p-3 text-center`}>
                 <button aria-label="Masquer cette suggestion" onClick={() => dismiss(s)} className="absolute top-1.5 right-1.5 p-1 rounded-full text-purple-300/80 hover:text-white"><X className="w-3.5 h-3.5" /></button>
-                <button onClick={() => openProfile(s.id)} className="block w-full">
+                <button {...profileProps({ id: s.id, username: s.username, display_name: s.display_name, profile_album_cover_url: s.avatar })} onClick={() => openProfile(s.id)} className="block w-full">
                   <img src={avatarThumb(s.avatar, 128) || defaultAvatar(s.username)} alt="" className={`${compact ? 'w-14 h-14' : 'w-16 h-16'} rounded-full object-cover mx-auto ring-2 ring-purple-500/40`} />
                   <p className="text-sm font-semibold truncate mt-2 flex items-center justify-center gap-1">
                     <span className="truncate">{s.display_name || s.username}</span>

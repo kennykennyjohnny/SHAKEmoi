@@ -68,7 +68,13 @@ function circleMessages() {
   }));
 }
 
-export interface MockOptions { log?: boolean }
+export interface MockOptions {
+  log?: boolean;
+  /** Délai ajouté à chaque requête (ms) : ~150 ms ≈ aller-retour en 4G. */
+  latency?: number;
+  /** Compte les requêtes vers la base (mesures Q5). */
+  counter?: { n: number };
+}
 
 /** Pose la fausse session et branche la fausse base sur la page. */
 export async function mockBackend(page: Page, opts: MockOptions = {}) {
@@ -95,6 +101,8 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
     const json = (body: any, status = 200, headers: Record<string, string> = {}) =>
       route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', ...headers }, body: JSON.stringify(body) });
 
+    if (opts.latency && req.method() !== 'OPTIONS') await new Promise((r) => setTimeout(r, opts.latency));
+    if (opts.counter && (p.startsWith('/rest/') || p.startsWith('/functions/'))) opts.counter.n++;
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
 
     // Images : SVG de la bonne taille, après un délai éventuel.
@@ -126,6 +134,27 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
         case 'get_my_circles':
           return json([{ ...circle, member_count: 3, unread_count: 1, last_activity_at: iso(3), last_message: { ...circleMessages()[39], sender_username: 'lea' }, muted: false, has_mention: false }]);
         case 'unread_inbox_count': return json({ dms: 1, circles: 1 });
+        case 'resolve_username': {
+          const u = Object.values(profiles).find((x) => x.username === String(body.p_username || '').toLowerCase());
+          return json(u ? [{ id: u.id, username: u.username }] : []);
+        }
+        case 'get_profile_header': {
+          const u = body.p_user ? profiles[body.p_user] : Object.values(profiles).find((x) => x.username === body.p_username);
+          if (!u) return json(null);
+          return json({
+            profile: { id: u.id, username: u.username, display_name: u.display_name, bio: u.bio, profile_album_cover_url: u.profile_album_cover_url },
+            block: 'none', counts: { shakes: posts.filter((p) => p.user_id === u.id).length, followers: 7, following: 7 },
+            is_following: false, follows_me: true,
+            mutual: u.id === ME ? null : { users: [{ id: BAPT, username: 'bapt', display_name: 'Bapt', profile_album_cover_url: null }], total: 1 },
+            taste: u.id === ME ? null : { status: 'ok', score: 88, families: ['Rap', 'Afro'], artists: ['Tiakola', 'SDM'], close: [] },
+            streak: { current: u.current_streak, best: 3, this_week: true, week_ends_at: new Date(Date.now() + 86400000).toISOString() },
+            stories: [], pinned_stories: [],
+          });
+        }
+        case 'get_taste':
+          return json({ status: 'ok', score: 88, families: ['Rap', 'Afro'], artists: ['Tiakola', 'SDM'], close: [], mine: 12, theirs: 15 });
+        case 'get_mutual_followers':
+          return json([{ id: BAPT, username: 'bapt', display_name: 'Bapt', profile_album_cover_url: null, total: 1 }]);
         case 'get_streak': return json({ current: 1, best: 3, this_week: true });
         default:
           if (opts.log) unhandled.add(`rpc ${fn} ${JSON.stringify(body).slice(0, 80)}`);
@@ -174,6 +203,10 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
           rows = rows.slice(off, off + lim);
           if (req.method() === 'HEAD') return route.fulfill({ status: 200, headers: { 'content-range': `0-0/${total}`, 'access-control-allow-origin': '*', 'access-control-expose-headers': 'content-range' } });
           return single ? one(rows) : json(rows, 200, { 'content-range': `${off}-${off + rows.length - 1}/${total}`, 'access-control-expose-headers': 'content-range' });
+        }
+        case 'follows': {
+          if (req.method() === 'HEAD') return route.fulfill({ status: 200, headers: { 'content-range': '0-0/7', 'access-control-allow-origin': '*', 'access-control-expose-headers': 'content-range' } });
+          return one([]);
         }
         case 'circles': return one([circle]);
         case 'shake_du_jour': return one([{ id: 'sdj' }]);

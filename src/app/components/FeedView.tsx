@@ -25,6 +25,7 @@ import { MediaImg, defaultAvatar, compressImage, avatarThumb } from '../../lib/m
 import { searchGifs, GIF_ERROR_TEXT } from '../../lib/gifs';
 import { friendlyError } from '../../lib/errors';
 import { MyAppLogo } from './PlatformLogo';
+import { profileProps } from '../../lib/profileCache';
 
 function storyTimeRemaining(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -1356,7 +1357,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   <div className="px-4 pt-2 flex items-center gap-2 text-xs text-fuchsia-400/80">
                     <Repeat2 className="w-3 h-3" />
                     <span className="text-purple-300/90">Reshaké par</span>
-                    <button
+                    <button {...profileProps(shake.reshakeFrom)}
                       onClick={() => setProfilePreview({
                         userId: shake.reshakeFrom!.id || shake.reshakeFrom!.username,
                         username: shake.reshakeFrom!.username
@@ -1375,7 +1376,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
 
                 {/* User Header */}
                 <div className="px-4 py-2 flex items-center gap-2">
-                  <button onClick={() => setProfilePreview({ userId: shake.user.id || shake.user.username, username: shake.user.username })}>
+                  <button {...profileProps({ id: shake.user.id, username: shake.user.username, display_name: shake.user.displayName, profile_album_cover_url: shake.user.avatar })} onClick={() => setProfilePreview({ userId: shake.user.id || shake.user.username, username: shake.user.username })}>
                     <img loading="lazy"
                       src={shake.user.avatar}
                       alt={shake.user.displayName}
@@ -1384,7 +1385,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   </button>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <button
+                      <button {...profileProps({ id: shake.user.id, username: shake.user.username, display_name: shake.user.displayName, profile_album_cover_url: shake.user.avatar })}
                         onClick={() => setProfilePreview({ userId: shake.user.id || shake.user.username, username: shake.user.username })}
                         className="font-semibold text-sm truncate hover:underline"
                       >

@@ -19,6 +19,7 @@ import { MyAppLogo } from './PlatformLogo';
 import { useBackHandler } from '../../lib/navigation';
 import { openProfile, openReport } from '../../lib/appNav';
 import { supabase } from '../../lib/supabase';
+import { profileProps } from '../../lib/profileCache';
 interface PostDetailModalProps {
   postId: string;
   currentUser: any;
@@ -246,7 +247,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
         {/* Header */}
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center gap-3 flex-shrink-0">
           {/* L'auteur : ouvre son profil par-dessus (le retour ramène ici). */}
-          <button onClick={() => openProfile(post.user_id || post.user?.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+          <button {...profileProps({ ...post.user, id: post.user_id || post.user?.id })} onClick={() => openProfile(post.user_id || post.user?.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
             <img loading="lazy" src={avatar} alt="" className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-700/30" />
             <div className="flex-1 min-w-0">
               <p className="font-bold text-sm text-white truncate">{userName}</p>
@@ -399,12 +400,12 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
               ) : (
                 comments.map((c: any) => (
                   <div key={c.id} className="flex gap-2.5">
-                    <button onClick={() => openProfile(c.user_id || c.user?.id)} aria-label={`Profil de @${c.user?.username || ''}`} className="flex-shrink-0 self-start">
+                    <button {...profileProps({ ...c.user, id: c.user_id || c.user?.id })} onClick={() => openProfile(c.user_id || c.user?.id)} aria-label={`Profil de @${c.user?.username || ''}`} className="flex-shrink-0 self-start">
                       <img loading="lazy" src={avatarThumb(c.user?.profile_album_cover_url) || defaultAvatar(c.user?.username || 'U')} alt="" className="w-7 h-7 rounded-full object-cover" />
                     </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <button onClick={() => openProfile(c.user_id || c.user?.id)} className="font-semibold text-xs text-white hover:underline">@{c.user?.username || 'inconnu'}</button>
+                        <button {...profileProps({ ...c.user, id: c.user_id || c.user?.id })} onClick={() => openProfile(c.user_id || c.user?.id)} className="font-semibold text-xs text-white hover:underline">@{c.user?.username || 'inconnu'}</button>
                         <span className="text-[10px] text-purple-300/75">{formatTime(c.created_at)}</span>
                         {currentUser?.id && c.user_id !== currentUser.id && (
                           <button onClick={() => openReport('comment', c.id)} aria-label="Signaler le commentaire" className="ml-auto p-1 text-purple-300/80 hover:text-pink-300">
@@ -437,7 +438,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
               {musicReactions.map(r => (
                   <div key={r.id} className="bg-purple-950/30 rounded-xl border border-purple-800/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <button onClick={() => openProfile(r.user_id || r.user?.id)} className="flex items-center gap-2">
+                      <button {...profileProps({ ...r.user, id: r.user_id || r.user?.id })} onClick={() => openProfile(r.user_id || r.user?.id)} className="flex items-center gap-2">
                         <img loading="lazy" src={avatarThumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full object-cover" alt="" />
                         <span className="text-xs font-medium hover:underline">@{r.user?.username}</span>
                       </button>
