@@ -309,3 +309,33 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 1. TOP : glisse vers la gauche → « Tout SHAKEMOI » (le trait rose suit ton doigt). Choisis « Depuis toujours », reviens sur Amis : la période est gardée.
 2. Touche le titre d'un son du podium → la liste des personnes qui l'ont shaké ; touche une ligne → le post complet.
 3. Touche la pochette → l'extrait joue ; « Shake » → il est publié sur ton fil.
+
+## Lot 7 — P15 (signaler un bug), P16 (Sentry), P17 (bloquer / signaler)
+| # | Statut | Explication |
+|---|---|---|
+| P17 bloquer | ✅ | Depuis le profil ou l'aperçu de profil (menu « ⋯ ») ; depuis une conversation ou un cercle : toucher l'en-tête / le nom ouvre le profil, puis « ⋯ → Bloquer ». **Imposé en base** (testé avec deux vrais comptes) : elle ne voit plus mes shakes (ni moi les siens), ne peut plus me suivre, m'écrire, liker, commenter, ni m'ajouter à un cercle ; nos commentaires et réponses en musique disparaissent l'un pour l'autre ; **les abonnements dans les deux sens sont retirés** (donc plus de Shakes éphémères non plus). Son profil affiche « Profil indisponible » ; le mien, « Tu as bloqué @x · Débloquer ». Seule exception : dans un cercle qu'on a déjà en commun, les messages du cercle restent visibles (comme un groupe WhatsApp). |
+| P17 liste | ✅ | Paramètres → **Personnes bloquées**, avec Débloquer. |
+| P17 signaler | ✅ | Une personne (profil « ⋯ »), un shake (drapeau dans le post), un commentaire (petit drapeau), un message privé ou de cercle (menu de l'appui long), un Shake éphémère (drapeau en haut). Motifs : spam, harcèlement, contenu choquant, faux compte, autre + texte facultatif. Une **copie du contenu** est gardée avec le signalement (si l'auteur l'efface, tu sais quoi). Personne d'autre que toi ne peut les lire (testé). |
+| P17 cercle | ✅ | Le créateur d'un cercle peut déjà retirer n'importe quel message (P12) ; les signalements de messages de cercle arrivent dans ta page admin. |
+| P15 | ✅ | Paramètres → **Signaler un bug** (et dans le menu « ⋯ » des profils) : un texte, une capture en option (galerie), et automatiquement : téléphone, navigateur, version de l'appli (désormais la vraie : version + commit), appli installée ou non, écran en cours, taille d'écran, compte. Message « Merci ! Kenny regarde ça 🙏 ». Table `bug_reports`, captures dans un **espace privé** (`bug-screens`). Capture **automatique** de l'écran : pas faite (il faudrait une bibliothèque lourde de ~50 Ko), la galerie suffit. |
+| P15 admin | ✅ | Paramètres → **Admin : bugs et signalements** (la ligne n'apparaît que pour toi ; la base refuse la lecture à tout autre compte, testé). Onglet Bugs : date, personne, texte, capture, infos techniques, statut **nouveau / vu / réglé**. Onglet Signalements : motif, qui, contre qui, copie du contenu, actions **Masquer** (retire le contenu) / **Ignorer**. |
+| P16 | 🟡 code prêt, clé à créer | Sentry est branché mais **ne fait rien tant que la clé n'est pas là** (le code est même retiré du site : 0 octet en plus). Une fois la clé ajoutée : erreurs JavaScript, plantages React avec un écran propre **« Oups, on recharge »** au lieu d'un écran blanc, pannes serveur (5xx). Vie privée : seulement l'identifiant (jamais l'email ni le pseudo), adresses sans paramètres, emails et jetons effacés des messages d'erreur, pas de console, rien de ce qu'on tape, **pas d'enregistrement vidéo**. Ligne ajoutée dans la page Confidentialité (avec les notifications push). Sources (source maps) envoyées au build Vercel si le jeton est là, puis retirées du site publié. |
+
+### P16 — Ce qu'il te faut faire (10 minutes, clic par clic)
+1. Va sur **sentry.io** → « Get started » → crée un compte (gratuit, plan *Developer*). Choisis la région **EU** (Francfort) si on te le demande.
+2. Crée un projet : plateforme **React**, nom `shakemoi`, alertes par défaut → « Create Project ».
+3. Copie la **DSN** affichée (`https://…@o….ingest.de.sentry.io/…`). Si tu l'as ratée : Settings → Projects → shakemoi → **Client Keys (DSN)**.
+4. Note le **slug de l'organisation** (Settings → Organization → *Organization Slug*) et le **slug du projet** (`shakemoi`).
+5. Crée un jeton pour les sources : Settings → **Auth Tokens** (ou *Developer Settings → Organization Tokens*) → « Create New Token » → garde les droits proposés (`project:releases`, `org:read`) → copie le jeton (il ne s'affiche qu'une fois).
+6. **Vercel** → projet `shak-emoi-aipt` → Settings → **Environment Variables** → ajoute (cocher Production + Preview) :
+   - `VITE_SENTRY_DSN` = la DSN de l'étape 3
+   - `SENTRY_AUTH_TOKEN` = le jeton de l'étape 5
+   - `SENTRY_ORG` = le slug de l'organisation
+   - `SENTRY_PROJECT` = `shakemoi`
+7. Vercel → Deployments → sur le dernier → « ⋯ » → **Redeploy** (la DSN est lue au build).
+8. Vérification : dans l'appli, Paramètres → Admin → bouton **« Test Sentry »** → sur sentry.io, **Issues** : « Erreur de test SHAKEmoi (date) » apparaît en moins d'une minute, avec le vrai nom du fichier source.
+
+**Tests (lot 7)**
+1. Depuis un 2ᵉ compte, ouvre ton profil → « ⋯ » → Bloquer. Le 2ᵉ compte ne voit plus tes shakes dans son fil ; ton profil lui affiche « Profil indisponible » ; il ne peut plus t'écrire (le message échoue). Paramètres → Personnes bloquées → Débloquer.
+2. Signale un shake (drapeau dans le post), un commentaire et un message → Paramètres → Admin → Signalements : les 3 sont là avec leur contenu ; « Masquer » sur le shake → il disparaît.
+3. Paramètres → Signaler un bug → écris, ajoute une capture → « Merci ! Kenny regarde ça 🙏 » → Admin → Bugs : il est là avec la capture et les infos ; passe-le en « Réglé ».

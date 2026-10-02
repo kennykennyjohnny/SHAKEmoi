@@ -1,4 +1,5 @@
-import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Hourglass, Play, Pause, Pin, Volume2, VolumeX } from 'lucide-react';
+import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Hourglass, Play, Pause, Pin, Volume2, VolumeX, Flag } from 'lucide-react';
+import { openReport } from '../../lib/appNav';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers, getStoryLikes, markStoryAsViewed } from '../../lib/database';
@@ -534,6 +535,14 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </>
+                )}
+                {!isOwner && currentUser && story?.id && (
+                  <button aria-label="Signaler ce Shake éphémère"
+                    onClick={(e) => { e.stopPropagation(); openReport('story', story.id); }}
+                    className="p-2 rounded-full bg-black/30 text-white/70 hover:text-pink-300 transition-colors"
+                  >
+                    <Flag className="w-4 h-4" />
+                  </button>
                 )}
                 <button aria-label="Fermer"
                   onClick={onClose}

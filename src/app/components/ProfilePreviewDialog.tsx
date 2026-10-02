@@ -2,7 +2,9 @@
 // téléphone, qui contient TOUT son fil (même grille que mon profil, chargée au
 // fil du défilement). « Profil complet » l'agrandit en page entière.
 // Règles d'accès : jamais de post privé ou de cercle (B2, B4), géré par la base.
-import { X, UserPlus, UserCheck, ArrowLeft, Maximize2, MessageCircle } from 'lucide-react';
+import { X, UserPlus, UserCheck, ArrowLeft, Maximize2, MessageCircle, MoreHorizontal, Ban, Flag, Bug } from 'lucide-react';
+import { getBlockStatus, blockUser, unblockUser, type BlockStatus } from '../../lib/moderation';
+import { openReport, openBugReport } from '../../lib/appNav';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -40,6 +42,20 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
   const [loading, setLoading] = useState(true);
   const [tasteMatch, setTasteMatch] = useState<{ percent: number; commonArtists: string[] } | null>(null);
   const [list, setList] = useState<FollowListKind | null>(null);
+  // P17 : blocage (imposé par la base ; ici l'affichage).
+  const [block, setBlock] = useState<BlockStatus>('none');
+  const [menu, setMenu] = useState(false);
+  const toggleBlock = async () => {
+    setMenu(false);
+    if (!profile) return;
+    if (block === 'i_blocked') {
+      if (await unblockUser(profile.id)) { setBlock('none'); loadProfile(); }
+      return;
+    }
+    if (!confirm(`Bloquer @${profile.username} ? Vous ne verrez plus vos shakes, vos Shakes éphémères ni vos profils ; vous ne pourrez plus vous écrire ni vous suivre (vos abonnements mutuels sont retirés).`)) return;
+    if (await blockUser(profile.id)) { setBlock('i_blocked'); setIsFollowingUser(false); }
+    else alert('Impossible de bloquer pour l’instant. Réessaie.');
+  };
   const refreshCounts = async () => {
     if (!profile) return;
     const [followers, following] = await Promise.all([getUserFollowersCount(profile.id), getUserFollowingCount(profile.id)]);
@@ -68,6 +84,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
       }
       if (!profileData) { setLoading(false); return; }
       const actualId = profileData.id;
+      if (!onRequireAuth) getBlockStatus(actualId).then(setBlock).catch(() => {});
       const [followersCount, followingCount, followingStatus, storiesData, pinnedData, shakeCount] = await Promise.all([
         getUserFollowersCount(actualId),
         getUserFollowingCount(actualId),
@@ -139,6 +156,18 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
             {expanded ? <ArrowLeft className="w-5 h-5" /> : <X className="w-5 h-5" />}
           </button>
           <p className="flex-1 min-w-0 font-bold truncate">@{profile?.username || username}</p>
+          {profile && !onRequireAuth && !isMe && (
+            <div className="relative">
+              <button aria-label="Plus d’options" onClick={() => setMenu(!menu)} className="p-2 rounded-full hover:bg-purple-900/40"><MoreHorizontal className="w-5 h-5" /></button>
+              {menu && (
+                <div className="absolute right-0 top-11 z-10 w-56 rounded-xl bg-[#2A1852] border border-purple-600/40 shadow-xl overflow-hidden">
+                  <button onClick={toggleBlock} className="w-full flex items-center gap-2 px-3 py-3 text-sm hover:bg-purple-900/50 text-pink-200"><Ban className="w-4 h-4" /> {block === 'i_blocked' ? 'Débloquer' : 'Bloquer'} @{profile.username}</button>
+                  <button onClick={() => { setMenu(false); openReport('user', profile.id); }} className="w-full flex items-center gap-2 px-3 py-3 text-sm hover:bg-purple-900/50"><Flag className="w-4 h-4" /> Signaler ce compte</button>
+                  <button onClick={() => { setMenu(false); openBugReport(); }} className="w-full flex items-center gap-2 px-3 py-3 text-sm hover:bg-purple-900/50"><Bug className="w-4 h-4" /> Signaler un bug</button>
+                </div>
+              )}
+            </div>
+          )}
           {!expanded && profile && (
             <button onClick={() => setExpanded(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-900/40 hover:bg-purple-900/60 text-xs font-semibold">
               <Maximize2 className="w-3.5 h-3.5" /> Profil complet
@@ -150,6 +179,18 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
           <div className={expanded ? 'w-full max-w-2xl mx-auto' : ''}>
             {loading ? (
               <div className="py-16 flex justify-center"><div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" /></div>
+            ) : profile && block === 'blocked_me' ? (
+              <div className="py-16 text-center px-6">
+                <p className="text-lg font-semibold">Profil indisponible</p>
+                <p className="text-sm text-purple-300/70 mt-1">Ce profil n'est pas accessible.</p>
+              </div>
+            ) : profile && block === 'i_blocked' ? (
+              <div className="py-16 text-center px-6">
+                <Ban className="w-10 h-10 text-pink-300 mx-auto mb-3" />
+                <p className="text-lg font-semibold">Tu as bloqué @{profile.username}</p>
+                <p className="text-sm text-purple-300/70 mt-1">Vous ne voyez plus vos contenus et ne pouvez plus vous écrire.</p>
+                <button onClick={toggleBlock} className="mt-5 px-5 py-2 rounded-full bg-purple-700/60 text-sm font-semibold">Débloquer</button>
+              </div>
             ) : !profile ? (
               <div className="py-16 text-center">
                 <p className="text-purple-300/70">Profil introuvable</p>

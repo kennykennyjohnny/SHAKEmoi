@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Send, Search, Music, Loader2, X, Camera, Smile, Heart, Reply, Copy, Trash2, Bell, BellOff, ChevronDown, MoreHorizontal, Users } from 'lucide-react';
+import { ArrowLeft, Send, Search, Music, Loader2, X, Camera, Smile, Heart, Reply, Copy, Trash2, Bell, BellOff, ChevronDown, MoreHorizontal, Users, Flag } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -17,7 +17,7 @@ import { MediaImg, thumb, defaultAvatar, avatarThumb } from '../../lib/media';
 import { searchGifs, GIF_ERROR_TEXT } from '../../lib/gifs';
 import { formatDayLabel, isSameDay, formatTime } from '../../lib/dates';
 import { MyAppLogo } from './PlatformLogo';
-import { openProfile } from '../../lib/appNav';
+import { openProfile, openReport } from '../../lib/appNav';
 import { setActiveChat, getActiveChat } from '../../lib/activeChat';
 import {
   type ChatRef, CHAT_PAGE, fetchChatPage, fetchChatMessage, sendChatMessage, uploadChatPhoto, likedMessageIds,
@@ -835,6 +835,9 @@ export function ChatThread({
             <MenuItem icon={<Heart className={`w-4 h-4 ${liked.has(menuMsg.id) ? 'fill-pink-400 text-pink-400' : ''}`} />} label={liked.has(menuMsg.id) ? 'Retirer mon like' : 'Liker'} onClick={() => { toggleLike(menuMsg); setMenuMsg(null); }} />
             {menuMsg.likes_count > 0 && <MenuItem icon={<Users className="w-4 h-4" />} label={`Voir les likes (${menuMsg.likes_count})`} onClick={() => showLikers(menuMsg)} />}
             {canRetract(menuMsg) && <MenuItem danger icon={<Trash2 className="w-4 h-4" />} label="Retirer le message" onClick={() => doRetract(menuMsg)} />}
+            {menuMsg.sender_id !== me && !isTemp(menuMsg) && (
+              <MenuItem icon={<Flag className="w-4 h-4" />} label="Signaler" onClick={() => { const m = menuMsg; setMenuMsg(null); openReport(isCircle ? 'circle_message' : 'message', m.id); }} />
+            )}
             <MenuItem icon={<X className="w-4 h-4" />} label="Annuler" onClick={() => setMenuMsg(null)} />
           </motion.div>
         </div>,

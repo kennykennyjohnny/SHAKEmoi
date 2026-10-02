@@ -66,6 +66,8 @@ export function PrivacyPage({ onBack }: { onBack: () => void }) {
           <ul className="list-disc pl-5 space-y-1.5">
             <li><b>Supabase</b> : base de données, comptes et fichiers, hébergés dans l'Union européenne (Irlande).</li>
             <li><b>Vercel</b> : hébergement du site.</li>
+            <li><b>Sentry</b> : détection automatique des plantages de l'appli, pour les corriger. Sentry ne reçoit que ton identifiant technique (pas ton email, ni le contenu de tes messages, ni tes photos, ni ce que tu tapes), et aucun enregistrement de ta session.</li>
+            <li><b>Notifications push</b> : si tu les actives, l'adresse technique de ton téléphone pour les notifications (fournie par Google, Apple ou Mozilla) est enregistrée ; elle est supprimée quand tu les coupes ou te déconnectes.</li>
             <li><b>Spotify, Apple (iTunes), Deezer</b> : recherche de sons, pochettes, extraits et liens d'écoute. Ils ne reçoivent que le titre et l'artiste recherchés, jamais ton identité.</li>
           </ul>
         </Section>

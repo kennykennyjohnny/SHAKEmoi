@@ -26,6 +26,9 @@ import { FinishProfileDialog, ResetPasswordDialog } from './components/AccountDi
 import { defaultAvatar, avatarThumb } from '../lib/media';
 import { isNotifTypeShown, loadNotifPrefs } from '../lib/notify';
 import { syncPushSubscription } from '../lib/push';
+import { setSentryUser } from '../lib/sentry';
+import { ReportSheet, BugReportSheet, BlockedUsersSheet } from './components/ModerationSheets';
+import { AdminView } from './components/AdminView';
 
 // Écrans chargés à la demande (perf 4G), préchargés ensuite en arrière-plan.
 const ProfileView = lazyView(() => import('./components/ProfileView'), (m) => m.ProfileView, ViewSpinner);
@@ -84,6 +87,27 @@ export default function App() {
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [notifPostId, setNotifPostId] = useState<string | null>(null);
   const [notifStory, setNotifStory] = useState<{ story: any; likes: boolean } | null>(null);
+  // Feuilles globales de modération (P15 / P17) et page admin.
+  const [reportTarget, setReportTarget] = useState<{ kind: any; id: string } | null>(null);
+  const [showBug, setShowBug] = useState(false);
+  const [showBlocked, setShowBlocked] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+  useEffect(() => {
+    const onReport = (e: Event) => setReportTarget((e as CustomEvent).detail);
+    const onBug = () => setShowBug(true);
+    const onBlocked = () => setShowBlocked(true);
+    const onAdmin = () => setShowAdmin(true);
+    window.addEventListener('shakemoi:report', onReport);
+    window.addEventListener('shakemoi:bug', onBug);
+    window.addEventListener('shakemoi:blocked', onBlocked);
+    window.addEventListener('shakemoi:admin', onAdmin);
+    return () => {
+      window.removeEventListener('shakemoi:report', onReport);
+      window.removeEventListener('shakemoi:bug', onBug);
+      window.removeEventListener('shakemoi:blocked', onBlocked);
+      window.removeEventListener('shakemoi:admin', onAdmin);
+    };
+  }, []);
   const [referrer, setReferrer] = useState<string | null>(null);
   // Session vérifiée (connecté ou non) : évite de traiter un membre en visiteur.
   const [authReady, setAuthReady] = useState(false);
@@ -288,6 +312,8 @@ export default function App() {
   useEffect(() => {
     if (!currentUser?.id) return;
     syncPushSubscription();
+    // Sentry : l'identifiant seulement (jamais l'email ni le pseudo).
+    setSentryUser(currentUser.id);
     loadNotifPrefs();
   }, [currentUser?.id]);
 
@@ -832,6 +858,12 @@ export default function App() {
           />
         )}
       </AnimatePresence>
+      <AnimatePresence>
+        {reportTarget && <ReportSheet kind={reportTarget.kind} id={reportTarget.id} onClose={() => setReportTarget(null)} />}
+        {showBug && <BugReportSheet onClose={() => setShowBug(false)} />}
+        {showBlocked && <BlockedUsersSheet onClose={() => setShowBlocked(false)} />}
+      </AnimatePresence>
+      {showAdmin && <AdminView onClose={() => setShowAdmin(false)} />}
       {/* Story ouverte depuis une notification (M10) */}
       {notifStory && (
         <StoryViewerDialog

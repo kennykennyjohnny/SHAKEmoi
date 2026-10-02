@@ -11,7 +11,8 @@ import { openExternal } from '../../lib/platforms';
 import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { MyAppLogo } from './PlatformLogo';
 import { useBackHandler } from '../../lib/navigation';
-import { openProfile } from '../../lib/appNav';
+import { openProfile, openReport } from '../../lib/appNav';
+import { Flag } from 'lucide-react';
 interface CommentsDialogProps {
   postId: string;
   onClose: () => void;
@@ -198,6 +199,11 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
                         <div className="flex items-center gap-2">
                           <button onClick={() => openProfile(comment.user_id || comment.user?.id)} className="font-semibold text-sm text-white hover:underline">@{comment.user?.username || 'inconnu'}</button>
                           <span className="text-xs text-purple-500/50">{formatTime(comment.created_at)}</span>
+                          {currentUser?.id && comment.user_id !== currentUser.id && (
+                            <button onClick={() => openReport('comment', comment.id)} aria-label="Signaler le commentaire" className="ml-auto p-1 text-purple-400/40 hover:text-pink-300">
+                              <Flag className="w-3 h-3" />
+                            </button>
+                          )}
                           {canDelete(comment) && (
                             confirmDeleteId === comment.id ? (
                               <span className="ml-auto flex items-center gap-2 text-xs">

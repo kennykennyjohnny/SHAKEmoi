@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { formatRelative } from '../../lib/dates';
-import { X, Heart, MessageCircle, Loader2, Send, Trash2, Share2, Music, Search, Repeat2 } from 'lucide-react';
+import { X, Heart, MessageCircle, Loader2, Send, Trash2, Share2, Music, Search, Repeat2, Flag } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment, reshakePost, unreshakePost, hasReshaked } from '../../lib/database';
 import { ReshakeDialog } from './ReshakeDialog';
@@ -16,7 +16,7 @@ import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { SongCover } from './SongCover';
 import { MyAppLogo } from './PlatformLogo';
 import { useBackHandler } from '../../lib/navigation';
-import { openProfile } from '../../lib/appNav';
+import { openProfile, openReport } from '../../lib/appNav';
 import { supabase } from '../../lib/supabase';
 interface PostDetailModalProps {
   postId: string;
@@ -252,6 +252,11 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
             </div>
           </button>
 
+          {!isOwner && currentUser && (
+            <button aria-label="Signaler ce shake" onClick={() => openReport('post', post.id)} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
+              <Flag className="w-4 h-4 text-purple-300/60" />
+            </button>
+          )}
           <button aria-label="Partager"
             onClick={() => setShowShare(true)}
             className="p-2 hover:bg-purple-900/40 rounded-full transition-colors"
@@ -392,6 +397,11 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
                       <div className="flex items-center gap-1.5">
                         <button onClick={() => openProfile(c.user_id || c.user?.id)} className="font-semibold text-xs text-white hover:underline">@{c.user?.username || 'inconnu'}</button>
                         <span className="text-[10px] text-purple-500/50">{formatTime(c.created_at)}</span>
+                        {currentUser?.id && c.user_id !== currentUser.id && (
+                          <button onClick={() => openReport('comment', c.id)} aria-label="Signaler le commentaire" className="ml-auto p-1 text-purple-400/40 hover:text-pink-300">
+                            <Flag className="w-3 h-3" />
+                          </button>
+                        )}
                         {currentUser?.id && (c.user_id === currentUser.id || isOwner) && (
                           <button
                             onClick={async () => {

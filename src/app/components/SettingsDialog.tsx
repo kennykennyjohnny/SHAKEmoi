@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 
 import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { PushToggle, NotifPrefsList } from './PushToggle';
+import { openBugReport, openBlockedUsers, openAdmin } from '../../lib/appNav';
+import { isAdmin } from '../../lib/moderation';
+import { Bug, Ban, ShieldCheck } from 'lucide-react';
 import { forgetPushOnLogout } from '../../lib/push';
 import { normalizePlatform, PLATFORM_LABELS, STREAMING_APPS, type PlatformKey } from '../../lib/platforms';
 import { PlatformLogo } from './PlatformLogo';
@@ -35,6 +38,9 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
   // « Revoir le tuto » : s'ouvre par-dessus, on revient ici à la fin (O1).
   const [replay, setReplay] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Ligne « Admin » : seulement pour le compte de Kenny (la base vérifie aussi).
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => { isAdmin().then(setAdmin).catch(() => {}); }, []);
   // L'email n'est plus copié dans users_profile (profil public) : on le lit
   // dans la session, seul endroit où il est visible par son propriétaire.
   const [email, setEmail] = useState<string | null>(null);
@@ -245,7 +251,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
             <div className="bg-purple-950/40 rounded-xl p-3 space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-purple-300/60">Version</span>
-                <span className="text-sm text-white">1.1.0</span>
+                <span className="text-sm text-white">{__APP_VERSION__}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-purple-300/60">Plateforme</span>
@@ -256,6 +262,24 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
                 <span className="text-sm text-white text-right">{STREAMING_APPS.map(k => PLATFORM_LABELS[k]).join(', ')}</span>
               </div>
             </div>
+          </div>
+
+          {/* Aide et sécurité (P15 / P17) */}
+          <div className="bg-purple-950/40 rounded-xl divide-y divide-purple-800/20">
+            <button onClick={() => { onClose(); openBugReport(); }} className="w-full flex items-center justify-between px-3 py-3 text-sm text-white hover:bg-white/5 rounded-t-xl">
+              <span className="flex items-center gap-2"><Bug className="w-4 h-4 text-fuchsia-400" /> Signaler un bug</span>
+              <ChevronRight className="w-4 h-4 text-purple-300/60" />
+            </button>
+            <button onClick={() => { onClose(); openBlockedUsers(); }} className={`w-full flex items-center justify-between px-3 py-3 text-sm text-white hover:bg-white/5 ${admin ? '' : 'rounded-b-xl'}`}>
+              <span className="flex items-center gap-2"><Ban className="w-4 h-4 text-fuchsia-400" /> Personnes bloquées</span>
+              <ChevronRight className="w-4 h-4 text-purple-300/60" />
+            </button>
+            {admin && (
+              <button onClick={() => { onClose(); openAdmin(); }} className="w-full flex items-center justify-between px-3 py-3 text-sm text-white hover:bg-white/5 rounded-b-xl">
+                <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-emerald-300" /> Admin : bugs et signalements</span>
+                <ChevronRight className="w-4 h-4 text-purple-300/60" />
+              </button>
+            )}
           </div>
 
           {/* Confidentialité */}

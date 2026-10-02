@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { reportError } from './sentry';
 
 // SHAKEMOI - Supabase Configuration
 // Priorité aux variables d'environnement (local .env / Vercel). À défaut, on
@@ -25,7 +26,15 @@ const timedFetch: typeof fetch = (input, init) => {
   if (init?.signal) return fetch(input, init);
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
   const ms = url.includes('/storage/v1/object') ? 60_000 : 20_000;
-  return fetch(input, { ...init, signal: timeoutSignal(ms) });
+  return fetch(input, { ...init, signal: timeoutSignal(ms) }).then((res) => {
+    // P16 : une panne côté serveur (5xx) est signalée à Sentry, sans les
+    // paramètres de l'adresse (ni contenu, ni jeton).
+    if (res.status >= 500) {
+      const where = url.split('?')[0].replace(/^https:\/\/[^/]+/, '');
+      reportError(new Error(`Supabase ${res.status} ${where}`), 'supabase');
+    }
+    return res;
+  });
 };
 
 // Initialize Supabase client
