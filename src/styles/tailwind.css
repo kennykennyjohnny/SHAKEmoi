@@ -89,3 +89,7 @@
 /* P20 : barre de progression d'un écran du récap (façon story). */
 @keyframes recap-fill { from { width: 0%; } to { width: 100%; } }
 .recap-fill { animation: recap-fill linear forwards; }
+
+/* N2 : apparition douce d'un onglet (les onglets restent montés). */
+@keyframes tab-enter { from { opacity: 0; } to { opacity: 1; } } /* pas de transform : les éléments « fixed » des vues resteraient décalés */
+.tab-enter { animation: tab-enter 0.15s ease-out; }

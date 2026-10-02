@@ -457,3 +457,21 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 | Affichage | ✅ | **Fond de chargement** propre tant que la photo n'est pas prête (le minuteur attend, E1), **nouvel essai automatique** avec le fichier d'origine si la version redimensionnée échoue, puis message « **La photo n'a pas pu se charger** — vérifie ta connexion, le son et le texte restent là ». Plus jamais d'écran noir. |
 
 **Tests (N5)** : sur un **Android** (ou Chrome ordinateur), publie une story avec une photo **HEIC** envoyée depuis un iPhone (AirDrop/mail) → « Conversion de la photo… » puis l'aperçu ; la story s'affiche partout. Coupe le réseau en ouvrant une story photo → fond violet qui pulse, puis le message clair.
+
+## N2 — Retour, adresses par écran, onglets indépendants
+| # | Statut | Explication |
+|---|---|---|
+| Adresses | ✅ | Chaque écran a son adresse : `/` (fil), `/top`, `/recherche`, `/messages`, `/messages/<id>` (conversation), `/cercles/<id>`, `/cercles/<id>/playlist` (P21), `/profil`, `/notifications`, `/u/<pseudo>` (aperçu ou profil d'un ami), `/post/<id>` (post ouvert dans l'appli). **Rafraîchir garde l'écran**, et ouvrir un de ces liens ouvre directement l'écran (conversation, cercle, playlist ou post compris). `/p/<id>` reste la page publique d'un post partagé (identique pour tous, comme décidé avant). |
+| Retour | ✅ | Le retour (bouton de l'appli, retour Android, glisser iPhone) **suit l'historique réel** : il ferme d'abord la fenêtre du dessus (aperçu de profil, post, story, commentaires, panneaux), puis la conversation / le cercle / la playlist, puis revient au fil, et seulement ensuite quitte. Arrivé directement par un lien (ex. `/messages/<id>`), le retour ramène à la liste puis à l'accueil au lieu de quitter. Une seule mécanique pour tout : chaque couche déclare son adresse, l'adresse affichée suit toujours ce qui est à l'écran. |
+| Onglets | ✅ | **Chaque onglet garde son état et son défilement** quand on va ailleurs puis qu'on revient (les onglets restent ouverts en arrière-plan) : position dans le fil, recherche tapée, période du TOP, conversation ouverte dans Messages… Une conversation laissée ouverte « dort » (elle ne bloque pas le retour des autres onglets) et se retrouve telle quelle. **Toucher l'onglet déjà actif remonte en haut** (sur ordinateur, l'Accueil se rafraîchit aussi). Les notifications se rechargent à chaque visite. Mon profil se met à jour après une publication. |
+| PWA / Vercel | ✅ | Toutes ces adresses (sans point) sont déjà renvoyées vers `index.html` par Vercel ; `/u/` garde son aperçu de lien. L'appli installée démarre sur `/` (fil) ; le retour Android de l'appli installée suit la même pile. |
+| Vérif | ✅ | Testé dans le navigateur avec une maquette des onglets : Messages → conversation (`/messages/abc`) → onglet Profil (`/profil`, la conversation dort) → retour sur Messages (`/messages/abc` retrouvée) → autre conversation (`/messages/def`, adresse remplacée sans empiler) → aperçu (`/u/raph`) → **retour** `/messages/def` → **retour** `/messages` → **retour** `/`. Fermer un aperçu par son bouton rend l'adresse de l'onglet (`/top`). |
+| Limite | 🟡 | Je n'ai pas pu tester connecté (pas de compte de test) : à vérifier sur ton téléphone (tests ci-dessous). Si une fenêtre est ouverte DANS un onglet quand on change d'onglet, elle se rouvre au retour sur l'onglet (comportement voulu), mais l'ordre de fermeture de deux fenêtres empilées dans un onglet en veille peut s'inverser (cas très rare). |
+
+**Tests (N2)**
+1. Va sur ton profil, actualise la page : tu restes sur ton profil (`/profil`). Pareil pour TOP, Recherche, Messages.
+2. Messages → une conversation (`/messages/…`) → actualise : la conversation est rouverte. Retour Android (ou bouton retour) → la liste → retour → le fil → retour → l'appli se ferme.
+3. Un cercle → Playlist → actualise : tu es sur la playlist du cercle.
+4. Fil : descends loin → va sur TOP → reviens sur Accueil : tu es au même endroit. Touche Accueil encore : remonte en haut.
+5. Dans le fil, ouvre l'aperçu d'un ami (`/u/pseudo`) → retour : l'aperçu se ferme, tu restes sur le fil.
+6. Sur l'appli installée (écran d'accueil du téléphone), refais 2 et 5.

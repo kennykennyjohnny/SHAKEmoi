@@ -34,7 +34,7 @@ const MSG_TABS = ['dms', 'circles'] as const;
 type MsgTab = typeof MSG_TABS[number];
 
 export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewOptions, inboxCounts }: MessagesViewProps) {
-  const { initialTab, openPartnerId = null, openPartner = null, openCircleId = null, nonce = 0, reset = 0 } = viewOptions || {};
+  const { initialTab, openPartnerId = null, openPartner = null, openCircleId = null, openPlaylist = false, nonce = 0, reset = 0 } = viewOptions || {};
   // Onglet gardé à l'actualisation et au retour (N2), sauf ouverture demandée.
   const [tab, setTabState] = useState<MsgTab>(() => {
     if (initialTab) return initialTab;
@@ -90,7 +90,7 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
             <DmsPanel currentUser={currentUser} onSubViewActive={setDmsSub} fabTrigger={fab.dms} openPartnerId={openPartnerId} openPartner={openPartner} openNonce={nonce} resetNonce={reset} />
           </div>
           <div className="w-full flex-shrink-0 flex flex-col min-h-0 overflow-hidden" aria-hidden={tab !== 'circles'}>
-            <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setCirclesSub} fabTrigger={fab.circles} openCircleId={openCircleId} openNonce={nonce} resetNonce={reset} />
+            <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setCirclesSub} fabTrigger={fab.circles} openCircleId={openCircleId} openPlaylist={openPlaylist} openNonce={nonce} resetNonce={reset} />
           </div>
         </div>
       </div>
@@ -230,7 +230,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
   }, [currentUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Retour système depuis une conversation : on revient à la liste.
-  useBackHandler(!!active, () => closeConversation());
+  useBackHandler(!!active, () => closeConversation(), active ? `/messages/${active.partner.id}` : undefined);
 
   const openConversation = (partner: any) => {
     const entry = conversations.find((c) => c.partnerId === partner.id);
@@ -311,7 +311,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
 
 // ==================== Cercles ====================
 
-function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigger, openCircleId, openNonce, resetNonce }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openCircleId?: string | null; openNonce?: number; resetNonce?: number }) {
+function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigger, openCircleId, openPlaylist = false, openNonce, resetNonce }: { currentUser: any; onOpenCircle?: (circleId: string | null) => void; onCircleCreated?: (circleId: string) => void; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openCircleId?: string | null; openPlaylist?: boolean; openNonce?: number; resetNonce?: number }) {
   const [circles, setCircles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -357,7 +357,7 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
   }, [fabTrigger]);
 
   // Retour système : on referme le cercle / la création avant de quitter.
-  useBackHandler(!!selectedCircleId, () => { setSelectedCircleId(null); onSubViewActive?.(false); });
+  useBackHandler(!!selectedCircleId, () => { setSelectedCircleId(null); onSubViewActive?.(false); }, selectedCircleId ? `/cercles/${selectedCircleId}` : undefined);
   useBackHandler(showCreate, () => { setShowCreate(false); onSubViewActive?.(false); });
 
   // silent : rafraîchissement en fond (nouveau message, cercle lu ou renommé), sans spinner.
@@ -381,7 +381,7 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
   if (selectedCircleId) {
     const circle = circles.find(c => c.id === selectedCircleId);
     if (circle) {
-      return <CircleView circle={circle} currentUser={currentUser} onBack={(left?: boolean) => { setSelectedCircleId(null); onSubViewActive?.(false); load(!left); }} />;
+      return <CircleView circle={circle} currentUser={currentUser} startOnPlaylist={openPlaylist && circle.id === openCircleId} onBack={(left?: boolean) => { setSelectedCircleId(null); onSubViewActive?.(false); load(!left); }} />;
     }
   }
 
@@ -652,16 +652,16 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
 
 // ==================== Un cercle : conversation + infos ====================
 
-function CircleView({ circle, currentUser, onBack }: { circle: any; currentUser: any; onBack: (left?: boolean) => void }) {
+function CircleView({ circle, currentUser, onBack, startOnPlaylist = false }: { circle: any; currentUser: any; onBack: (left?: boolean) => void; startOnPlaylist?: boolean }) {
   const [name, setName] = useState<string>(circle.name);
   const [photoUrl, setPhotoUrl] = useState<string | null>(circle.photo_url || null);
   const [members, setMembers] = useState<any[]>([]);
   const [showInfo, setShowInfo] = useState(false);
   const isOwner = circle.created_by === currentUser?.id;
   // P21 : la playlist remplace la conversation (même en-tête) ; le retour y revient.
-  const [view, setView] = useState<'chat' | 'playlist'>('chat');
+  const [view, setView] = useState<'chat' | 'playlist'>(startOnPlaylist ? 'playlist' : 'chat');
   const [jumpId, setJumpId] = useState<string | null>(null);
-  useBackHandler(view === 'playlist', () => setView('chat'));
+  useBackHandler(view === 'playlist', () => setView('chat'), `/cercles/${circle.id}/playlist`);
 
   const loadMembers = async () => setMembers(await getCircleMembers(circle.id));
   useEffect(() => { loadMembers(); }, [circle.id]); // eslint-disable-line react-hooks/exhaustive-deps

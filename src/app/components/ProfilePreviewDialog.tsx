@@ -33,10 +33,10 @@ interface ProfilePreviewDialogProps {
 
 export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth, startExpanded = false }: ProfilePreviewDialogProps) {
   // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
-  useBackHandler(true, onClose);
   const [expanded, setExpanded] = useState(startExpanded);
   const [me, setMe] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  useBackHandler(true, onClose, profile?.username || username ? `/u/${encodeURIComponent(profile?.username || username)}` : undefined);
   const [stories, setStories] = useState<any[]>([]);
   const [activeStory, setActiveStory] = useState<any | null>(null);
   const [pinnedStories, setPinnedStories] = useState<any[]>([]);

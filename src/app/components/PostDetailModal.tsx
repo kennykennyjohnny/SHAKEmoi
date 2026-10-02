@@ -44,8 +44,9 @@ export function PostDetailModal(props: PostDetailModalProps) {
 }
 
 function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUpdated }: PostDetailModalProps) {
-  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli (N2).
-  useBackHandler(true, onClose);
+  // Retour du téléphone : ferme cette fenêtre au lieu de quitter l'appli ;
+  // adresse /post/<id> : rafraîchir rouvre le post (N2).
+  useBackHandler(true, onClose, `/post/${postId}`);
   const [post, setPost] = useState<any>(null);
   const [showShare, setShowShare] = useState(false);
   const [showLikers, setShowLikers] = useState(false);

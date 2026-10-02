@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect , useRef } from 'react';
 import { Home, Search, PlusCircle, User, TrendingUp, Share2, MessageCircle, Sun, Bell, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { FeedView } from './components/FeedView';
@@ -17,7 +17,7 @@ import { getPreferredPlatform } from '../lib/shares';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { lazyView, preloadViews, ViewSpinner } from '../lib/lazyView';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getInboxCounts, getCurrentShakeWeekStart, getStoryById } from '../lib/database';
-import { useBackHandler } from '../lib/navigation';
+import { useBackHandler, setBasePath, TabActiveContext } from '../lib/navigation';
 import { parseRoute, type Route } from '../lib/links';
 import { Slogan } from './components/Slogan';
 import { InstallAppButton } from './components/InstallAppButton';
@@ -52,22 +52,59 @@ const StoryViewerDialog = lazyView(() => import('./components/StoryViewerDialog'
 
 type View = 'feed' | 'search' | 'top' | 'profile' | 'messages' | 'notifications';
 
+// N2 : chaque écran a son adresse ; rafraîchir garde l'écran.
+const VIEW_PATHS: Record<View, string> = {
+  feed: '/', top: '/top', search: '/recherche', messages: '/messages', profile: '/profil', notifications: '/notifications',
+};
+const VIEWS = Object.keys(VIEW_PATHS) as View[];
+// Onglets gardés en mémoire quand on en change (état + défilement). Les
+// notifications se rechargent à chaque visite (et se marquent lues).
+const KEEP_ALIVE: View[] = ['feed', 'top', 'search', 'messages', 'profile'];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Écran correspondant à l'adresse d'arrivée (null : lien public géré ailleurs). */
+function screenFromPath(pathname: string): { view: View; options?: any; postId?: string } | null {
+  const [a, b, c] = pathname.split('/').filter(Boolean).map(decodeURIComponent);
+  if (!a) return { view: 'feed' };
+  if (a === 'top' && !b) return { view: 'top' };
+  if (a === 'recherche' && !b) return { view: 'search' };
+  if (a === 'profil' && !b) return { view: 'profile' };
+  if (a === 'notifications' && !b) return { view: 'notifications' };
+  if (a === 'messages') return b && UUID_RE.test(b) ? { view: 'messages', options: { initialTab: 'dms', openPartnerId: b, nonce: 1 } } : { view: 'messages', options: { initialTab: 'dms' } };
+  if (a === 'cercles') return b && UUID_RE.test(b)
+    ? { view: 'messages', options: { initialTab: 'circles', openCircleId: b, openPlaylist: c === 'playlist', nonce: 1 } }
+    : { view: 'messages', options: { initialTab: 'circles' } };
+  if (a === 'post' && b && UUID_RE.test(b)) return { view: 'feed', postId: b };
+  return null;
+}
+
 // Cercle à rejoindre après inscription (lien d'invitation ouvert sans compte).
 const PENDING_CIRCLE_KEY = 'shakemoi_pending_circle';
 
 export default function App() {
-  // Onglet en cours gardé par onglet du navigateur : une actualisation ne
-  // renvoie plus à l'accueil (et deux onglets restent indépendants).
-  const [currentView, setCurrentView] = useState<View>(() => {
-    try {
-      const v = sessionStorage.getItem('shakemoi_view');
-      if (window.location.pathname === '/' && v && ['feed', 'search', 'top', 'profile', 'messages', 'notifications'].includes(v)) return v as View;
-    } catch { /* stockage indisponible */ }
-    return 'feed';
-  });
+  // N2 : l'écran vient de l'adresse (/top, /messages/<id>, /cercles/<id>…).
+  const [initialScreen] = useState(() => screenFromPath(window.location.pathname));
+  const [currentView, setCurrentView] = useState<View>(initialScreen?.view ?? 'feed');
+  // Onglets déjà ouverts : ils restent montés (cachés) quand on en change.
+  const [visited, setVisited] = useState<View[]>(() => [initialScreen?.view ?? 'feed']);
   useEffect(() => {
-    try { sessionStorage.setItem('shakemoi_view', currentView); } catch { /* pas grave */ }
+    setVisited((v) => (v.includes(currentView) ? v : [...v, currentView]));
+    setBasePath(VIEW_PATHS[currentView]);
   }, [currentView]);
+  const mainRef = useRef<HTMLElement>(null);
+  /** Toucher l'onglet déjà ouvert : remonte en haut (N2). */
+  const scrollViewToTop = (view: View) => {
+    const box = mainRef.current?.querySelector(`[data-view="${view}"]`);
+    if (!box) return;
+    box.querySelectorAll<HTMLElement>('*').forEach((el) => {
+      if (el.scrollTop > 0 && /(auto|scroll)/.test(getComputedStyle(el).overflowY)) el.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  };
+  const goTab = (view: View) => {
+    if (view === currentView) { scrollViewToTop(view); return true; }
+    setCurrentView(view);
+    return false;
+  };
   const [showCreateShake, setShowCreateShake] = useState(false);
   const [showEphemeralShake, setShowEphemeralShake] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -86,9 +123,9 @@ export default function App() {
   const applyInbox = (c: { dms: number; circles: number }) => { setInboxCounts(c); setUnreadMessages(c.dms + c.circles); };
   const [showShakeDuJour, setShowShakeDuJour] = useState(false);
   const [hasPostedToday, setHasPostedToday] = useState(true);
-  const [viewOptions, setViewOptions] = useState<any>({});
+  const [viewOptions, setViewOptions] = useState<any>(() => initialScreen?.options ?? {});
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
-  const [notifPostId, setNotifPostId] = useState<string | null>(null);
+  const [notifPostId, setNotifPostId] = useState<string | null>(() => initialScreen?.postId ?? null);
   const [notifStory, setNotifStory] = useState<{ story: any; likes: boolean } | null>(null);
   // Feuilles globales de modération (P15 / P17) et page admin.
   const [reportTarget, setReportTarget] = useState<{ kind: any; id: string } | null>(null);
@@ -566,7 +603,7 @@ export default function App() {
           </p>
         </div>
 
-        <main className="flex-1 overflow-hidden flex flex-col min-h-0">
+        <main ref={mainRef} className="relative flex-1 overflow-hidden flex flex-col min-h-0">
           <SearchView
             currentUser={null}
             onRequireAuth={(action) => { setAuthReason(action ? pendingActionReason(action) : null); setShowAuth(true); }}
@@ -601,8 +638,8 @@ export default function App() {
     );
   }
 
-  const renderView = () => {
-    switch (currentView) {
+  const renderView = (view: View) => {
+    switch (view) {
       case 'feed':
         return (
           <FeedView
@@ -713,18 +750,17 @@ export default function App() {
 
         {/* Content */}
         <main className="flex-1 overflow-hidden flex flex-col min-h-0">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentView}
-              className="flex-1 flex flex-col min-h-0"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
-            >
-              {renderView()}
-            </motion.div>
-          </AnimatePresence>
+          {VIEWS.filter((v) => v === currentView || (KEEP_ALIVE.includes(v) && visited.includes(v))).map((v) => (
+            <TabActiveContext.Provider key={v} value={v === currentView}>
+              <div
+                data-view={v}
+                aria-hidden={v !== currentView}
+                className={v === currentView ? 'flex-1 flex flex-col min-h-0 tab-enter' : 'absolute inset-0 flex flex-col min-h-0 invisible pointer-events-none'}
+              >
+                {renderView(v)}
+              </div>
+            </TabActiveContext.Provider>
+          ))}
         </main>
 
         {/* Bottom Navigation Mobile — Feed, Top, Search, DMs, Profile */}
@@ -740,9 +776,9 @@ export default function App() {
               <button
                 key={view}
                 onClick={() => {
-                  // L'onglet Messages s'ouvre toujours sur les messages privés.
-                  if (view === 'messages') { setViewOptions({}); }
-                  setCurrentView(view);
+                  // Toucher l'onglet ouvert remonte en haut ; sinon on y va,
+                  // en retrouvant son état (N2).
+                  goTab(view);
                 }}
                 aria-label={label}
                 aria-current={currentView === view ? 'page' : undefined}
@@ -775,7 +811,7 @@ export default function App() {
           ]).map(({ view, icon: Icon, label }) => (
             <button
               key={view}
-              onClick={() => { if (view === 'messages') { setViewOptions({ reset: Date.now() }); } if (view === 'feed') setRefreshFeed(p => p + 1); setCurrentView(view); }}
+              onClick={() => { if (goTab(view) && view === 'feed') setRefreshFeed(p => p + 1); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors relative ${
                 currentView === view ? 'bg-purple-500/10 text-purple-400' : 'text-purple-300/60 hover:bg-violet-900/25'
               }`}

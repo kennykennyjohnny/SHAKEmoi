@@ -43,6 +43,15 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
     loadUserData();
   }, [user?.id]);
 
+  // N2 : l'onglet Profil reste ouvert en arrière-plan ; après une publication,
+  // la grille et les chiffres se mettent à jour.
+  const [gridKey, setGridKey] = useState(0);
+  useEffect(() => {
+    const onPosted = () => { setGridKey((k) => k + 1); loadUserData(); };
+    window.addEventListener('shakemoi:posted', onPosted);
+    return () => window.removeEventListener('shakemoi:posted', onPosted);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const loadUserData = async () => {
     if (!user) return;
     try {
@@ -220,6 +229,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         userId={user.id}
         currentUser={user}
         isOwn
+        refreshKey={gridKey}
         onDeleted={(wasShake: boolean) => { if (wasShake) setStats(st => ({ ...st, shakes: Math.max(0, st.shakes - 1) })); }}
       />
 
