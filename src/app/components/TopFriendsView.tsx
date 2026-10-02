@@ -1,5 +1,7 @@
-// TOP (P14) : deux onglets « Amis » / « Tout SHAKEMOI » qu'on change en glissant
-// (même mécanique que Messages / Cercles, P10), trois périodes (7 j, 30 j,
+// Classement (P14, Q4) : trois onglets centrés « Amis » | « Global » |
+// « Découvrir » qu'on change en glissant ou en touchant (EXACTEMENT la
+// mécanique de Messages ↔ Cercles : useSwipeTabs), le dernier choisi est gardé.
+// Amis / Global : trois périodes (7 j, 30 j,
 // depuis toujours) gardées d'un onglet à l'autre. Tout est calculé en base
 // (get_top) : sons les plus shakés (posts + reshakes), sons les plus likés,
 // artistes, personnes les plus actives. Jamais de post privé ni de cercle.
@@ -19,21 +21,23 @@ import { openPost, openPostInList, openProfile } from '../../lib/appNav';
 import { formatRelative } from '../../lib/dates';
 import { useBackHandler } from '../../lib/navigation';
 import { profileProps } from '../../lib/profileCache';
+import { DiscoverPanel } from './DiscoverPanel';
 
 interface TopFriendsViewProps {
   currentUser: any;
   onRefreshFeed?: () => void;
 }
 
-type Scope = 'friends' | 'all';
+type Scope = 'friends' | 'all' | 'discover';
 type Period = 7 | 30 | 0;
-const SCOPES = ['friends', 'all'] as const;
+const SCOPES = ['friends', 'all', 'discover'] as const;
+const SCOPE_LABEL: Record<Scope, string> = { friends: 'Amis', all: 'Global', discover: 'Découvrir' };
 const PERIOD_KEY = 'shakemoi_top_period';
 const SCOPE_KEY = 'shakemoi_top_scope';
 
 // Petit cache (2 min) : changer d'onglet ou de période ne recharge pas tout en 4G.
 const cache = new Map<string, { at: number; data: any }>();
-async function loadTop(scope: Scope, period: Period, force = false) {
+async function loadTop(scope: Exclude<Scope, 'discover'>, period: Period, force = false) {
   const key = `${scope}-${period}`;
   const hit = cache.get(key);
   if (!force && hit && Date.now() - hit.at < 120_000) return hit.data;
@@ -48,29 +52,34 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
     try { const v = sessionStorage.getItem(PERIOD_KEY); return (v === '30' ? 30 : v === '0' ? 0 : 7) as Period; } catch { return 7; }
   });
   const [scope, setScopeState] = useState<Scope>(() => {
-    try { return sessionStorage.getItem(SCOPE_KEY) === 'all' ? 'all' : 'friends'; } catch { return 'friends'; }
+    // Gardé à l'actualisation et à la réouverture de l'appli (Q4). Amis par défaut.
+    try { const v = localStorage.getItem(SCOPE_KEY); return v === 'all' || v === 'discover' ? v : 'friends'; } catch { return 'friends'; }
   });
   const setPeriod = (p: Period) => { setPeriodState(p); try { sessionStorage.setItem(PERIOD_KEY, String(p)); } catch { /* pas grave */ } };
-  const setScope = (s: Scope) => { setScopeState(s); try { sessionStorage.setItem(SCOPE_KEY, s); } catch { /* pas grave */ } };
+  const setScope = (s: Scope) => { setScopeState(s); try { localStorage.setItem(SCOPE_KEY, s); } catch { /* pas grave */ } };
   const swipe = useSwipeTabs(SCOPES, scope, setScope);
 
   return (
     <div className="w-full max-w-2xl mx-auto flex-1 flex flex-col min-h-0 overflow-hidden">
       {/* Onglets (on glisse ou on touche) + période */}
       <div className="px-4 pt-3 flex-shrink-0">
-        <div className="relative grid grid-cols-2 border-b border-purple-500/20">
-          {SCOPES.map((sc) => (
-            <button key={sc} onClick={() => setScope(sc)} className={`py-2.5 text-sm font-semibold transition-colors ${scope === sc ? 'text-white' : 'text-purple-300/80 hover:text-purple-200'}`}>
-              {sc === 'friends' ? 'Amis' : 'Tout SHAKEMOI'}
-            </button>
-          ))}
-          <span className="absolute bottom-0 inset-x-0 h-0.5 pointer-events-none">
-            <span className="block h-full" style={swipe.indicatorStyle}>
-              <span className="block h-full mx-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
+        <div className="border-b border-purple-500/20 flex justify-center">
+          <div className="relative grid grid-cols-3 w-full max-w-[21rem]">
+            {SCOPES.map((sc) => (
+              <button key={sc} onClick={() => setScope(sc)} aria-pressed={scope === sc}
+                className={`py-2.5 text-sm font-semibold transition-colors ${scope === sc ? 'text-white' : 'text-purple-300/80 hover:text-purple-200'}`}>
+                {SCOPE_LABEL[sc]}
+              </button>
+            ))}
+            <span className="absolute bottom-0 inset-x-0 h-0.5 pointer-events-none">
+              <span className="block h-full" style={swipe.indicatorStyle}>
+                <span className="block h-full mx-5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
+              </span>
             </span>
-          </span>
+          </div>
         </div>
-        <div className="flex justify-center my-3">
+        {/* Période : seulement pour Amis / Global (Découvrir se renouvelle chaque jour). */}
+        <div className={`flex justify-center my-3 transition-opacity ${scope === 'discover' ? 'opacity-0 pointer-events-none h-0 my-0 overflow-hidden' : ''}`}>
           <div className="flex bg-violet-950/25 rounded-full p-0.5 border border-purple-500/20">
             {([7, 30, 0] as const).map((p) => (
               <button key={p} onClick={() => setPeriod(p)}
@@ -86,7 +95,9 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
         <div className="flex h-full" style={swipe.trackStyle}>
           {SCOPES.map((sc) => (
             <div key={sc} className="w-full flex-shrink-0 h-full overflow-y-auto px-4 pb-[var(--nav-h)] lg:pb-4" aria-hidden={scope !== sc}>
-              <TopPanel scope={sc} period={period} visible={scope === sc} currentUser={currentUser} onRefreshFeed={onRefreshFeed} />
+              {sc === 'discover'
+                ? <DiscoverPanel visible={scope === sc} currentUser={currentUser} onRefreshFeed={onRefreshFeed} />
+                : <TopPanel scope={sc} period={period} visible={scope === sc} currentUser={currentUser} onRefreshFeed={onRefreshFeed} />}
             </div>
           ))}
         </div>
@@ -95,7 +106,7 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
   );
 }
 
-function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scope: Scope; period: Period; visible: boolean; currentUser: any; onRefreshFeed?: () => void }) {
+function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scope: Exclude<Scope, 'discover'>; period: Period; visible: boolean; currentUser: any; onRefreshFeed?: () => void }) {
   const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -158,7 +169,7 @@ function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scop
 
       {/* Sons les plus shakés (posts + reshakes) */}
       <section>
-        <SectionTitle icon={<Flame className="w-4 h-4 text-pink-400" />} title="Sons les plus shakés" sub={`${scope === 'friends' ? 'Dans ton réseau' : 'Sur tout SHAKEMOI'}, ${label} · posts + reshakes`} />
+        <SectionTitle icon={<Flame className="w-4 h-4 text-pink-400" />} title="Sons les plus shakés" sub={`${scope === 'friends' ? 'Dans ton réseau' : 'Sur SHAKEmoi (Global)'}, ${label} · posts + reshakes`} />
         {shakedList.length === 0 ? (
           <Empty text={scope === 'friends' ? 'Rien encore dans ton réseau sur cette période. Suis des amis et shake !' : 'Rien sur cette période.'} />
         ) : (

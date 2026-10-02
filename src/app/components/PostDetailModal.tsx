@@ -12,10 +12,9 @@
 import { useState, useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { formatRelative } from '../../lib/dates';
-import { X, Heart, MessageCircle, Send, Trash2, Share2, Music, Search, Repeat2, Flag, Pin, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { pinSong } from './PinnedSongs';
+import { X, Heart, MessageCircle, Send, Trash2, Share2, Music, Search, Repeat2, Flag, Pin, PinOff, ChevronLeft, ChevronRight, Loader2, MoreHorizontal } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
-import { getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment, reshakePost, unreshakePost, hasReshaked } from '../../lib/database';
+import { togglePinPost, getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment, reshakePost, unreshakePost, hasReshaked } from '../../lib/database';
 import { ReshakeDialog } from './ReshakeDialog';
 import { SendSongDialog } from './SendSongDialog';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -346,6 +345,7 @@ function PostBody({ postId, active, currentUser, onClose, onDeletePost, onUpdate
   const [showReshake, setShowReshake] = useState(false);
   const [reshakeNotice, setReshakeNotice] = useState<string | null>(null);
   const [sendTrack, setSendTrack] = useState<any>(null);
+  const [ownerMenu, setOwnerMenu] = useState(false);
 
   // Comments & music reactions
   const [tab, setTab] = useState<'comments' | 'music'>('comments');
@@ -557,6 +557,35 @@ function PostBody({ postId, active, currentUser, onClose, onDeletePost, onUpdate
               onClose={() => setShowShare(false)}
             />
           )}
+          {/* Q11 : menu « … » de mon post : épingler en haut du profil, supprimer. */}
+          {isOwner && (
+            <div className="relative">
+              <button aria-label="Plus d’options" onClick={() => setOwnerMenu(!ownerMenu)} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
+                <MoreHorizontal className="w-5 h-5 text-purple-200" />
+              </button>
+              {ownerMenu && (
+                <div className="absolute right-0 top-11 z-20 w-60 rounded-xl bg-[#2A1852] border border-purple-500/50 shadow-xl overflow-hidden">
+                  <button onClick={async () => {
+                      setOwnerMenu(false);
+                      const msg = await togglePinPost(post);
+                      if (!msg) return;
+                      const pinned = !post.pinned_at;
+                      if (!/Impossible/.test(msg)) { setPost({ ...post, pinned_at: pinned ? new Date().toISOString() : null }); remember({ post: { ...post, pinned_at: pinned ? new Date().toISOString() : null } }); }
+                      notice(msg);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-3 text-sm text-white hover:bg-purple-900/50">
+                    {post.pinned_at ? <><PinOff className="w-4 h-4" /> Désépingler</> : <><Pin className="w-4 h-4" /> Épingler en haut du profil</>}
+                  </button>
+                  {onDeletePost && (
+                    <button onClick={() => { setOwnerMenu(false); if (confirm('Supprimer ce shake ?')) { onDeletePost(post.id); onClose(); } }}
+                      className="w-full flex items-center gap-2 px-3 py-3 text-sm text-pink-200 hover:bg-purple-900/50">
+                      <Trash2 className="w-4 h-4" /> Supprimer
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           {closeBtn}
         </div>
 
@@ -635,21 +664,6 @@ function PostBody({ postId, active, currentUser, onClose, onDeletePost, onUpdate
               <span className="text-xs font-semibold text-fuchsia-200">Écouter</span>
             </button>
 
-            {isOwner && (
-              <button aria-label="Épingler sur mon profil" title="Épingler sur mon profil"
-                onClick={async () => { const err = await pinSong(null, post); notice(err || 'Épinglé sur ton profil 📌'); }}
-                className="p-1.5 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/20 rounded-lg transition-colors">
-                <Pin className="w-4 h-4 text-fuchsia-300" />
-              </button>
-            )}
-            {isOwner && onDeletePost && (
-              <button aria-label="Supprimer"
-                onClick={() => { if (confirm('Supprimer ce shake ?')) { onDeletePost(post.id); onClose(); } }}
-                className="p-1.5 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 rounded-lg transition-colors"
-              >
-                <Trash2 className="w-4 h-4 text-pink-400" />
-              </button>
-            )}
           </div>
 
           {reshakeNotice && <p className="mx-4 mb-2 text-xs text-pink-200 bg-pink-500/10 border border-pink-500/20 rounded-lg px-3 py-2">{reshakeNotice}</p>}

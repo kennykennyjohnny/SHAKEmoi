@@ -55,6 +55,8 @@ export const posts: any[] = [];
       cover_url: cover(k), album_cover_url: cover(k), track_id: `trk${k}`, caption: k % 3 ? '' : 'En boucle 🔥',
       likes_count: k % 7, comments_count: k % 4, reshakes_count: 0, is_reshake: false, is_private: false, circle_id: null,
       spotify_url: `https://open.spotify.com/track/trk${k}`, preview_url: null,
+      // Q11 : le 6e Shake de Léa est épinglé.
+      pinned_at: k === 5 ? iso(5) : null,
     });
   }
 });
@@ -197,6 +199,9 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
           if (id) return one(posts.filter((p) => p.id === id).map(withUser));
           const uid = eqParam('user_id');
           let rows = (uid ? posts.filter((p) => p.user_id === uid) : posts).map(withUser);
+          const pin = url.searchParams.get('pinned_at');
+          if (pin === 'is.null') rows = rows.filter((p) => !p.pinned_at);
+          if (pin === 'not.is.null') rows = rows.filter((p) => p.pinned_at).sort((a, b) => b.pinned_at.localeCompare(a.pinned_at));
           const total = rows.length;
           const off = Number(url.searchParams.get('offset') || 0);
           const lim = Number(url.searchParams.get('limit') || 1000);

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { ProfileGrid } from './ProfileGrid';
 import { FollowListSheet } from './FollowListSheet';
 import { StreakBadge } from './Streak';
-import { PinnedSongs } from './PinnedSongs';
 import { InviteSheet } from './InviteSheet';
 import { UserPlus } from 'lucide-react';
 import { SettingsDialog } from './SettingsDialog';
@@ -144,9 +143,6 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
         {user.bio && (
           <p className="text-sm text-purple-200/85 mt-3 leading-relaxed">{user.bio}</p>
         )}
-
-        {/* Sons épinglés (P24) */}
-        <PinnedSongs userId={user.id} isOwn />
 
         {/* Stories : en cours, « À la une » (épinglées) et accès aux archives */}
         <div className="mt-4">

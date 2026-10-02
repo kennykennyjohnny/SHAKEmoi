@@ -47,3 +47,20 @@ test.describe('glisser pour fermer', () => {
     await expect(page.getByRole('dialog', { name: /Profil de/ })).toHaveCount(0);
   });
 });
+
+test.describe('Classement', () => {
+  test.skip(({ isMobile }) => !isMobile, 'geste tactile : téléphone');
+  test('3 onglets : glisser, toucher, gardé à l’actualisation', async ({ page }) => {
+    await mockBackend(page);
+    await page.goto('/top');
+    const tab = (n: string) => page.getByRole('button', { name: n, exact: true });
+    await expect(tab('Amis')).toHaveAttribute('aria-pressed', 'true');
+    await page.waitForTimeout(800);
+    await swipe(page, 'main', { x: 320, y: 600 }, { x: 60, y: 605 });
+    await expect(tab('Global')).toHaveAttribute('aria-pressed', 'true');
+    await tab('Découvrir').click();
+    await expect(tab('Découvrir')).toHaveAttribute('aria-pressed', 'true');
+    await page.reload();
+    await expect(tab('Découvrir')).toHaveAttribute('aria-pressed', 'true');
+  });
+});

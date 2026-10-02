@@ -621,3 +621,24 @@ Sans compte de test, je ne pouvais pas voir l'appli connectée. J'ai monté un *
 6. Ordinateur : flèches sur les côtés et flèches du clavier ; Échap ferme.
 7. Un cercle → icône Playlist : la playlist glisse depuis la droite ; la bulle (ou retour) la referme, la conversation est restée au même endroit.
 8. Réglages du téléphone → Accessibilité → « Réduire les animations » : l'appli ne fait plus que des apparitions directes.
+
+## Lot Q4 — Q4 (Classement en 3 onglets) + Q11 (Shakes épinglés dans la grille)
+| # | Statut | Explication |
+|---|---|---|
+| Q4 onglets | ✅ | **Trois onglets centrés** : **Amis** (à gauche, ouvert par défaut) · **Global** (l'ancien « Tout SHAKEMOI ») · **Découvrir** (nouveau). On glisse ou on touche : **exactement la mécanique de Messages ↔ Cercles** (même composant `useSwipeTabs`) : le contenu et le trait rose suivent le doigt, relâcher à mi-chemin termine ou annule. La période (7 j / 30 j / Depuis toujours) ne s'affiche que pour Amis et Global. |
+| Q4 mémoire | ✅ | Le dernier onglet choisi est **gardé à l'actualisation et à la réouverture de l'appli**. |
+| Q4 texte | ✅ | « Tout SHAKEMOI » remplacé partout (onglet, sous-titres) : « Global », « Sur SHAKEmoi (Global) ». |
+| Q4 Découvrir | 🟡 | L'onglet est en place ; son contenu (le moteur de recommandation Q8) arrive au lot suivant. En attendant il affiche « Des sons choisis pour toi — bientôt ici ». |
+| Q11 principe | ✅ | **P24 remplacé** : plus de rubrique « Sons épinglés » au-dessus du fil (retirée de mon profil et de l'aperçu). On épingle **ses propres Shakes déjà publiés**, **jusqu'à 3**, **en haut de la grille**, avec une **petite épingle violette** dans le coin de la vignette. Ordre des épinglés : le dernier épinglé en premier ; le reste de la grille reste chronologique. |
+| Q11 épingler | ✅ | Deux façons : menu **« … »** du post (« Épingler en haut du profil » / « Désépingler », avec « Supprimer » déplacé dans le même menu) ou **appui long sur la vignette** de mon profil. Au-delà de 3 : « Remplacer le plus ancien épinglé par celui-ci ? ». La grille se remet dans l'ordre tout de suite. |
+| Q11 partout | ✅ | Visible par tous ceux qui voient le profil (profil complet, aperçu de profil) ; le passage d'un post à l'autre (Q2) suit l'ordre de la grille, épinglés compris (testé). |
+| Q11 en base | ✅ | Colonne `posts.pinned_at` + fonctions `pin_post` / `unpin_post` : seulement **mes** Shakes visibles sur mon profil (pas un reshake, pas un post privé ni de cercle), 3 maximum, impossible de modifier l'épinglage à la main. **Testé** (transaction annulée) : 1er et 2e épinglés → OK ; 4e → « plein » ; avec remplacement → le plus ancien (EKKO) est désépinglé, on reste à 3 ; modification directe → refusée. |
+| Q11 reprise P24 | ✅ | En base il y avait **2 sons épinglés** : « EKKO » (HOUDI) de @kenny correspondait à un de ses Shakes → **devenu un Shake épinglé** ; « Fuentes de Ortiz » de @yohpes ne correspondait à aucun de ses Shakes → **abandonné** (la ligne reste dans l'ancienne table, plus rien ne l'affiche). |
+| Q11 goûts | ✅ | Un Shake épinglé garde son **poids fort** dans la compatibilité (×2 au total, comme avant), et le gardera dans le profil de goût de Découvrir (Q8). |
+
+**Tests (lot Q4)**
+1. Classement : trois onglets centrés, « Amis » ouvert. Glisse vers la gauche → « Global », encore → « Découvrir » ; relâche à mi-chemin → ça revient. Ferme l'appli, rouvre : tu es sur le dernier onglet choisi.
+2. Ton profil : appui long sur une de tes pochettes → « Épingler en haut du profil » → elle passe en premier avec l'épingle violette. Ouvre un autre de tes posts → « … » → « Épingler en haut du profil ». Fais-le une 4e fois → on te propose de remplacer le plus ancien.
+3. Ton profil vu par un ami (ou ton aperçu) : les épinglés sont en haut ; plus de rubrique « Sons épinglés ».
+4. Ouvre l'épinglé et glisse à gauche : tu passes au plus récent des autres, dans l'ordre de la grille.
+5. Ton profil : « EKKO » est épinglé en haut (repris de ton ancien son épinglé).

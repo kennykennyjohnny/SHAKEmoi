@@ -20,7 +20,6 @@ import { supabase } from '../../lib/supabase';
 import { StoryViewerDialog } from './StoryViewerDialog';
 import { ProfileGrid } from './ProfileGrid';
 import { StreakBadge, primeStreak } from './Streak';
-import { PinnedSongs } from './PinnedSongs';
 import { SuggestionsCarousel } from './SuggestionsCarousel';
 import { tasteExplanation, type Taste } from '../../lib/social';
 import { defaultAvatar, avatarThumb } from '../../lib/media';
@@ -251,8 +250,6 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                   </div>
 
                   {header?.profile?.bio && <p className="text-sm text-purple-100 mt-3 leading-relaxed">{header.profile.bio}</p>}
-
-                  {profile && loaded && <PinnedSongs userId={profile.id} isOwn={isMe} />}
 
                   {/* P3 : abonnés en commun (connecté seulement) */}
                   {profile && loaded && myId && !isMe && <MutualFollowersLine userId={profile.id} initial={header?.mutual ?? null} onOpen={() => setList('mutual')} />}

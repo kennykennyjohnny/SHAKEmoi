@@ -12,11 +12,12 @@ async function openFirstPost(page: Page) {
   await page.goto('/');
   await page.waitForTimeout(1200);
   await page.evaluate((id) => { window.dispatchEvent(new CustomEvent('shakemoi:open', { detail: `profile:${id}` })); }, LEA);
-  const thumb = page.locator(`[data-thumb="${pid(0)}"]`);
+  // 1re vignette = le Shake épinglé (Titre 6), puis Titre 1, Titre 2… (Q11)
+  const thumb = page.locator(`[data-thumb="${pid(5)}"]`);
   await expect(thumb).toBeVisible();
   await thumb.click();
-  await expect(activeTitle(page)).toHaveText('Titre 1');
-  await expect(page).toHaveURL(new RegExp(`/post/${pid(0)}$`));
+  await expect(activeTitle(page)).toHaveText('Titre 6');
+  await expect(page).toHaveURL(new RegExp(`/post/${pid(5)}$`));
   await page.waitForTimeout(400);
 }
 
@@ -25,12 +26,12 @@ test('flèches et clavier', async ({ page, isMobile }) => {
   await openFirstPost(page);
   await expect(page.getByRole('button', { name: 'Shake précédent' })).toHaveCount(0); // au début : pas de flèche gauche
   await page.getByRole('button', { name: 'Shake suivant' }).click();
-  await expect(activeTitle(page)).toHaveText('Titre 2');
-  await expect(page).toHaveURL(new RegExp(`/post/${pid(1)}$`));
+  await expect(activeTitle(page)).toHaveText('Titre 1');
+  await expect(page).toHaveURL(new RegExp(`/post/${pid(0)}$`));
   await page.keyboard.press('ArrowRight');
-  await expect(activeTitle(page)).toHaveText('Titre 3');
-  await page.keyboard.press('ArrowLeft');
   await expect(activeTitle(page)).toHaveText('Titre 2');
+  await page.keyboard.press('ArrowLeft');
+  await expect(activeTitle(page)).toHaveText('Titre 1');
   // Retour : le post se ferme, on est sur l'aperçu de profil.
   await page.goBack();
   await expect(page.getByRole('dialog', { name: 'Shake' })).toHaveCount(0);
@@ -44,15 +45,15 @@ test('glisser : suivant, précédent, bout de liste, fermer', async ({ page, isM
   // Au début : glisser vers la droite résiste, on reste sur le 1er.
   await swipe(page, sel, { x: 100, y: 500 }, { x: 330, y: 505 });
   await page.waitForTimeout(450);
-  await expect(activeTitle(page)).toHaveText('Titre 1');
+  await expect(activeTitle(page)).toHaveText('Titre 6');
   // Vers la gauche : le suivant.
   await swipe(page, sel, { x: 330, y: 500 }, { x: 60, y: 505 });
-  await expect(activeTitle(page)).toHaveText('Titre 2');
+  await expect(activeTitle(page)).toHaveText('Titre 1');
   await swipe(page, sel, { x: 330, y: 500 }, { x: 60, y: 505 });
-  await expect(activeTitle(page)).toHaveText('Titre 3');
+  await expect(activeTitle(page)).toHaveText('Titre 2');
   // Vers la droite : le précédent.
   await swipe(page, sel, { x: 60, y: 500 }, { x: 330, y: 505 });
-  await expect(activeTitle(page)).toHaveText('Titre 2');
+  await expect(activeTitle(page)).toHaveText('Titre 1');
   await page.waitForTimeout(400);
   // En plein geste vers le bas : le post suit le doigt, rétrécit, la grille réapparaît.
   await swipe(page, sel, { x: 200, y: 300 }, { x: 200, y: 520 }, 10, 12, false);
@@ -63,5 +64,5 @@ test('glisser : suivant, précédent, bout de liste, fermer', async ({ page, isM
   // Vers le bas depuis la pochette : fermé, la vignette du post vu est à l'écran.
   await swipe(page, sel, { x: 200, y: 300 }, { x: 200, y: 650 });
   await expect(page.getByRole('dialog', { name: 'Shake' })).toHaveCount(0);
-  await expect(page.locator(`[data-thumb="${pid(1)}"]`)).toBeInViewport();
+  await expect(page.locator(`[data-thumb="${pid(0)}"]`)).toBeInViewport();
 });

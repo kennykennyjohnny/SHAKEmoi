@@ -215,24 +215,48 @@ export async function getUserShakeCount(userId: string): Promise<number> {
 // Q5 : pages de 12 (4 lignes) : la 1re arrive vite, la suite au défilement.
 export const PROFILE_PAGE = 12;
 export async function getProfileGridPage(userId: string, kind: 'shakes' | 'reshakes', before: string | null): Promise<any[]> {
-  let query = supabase
+  const base = () => supabase
     .from('posts')
-    .select(`id, user_id, created_at, track_name, artist, cover_url, image_url, likes_count, comments_count, reshakes_count, is_reshake, original_post_id,
+    .select(`id, user_id, created_at, pinned_at, track_name, artist, cover_url, image_url, likes_count, comments_count, reshakes_count, is_reshake, original_post_id,
       original_post:original_post_id(id, track_name, artist, cover_url, image_url, likes_count, comments_count, reshakes_count, is_private, circle_id,
         user:users_profile!posts_user_id_fkey(id, username))`)
     .eq('user_id', userId)
     .not('is_private', 'is', true)
-    .is('circle_id', null)
-    .order('created_at', { ascending: false })
-    .limit(PROFILE_PAGE);
-  query = kind === 'shakes' ? query.not('is_reshake', 'is', true) : query.eq('is_reshake', true);
-  if (before) query = query.lt('created_at', before);
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data || [])
+    .is('circle_id', null);
+  const norm = (rows: any[] | null) => (rows || [])
     .map((p: any) => ({ ...p, original_post: Array.isArray(p.original_post) ? p.original_post[0] : p.original_post }))
     // Reshake d'un post devenu invisible (supprimé, privé) : rien à montrer.
     .filter((p: any) => !p.is_reshake || p.original_post);
+  if (kind === 'reshakes') {
+    let q = base().eq('is_reshake', true).order('created_at', { ascending: false }).limit(PROFILE_PAGE);
+    if (before) q = q.lt('created_at', before);
+    const { data, error } = await q;
+    if (error) throw error;
+    return norm(data);
+  }
+  // Q11 : les Shakes épinglés en tête (le dernier épinglé en premier), puis
+  // les autres du plus récent au plus ancien.
+  let q = base().not('is_reshake', 'is', true).is('pinned_at', null).order('created_at', { ascending: false }).limit(PROFILE_PAGE);
+  if (before) q = q.lt('created_at', before);
+  const [rest, pinned] = await Promise.all([
+    q,
+    before ? Promise.resolve({ data: [], error: null }) : base().not('is_reshake', 'is', true).not('pinned_at', 'is', null).order('pinned_at', { ascending: false }).limit(3),
+  ]);
+  if (rest.error) throw rest.error;
+  return [...norm(pinned.data as any[]), ...norm(rest.data)];
+}
+
+/** Q11 : épingler un de mes Shakes en haut de mon profil (3 au maximum). */
+export async function pinPost(postId: string, replaceOldest = false): Promise<{ status: 'pinned' | 'already' | 'full' | 'error'; error?: string }> {
+  const { data, error } = await supabase.rpc('pin_post', { p_post: postId, p_replace_oldest: replaceOldest });
+  if (error) return { status: 'error', error: error.message };
+  window.dispatchEvent(new CustomEvent('shakemoi:pins-changed'));
+  return { status: (data as any)?.status || 'pinned' };
+}
+export async function unpinPost(postId: string): Promise<boolean> {
+  const { error } = await supabase.rpc('unpin_post', { p_post: postId });
+  if (!error) window.dispatchEvent(new CustomEvent('shakemoi:pins-changed'));
+  return !error;
 }
 
 /** Ai-je déjà reshaké ce post ? (un reshake par personne et par post, F1) */
@@ -2193,4 +2217,17 @@ export async function commentOnStory(storyId: string, commentText: string) {
     console.error('Error commenting on story:', error);
     return { success: false, error: error.message };
   }
+}
+
+/** Q11 : épingler / désépingler depuis l'appli (menu du post ou appui long sur la vignette).
+ *  Renvoie le petit message à afficher (null si la personne a annulé). */
+export async function togglePinPost(post: { id: string; pinned_at?: string | null }): Promise<string | null> {
+  if (post.pinned_at) return (await unpinPost(post.id)) ? 'Désépinglé' : 'Impossible de désépingler. Réessaie.';
+  let r = await pinPost(post.id);
+  if (r.status === 'full') {
+    if (!confirm('Tu as déjà 3 Shakes épinglés. Remplacer le plus ancien épinglé par celui-ci ?')) return null;
+    r = await pinPost(post.id, true);
+  }
+  if (r.status === 'error') return 'Impossible d’épingler ce Shake. Réessaie.';
+  return 'Épinglé en haut de ton profil 📌';
 }
