@@ -65,3 +65,22 @@ export async function getInviteCard(username: string): Promise<any | null> {
   const { data } = await supabase.rpc('get_invite_card', { p_username: username });
   return data || null;
 }
+
+// Récap de la semaine qui vient de se terminer (P20).
+export interface WeeklyRecap {
+  week: number;
+  start: string;
+  end: string;
+  shakes: number;
+  likes: number;
+  streak: number;
+  genre: string | null;
+  match: { id: string; username: string; avatar: string | null; score: number } | null;
+  top: { id: string; title: string; artist: string; cover: string | null; preview_url: string | null; track_id: string | null; spotify_url: string | null; likes: number }[];
+}
+
+export async function getWeeklyRecap(): Promise<WeeklyRecap | null> {
+  const { data, error } = await supabase.rpc('get_weekly_recap');
+  if (error) throw error;
+  return (data as WeeklyRecap) || null;
+}

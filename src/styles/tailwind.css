@@ -85,3 +85,7 @@
     animation: shake-success 0.4s ease-out;
   }
 }
+
+/* P20 : barre de progression d'un écran du récap (façon story). */
+@keyframes recap-fill { from { width: 0%; } to { width: 100%; } }
+.recap-fill { animation: recap-fill linear forwards; }

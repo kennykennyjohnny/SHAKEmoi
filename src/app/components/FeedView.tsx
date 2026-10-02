@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
 import { SuggestionsCarousel } from './SuggestionsCarousel';
+import { RecapCard } from './WeeklyRecap';
 import { formatRelative } from '../../lib/dates';
 import { createPortal } from 'react-dom';
 import { Heart, MessageCircle, Repeat2, Play, Pause, MoreHorizontal, Loader2, Send, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Copy, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
@@ -1247,6 +1248,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         
         <AnimatePresence mode="wait">
         <motion.div key={currentFeedId || 'main-feed'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.12, ease: 'easeOut' }} className="space-y-5">
+        {/* P20 : récap de la semaine, en haut du fil principal. */}
+        {!currentFeedId && currentUser && <RecapCard user={currentUser} />}
         {shakes.length === 0 ? (
           <div className="py-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-[#1D0F3D] border border-purple-800/20 rounded-full flex items-center justify-center">

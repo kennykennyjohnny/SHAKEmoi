@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { X, Copy, Check, Download, Share2, Clapperboard, Loader2, Link2, MessageSquare } from 'lucide-react';
-import { createStoryVideo, pickVideoMime, type StoryResult } from '../../lib/storyVideo';
+import { X, Copy, Check, Share2, Clapperboard, Link2, MessageSquare } from 'lucide-react';
+import { createStoryVideo } from '../../lib/storyVideo';
+import { StoryVideoMaker } from './StoryVideoMaker';
+import { supabase } from '../../lib/supabase';
 import { resolvePreviewUrl } from '../../lib/preview';
 import { PUBLIC_ORIGIN } from '../../lib/links';
 import { useBackHandler } from '../../lib/navigation';
@@ -27,8 +29,6 @@ interface Props {
   onClose: () => void;
 }
 
-type VideoState = 'idle' | 'recording' | 'ready' | 'error';
-
 function fileSlug(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'son';
 }
@@ -48,13 +48,8 @@ export function SongShareSheet({ song, by, link, onClose }: Props) {
   useBackHandler(true, onClose);
   const [url, setUrl] = useState<string | null>(typeof link === 'string' ? link : null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(song.previewUrl ?? null);
-  const [video, setVideo] = useState<VideoState>('idle');
-  const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<(StoryResult & { objectUrl: string }) | null>(null);
+  const [byAvatar, setByAvatar] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [linkCopiedForStory, setLinkCopiedForStory] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const canRecord = pickVideoMime() !== null;
 
   // Le lien et l'extrait se préparent dès l'ouverture : le clic « vidéo » part
   // alors tout de suite (et reste dans le geste de l'utilisateur, requis par iOS).
@@ -66,48 +61,15 @@ export function SongShareSheet({ song, by, link, onClose }: Props) {
     if (!song.previewUrl) {
       resolvePreviewUrl(song.title, song.artist).then(p => { if (!cancelled) setPreviewUrl(p); }).catch(() => {});
     }
+    // Avatar de la personne qui partage, affiché dans la vidéo.
+    if (by) {
+      supabase.from('users_profile').select('profile_album_cover_url').eq('username', by).maybeSingle()
+        .then(({ data }) => { if (!cancelled) setByAvatar(data?.profile_album_cover_url || null); });
+    }
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => () => { if (result) URL.revokeObjectURL(result.objectUrl); }, [result]);
-
   const text = `${song.title} — ${song.artist}${by ? ` · partagé par @${by}` : ''} sur SHAKEmoi`;
-
-  const makeVideo = async () => {
-    if (!url || !canvasRef.current || video === 'recording') return;
-    setVideo('recording');
-    setProgress(0);
-    try {
-      const res = await createStoryVideo(canvasRef.current, { ...song, previewUrl, by }, url, setProgress);
-      setResult({ ...res, objectUrl: URL.createObjectURL(res.blob) });
-      setVideo('ready');
-    } catch (e) {
-      console.error('Vidéo de partage :', e);
-      setVideo('error');
-    }
-  };
-
-  const download = () => {
-    if (!result) return;
-    const a = document.createElement('a');
-    a.href = result.objectUrl;
-    a.download = `shakemoi-${fileSlug(song.title)}.${result.ext}`;
-    a.click();
-  };
-
-  const shareVideo = async () => {
-    if (!result || !url) return;
-    const file = new File([result.blob], `shakemoi-${fileSlug(song.title)}.${result.ext}`, { type: result.mime });
-    // Lien copié d'abord (dans le même geste) : sur Insta, on le colle dans le
-    // sticker « Lien » pour rendre la story cliquable.
-    navigator.clipboard?.writeText(url).then(() => setLinkCopiedForStory(true)).catch(() => {});
-    if (navigator.canShare?.({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: song.title, text: `${text}\n${url}` }); } catch { /* annulé */ }
-    } else {
-      download();
-      setLinkCopiedForStory(true);
-    }
-  };
 
   const copyLink = async () => {
     if (!url) return;
@@ -169,92 +131,15 @@ export function SongShareSheet({ song, by, link, onClose }: Props) {
 
           {/* Vidéo story */}
           <div className="p-4">
-            <div className="rounded-2xl bg-gradient-to-br from-purple-700/30 to-pink-600/20 border border-purple-400/20 p-4">
-              <div className="flex gap-4 items-center">
-                <div className="relative w-[108px] aspect-[9/16] rounded-xl overflow-hidden bg-[#0A0614] flex-shrink-0 ring-1 ring-white/10">
-                  {/* Le canvas sert à la création ; la vidéo finie le remplace. */}
-                  <canvas ref={canvasRef} className={`w-full h-full ${video === 'recording' ? 'block' : 'hidden'}`} />
-                  {video === 'ready' && result && (
-                    result.isImage
-                      ? <img loading="lazy" src={result.objectUrl} alt="" className="w-full h-full object-cover" />
-                      : <video src={result.objectUrl} className="w-full h-full object-cover" autoPlay loop muted playsInline />
-                  )}
-                  {(video === 'idle' || video === 'error') && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      {song.cover
-                        ? <img loading="lazy" src={song.cover} alt="" className="w-16 h-16 rounded-lg object-cover opacity-80" />
-                        : <Clapperboard className="w-8 h-8 text-purple-300/60" />}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold leading-tight">
-                    {canRecord ? 'Vidéo pour ta story' : 'Image pour ta story'}
-                  </p>
-                  <p className="text-xs text-purple-200/70 mt-1">
-                    {canRecord
-                      ? 'Pochette animée + extrait du son, prête pour Insta, TikTok, Snap ou WhatsApp.'
-                      : 'Ta story avec la pochette et le lien du son.'}
-                  </p>
-
-                  {video === 'idle' && (
-                    <button
-                      onClick={makeVideo}
-                      disabled={!url}
-                      className="mt-3 w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
-                    >
-                      {url ? <Clapperboard className="w-4 h-4" /> : <Loader2 className="w-4 h-4 animate-spin" />}
-                      {canRecord ? 'Créer la vidéo' : 'Créer l\'image'}
-                    </button>
-                  )}
-
-                  {video === 'recording' && (
-                    <div className="mt-3">
-                      <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-[width] duration-200" style={{ width: `${Math.round(progress * 100)}%` }} />
-                      </div>
-                      <p className="text-[11px] text-purple-200/70 mt-1.5">Création en cours… {Math.max(0, Math.ceil(10 - progress * 10))} s</p>
-                    </div>
-                  )}
-
-                  {video === 'ready' && (
-                    <div className="mt-3 flex gap-2">
-                      <button onClick={shareVideo} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-sm flex items-center justify-center gap-2">
-                        <Share2 className="w-4 h-4" /> Partager
-                      </button>
-                      <button onClick={download} className="px-3 rounded-xl bg-white/10 border border-white/15" aria-label="Enregistrer">
-                        <Download className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-
-                  {video === 'error' && (
-                    <button onClick={() => setVideo('idle')} className="mt-3 text-xs text-pink-300 underline">
-                      La création a échoué — réessayer
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {linkCopiedForStory && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-3 flex gap-2 items-start text-[12px] text-purple-100/90 bg-black/25 rounded-xl p-3">
-                      <Copy className="w-4 h-4 flex-shrink-0 mt-0.5 text-pink-300" />
-                      <span>
-                        <b>Lien copié.</b> Sur ta story Insta, ajoute le sticker <b>« Lien »</b> et colle-le :
-                        tes potes tapent dessus et tombent direct sur le son.
-                      </span>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <StoryVideoMaker
+              url={url}
+              shareText={text}
+              fileName={`shakemoi-${fileSlug(song.title)}`}
+              make={(canvas, onProgress) => createStoryVideo(canvas, { ...song, previewUrl, by, byAvatar }, url!, onProgress)}
+              placeholder={song.cover
+                ? <img loading="lazy" src={song.cover} alt="" className="w-16 h-16 rounded-lg object-cover opacity-80" />
+                : <Clapperboard className="w-8 h-8 text-purple-300/60" />}
+            />
           </div>
 
           {/* Partages rapides */}
