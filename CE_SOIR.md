@@ -689,3 +689,25 @@ from reco_events group by 1 order by 2 desc;
 4. Paramètres → « Mes artistes préférés » : choisis Ninho → 3-4 artistes proches apparaissent à côté ; « Rap FR », « Afro »… ; cherche un artiste ; Enregistrer. Reviens sur Découvrir : la sélection en tient compte (artistes choisis = « Parce que tu aimes … »).
 5. Paramètres → « Revoir le tuto » : après le choix de l'appli, l'étape « Choisis au moins 3 artistes » (Continuer grisé avant 3, Passer possible), puis « Suis au moins 3 personnes ».
 6. Juge le contrôle humain ci-dessus : dis-moi ce qui sonne faux pour tes potes.
+
+## Lot Q6 — Q14 : un tuto concret et interactif
+Captures de chaque écran (banc d'essai, téléphone 390 px) : **`docs/captures/q14-tuto.jpg`**.
+
+| # | Statut | Explication |
+|---|---|---|
+| Q14 principe | ✅ | Fini les slides abstraites (vinyle, icônes) : **chaque écran est un vrai bout d'interface animé**, avec de **vrais titres du moment** (pochettes + extraits pris dans le catalogue de Découvrir, une seule petite lecture) et, si le réseau est lent, des exemples embarqués (Meuda, Djadja, Calm Down, Blinding Lights). Une phrase par écran, tutoiement, un emoji. |
+| 1. Partage le son du moment | ✅ 👆 | La recherche se tape toute seule (« Tiakola »), la pochette apparaît, le bouton « Publier mon Shake » pulse. **À toi** : touche la pochette → **l'extrait joue vraiment** (lecteur M2) → « ✓ Bien joué ! ». |
+| 2. Réagis à la musique de tes potes | ✅ 👆👆 | Un post de Léa. **À toi** : **double-tap** sur la pochette → gros cœur animé, le compteur passe à 13 → « Bien joué ». On voit aussi « répondre en musique ». |
+| 3. Les Shakes éphémères | ✅ | Un mini Shake éphémère de Bapt : barres de progression, **compte à rebours qui défile** (23:59:41…), sticker du son. « Visible 24 h par tes abonnés ». |
+| 4. Tes cercles | ✅ | Une mini conversation « Les potes » (messages qui arrivent, un son partagé) ; touche l'icône playlist → **la playlist du cercle glisse** (même transition que dans l'appli). |
+| 5. Ta flamme | ✅ 👆 | Flamme grise « 3 semaines… publie avant mardi ! ». **À toi** : « Publier mon Shake » → **elle s'allume en violet**, passe à 4 → « Bien joué ». |
+| 6. Découvre | ✅ | « Léa · 92 % » + l'explication, puis un mini Découvrir avec ses raisons (« Parce que tu as shaké Tiakola », « Aimé par Léa · 92 % compatibles », « Dans ton style Afro ») et les boutons Shaker. |
+| Configuration | ✅ | Ensuite : **Tu écoutes où ?** (O1) → **Choisis au moins 3 artistes** (Q9) → **Suis au moins 3 personnes** (P29) → arrivée sur un fil déjà rempli. |
+| Toujours possible | ✅ | « **Suivant** » toujours là (même sans faire le geste : il est juste moins mis en avant), « **Passer** », barre de progression (touchable), **glisser** pour avancer / revenir, flèches du clavier, **rejouer** depuis Paramètres → « Revoir le tuto » (qui enchaîne aussi sur les artistes). |
+| Léger | ✅ | Aucune vidéo, aucune image lourde : les vrais composants de l'appli en version démo + des données d'exemple embarquées ; le son ne part que si on touche. Animations dans le style Q3 (même courbe, même durée). |
+| Test | ✅ | **Playwright de bout en bout** (nouveau compte simulé) : les 6 écrans, double-tap validé, flamme allumée, playlist ouverte, choix de l'appli, « Encore 3 » grisé puis 3 artistes, et l'écran « Suis au moins 3 personnes ». |
+
+**Tests (lot Q6)**
+1. Paramètres → « Revoir le tuto » : 6 écrans ; touche la pochette du 1er (l'extrait joue), double-tape le post du 2e (cœur), publie au 5e (la flamme s'allume).
+2. Glisse vers la gauche / la droite pour avancer / revenir ; « Passer » saute à « Tu écoutes où ? ».
+3. Après l'appli d'écoute : « Choisis au moins 3 artistes », puis (nouveau compte) « Suis au moins 3 personnes ».

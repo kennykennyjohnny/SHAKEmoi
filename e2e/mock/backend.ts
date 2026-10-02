@@ -76,6 +76,8 @@ export interface MockOptions {
   latency?: number;
   /** Compte les requêtes vers la base (mesures Q5). */
   counter?: { n: number };
+  /** Nouveau compte : le tuto s'ouvre au démarrage. */
+  newUser?: boolean;
 }
 
 /** Pose la fausse session et branche la fausse base sur la page. */
@@ -197,6 +199,7 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
         case 'users_profile': {
           const id = eqParam('id');
           const inList = (url.searchParams.get('id') || '').match(/^in\.\((.*)\)$/)?.[1]?.split(',').map((x) => x.replace(/"/g, ''));
+          if (id === ME && opts.newUser) return one([{ ...profiles[ME], onboarding_completed_at: null }]);
           if (id) return one(profiles[id] ? [profiles[id]] : []);
           if (inList) return one(inList.map((x) => profiles[x]).filter(Boolean));
           const u = eqParam('username') || (url.searchParams.get('username') || '').replace(/^ilike\./, '');
@@ -233,6 +236,9 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
           if (req.method() === 'HEAD') return route.fulfill({ status: 200, headers: { 'content-range': '0-0/7', 'access-control-allow-origin': '*', 'access-control-expose-headers': 'content-range' } });
           return one([]);
         }
+        case 'catalog_tracks':
+          return one([['Meuda', 'Tiakola', 'Rap'], ['Djadja', 'Aya Nakamura', 'Afro'], ['Espresso', 'Sabrina Carpenter', 'Pop'], ['Snooze', 'SZA', 'R&B / Soul']]
+            .map(([title, artist, fam], i) => ({ title, artist, cover_url: cover(i + 1), preview_url: img(10, 10), sources: { [`chart:${fam}`]: 1 } })));
         case 'circles': return one([circle]);
         case 'shake_du_jour': return one([{ id: 'sdj' }]);
         case 'circle_members': return one([ME, LEA, BAPT].map((id) => ({ circle_id: CIRCLE, user_id: id, user: profiles[id], joined_at: iso(1000), role: id === LEA ? 'owner' : 'member' })));
