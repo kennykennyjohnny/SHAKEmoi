@@ -84,9 +84,9 @@ export function CircleInviteView({ code, currentUser, onJoin, onSignUp }: Props)
 
   if (expired || !circle) return (
     <div className="h-[100dvh] bg-[#1E1440] flex flex-col items-center justify-center gap-4 p-4">
-      <Users className="w-10 h-10 text-purple-400/60" />
+      <Users className="w-10 h-10 text-purple-300/80" />
       <p className="text-white font-semibold text-center">Ce lien n'est plus valide</p>
-      <p className="text-purple-300/70 text-sm text-center max-w-xs">Demande un nouveau lien à un membre du cercle.</p>
+      <p className="text-purple-300/90 text-sm text-center max-w-xs">Demande un nouveau lien à un membre du cercle.</p>
       <button onClick={() => { onJoin(); }} className="px-5 py-2.5 bg-purple-600/30 rounded-full text-sm text-purple-300 hover:bg-purple-600/40 transition-colors">
         Retour à l'accueil
       </button>
@@ -153,11 +153,11 @@ export function CircleInviteView({ code, currentUser, onJoin, onSignUp }: Props)
             </motion.div>
             <h2 className="text-xl font-bold text-white mb-1">{circle.name}</h2>
             {creator && (
-              <p className="text-sm text-purple-300/60">
+              <p className="text-sm text-purple-300/85">
                 Créé par <span className="text-fuchsia-400 font-medium">@{creator.username}</span>
               </p>
             )}
-            {!creator && <p className="text-sm text-purple-300/60">Cercle privé</p>}
+            {!creator && <p className="text-sm text-purple-300/85">Cercle privé</p>}
           </div>
 
           {/* Members preview */}
@@ -181,7 +181,7 @@ export function CircleInviteView({ code, currentUser, onJoin, onSignUp }: Props)
                   </div>
                 )}
               </div>
-              <p className="text-center text-xs text-purple-300/60 mt-2">
+              <p className="text-center text-xs text-purple-300/85 mt-2">
                 {members.length} membre{members.length > 1 ? 's' : ''} actif{members.length > 1 ? 's' : ''}
                 {members.length <= 3 && (
                   <> · {members.map((m: any) => m.display_name || m.username).join(', ')}</>
@@ -190,7 +190,7 @@ export function CircleInviteView({ code, currentUser, onJoin, onSignUp }: Props)
             </div>
           )}
           {members.length === 0 && memberCount > 0 && (
-            <p className="px-6 pb-4 text-center text-xs text-purple-300/60">
+            <p className="px-6 pb-4 text-center text-xs text-purple-300/85">
               {memberCount} membre{memberCount > 1 ? 's' : ''} actif{memberCount > 1 ? 's' : ''}
             </p>
           )}
@@ -198,7 +198,7 @@ export function CircleInviteView({ code, currentUser, onJoin, onSignUp }: Props)
           {/* Recent tracks teaser */}
           {recentTracks.length > 0 && recentTracks.length < 4 && (
             <div className="px-6 pb-4">
-              <div className="flex items-center gap-2 text-purple-300/60 text-xs mb-2">
+              <div className="flex items-center gap-2 text-purple-300/85 text-xs mb-2">
                 <Disc3 className="w-3 h-3" />
                 Derniers sons partagés
               </div>
@@ -214,7 +214,7 @@ export function CircleInviteView({ code, currentUser, onJoin, onSignUp }: Props)
                     <img loading="lazy" src={t.cover_url} className="w-8 h-8 rounded object-cover" alt="" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-white/80 truncate">{t.track_name}</p>
-                      <p className="text-[10px] text-purple-300/60 truncate">{t.artist}</p>
+                      <p className="text-[10px] text-purple-300/85 truncate">{t.artist}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -228,7 +228,7 @@ export function CircleInviteView({ code, currentUser, onJoin, onSignUp }: Props)
               <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="text-center py-3">
                 <Sparkles className="w-8 h-8 text-fuchsia-400 mx-auto mb-2" />
                 <p className="font-bold text-fuchsia-400">Bienvenue dans le cercle !</p>
-                <p className="text-xs text-purple-300/60 mt-1">Redirection en cours...</p>
+                <p className="text-xs text-purple-300/85 mt-1">Redirection en cours...</p>
               </motion.div>
             ) : alreadyMember ? (
               <button
@@ -269,7 +269,7 @@ export function CircleInviteView({ code, currentUser, onJoin, onSignUp }: Props)
               'Découvre les goûts de ton entourage',
               'Crée des cercles privés pour vos sessions',
             ].map((text, i) => (
-              <div key={i} className="flex items-center gap-2 text-purple-300/60 text-sm">
+              <div key={i} className="flex items-center gap-2 text-purple-300/85 text-sm">
                 <div className="w-1.5 h-1.5 rounded-full bg-fuchsia-500/60" />
                 {text}
               </div>
@@ -277,7 +277,7 @@ export function CircleInviteView({ code, currentUser, onJoin, onSignUp }: Props)
           </motion.div>
         )}
 
-        <p className="text-center text-[10px] text-purple-500/30 mt-8">shakemoi.fr · <Slogan /></p>
+        <p className="text-center text-[10px] text-purple-300/75 mt-8">shakemoi.fr · <Slogan /></p>
       </motion.div>
     </div>
   );

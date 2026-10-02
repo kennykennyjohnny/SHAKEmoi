@@ -77,24 +77,24 @@ export function AdminView({ onClose }: { onClose: () => void }) {
         <button aria-label="Actualiser" onClick={load} className="p-2 rounded-full hover:bg-purple-900/40"><RefreshCw className="w-4 h-4" /></button>
       </div>
       <div className="grid grid-cols-2 border-b border-purple-800/30">
-        <button onClick={() => setTab('bugs')} className={`py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5 ${tab === 'bugs' ? 'text-white border-b-2 border-pink-500' : 'text-purple-300/60'}`}><Bug className="w-4 h-4" /> Bugs {newBugs ? `(${newBugs})` : ''}</button>
-        <button onClick={() => setTab('reports')} className={`py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5 ${tab === 'reports' ? 'text-white border-b-2 border-pink-500' : 'text-purple-300/60'}`}><Flag className="w-4 h-4" /> Signalements {newReports ? `(${newReports})` : ''}</button>
+        <button onClick={() => setTab('bugs')} className={`py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5 ${tab === 'bugs' ? 'text-white border-b-2 border-pink-500' : 'text-purple-300/85'}`}><Bug className="w-4 h-4" /> Bugs {newBugs ? `(${newBugs})` : ''}</button>
+        <button onClick={() => setTab('reports')} className={`py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5 ${tab === 'reports' ? 'text-white border-b-2 border-pink-500' : 'text-purple-300/85'}`}><Flag className="w-4 h-4" /> Signalements {newReports ? `(${newReports})` : ''}</button>
       </div>
       {msg && <p className="m-3 text-xs text-pink-200 bg-pink-500/10 border border-pink-500/20 rounded-lg px-3 py-2" onClick={() => setMsg(null)}>{msg}</p>}
       <div className="flex-1 overflow-y-auto p-3 space-y-3 max-w-2xl w-full mx-auto">
         {(tab === 'bugs' ? bugs : reports) === null ? (
           <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-purple-400" /></div>
         ) : tab === 'bugs' ? (
-          bugs!.length === 0 ? <p className="text-center text-sm text-purple-300/60 py-12">Aucun bug signalé.</p> : bugs!.map((b) => (
+          bugs!.length === 0 ? <p className="text-center text-sm text-purple-300/85 py-12">Aucun bug signalé.</p> : bugs!.map((b) => (
             <div key={b.id} className={`rounded-xl border p-3 ${b.status === 'nouveau' ? 'border-pink-500/40 bg-pink-500/5' : 'border-purple-700/30 bg-violet-950/30'}`}>
-              <div className="flex items-center gap-2 text-xs text-purple-300/70 mb-1.5">
+              <div className="flex items-center gap-2 text-xs text-purple-300/90 mb-1.5">
                 <button onClick={() => b.user_id && openProfile(b.user_id)} className="font-semibold text-purple-100">{who(b.user_id)}</button>
                 <span>· {formatRelative(b.created_at)}</span>
                 <span className="ml-auto">{b.info?.telephone} · {b.info?.navigateur}{b.info?.appli_installee ? ' · appli' : ''}</span>
               </div>
               <p className="text-sm whitespace-pre-wrap break-words">{b.text}</p>
               {shots[b.id] && <a href={shots[b.id]} target="_blank" rel="noreferrer"><img src={shots[b.id]} alt="Capture" className="mt-2 max-h-56 rounded-lg" /></a>}
-              <button onClick={() => setOpenInfo(openInfo === b.id ? null : b.id)} className="mt-2 text-[11px] text-purple-300/70 underline">Infos techniques</button>
+              <button onClick={() => setOpenInfo(openInfo === b.id ? null : b.id)} className="mt-2 text-[11px] text-purple-300/90 underline">Infos techniques</button>
               {openInfo === b.id && <pre className="mt-1 text-[10px] bg-black/30 rounded-lg p-2 overflow-x-auto">{JSON.stringify(b.info, null, 2)}</pre>}
               <div className="flex gap-1.5 mt-2">
                 {BUG_STATUS.map((s) => (
@@ -104,9 +104,9 @@ export function AdminView({ onClose }: { onClose: () => void }) {
             </div>
           ))
         ) : (
-          reports!.length === 0 ? <p className="text-center text-sm text-purple-300/60 py-12">Aucun signalement.</p> : reports!.map((r) => (
+          reports!.length === 0 ? <p className="text-center text-sm text-purple-300/85 py-12">Aucun signalement.</p> : reports!.map((r) => (
             <div key={r.id} className={`rounded-xl border p-3 ${r.status === 'nouveau' ? 'border-pink-500/40 bg-pink-500/5' : 'border-purple-700/30 bg-violet-950/30 opacity-80'}`}>
-              <div className="flex flex-wrap items-center gap-x-2 text-xs text-purple-300/70 mb-1.5">
+              <div className="flex flex-wrap items-center gap-x-2 text-xs text-purple-300/90 mb-1.5">
                 <span className="px-1.5 py-0.5 rounded bg-purple-800/60 text-purple-100">{r.target_kind}</span>
                 <span className="font-semibold text-pink-200">{reasonLabel(r.reason)}</span>
                 <span>· par {who(r.reporter_id)} · {formatRelative(r.created_at)}</span>
@@ -117,7 +117,7 @@ export function AdminView({ onClose }: { onClose: () => void }) {
               {r.snapshot && (
                 <div className="mt-2 text-xs bg-black/25 rounded-lg p-2 space-y-0.5">
                   {Object.entries(r.snapshot).filter(([, v]) => v).map(([k, v]) => (
-                    <p key={k}><span className="text-purple-300/60">{k} :</span> {String(v)}</p>
+                    <p key={k}><span className="text-purple-300/85">{k} :</span> {String(v)}</p>
                   ))}
                 </div>
               )}

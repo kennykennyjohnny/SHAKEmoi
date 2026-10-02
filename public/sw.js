@@ -38,8 +38,11 @@ self.addEventListener('push', event => {
   const title = data.title || 'SHAKEmoi';
   const options = {
     body: data.body || '',
-    icon: '/icon-192.png',
-    badge: '/favicon-32.png',
+    // Q10 : pas de grande image à droite (c'était le logo, en double avec
+    // celui de gauche). Le badge est le S blanc sur fond transparent : sans
+    // transparence, Android affiche un carré blanc.
+    badge: '/badge-96.png',
+    ...(data.icon ? { icon: data.icon } : {}),
     tag: data.tag || undefined,
     renotify: !!data.tag,
     data: { url: data.url || '/' },

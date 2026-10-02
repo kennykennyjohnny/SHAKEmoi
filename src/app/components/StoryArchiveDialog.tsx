@@ -69,10 +69,10 @@ export function StoryArchiveDialog({ currentUser, onClose, onChanged }: Props) {
             <Archive className="w-5 h-5 text-purple-300" />
             <div className="flex-1">
               <p className="font-bold leading-tight">Mes archives</p>
-              <p className="text-[11px] text-purple-300/60">Épingle un Shake éphémère pour le garder « À la une » sur ton profil</p>
+              <p className="text-[11px] text-purple-300/85">Épingle un Shake éphémère pour le garder « À la une » sur ton profil</p>
             </div>
             <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10" aria-label="Fermer">
-              <X className="w-5 h-5 text-purple-300/70" />
+              <X className="w-5 h-5 text-purple-300/90" />
             </button>
           </div>
 
@@ -80,13 +80,13 @@ export function StoryArchiveDialog({ currentUser, onClose, onChanged }: Props) {
             {stories === null ? (
               <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 text-purple-400 animate-spin" /></div>
             ) : stories.length === 0 ? (
-              <p className="text-center text-sm text-purple-300/60 py-16 px-6">
+              <p className="text-center text-sm text-purple-300/85 py-16 px-6">
                 Pas encore de Shake éphémère. Publie ton premier : il sera gardé ici.
               </p>
             ) : (
               groups.map(g => (
                 <section key={g.label} className="mt-4">
-                  <p className="text-[11px] uppercase tracking-wider text-purple-300/50 font-semibold mb-2 px-1 first-letter:uppercase">{g.label}</p>
+                  <p className="text-[11px] uppercase tracking-wider text-purple-300/80 font-semibold mb-2 px-1 first-letter:uppercase">{g.label}</p>
                   <div className="grid grid-cols-3 gap-1.5">
                     {g.items.map(s => {
                       const expired = s.expires_at && new Date(s.expires_at).getTime() < Date.now();

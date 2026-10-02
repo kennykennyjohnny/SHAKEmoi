@@ -81,7 +81,7 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
                 onClick={onClose}
                 className="p-2 hover:bg-purple-900/40 rounded-full transition-colors"
               >
-                <X className="w-6 h-6 text-purple-300/60" />
+                <X className="w-6 h-6 text-purple-300/85" />
               </button>
             </div>
 
@@ -111,7 +111,7 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
                 Invite tes amis sur Shakemoi <Sparkles className="w-5 h-5 text-yellow-400" />
               </h3>
               
-              <p className="text-purple-300/60 text-sm mb-6">
+              <p className="text-purple-300/85 text-sm mb-6">
                 Partage ton lien personnel avec tes amis et découvre ensemble les meilleures vibes musicales ! 🎵
               </p>
 
@@ -119,7 +119,7 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
               <div className="bg-purple-950/40/50 border border-purple-800/30 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-purple-400/50 mb-1">Lien de partage</p>
+                    <p className="text-xs text-purple-300/80 mb-1">Lien de partage</p>
                     <p className="text-white font-mono text-sm truncate">{shareUrl}</p>
                   </div>
                   <button
@@ -166,15 +166,15 @@ export function ShareDialog({ currentUser, onClose }: ShareDialogProps) {
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <div className="bg-purple-950/40/30 rounded-lg p-3">
                   <p className="text-2xl font-bold text-purple-400">{formatNumber(stats.users)}</p>
-                  <p className="text-xs text-purple-400/50">Shakers</p>
+                  <p className="text-xs text-purple-300/80">Shakers</p>
                 </div>
                 <div className="bg-purple-950/40/30 rounded-lg p-3">
                   <p className="text-2xl font-bold text-pink-400">{formatNumber(stats.shakes)}</p>
-                  <p className="text-xs text-purple-400/50">Shakes</p>
+                  <p className="text-xs text-purple-300/80">Shakes</p>
                 </div>
                 <div className="bg-purple-950/40/30 rounded-lg p-3">
                   <p className="text-2xl font-bold text-fuchsia-400">{formatNumber(stats.likes)}</p>
-                  <p className="text-xs text-purple-400/50">Likes</p>
+                  <p className="text-xs text-purple-300/80">Likes</p>
                 </div>
               </div>
 

@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { spotify } from '../../lib/spotify';
 import { createPost, createShakeDuJour } from '../../lib/database';
 import { useBackHandler } from '../../lib/navigation';
+import { IS_TOUCH } from '../../lib/useMediaQuery';
 
 
 interface ShakeDuJourDialogProps {
@@ -91,14 +92,14 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
             <h2 className="text-lg font-bold">Shake de la semaine</h2>
           </div>
           <button aria-label="Fermer" onClick={onSkip} className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors">
-            <X className="w-5 h-5 text-purple-300/60" />
+            <X className="w-5 h-5 text-purple-300/85" />
           </button>
         </div>
 
         {/* Prompt */}
         <div className="px-4 py-3 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-b border-purple-800/20">
           <p className="text-sm text-yellow-200/90 font-medium">Quel son définit ta semaine ?</p>
-          <p className="text-xs text-purple-300/60 mt-1">Poste ton Shake pour débloquer le feed et participer au mini-jeu cercle. Un nouveau chaque mardi à 11 h (heure de Paris) !</p>
+          <p className="text-xs text-purple-300/85 mt-1">Poste ton Shake pour débloquer le feed et participer au mini-jeu cercle. Un nouveau chaque mardi à 11 h (heure de Paris) !</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -106,14 +107,14 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
           {!selectedTrack && (
             <>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/80" />
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Rechercher un son..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-purple-950/30 border border-purple-800/30 rounded-full text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500"
-                  autoFocus
+                  className="w-full pl-10 pr-4 py-2.5 bg-purple-950/30 border border-purple-800/30 rounded-full text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500"
+                  autoFocus={!IS_TOUCH}
                 />
               </div>
 
@@ -140,7 +141,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{track.title}</p>
-                        <p className="text-xs text-purple-300/60 truncate">{track.artists || track.artist}</p>
+                        <p className="text-xs text-purple-300/85 truncate">{track.artists || track.artist}</p>
                       </div>
                       <button
                         onClick={() => setSelectedTrack(track)}
@@ -163,11 +164,11 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
                   <SongCover songKey={`sdj-${selectedTrack.id}`} title={selectedTrack.title} artist={selectedTrack.artist} cover={selectedTrack.coverUrl} previewUrl={selectedTrack.previewUrl} spotifyId={selectedTrack.id} spotifyUrl={selectedTrack.spotifyUrl} className="w-16 h-16" />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">{selectedTrack.title}</p>
-                    <p className="text-xs text-purple-300/60 truncate">{selectedTrack.artist}</p>
+                    <p className="text-xs text-purple-300/85 truncate">{selectedTrack.artist}</p>
                   </div>
                   <button aria-label="Fermer"
                     onClick={() => setSelectedTrack(null)}
-                    className="text-purple-400/50 hover:text-white self-start"
+                    className="text-purple-300/80 hover:text-white self-start"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -179,7 +180,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 placeholder="Pourquoi ce son cette semaine ? (optionnel)"
-                className="w-full px-3 py-2.5 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-yellow-500"
+                className="w-full px-3 py-2.5 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-yellow-500"
                 maxLength={280}
               />
 
@@ -193,7 +194,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
                   />
                   <span className="text-sm text-purple-200/80">Afficher sur mon profil</span>
                 </div>
-                <p className="text-[11px] text-purple-300/60">Par défaut, le Shake reste privé (feed + mini-jeu cercle). Coche pour le publier sur ton profil.</p>
+                <p className="text-[11px] text-purple-300/85">Par défaut, le Shake reste privé (feed + mini-jeu cercle). Coche pour le publier sur ton profil.</p>
               </label>
 
               <button

@@ -13,6 +13,7 @@ import { setPendingAction, type PendingAction } from '../../lib/pendingAction';
 
 import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { SuggestionsCarousel } from './SuggestionsCarousel';
+import { IS_TOUCH } from '../../lib/useMediaQuery';
 interface SearchViewProps {
   currentUser?: any;
   onRefreshFeed?: () => void;
@@ -214,14 +215,14 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
       {/* Search Bar — en-tête fixe, ne défile pas avec les résultats */}
       <div className="flex-shrink-0 z-30 bg-[#1E1440] px-4 pt-4 pb-3 w-full">
         <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/70" />
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300/90" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Rechercher un son, artiste ou @ami..."
-            className="w-full pl-11 pr-4 py-3 bg-violet-950/20 border border-purple-500/30 rounded-full text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500 transition-colors"
-            autoFocus
+            className="w-full pl-11 pr-4 py-3 bg-violet-950/20 border border-purple-500/30 rounded-full text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500 transition-colors"
+            autoFocus={!IS_TOUCH}
           />
         </div>
 
@@ -232,7 +233,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
               className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                 activeTab === 'tracks'
                   ? 'bg-purple-500 text-white'
-                  : 'bg-violet-950/25 text-purple-200/70 hover:text-white'
+                  : 'bg-violet-950/25 text-purple-200/85 hover:text-white'
               }`}
             >
               <Music className="w-4 h-4" />
@@ -243,7 +244,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
               className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                 activeTab === 'users'
                   ? 'bg-purple-500 text-white'
-                  : 'bg-violet-950/25 text-purple-200/70 hover:text-white'
+                  : 'bg-violet-950/25 text-purple-200/85 hover:text-white'
               }`}
             >
               <User className="w-4 h-4" />
@@ -254,7 +255,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
               className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                 activeTab === 'circles'
                   ? 'bg-purple-500 text-white'
-                  : 'bg-violet-950/25 text-purple-200/70 hover:text-white'
+                  : 'bg-violet-950/25 text-purple-200/85 hover:text-white'
               }`}
             >
               <Sparkles className="w-4 h-4" />
@@ -321,7 +322,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                       </button>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm text-white truncate">{track.title}</h3>
-                        <p className="text-xs text-purple-300/60 truncate">{track.artists || track.artist}</p>
+                        <p className="text-xs text-purple-300/85 truncate">{track.artists || track.artist}</p>
                       </div>
                     </div>
 
@@ -364,7 +365,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                         title="Envoyer à un ami"
                         aria-label="Envoyer à un ami"
                       >
-                        <Send className="w-4 h-4 text-purple-300/70" />
+                        <Send className="w-4 h-4 text-purple-300/90" />
                       </button>
                       {shareTrackId === track.id && (
                         <SongShareSheet
@@ -395,7 +396,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                             onChange={(e) => setShakeCaption(e.target.value)}
                             placeholder="Un commentaire ? (optionnel)"
                             enterKeyHint="send"
-                            className="flex-1 min-w-0 px-3 py-2 bg-violet-950/25 border border-purple-700/30 rounded-lg text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500"
+                            className="flex-1 min-w-0 px-3 py-2 bg-violet-950/25 border border-purple-700/30 rounded-lg text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleShake(track);
                               if (e.key === 'Escape') { setShowCaptionFor(null); setShakeCaption(''); }
@@ -419,7 +420,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
           ) : (
             <div className="text-center py-8">
               <Music className="w-10 h-10 text-[#FFEFD5] mx-auto mb-2" />
-              <p className="text-purple-200/70 text-sm">Aucun résultat pour "{searchQuery}"</p>
+              <p className="text-purple-200/85 text-sm">Aucun résultat pour "{searchQuery}"</p>
             </div>
           )}
         </div>
@@ -474,7 +475,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
           ) : (
             <div className="text-center py-8">
               <User className="w-10 h-10 text-purple-600 mx-auto mb-2" />
-              <p className="text-purple-200/70 text-sm">Aucun utilisateur trouvé pour "{searchQuery}"</p>
+              <p className="text-purple-200/85 text-sm">Aucun utilisateur trouvé pour "{searchQuery}"</p>
             </div>
           )}
         </div>
@@ -497,13 +498,13 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm text-white truncate">{circle.name}</h3>
-                  <p className="text-xs text-purple-300/70">{circle.invite_code ? `Code: ${circle.invite_code}` : 'Cercle'}</p>
+                  <p className="text-xs text-purple-300/90">{circle.invite_code ? `Code: ${circle.invite_code}` : 'Cercle'}</p>
                 </div>
                 {joinedCircleIds.has(circle.id) ? (
                   <span className="text-xs text-fuchsia-400 font-semibold px-3">Rejoint !</span>
                 ) : circle.is_member !== false ? (
                   // Cercle déjà à soi (la base ne montre que ceux dont on est membre).
-                  <span className="text-xs text-purple-300/70 font-semibold px-3">Membre ✓</span>
+                  <span className="text-xs text-purple-300/90 font-semibold px-3">Membre ✓</span>
                 ) : (
                   <button
                     onClick={async () => {
@@ -520,8 +521,8 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
           ) : (
             <div className="text-center py-8">
               <Sparkles className="w-10 h-10 text-purple-600 mx-auto mb-2" />
-              <p className="text-purple-200/70 text-sm">Aucun cercle trouvé pour "{searchQuery}"</p>
-              <p className="text-purple-300/50 text-xs mt-1">Pour rejoindre un cercle, tape son code d'invitation exact.</p>
+              <p className="text-purple-200/85 text-sm">Aucun cercle trouvé pour "{searchQuery}"</p>
+              <p className="text-purple-300/80 text-xs mt-1">Pour rejoindre un cercle, tape son code d'invitation exact.</p>
             </div>
           )}
         </div>
@@ -531,10 +532,10 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
       {!hasQuery && (
         <div className="flex flex-col items-center justify-center py-16 text-center px-4">
           <div className="w-20 h-20 mb-5 rounded-full bg-gradient-to-br from-purple-900/40 to-pink-900/40 flex items-center justify-center border border-purple-700/20">
-            <SearchIcon className="w-8 h-8 text-purple-400/60" />
+            <SearchIcon className="w-8 h-8 text-purple-300/80" />
           </div>
           <h3 className="text-lg font-bold text-white mb-2">Découvre de la musique</h3>
-          <p className="text-sm text-purple-300/60 max-w-xs leading-relaxed">
+          <p className="text-sm text-purple-300/85 max-w-xs leading-relaxed">
             Recherche un son, un artiste, un ami ou un cercle musical
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -542,7 +543,7 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
               <button
                 key={genre}
                 onClick={() => setSearchQuery(genre)}
-                className="px-3 py-1.5 bg-violet-950/25 border border-purple-500/25 rounded-full text-sm text-purple-200/60 hover:text-white hover:border-purple-600/40 transition-colors"
+                className="px-3 py-1.5 bg-violet-950/25 border border-purple-500/25 rounded-full text-sm text-purple-200/80 hover:text-white hover:border-purple-600/40 transition-colors"
               >
                 {genre}
               </button>

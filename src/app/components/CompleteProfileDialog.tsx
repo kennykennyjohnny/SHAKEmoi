@@ -83,14 +83,14 @@ export function CompleteProfileDialog({ user, onComplete }: CompleteProfileDialo
       >
         <div className="p-6 text-center">
           <h2 className="text-xl font-bold text-white mb-1">Complète ton profil</h2>
-          <p className="text-sm text-purple-300/60 mb-5">Ajoute une photo et un nom pour que tes amis te reconnaissent</p>
+          <p className="text-sm text-purple-300/85 mb-5">Ajoute une photo et un nom pour que tes amis te reconnaissent</p>
 
           {/* Avatar */}
           <label className="mx-auto w-20 h-20 rounded-full bg-purple-950/60 border-2 border-dashed border-purple-500/40 flex items-center justify-center cursor-pointer overflow-hidden mb-4 block hover:border-purple-500 transition-colors">
             {avatarPreview ? (
               <img loading="lazy" src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
-              <Camera className="w-6 h-6 text-purple-400/50" />
+              <Camera className="w-6 h-6 text-purple-300/80" />
             )}
             <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
             {cropFile && (
@@ -105,12 +105,12 @@ export function CompleteProfileDialog({ user, onComplete }: CompleteProfileDialo
 
           {/* Display Name */}
           <div className="relative mb-5">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/80" />
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-400/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+              className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-300/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
               placeholder="Ton nom affiché"
             />
           </div>
@@ -123,7 +123,7 @@ export function CompleteProfileDialog({ user, onComplete }: CompleteProfileDialo
             {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Enregistrement...</> : 'Continuer'}
           </button>
 
-          <button onClick={skip} className="mt-3 text-sm text-purple-400/50 hover:text-purple-400/60 transition-colors">
+          <button onClick={skip} className="mt-3 text-sm text-purple-300/80 hover:text-purple-300/80 transition-colors">
             Passer pour l'instant
           </button>
         </div>

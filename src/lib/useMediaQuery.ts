@@ -13,3 +13,7 @@ export function useMediaQuery(query: string): boolean {
   }, [query]);
   return matches;
 }
+
+/** Écran tactile (téléphone, tablette). Sert à ne pas ouvrir le clavier tout
+ *  seul : sur téléphone, un champ ne prend le focus que si on le touche. */
+export const IS_TOUCH = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;

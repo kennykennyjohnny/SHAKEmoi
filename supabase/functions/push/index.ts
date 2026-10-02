@@ -51,14 +51,16 @@ async function ensureVapid(): Promise<VapidKeys> {
   return c.vapid;
 }
 
-const at = (u?: string | null) => (u ? `@${u}` : 'Quelqu’un');
+// Q10 : le téléphone affiche déjà « SHAKEmoi » et le logo ; le titre est la
+// personne (son nom affiché, sinon son pseudo), le texte court ce qu'elle a fait.
+const at = (u?: string | null) => (u || 'Quelqu’un');
 const clip = (s: string, n = 90) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 async function usernames(ids: string[]): Promise<Record<string, string>> {
   const uniq = [...new Set(ids.filter(Boolean))];
   if (!uniq.length) return {};
-  const { data } = await db.from('users_profile').select('id, username').in('id', uniq);
-  return Object.fromEntries((data || []).map((u: any) => [u.id, u.username]));
+  const { data } = await db.from('users_profile').select('id, username, display_name').in('id', uniq);
+  return Object.fromEntries((data || []).map((u: any) => [u.id, (u.display_name || '').trim() || u.username]));
 }
 
 function messageBody(m: any): string {
@@ -82,29 +84,29 @@ async function fromNotification(n: any, old: any | null): Promise<Push[]> {
   let track = '';
   if (n.post_id) {
     const { data } = await db.from('posts').select('track_name, is_reshake, original_post_id').eq('id', n.post_id).maybeSingle();
-    if (data?.track_name) track = ` « ${clip(data.track_name, 40)} »`;
+    if (data?.track_name) track = ` · ${clip(data.track_name, 40)}`;
   }
   const post = (pref: string, text: string): Push => ({
-    userId: n.user_id, pref, title: 'SHAKEmoi', body: `${who} ${text}${track}`,
+    userId: n.user_id, pref, title: who, body: `${text}${track}`,
     url: `/?open=post:${n.post_id}`, tag: `${n.type}-${n.post_id}-${n.from_user_id}`,
   });
   switch (n.type) {
-    case 'like': return n.post_id ? [post('likes', 'a aimé ton shake')] : [];
-    case 'comment': return n.post_id ? [post('comments', 'a commenté ton shake')] : [];
-    case 'music_reaction': return n.post_id ? [post('comments', 'a répondu en musique à ton shake')] : [];
-    case 'comment_like': return n.post_id ? [post('likes', 'a aimé ton commentaire sur')] : [];
-    case 'reshake': return n.post_id ? [post('reshakes', 'a reshaké ton shake')] : [];
+    case 'like': return n.post_id ? [post('likes', 'a aimé ton Shake')] : [];
+    case 'comment': return n.post_id ? [post('comments', 'a commenté ton Shake')] : [];
+    case 'music_reaction': return n.post_id ? [post('comments', 'a répondu en musique à ton Shake')] : [];
+    case 'comment_like': return n.post_id ? [post('likes', 'a aimé ton commentaire')] : [];
+    case 'reshake': return n.post_id ? [post('reshakes', 'a reshaké ton Shake')] : [];
     case 'follow':
     case 'feel':
-      return [{ userId: n.user_id, pref: 'follows', title: 'SHAKEmoi', body: `${who} s’est abonné·e à toi`,
+      return [{ userId: n.user_id, pref: 'follows', title: who, body: 's’est abonné·e à toi',
         url: `/?open=profile:${n.from_user_id}`, tag: `follow-${n.from_user_id}` }];
     case 'invite_joined':
-      return [{ userId: n.user_id, pref: 'follows', title: 'SHAKEmoi', body: `${who} a rejoint SHAKEmoi grâce à toi 🎉`,
+      return [{ userId: n.user_id, pref: 'follows', title: who, body: 'a rejoint grâce à ton invitation 🎉',
         url: `/?open=profile:${n.from_user_id}`, tag: `invite-${n.from_user_id}` }];
     case 'story_like': {
       const others = Math.max(0, (n.actor_ids || []).length - 1);
-      return [{ userId: n.user_id, pref: 'likes', title: 'SHAKEmoi',
-        body: others > 0 ? `${who} et ${others} autre${others > 1 ? 's' : ''} ont aimé ton Shake éphémère` : `${who} a aimé ton Shake éphémère`,
+      return [{ userId: n.user_id, pref: 'likes', title: others > 0 ? `${who} et ${others} autre${others > 1 ? 's' : ''}` : who,
+        body: others > 0 ? 'ont aimé ton Shake éphémère' : 'a aimé ton Shake éphémère',
         url: `/?open=story:${n.story_id}`, tag: `story_like-${n.story_id}` }];
     }
     case 'circle_join':
@@ -112,7 +114,7 @@ async function fromNotification(n: any, old: any | null): Promise<Push[]> {
     case 'circle_invite': {
       const { data: c } = await db.from('circles').select('name').eq('id', n.circle_id).maybeSingle();
       const text = n.type === 'circle_join' ? 'a rejoint ton cercle' : 't’a ajouté·e au cercle';
-      return [{ userId: n.user_id, pref: 'circles', title: 'SHAKEmoi', body: `${who} ${text}${c?.name ? ` « ${c.name} »` : ''}`,
+      return [{ userId: n.user_id, pref: 'circles', title: who, body: `${text}${c?.name ? ` « ${c.name} »` : ''}`,
         url: `/?open=circle:${n.circle_id}`, tag: `${n.type}-${n.circle_id}` }];
     }
     default:
@@ -123,7 +125,7 @@ async function fromNotification(n: any, old: any | null): Promise<Push[]> {
 async function fromMessage(m: any): Promise<Push[]> {
   if (!m.receiver_id || m.receiver_id === m.sender_id) return [];
   const names = await usernames([m.sender_id]);
-  const body = m.story_id ? `A répondu à ton Shake éphémère : ${messageBody(m)}` : messageBody(m);
+  const body = m.story_id ? `a répondu à ton Shake éphémère · ${messageBody(m)}` : messageBody(m);
   return [{ userId: m.receiver_id, pref: 'messages', title: at(names[m.sender_id]), body,
     url: `/?open=dm:${m.sender_id}`, tag: `dm-${m.sender_id}`, mute: { kind: 'dm', id: m.sender_id } }];
 }
@@ -156,10 +158,10 @@ async function fromMessageLike(l: any, circle: boolean): Promise<Push[]> {
   const who = at(names[l.user_id]);
   if (circle) {
     const { data: c } = await db.from('circles').select('name').eq('id', m.circle_id).maybeSingle();
-    return [{ userId: m.sender_id, pref: 'circles', title: c?.name || 'Cercle', body: `${who} a aimé ton message : ${messageBody(m)}`,
+    return [{ userId: m.sender_id, pref: 'circles', title: c?.name || 'Cercle', body: `${who} a aimé ton message · ${messageBody(m)}`,
       url: `/?open=circle:${m.circle_id}`, tag: `msglike-${m.id}`, mute: { kind: 'circle', id: m.circle_id } }];
   }
-  return [{ userId: m.sender_id, pref: 'messages', title: who, body: `A aimé ton message : ${messageBody(m)}`,
+  return [{ userId: m.sender_id, pref: 'messages', title: who, body: `a aimé ton message · ${messageBody(m)}`,
     url: `/?open=dm:${l.user_id}`, tag: `msglike-${m.id}`, mute: { kind: 'dm', id: l.user_id } }];
 }
 
@@ -219,8 +221,8 @@ Deno.serve(async (req) => {
       const jwt = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
       const { data: u } = await db.auth.getUser(jwt);
       if (!u?.user) return json({ error: 'unauthorized' }, 401);
-      return json(await deliver([{ userId: u.user.id, pref: '_test', title: 'SHAKEmoi',
-        body: 'C’est activé ! Tes notifications arriveront ici, même appli fermée 🎧', url: '/?open=notifications:1', tag: 'test', force: true }]));
+      return json(await deliver([{ userId: u.user.id, pref: '_test', title: 'C’est activé !',
+        body: 'Tes notifications arriveront ici, même appli fermée 🎧', url: '/?open=notifications:1', tag: 'test', force: true }]));
     }
     const cfg = await getConfig();
     if (!cfg.hookSecret || req.headers.get('x-push-secret') !== cfg.hookSecret) {

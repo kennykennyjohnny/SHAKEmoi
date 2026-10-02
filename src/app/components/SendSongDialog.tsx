@@ -5,6 +5,7 @@ import { searchUsers, sendSongNotification } from '../../lib/database';
 
 import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { useBackHandler } from '../../lib/navigation';
+import { IS_TOUCH } from '../../lib/useMediaQuery';
 interface SendSongDialogProps {
   track: any;
   onClose: () => void;
@@ -77,7 +78,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
             onClick={onClose}
             className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-purple-300/60" />
+            <X className="w-5 h-5 text-purple-300/85" />
           </button>
         </div>
 
@@ -91,7 +92,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
             />
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-sm truncate">{track.title}</h3>
-              <p className="text-xs text-purple-300/60 truncate">{track.artist}</p>
+              <p className="text-xs text-purple-300/85 truncate">{track.artist}</p>
             </div>
           </div>
         </div>
@@ -99,14 +100,14 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
         {/* Search User */}
         <div className="p-4">
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/85" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher un ami..."
-              className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              autoFocus
+              className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-300/70 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              autoFocus={!IS_TOUCH}
             />
           </div>
 
@@ -117,7 +118,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
                 <Loader2 className="w-6 h-6 text-purple-500 animate-spin mx-auto" />
               </div>
             ) : users.length === 0 ? (
-              <div className="text-center py-8 text-purple-300/60 text-sm">
+              <div className="text-center py-8 text-purple-300/85 text-sm">
                 {searchQuery.length >= 2 ? 'Aucun utilisateur trouvé' : 'Tape au moins 2 caractères'}
               </div>
             ) : (
@@ -138,7 +139,7 @@ export function SendSongDialog({ track, onClose }: SendSongDialogProps) {
                   />
                   <div className="flex-1 text-left">
                     <p className="font-semibold text-sm">{user.username}</p>
-                    <p className="text-xs text-purple-300/60">
+                    <p className="text-xs text-purple-300/85">
                       {user.feels_count || 0} abonnés
                     </p>
                   </div>

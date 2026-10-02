@@ -224,7 +224,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
   if (!post) return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center" onClick={onClose}>
-      <p className="text-purple-300/60">Ce shake n’existe plus (ou n’est pas visible pour toi).</p>
+      <p className="text-purple-300/85">Ce shake n’existe plus (ou n’est pas visible pour toi).</p>
     </motion.div>
   );
 
@@ -250,20 +250,20 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
             <img loading="lazy" src={avatar} alt="" className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-700/30" />
             <div className="flex-1 min-w-0">
               <p className="font-bold text-sm text-white truncate">{userName}</p>
-              <p className="text-xs text-purple-300/60">@{post.user?.username}</p>
+              <p className="text-xs text-purple-300/85">@{post.user?.username}</p>
             </div>
           </button>
 
           {!isOwner && currentUser && (
             <button aria-label="Signaler ce shake" onClick={() => openReport('post', post.id)} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
-              <Flag className="w-4 h-4 text-purple-300/60" />
+              <Flag className="w-4 h-4 text-purple-300/85" />
             </button>
           )}
           <button aria-label="Partager"
             onClick={() => setShowShare(true)}
             className="p-2 hover:bg-purple-900/40 rounded-full transition-colors"
           >
-            <Share2 className="w-5 h-5 text-purple-300/60" />
+            <Share2 className="w-5 h-5 text-purple-300/85" />
           </button>
           {showShare && (
             <SongShareSheet
@@ -274,7 +274,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
             />
           )}
           <button aria-label="Fermer" onClick={onClose} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
-            <X className="w-6 h-6 text-purple-300/60" />
+            <X className="w-6 h-6 text-purple-300/85" />
           </button>
         </div>
 
@@ -294,7 +294,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
           {/* Track info */}
           <div className="px-4 pt-3">
             <h3 className="font-bold text-lg text-white truncate">{post.track_name}</h3>
-            <p className="text-sm text-purple-300/60 truncate">{post.artist}</p>
+            <p className="text-sm text-purple-300/85 truncate">{post.artist}</p>
           </div>
 
           {/* Caption */}
@@ -309,7 +309,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
           <div className="px-4 py-3 flex items-center gap-3.5">
             <div className="flex items-center gap-1.5">
               <button onClick={toggleLike} aria-label={isLiked ? 'Retirer le like' : 'Liker'} className="group">
-                <Heart className={`w-6 h-6 transition-all ${isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-300/70 group-hover:text-pink-500'}`} />
+                <Heart className={`w-6 h-6 transition-all ${isLiked ? 'text-pink-500 fill-pink-500' : 'text-purple-300/90 group-hover:text-pink-500'}`} />
               </button>
               {isOwner && likeCount > 0 ? (
                 <button
@@ -318,15 +318,15 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
                   className="text-sm font-medium text-pink-400/90 underline underline-offset-2 decoration-dotted px-1 -mx-1 py-1"
                 >{likeCount}</button>
               ) : (
-                <span className={`text-sm font-medium ${isLiked ? 'text-pink-500' : 'text-purple-300/70'}`}>{likeCount}</span>
+                <span className={`text-sm font-medium ${isLiked ? 'text-pink-500' : 'text-purple-300/90'}`}>{likeCount}</span>
               )}
             </div>
             {showLikers && post && <LikersSheet postId={post.id} onClose={() => setShowLikers(false)} />}
 
             <button onClick={() => setTab('comments')} className="flex items-center gap-1.5 group">
-              <MessageCircle className="w-6 h-6 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
+              <MessageCircle className="w-6 h-6 text-purple-300/90 group-hover:text-fuchsia-400 transition-colors" />
               {/* Texte + réponses en musique (O3), comme dans le fil. */}
-              <span className="text-sm font-medium text-purple-300/70">{comments.length + musicReactions.length}</span>
+              <span className="text-sm font-medium text-purple-300/90">{comments.length + musicReactions.length}</span>
             </button>
 
             <button
@@ -335,8 +335,8 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
               aria-pressed={reshaked}
               className={`flex items-center gap-1.5 group ${isOwner ? 'opacity-40' : ''}`}
             >
-              <Repeat2 className={`w-6 h-6 transition-colors ${reshaked ? 'text-fuchsia-400' : 'text-purple-300/70 group-hover:text-fuchsia-400'}`} />
-              <span className={`text-sm font-medium ${reshaked ? 'text-fuchsia-400' : 'text-purple-300/70'}`}>{reshakeCount}</span>
+              <Repeat2 className={`w-6 h-6 transition-colors ${reshaked ? 'text-fuchsia-400' : 'text-purple-300/90 group-hover:text-fuchsia-400'}`} />
+              <span className={`text-sm font-medium ${reshaked ? 'text-fuchsia-400' : 'text-purple-300/90'}`}>{reshakeCount}</span>
             </button>
 
             <button
@@ -344,7 +344,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
               aria-label="Envoyer à un ami"
               className="p-1 group"
             >
-              <Send className="w-5 h-5 text-purple-300/70 group-hover:text-fuchsia-400 transition-colors" />
+              <Send className="w-5 h-5 text-purple-300/90 group-hover:text-fuchsia-400 transition-colors" />
             </button>
 
             <button onClick={openInMusicApp} className="flex items-center gap-1.5 group ml-auto px-3 py-1.5 rounded-full bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors">
@@ -376,13 +376,13 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
             <div className="flex items-center gap-4 py-2">
               <button
                 onClick={() => setTab('comments')}
-                className={`text-sm font-bold transition-colors ${tab === 'comments' ? 'text-white' : 'text-purple-400/50 hover:text-purple-300'}`}
+                className={`text-sm font-bold transition-colors ${tab === 'comments' ? 'text-white' : 'text-purple-300/80 hover:text-purple-300'}`}
               >
                 Commentaires ({comments.length})
               </button>
               <button
                 onClick={() => setTab('music')}
-                className={`text-sm font-bold transition-colors flex items-center gap-1.5 ${tab === 'music' ? 'text-pink-400' : 'text-purple-400/50 hover:text-purple-300'}`}
+                className={`text-sm font-bold transition-colors flex items-center gap-1.5 ${tab === 'music' ? 'text-pink-400' : 'text-purple-300/80 hover:text-purple-300'}`}
               >
                 <Music className="w-4 h-4" />
                 Sons ({musicReactions.length})
@@ -395,7 +395,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
               {commentsLoading ? (
                 <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 text-purple-500 animate-spin" /></div>
               ) : comments.length === 0 ? (
-                <p className="text-center text-purple-400/50 py-4 text-sm">Aucun commentaire</p>
+                <p className="text-center text-purple-300/80 py-4 text-sm">Aucun commentaire</p>
               ) : (
                 comments.map((c: any) => (
                   <div key={c.id} className="flex gap-2.5">
@@ -405,9 +405,9 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <button onClick={() => openProfile(c.user_id || c.user?.id)} className="font-semibold text-xs text-white hover:underline">@{c.user?.username || 'inconnu'}</button>
-                        <span className="text-[10px] text-purple-500/50">{formatTime(c.created_at)}</span>
+                        <span className="text-[10px] text-purple-300/75">{formatTime(c.created_at)}</span>
                         {currentUser?.id && c.user_id !== currentUser.id && (
-                          <button onClick={() => openReport('comment', c.id)} aria-label="Signaler le commentaire" className="ml-auto p-1 text-purple-400/40 hover:text-pink-300">
+                          <button onClick={() => openReport('comment', c.id)} aria-label="Signaler le commentaire" className="ml-auto p-1 text-purple-300/80 hover:text-pink-300">
                             <Flag className="w-3 h-3" />
                           </button>
                         )}
@@ -420,7 +420,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
                               if (!r.success) setComments(before);
                             }}
                             aria-label="Supprimer le commentaire"
-                            className="ml-auto p-1 text-purple-400/50 hover:text-pink-400"
+                            className="ml-auto p-1 text-purple-300/80 hover:text-pink-400"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -441,13 +441,13 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
                         <img loading="lazy" src={avatarThumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full object-cover" alt="" />
                         <span className="text-xs font-medium hover:underline">@{r.user?.username}</span>
                       </button>
-                      {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}
+                      {r.text && <span className="text-xs text-purple-300/85 ml-1">"{r.text}"</span>}
                     </div>
                     <div className="flex gap-2 items-center">
                       <SongCover songKey={`reaction-${r.id}`} title={r.track_name} artist={r.artist} cover={r.cover_url} previewUrl={r.preview_url} spotifyId={r.track_id} spotifyUrl={r.spotify_url} className="w-10 h-10" rounded="rounded-md" iconSize="sm" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{r.track_name}</p>
-                        <p className="text-xs text-purple-300/60 truncate">{r.artist}</p>
+                        <p className="text-xs text-purple-300/85 truncate">{r.artist}</p>
                       </div>
                       <button onClick={e => { e.stopPropagation(); openReactionInApp(r); }} aria-label="Ouvrir dans mon appli de musique" className="p-1.5 rounded-full bg-purple-600/10 hover:bg-purple-600/20">
                         <MyAppLogo className="w-3.5 h-3.5 text-purple-400" />
@@ -455,7 +455,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
                     </div>
                   </div>
               ))}
-              {musicReactions.length === 0 && <p className="text-center text-purple-400/50 py-4 text-sm">Aucune réaction musicale</p>}
+              {musicReactions.length === 0 && <p className="text-center text-purple-300/80 py-4 text-sm">Aucune réaction musicale</p>}
 
               {/* Add music reaction */}
               <div className="border-t border-purple-800/20 pt-3">
@@ -463,8 +463,8 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
                 {!selectedTrack ? (
                   <>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
-                      <input type="text" value={musicQuery} onChange={e => setMusicQuery(e.target.value)} placeholder="Chercher un morceau..." className="w-full pl-9 pr-3 py-2 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/80" />
+                      <input type="text" value={musicQuery} onChange={e => setMusicQuery(e.target.value)} placeholder="Chercher un morceau..." className="w-full pl-9 pr-3 py-2 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500" />
                     </div>
                     {musicSearching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
                     {musicResults.slice(0, 5).map(t => (
@@ -472,7 +472,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
                         <img loading="lazy" src={t.cover} className="w-9 h-9 rounded-md object-cover" alt="" />
                         <div className="flex-1 text-left min-w-0">
                           <p className="text-sm font-medium truncate">{t.name}</p>
-                          <p className="text-xs text-purple-300/60 truncate">{t.artist}</p>
+                          <p className="text-xs text-purple-300/85 truncate">{t.artist}</p>
                         </div>
                       </button>
                     ))}
@@ -483,11 +483,11 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
                       <img loading="lazy" src={selectedTrack.cover} className="w-10 h-10 rounded-md object-cover" alt="" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{selectedTrack.name}</p>
-                        <p className="text-xs text-purple-300/60 truncate">{selectedTrack.artist}</p>
+                        <p className="text-xs text-purple-300/85 truncate">{selectedTrack.artist}</p>
                       </div>
-                      <button aria-label="Retirer le son" onClick={() => setSelectedTrack(null)} className="text-purple-400/50 hover:text-white"><X className="w-4 h-4" /></button>
+                      <button aria-label="Retirer le son" onClick={() => setSelectedTrack(null)} className="text-purple-300/80 hover:text-white"><X className="w-4 h-4" /></button>
                     </div>
-                    <input type="text" value={musicComment} onChange={e => setMusicComment(e.target.value)} placeholder="Commentaire (optionnel)" className="w-full px-3 py-2 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-pink-500" maxLength={200} />
+                    <input type="text" value={musicComment} onChange={e => setMusicComment(e.target.value)} placeholder="Commentaire (optionnel)" className="w-full px-3 py-2 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-pink-500" maxLength={200} />
                     <button onClick={() => handleSendMusicReaction(selectedTrack)} disabled={musicSending} className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2">
                       {musicSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" /> Envoyer la réaction</>}
                     </button>
@@ -508,7 +508,7 @@ function PostDetailModalInner({ postId, currentUser, onClose, onDeletePost, onUp
               onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
               placeholder="Écrire un commentaire..."
               enterKeyHint="send"
-              className="flex-1 min-w-0 bg-purple-950/40 border border-purple-800/30 rounded-full px-4 py-2 text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors"
+              className="flex-1 min-w-0 bg-purple-950/40 border border-purple-800/30 rounded-full px-4 py-2 text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500 transition-colors"
             />
             <button
               onClick={handleSendComment}

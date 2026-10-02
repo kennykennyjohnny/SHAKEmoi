@@ -31,7 +31,7 @@ export function PrivacyPage({ onBack }: { onBack: () => void }) {
 
       <main className="max-w-2xl mx-auto px-5 pb-[max(3rem,env(safe-area-inset-bottom))]">
         <h1 className="text-2xl font-bold mt-6">Politique de confidentialité</h1>
-        <p className="text-xs text-purple-300/60 mt-1">Dernière mise à jour : {UPDATED}</p>
+        <p className="text-xs text-purple-300/85 mt-1">Dernière mise à jour : {UPDATED}</p>
 
         <Section title="En bref">
           <p>

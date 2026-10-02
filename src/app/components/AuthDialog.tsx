@@ -182,7 +182,7 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
                 <h1 className="text-lg font-black text-white mb-1">
                   {referrerProfile.display_name || referrerProfile.username} veut te retrouver sur SHAKEmoi !
                 </h1>
-                <p className="text-purple-300/60 text-sm">
+                <p className="text-purple-300/85 text-sm">
                   Inscris-toi pour partager tes sons et découvrir ce que tes amis écoutent 🎵
                 </p>
               </>
@@ -196,7 +196,7 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
                 >
                   <Logo size="lg" animated={true} showText={true} />
                 </motion.div>
-                <p className="text-purple-300/60 text-sm mt-1">
+                <p className="text-purple-300/85 text-sm mt-1">
                   {mode === 'login' ? 'Content de te revoir' : <Slogan />}
                 </p>
               </>
@@ -228,7 +228,7 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
             {mode === 'signup' && (
               <>
                 <div className="relative">
-                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/80" />
                   <input
                     type="text"
                     required
@@ -237,18 +237,18 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
                     autoCapitalize="none"
                     autoCorrect="off"
                     maxLength={20}
-                    className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-400/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                    className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-300/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
                     placeholder="Pseudo (ex. kenny.shake)"
                   />
                 </div>
-                <p className="-mt-1 px-1 text-[11px] text-purple-300/50">3 à 20 caractères : lettres, chiffres, point, tiret.</p>
+                <p className="-mt-1 px-1 text-[11px] text-purple-300/80">3 à 20 caractères : lettres, chiffres, point, tiret.</p>
                 <div className="relative">
-                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/80" />
                   <input
                     type="text"
                     value={formData.displayName}
                     onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                    className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-400/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                    className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-300/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
                     placeholder="Nom affiché (optionnel)"
                   />
                 </div>
@@ -256,27 +256,27 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
             )}
 
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/80" />
               <input
                 type="email"
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-400/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-300/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
                 placeholder="Email"
               />
             </div>
 
             {mode !== 'forgot' && (
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/80" />
                 <input
                   type="password"
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                  className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-400/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                  className="w-full bg-purple-950/30 border border-purple-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-purple-300/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
                   placeholder="Mot de passe"
                   minLength={6}
                 />
@@ -287,7 +287,7 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
                 <button
                   type="button"
                   onClick={() => { setMode('forgot'); setError(null); setInfo(null); }}
-                  className="text-xs text-purple-300/70 hover:text-white underline-offset-2 hover:underline"
+                  className="text-xs text-purple-300/90 hover:text-white underline-offset-2 hover:underline"
                 >
                   Mot de passe oublié ?
                 </button>
@@ -306,7 +306,7 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
               )}
             </button>
             {mode === 'signup' && (
-              <p className="text-[11px] text-center text-purple-300/50 leading-snug">
+              <p className="text-[11px] text-center text-purple-300/80 leading-snug">
                 En t'inscrivant, tu acceptes notre{' '}
                 <a href="/confidentialite" target="_blank" rel="noopener" className="underline hover:text-purple-200">
                   politique de confidentialité
@@ -315,7 +315,7 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
             )}
 
             <div className="text-center pt-3 border-t border-purple-800/20">
-              <p className="text-purple-300/60 text-sm">
+              <p className="text-purple-300/85 text-sm">
                 {mode === 'login' ? "Pas encore de compte ?" : mode === 'forgot' ? 'Tu t\'en souviens ?' : "Déjà un compte ?"}
                 {' '}
                 <button

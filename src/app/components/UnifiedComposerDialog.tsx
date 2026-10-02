@@ -280,7 +280,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                 onClick={onClose}
                 className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
               >
-                <X className="w-5 h-5 text-purple-300/60" />
+                <X className="w-5 h-5 text-purple-300/85" />
               </button>
             </div>
 
@@ -331,13 +331,13 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                   </div>
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-900/25 border border-purple-700/30 cursor-pointer text-sm flex-shrink-0">
-                      <ImageIcon className="w-4 h-4 text-purple-300/70" />
+                      <ImageIcon className="w-4 h-4 text-purple-300/90" />
                       {photoBusy ? 'Conversion de la photo…' : photoPreview ? 'Changer' : 'Ajouter une photo'}
                       <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
                     </label>
                     {photoPreview && (
                       <>
-                        <ZoomIn className="w-4 h-4 text-purple-300/70 flex-shrink-0" />
+                        <ZoomIn className="w-4 h-4 text-purple-300/90 flex-shrink-0" />
                         <input
                           type="range"
                           min={0.2}
@@ -354,7 +354,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                           title="Recentrer"
                           aria-label="Recentrer la photo"
                         >
-                          <RotateCcw className="w-4 h-4 text-purple-300/70" />
+                          <RotateCcw className="w-4 h-4 text-purple-300/90" />
                         </button>
                         <button
                           onClick={() => { setPhotoFile(null); setPhotoPreview(null); setPhotoSize(null); }}
@@ -362,7 +362,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                           title="Retirer la photo"
                           aria-label="Retirer la photo"
                         >
-                          <X className="w-4 h-4 text-purple-300/70" />
+                          <X className="w-4 h-4 text-purple-300/90" />
                         </button>
                       </>
                     )}
@@ -393,14 +393,14 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                       onClick={() => setSelectedTrack(null)}
                       className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
                     >
-                      <X className="w-4 h-4 text-purple-300/60" />
+                      <X className="w-4 h-4 text-purple-300/85" />
                     </button>
                   </div>
 
                   {/* For SHAKE only: add photo option */}
                   {composerType === 'shake' && (
                     <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-900/25 border border-purple-700/30 cursor-pointer text-sm mb-3">
-                      <ImageIcon className="w-4 h-4 text-purple-300/70" />
+                      <ImageIcon className="w-4 h-4 text-purple-300/90" />
                       {photoBusy ? 'Conversion de la photo…' : 'Ajouter une photo (optionnel)'}
                       <input
                         type="file"
@@ -423,7 +423,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                   {/* For SHAKE only: offer photo upload before track */}
                   {composerType === 'shake' && (
                     <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-900/25 border border-purple-700/30 cursor-pointer text-sm">
-                      <ImageIcon className="w-4 h-4 text-purple-300/70" />
+                      <ImageIcon className="w-4 h-4 text-purple-300/90" />
                       {photoBusy ? 'Conversion de la photo…' : 'Ajouter une photo'}
                       <input
                         type="file"
@@ -444,13 +444,13 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                   {/* Track Search */}
                   <div className="mb-4">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/85" />
                       <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Rechercher un titre, artiste..."
-                        className="w-full pl-10 pr-4 py-2.5 bg-purple-950/40 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors"
+                        className="w-full pl-10 pr-4 py-2.5 bg-purple-950/40 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500 transition-colors"
                         autoFocus
                       />
                     </div>
@@ -458,20 +458,20 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
 
                   {/* Search results (no suggestions) */}
                   <div>
-                    <h3 className="text-sm font-semibold text-purple-300/60 mb-3">
+                    <h3 className="text-sm font-semibold text-purple-300/85 mb-3">
                       {searchQuery.trim() ? 'Résultats' : 'Recherche musicale (optionnel)'}
                     </h3>
                     <div className="space-y-2">
                       {isSearching ? (
                         <div className="flex justify-center">
-                          <Loader2 className="w-4 h-4 animate-spin text-purple-300/60" />
+                          <Loader2 className="w-4 h-4 animate-spin text-purple-300/85" />
                         </div>
                       ) : !searchQuery.trim() ? (
-                        <p className="text-xs text-purple-300/50">
+                        <p className="text-xs text-purple-300/80">
                           Tape au moins 1 caractere pour chercher un son.
                         </p>
                       ) : searchResults.length === 0 ? (
-                        <p className="text-xs text-purple-300/50">
+                        <p className="text-xs text-purple-300/80">
                           Aucun resultat.
                         </p>
                       ) : (
@@ -492,7 +492,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                                 <h4 className="font-semibold text-sm text-white truncate">
                                   {track.title}
                                 </h4>
-                                <p className="text-xs text-purple-300/60 truncate">
+                                <p className="text-xs text-purple-300/85 truncate">
                                   {track.artist}
                                 </p>
                               </div>
@@ -508,14 +508,14 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
 
               {/* Caption Textarea */}
               <div>
-                <label className="text-xs text-purple-300/70 font-medium">
+                <label className="text-xs text-purple-300/90 font-medium">
                   {composerType === 'shake' ? 'Ajoute un commentaire...' : 'Ajoute du texte...'}
                 </label>
                 <textarea
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
                   placeholder="(optionnel)"
-                  className="w-full mt-1 px-3 py-2 bg-purple-950/40 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500 transition-colors resize-none"
+                  className="w-full mt-1 px-3 py-2 bg-purple-950/40 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500 transition-colors resize-none"
                   rows={2}
                 />
               </div>
@@ -525,7 +525,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                 <>
                   {/* Duration selector */}
                   <div>
-                    <label className="text-xs text-purple-300/70 font-medium flex items-center gap-1">
+                    <label className="text-xs text-purple-300/90 font-medium flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       Durée du Shake éphémère
                     </label>
@@ -548,7 +548,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
 
                   {/* Fond de la story */}
                   <div>
-                    <label className="text-xs text-purple-300/70 font-medium">Fond</label>
+                    <label className="text-xs text-purple-300/90 font-medium">Fond</label>
                     <div className="flex gap-2 mt-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                       {STORY_THEMES.map(theme => {
                         const selected = storyTheme.id === theme.id;
@@ -562,12 +562,12 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                               className={`w-11 h-16 rounded-lg border-2 transition-all ${selected ? 'border-white scale-105 shadow-lg shadow-white/20' : 'border-white/10'}`}
                               style={{ background: themeCss(theme) ?? autoBackgroundCss(coverPalette) }}
                             />
-                            <span className={`text-[10px] ${selected ? 'text-white font-semibold' : 'text-purple-300/60'}`}>{theme.label}</span>
+                            <span className={`text-[10px] ${selected ? 'text-white font-semibold' : 'text-purple-300/85'}`}>{theme.label}</span>
                           </button>
                         );
                       })}
                     </div>
-                    <p className="text-[11px] text-purple-300/50 mt-1">« Auto » reprend les couleurs de la pochette.</p>
+                    <p className="text-[11px] text-purple-300/80 mt-1">« Auto » reprend les couleurs de la pochette.</p>
                   </div>
                 </>
               )}
@@ -578,7 +578,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
               className="sticky bottom-0 z-10 px-4 py-3 border-t border-purple-800/20 flex justify-between items-center bg-[#1D0F3D]"
               style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
             >
-              <p className="text-xs text-purple-300/60">
+              <p className="text-xs text-purple-300/85">
                 {composerType === 'shake'
                   ? selectedTrack || photoPreview
                     ? 'Prêt à shaker ?'

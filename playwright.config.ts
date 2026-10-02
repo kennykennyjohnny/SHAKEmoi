@@ -4,6 +4,8 @@ import { defineConfig, devices } from '@playwright/test';
 // Par défaut contre le site en ligne ; E2E_BASE_URL=http://localhost:5173 pour le local.
 export default defineConfig({
   testDir: './e2e',
+  // Les tests sur base simulée ont leur propre config (playwright.mock.config.ts).
+  testIgnore: /.*.mock.spec.ts/,
   timeout: 45_000,
   retries: 1,
   reporter: [['list']],

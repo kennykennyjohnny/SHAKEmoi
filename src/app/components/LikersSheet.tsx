@@ -47,7 +47,7 @@ export function LikersSheet({ postId, onClose, onOpenProfile }: Props) {
             {likers ? `${likers.length} like${likers.length > 1 ? 's' : ''}` : 'Likes'}
           </h3>
           <button onClick={onClose} className="p-1.5 hover:bg-purple-900/30 rounded-full" aria-label="Fermer">
-            <X className="w-4 h-4 text-purple-300/70" />
+            <X className="w-4 h-4 text-purple-300/90" />
           </button>
         </div>
         {likers === null ? (
@@ -55,7 +55,7 @@ export function LikersSheet({ postId, onClose, onOpenProfile }: Props) {
             <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
           </div>
         ) : likers.length === 0 ? (
-          <div className="p-8 text-center text-purple-300/60 text-sm">Aucun like pour l'instant</div>
+          <div className="p-8 text-center text-purple-300/85 text-sm">Aucun like pour l'instant</div>
         ) : (
           <div className="overflow-y-auto overscroll-contain flex-1 py-1">
             {likers.map((u: any) => (
@@ -71,7 +71,7 @@ export function LikersSheet({ postId, onClose, onOpenProfile }: Props) {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-white truncate">{u.display_name || u.username}</p>
-                  <p className="text-xs text-purple-300/60">@{u.username}</p>
+                  <p className="text-xs text-purple-300/85">@{u.username}</p>
                 </div>
                 <Heart className="w-4 h-4 text-pink-500 fill-pink-500 flex-shrink-0" />
               </button>

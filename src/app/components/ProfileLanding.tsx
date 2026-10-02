@@ -97,14 +97,14 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore, invite 
 
             {songs.length > 0 && (
               <div className="mt-6 text-left">
-                <p className="text-[11px] uppercase tracking-wider text-purple-300/60 font-semibold mb-2">Ce que {name} écoute en ce moment</p>
+                <p className="text-[11px] uppercase tracking-wider text-purple-300/85 font-semibold mb-2">Ce que {name} écoute en ce moment</p>
                 <div className="space-y-2">
                   {songs.map((s) => (
                     <div key={s.id} className="flex items-center gap-3 p-2 rounded-2xl bg-white/5 border border-white/10">
                       <SongCover songKey={`invite-${s.id}`} title={s.track_name} artist={s.artist} cover={s.cover_url} previewUrl={s.preview_url} spotifyId={s.track_id} spotifyUrl={s.spotify_url} className="w-14 h-14 flex-shrink-0" rounded="rounded-xl" iconSize="sm" />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">{s.track_name}</p>
-                        <p className="text-xs text-purple-200/70 truncate">{s.artist}</p>
+                        <p className="text-xs text-purple-200/85 truncate">{s.artist}</p>
                       </div>
                     </div>
                   ))}
@@ -132,8 +132,8 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore, invite 
             {profile.bio && <p className="mt-2 text-sm text-purple-100/75">{profile.bio}</p>}
 
             <div className="mt-4 flex justify-center gap-8">
-              <div><p className="text-lg font-bold">{stats.shakes}</p><p className="text-[10px] uppercase tracking-wider text-purple-300/60">Shakes</p></div>
-              <div><p className="text-lg font-bold">{stats.followers}</p><p className="text-[10px] uppercase tracking-wider text-purple-300/60">Abonnés</p></div>
+              <div><p className="text-lg font-bold">{stats.shakes}</p><p className="text-[10px] uppercase tracking-wider text-purple-300/85">Shakes</p></div>
+              <div><p className="text-lg font-bold">{stats.followers}</p><p className="text-[10px] uppercase tracking-wider text-purple-300/85">Abonnés</p></div>
             </div>
 
             <div className="mt-6 rounded-2xl bg-gradient-to-r from-purple-500/15 to-pink-500/10 border border-purple-400/20 p-4">
@@ -154,7 +154,7 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore, invite 
 
             {recent.length > 0 && (
               <div className="mt-6 text-left">
-                <p className="text-[11px] uppercase tracking-wider text-purple-300/60 font-semibold mb-2">Ses derniers sons</p>
+                <p className="text-[11px] uppercase tracking-wider text-purple-300/85 font-semibold mb-2">Ses derniers sons</p>
                 <div className="grid grid-cols-3 gap-1.5">
                   {recent.map(p => (
                     <div key={p.id} className="relative aspect-square rounded-xl overflow-hidden bg-purple-900/40">
@@ -185,7 +185,7 @@ export function ProfileLanding({ username, onSignUp, onLogin, onExplore, invite 
           <Search className="w-4 h-4" /> Découvrir sans compte
         </button>
 
-        <p className="text-center text-[10px] text-purple-400/40 mt-8">shakemoi.fr · <Slogan /></p>
+        <p className="text-center text-[10px] text-purple-300/80 mt-8">shakemoi.fr · <Slogan /></p>
       </motion.main>
     </div>
   );

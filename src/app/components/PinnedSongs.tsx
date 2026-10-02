@@ -82,7 +82,7 @@ export function PinnedSongs({ userId, isOwn = false }: { userId: string; isOwn?:
 
   return (
     <div className="mt-4">
-      <p className="text-[11px] text-purple-300/60 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Pin className="w-3 h-3 text-fuchsia-400 fill-fuchsia-400" /> Sons épinglés</p>
+      <p className="text-[11px] text-purple-300/85 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Pin className="w-3 h-3 text-fuchsia-400 fill-fuchsia-400" /> Sons épinglés</p>
       <div className="grid grid-cols-3 gap-2">
         {pins.map((p, i) => (
           <div key={p.id} className="relative">
@@ -93,7 +93,7 @@ export function PinnedSongs({ userId, isOwn = false }: { userId: string; isOwn?:
             </span>
             <button onClick={() => isOwn && setEditing(editing === p.id ? null : p.id)} className="w-full text-left mt-1" disabled={!isOwn}>
               <p className="text-xs font-semibold text-white truncate">{p.track_name}</p>
-              <p className="text-[11px] text-purple-300/60 truncate">{p.artist}</p>
+              <p className="text-[11px] text-purple-300/85 truncate">{p.artist}</p>
             </button>
             {isOwn && editing === p.id && (
               <div className="absolute inset-x-0 top-0 z-10 aspect-square rounded-xl bg-black/75 flex flex-col items-center justify-center gap-1.5">
@@ -114,7 +114,7 @@ export function PinnedSongs({ userId, isOwn = false }: { userId: string; isOwn?:
           </button>
         )}
       </div>
-      {isOwn && pins.length > 0 && <p className="text-[10px] text-purple-300/50 mt-1">Touche un titre pour le déplacer ou le désépingler.</p>}
+      {isOwn && pins.length > 0 && <p className="text-[10px] text-purple-300/80 mt-1">Touche un titre pour le déplacer ou le désépingler.</p>}
       {picking && <PinPicker onClose={() => setPicking(false)} />}
     </div>
   );
@@ -148,8 +148,8 @@ function PinPicker({ onClose }: { onClose: () => void }) {
         </div>
         <div className="p-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
-            <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ce que tu écoutes en ce moment…" className="w-full pl-9 pr-3 py-2.5 bg-violet-950/40 border border-purple-500/30 rounded-xl text-base sm:text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-pink-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/85" />
+            <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ce que tu écoutes en ce moment…" className="w-full pl-9 pr-3 py-2.5 bg-violet-950/40 border border-purple-500/30 rounded-xl text-base sm:text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-pink-400" />
           </div>
           {error && <p className="text-xs text-pink-300 mt-2">{error}</p>}
         </div>
@@ -157,7 +157,7 @@ function PinPicker({ onClose }: { onClose: () => void }) {
           {results.map((t) => (
             <button key={t.id} onClick={() => pick(t)} disabled={!!busy} className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-purple-900/30 text-left disabled:opacity-60">
               <img src={t.cover} alt="" className="w-11 h-11 rounded-md object-cover" />
-              <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{t.name}</p><p className="text-xs text-purple-300/60 truncate">{t.artist}</p></div>
+              <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{t.name}</p><p className="text-xs text-purple-300/85 truncate">{t.artist}</p></div>
               {busy === t.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pin className="w-4 h-4 text-fuchsia-400" />}
             </button>
           ))}

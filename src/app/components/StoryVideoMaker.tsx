@@ -96,14 +96,14 @@ export function StoryVideoMaker({ make, url, shareText, fileName, title, subtitl
           )}
           {(state === 'idle' || state === 'error') && (
             <div className="absolute inset-0 flex items-center justify-center">
-              {placeholder || <Clapperboard className="w-8 h-8 text-purple-300/60" />}
+              {placeholder || <Clapperboard className="w-8 h-8 text-purple-300/85" />}
             </div>
           )}
         </div>
 
         <div className="flex-1 min-w-0">
           <p className="font-bold leading-tight">{title || (canRecord ? 'Vidéo pour ta story Insta' : 'Image pour ta story Insta')}</p>
-          <p className="text-xs text-purple-200/70 mt-1">
+          <p className="text-xs text-purple-200/85 mt-1">
             {subtitle || (canRecord
               ? `${VIDEO_SECONDS} s avec le son, prête pour Insta, TikTok, Snap ou WhatsApp.`
               : 'Ta story Insta avec la pochette et le lien.')}
@@ -125,7 +125,7 @@ export function StoryVideoMaker({ make, url, shareText, fileName, title, subtitl
               <div className="h-2 rounded-full bg-white/10 overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-[width] duration-200" style={{ width: `${Math.round(progress * 100)}%` }} />
               </div>
-              <p className="text-[11px] text-purple-200/70 mt-1.5">Création en cours… {remaining} s</p>
+              <p className="text-[11px] text-purple-200/85 mt-1.5">Création en cours… {remaining} s</p>
             </div>
           )}
 

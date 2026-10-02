@@ -7,6 +7,7 @@ import { X, Loader2, Flag, Bug, ImagePlus, Check } from 'lucide-react';
 import { REPORT_REASONS, reportContent, submitBugReport, getMyBlocks, unblockUser, type ReportKind, type ReportReason } from '../../lib/moderation';
 import { useBackHandler } from '../../lib/navigation';
 import { avatarThumb, defaultAvatar } from '../../lib/media';
+import { IS_TOUCH } from '../../lib/useMediaQuery';
 
 function Sheet({ title, icon, onClose, children }: { title: string; icon?: ReactNode; onClose: () => void; children: ReactNode }) {
   useBackHandler(true, onClose);
@@ -55,7 +56,7 @@ export function ReportSheet({ kind, id, onClose }: { kind: ReportKind; id: strin
         <div className="text-center py-8">
           <Check className="w-10 h-10 text-emerald-300 mx-auto mb-3" />
           <p className="font-semibold">Merci, c'est signalé.</p>
-          <p className="text-sm text-purple-200/70 mt-1">Kenny va regarder. Tu peux aussi bloquer la personne depuis son profil.</p>
+          <p className="text-sm text-purple-200/85 mt-1">Kenny va regarder. Tu peux aussi bloquer la personne depuis son profil.</p>
           <button onClick={onClose} className="mt-5 px-5 py-2 rounded-full bg-purple-700/60 text-sm font-semibold">Fermer</button>
         </div>
       ) : (
@@ -70,7 +71,7 @@ export function ReportSheet({ kind, id, onClose }: { kind: ReportKind; id: strin
             ))}
           </div>
           <textarea value={details} onChange={(e) => setDetails(e.target.value.slice(0, 1000))} rows={3} placeholder="Ajoute un mot si tu veux (facultatif)"
-            className="mt-3 w-full px-3 py-2 bg-violet-950/40 border border-purple-500/30 rounded-xl text-base sm:text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-pink-400" />
+            className="mt-3 w-full px-3 py-2 bg-violet-950/40 border border-purple-500/30 rounded-xl text-base sm:text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-pink-400" />
           {error && <p className="text-xs text-pink-300 mt-2">Le signalement n'est pas parti. Réessaie.</p>}
           <button onClick={send} disabled={!reason || sending} className="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 font-semibold disabled:opacity-40 flex items-center justify-center gap-2">
             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Envoyer le signalement'}
@@ -108,9 +109,9 @@ export function BugReportSheet({ onClose }: { onClose: () => void }) {
         </div>
       ) : (
         <>
-          <textarea autoFocus value={text} onChange={(e) => setText(e.target.value.slice(0, 4000))} rows={5}
+          <textarea autoFocus={!IS_TOUCH} value={text} onChange={(e) => setText(e.target.value.slice(0, 4000))} rows={5}
             placeholder="Qu'est-ce qui ne marche pas ? Où étais-tu, qu'as-tu touché ?"
-            className="w-full px-3 py-2 bg-violet-950/40 border border-purple-500/30 rounded-xl text-base sm:text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-pink-400" />
+            className="w-full px-3 py-2 bg-violet-950/40 border border-purple-500/30 rounded-xl text-base sm:text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-pink-400" />
           <div className="mt-3 flex items-center gap-3">
             {shot ? (
               <div className="relative">
@@ -124,7 +125,7 @@ export function BugReportSheet({ onClose }: { onClose: () => void }) {
             )}
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) setShot({ file: f, url: URL.createObjectURL(f) }); }} />
           </div>
-          <p className="text-[11px] text-purple-300/60 mt-3">Ajouté automatiquement : ton téléphone, ton navigateur, la version de l'appli, l'écran en cours et ton compte. Rien d'autre.</p>
+          <p className="text-[11px] text-purple-300/85 mt-3">Ajouté automatiquement : ton téléphone, ton navigateur, la version de l'appli, l'écran en cours et ton compte. Rien d'autre.</p>
           {error && <p className="text-xs text-pink-300 mt-2">Le signalement n'est pas parti. Réessaie.</p>}
           <button onClick={send} disabled={!text.trim() || sending} className="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 font-semibold disabled:opacity-40 flex items-center justify-center gap-2">
             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Envoyer'}
@@ -147,13 +148,13 @@ export function BlockedUsersSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet title="Personnes bloquées" onClose={onClose}>
       {list === null ? <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-purple-400" /></div>
-        : list.length === 0 ? <p className="text-sm text-purple-300/70 text-center py-8">Tu n'as bloqué personne.</p>
+        : list.length === 0 ? <p className="text-sm text-purple-300/90 text-center py-8">Tu n'as bloqué personne.</p>
         : list.map((u) => (
           <div key={u.id} className="flex items-center gap-3 p-2 rounded-xl">
             <img src={avatarThumb(u.profile_album_cover_url, 64) || defaultAvatar(u.username)} alt="" className="w-10 h-10 rounded-full object-cover" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold truncate">{u.display_name || u.username}</p>
-              <p className="text-xs text-purple-300/60">@{u.username}</p>
+              <p className="text-xs text-purple-300/85">@{u.username}</p>
             </div>
             <button onClick={() => unblock(u)} className="px-3 py-1.5 rounded-lg bg-purple-800/60 text-xs font-semibold">Débloquer</button>
           </div>

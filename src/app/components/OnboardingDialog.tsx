@@ -266,7 +266,7 @@ export function OnboardingDialog({ initialService, replay, onComplete, onClose }
               className="w-full max-w-md overflow-y-auto overscroll-contain py-2"
             >
               <h2 className="text-3xl font-black text-center leading-tight mb-2 tracking-tight">Tu écoutes où ?</h2>
-              <p className="text-center text-purple-200/70 mb-5">On ouvrira chaque son directement là-bas.</p>
+              <p className="text-center text-purple-200/85 mb-5">On ouvrira chaque son directement là-bas.</p>
               <div className="grid grid-cols-2 gap-3">
                 {STREAMING_APPS.map((key, i) => {
                   const selected = service === key;
@@ -316,7 +316,7 @@ export function OnboardingDialog({ initialService, replay, onComplete, onClose }
             {service ? (replay ? 'C’est bon' : 'C’est parti') : 'Choisis ton appli'}
           </button>
         )}
-        {isPicker && <p className="text-center text-xs text-white/40 mt-3">Modifiable à tout moment dans les paramètres.</p>}
+        {isPicker && <p className="text-center text-xs text-white/60 mt-3">Modifiable à tout moment dans les paramètres.</p>}
       </div>
     </div>
   );

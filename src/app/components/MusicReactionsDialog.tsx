@@ -70,7 +70,7 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
             <Music className="w-5 h-5 text-pink-400" />
             <h2 className="text-lg font-bold">Réactions musicales</h2>
           </div>
-          <button aria-label="Fermer" onClick={onClose} className="p-1.5 hover:bg-purple-900/40 rounded-full"><X className="w-5 h-5 text-purple-300/60" /></button>
+          <button aria-label="Fermer" onClick={onClose} className="p-1.5 hover:bg-purple-900/40 rounded-full"><X className="w-5 h-5 text-purple-300/85" /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -81,13 +81,13 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
                   <div className="flex items-center gap-2 mb-2">
                     <img loading="lazy" src={avatarThumb(r.user?.profile_album_cover_url) || defaultAvatar(r.user?.username)} className="w-6 h-6 rounded-full object-cover" alt="" />
                     <span className="text-xs font-medium">@{r.user?.username}</span>
-                    {r.text && <span className="text-xs text-purple-300/60 ml-1">"{r.text}"</span>}
+                    {r.text && <span className="text-xs text-purple-300/85 ml-1">"{r.text}"</span>}
                   </div>
                   <div className="flex gap-2 items-center">
                     <SongCover songKey={`reaction-${r.id}`} title={r.track_name} artist={r.artist} cover={r.cover_url} previewUrl={r.preview_url} spotifyId={r.track_id} spotifyUrl={r.spotify_url} className="w-10 h-10" rounded="rounded-md" iconSize="sm" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate">{r.track_name}</p>
-                      <p className="text-xs text-purple-300/60 truncate">{r.artist}</p>
+                      <p className="text-xs text-purple-300/85 truncate">{r.artist}</p>
                     </div>
                     <button onClick={e => { e.stopPropagation(); openInApp(r); }} aria-label="Ouvrir dans mon appli de musique" className="p-1.5 rounded-full bg-purple-600/10 hover:bg-purple-600/20">
                       <MyAppLogo className="w-3.5 h-3.5 text-purple-400" />
@@ -103,8 +103,8 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
             {!selectedTrack ? (
               <>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/50" />
-                  <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="Chercher un morceau..." className="w-full pl-9 pr-3 py-2 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-purple-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/80" />
+                  <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="Chercher un morceau..." className="w-full pl-9 pr-3 py-2 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500" />
                 </div>
                 {searching && <Loader2 className="w-4 h-4 text-purple-500 animate-spin mx-auto my-2" />}
                 {results.slice(0, 5).map(t => (
@@ -112,7 +112,7 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
                     <img loading="lazy" src={t.cover} className="w-9 h-9 rounded-md object-cover" alt="" />
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-sm font-medium truncate">{t.name}</p>
-                      <p className="text-xs text-purple-300/60 truncate">{t.artist}</p>
+                      <p className="text-xs text-purple-300/85 truncate">{t.artist}</p>
                     </div>
                   </button>
                 ))}
@@ -123,11 +123,11 @@ export function MusicReactionsDialog({ postId, currentUser, onClose }: Props) {
                   <img loading="lazy" src={selectedTrack.cover} className="w-10 h-10 rounded-md object-cover" alt="" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{selectedTrack.name}</p>
-                    <p className="text-xs text-purple-300/60 truncate">{selectedTrack.artist}</p>
+                    <p className="text-xs text-purple-300/85 truncate">{selectedTrack.artist}</p>
                   </div>
-                  <button aria-label="Retirer le son" onClick={() => setSelectedTrack(null)} className="text-purple-400/50 hover:text-white"><X className="w-4 h-4" /></button>
+                  <button aria-label="Retirer le son" onClick={() => setSelectedTrack(null)} className="text-purple-300/80 hover:text-white"><X className="w-4 h-4" /></button>
                 </div>
-                <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Commentaire (optionnel)" className="w-full px-3 py-2 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-400/40 focus:outline-none focus:border-pink-500" maxLength={200} />
+                <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Commentaire (optionnel)" className="w-full px-3 py-2 bg-purple-950/30 border border-purple-800/30 rounded-lg text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-pink-500" maxLength={200} />
                 <button onClick={() => handleSend(selectedTrack)} disabled={sending} className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2">
                   {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" /> Envoyer la réaction</>}
                 </button>

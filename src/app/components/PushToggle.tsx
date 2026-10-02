@@ -59,7 +59,7 @@ export function PushToggle({ compact = false }: { compact?: boolean }) {
         <BellRing className="w-4 h-4 text-purple-300 flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm text-white font-medium">Notifications sur le téléphone</p>
-          <p className="text-xs text-purple-300/60">
+          <p className="text-xs text-purple-300/85">
             {status === 'on' ? 'Activées, même appli fermée' : status === 'off' ? 'Désactivées sur ce téléphone' : status === null ? '…' : 'Indisponibles ici'}
           </p>
         </div>

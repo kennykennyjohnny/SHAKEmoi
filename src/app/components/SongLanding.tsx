@@ -194,7 +194,7 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
   if (!data) return (
     <div className="min-h-[100dvh] bg-[#1E1440] text-white flex flex-col items-center justify-center gap-4 text-center p-6">
       <Logo size="sm" animated={false} showText={true} href="/" />
-      <p className="text-purple-300/70">Ce son n'existe plus ou le lien est invalide.</p>
+      <p className="text-purple-300/90">Ce son n'existe plus ou le lien est invalide.</p>
       <button onClick={currentUser ? onOpenApp : onSignUp} className="px-6 py-3 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-xl font-bold text-sm">
         {currentUser ? 'Accéder à mon compte' : 'Découvrir SHAKEmoi'}
       </button>
@@ -283,12 +283,12 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
           )}
         </button>
         {previewChecked && !previewUrl && (
-          <p className="text-center text-[11px] text-purple-300/50 mt-2">Pas d'extrait pour ce son : écoute-le en entier ci-dessous</p>
+          <p className="text-center text-[11px] text-purple-300/80 mt-2">Pas d'extrait pour ce son : écoute-le en entier ci-dessous</p>
         )}
 
         <div className="text-center mt-5 mb-5">
           <h1 className="text-xl font-bold leading-tight">{data.title}</h1>
-          <p className="text-sm text-purple-300/70 mt-0.5">{data.artist}</p>
+          <p className="text-sm text-purple-300/90 mt-0.5">{data.artist}</p>
         </div>
 
         {/* Écouter : un vrai lien par plateforme, jamais de bouton mort */}
@@ -375,7 +375,7 @@ export function SongLanding({ source, currentUser, onSignUp, onLogin, onOpenApp,
           )}
         </div>
 
-        <p className="text-center text-[10px] text-purple-400/40 mt-8">shakemoi.fr · <Slogan /></p>
+        <p className="text-center text-[10px] text-purple-300/80 mt-8">shakemoi.fr · <Slogan /></p>
       </motion.main>
 
       {showShare && (

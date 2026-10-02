@@ -117,7 +117,7 @@ export function ProfileGrid({ userId, currentUser, isOwn = false, onDeleted, ref
               key={t}
               onClick={() => setTab(t)}
               className={`py-3 border-b-2 font-semibold text-sm transition-colors flex items-center gap-1.5 ${
-                tab === t ? (t === 'shakes' ? 'border-purple-500 text-purple-200' : 'border-fuchsia-500 text-fuchsia-300') : 'border-transparent text-purple-400/50 hover:text-purple-200'
+                tab === t ? (t === 'shakes' ? 'border-purple-500 text-purple-200' : 'border-fuchsia-500 text-fuchsia-300') : 'border-transparent text-purple-300/80 hover:text-purple-200'
               }`}
             >
               {t === 'reshakes' && <Repeat2 className="w-3.5 h-3.5" />}
@@ -142,7 +142,7 @@ export function ProfileGrid({ userId, currentUser, isOwn = false, onDeleted, ref
                 >
                   {cover
                     ? <img loading="lazy" src={thumb(cover, 300)} alt="" className="w-full h-full object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center"><Music className="w-6 h-6 text-purple-300/50" /></div>}
+                    : <div className="w-full h-full flex items-center justify-center"><Music className="w-6 h-6 text-purple-300/80" /></div>}
                   {p.is_reshake && shown?.user?.username && (
                     <span className="absolute top-1 left-1 max-w-[85%] truncate bg-black/60 rounded-full px-1.5 py-0.5 text-[9px] text-fuchsia-300 font-medium">@{shown.user.username}</span>
                   )}
@@ -172,7 +172,7 @@ export function ProfileGrid({ userId, currentUser, isOwn = false, onDeleted, ref
             <div className="w-16 h-16 mx-auto mb-4 bg-[#1D0F3D] rounded-full flex items-center justify-center border border-purple-800/20">
               {tab === 'shakes' ? <Music className="w-8 h-8 text-[#FFEFD5]" /> : <Repeat2 className="w-8 h-8 text-[#FFEFD5]" />}
             </div>
-            <p className="text-purple-300/60">{tab === 'shakes' ? 'Aucun shake pour le moment' : 'Aucun reshake pour le moment'}</p>
+            <p className="text-purple-300/85">{tab === 'shakes' ? 'Aucun shake pour le moment' : 'Aucun reshake pour le moment'}</p>
           </div>
         )}
         {/* Secours si le défilement automatique ne s'est pas déclenché. */}

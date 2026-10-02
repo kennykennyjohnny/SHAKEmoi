@@ -728,18 +728,18 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                     <div className="flex items-center gap-1">
                       <button
                         onClick={toggleViewers}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold ${panelMode === 'views' ? 'bg-white/15 text-white' : 'text-white/50'}`}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold ${panelMode === 'views' ? 'bg-white/15 text-white' : 'text-white/65'}`}
                       >
                         <Eye className="w-4 h-4" /> Vues {viewers.length > 0 ? `(${viewers.length})` : ''}
                       </button>
                       <button
                         onClick={openLikers}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold ${panelMode === 'likes' ? 'bg-white/15 text-white' : 'text-white/50'}`}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold ${panelMode === 'likes' ? 'bg-white/15 text-white' : 'text-white/65'}`}
                       >
                         <Heart className="w-4 h-4" /> Likes {likers && likers.length > 0 ? `(${likers.length})` : ''}
                       </button>
                     </div>
-                    <button aria-label="Fermer" onClick={() => setShowViewers(false)} className="p-1 text-white/50 hover:text-white">
+                    <button aria-label="Fermer" onClick={() => setShowViewers(false)} className="p-1 text-white/65 hover:text-white">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -750,7 +750,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                           <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         </div>
                       ) : likers.length === 0 ? (
-                        <p className="text-center text-sm text-white/40 py-6">Pas encore de like sur ce Shake éphémère</p>
+                        <p className="text-center text-sm text-white/60 py-6">Pas encore de like sur ce Shake éphémère</p>
                       ) : (
                         likers.map((u: any) => (
                           <div key={u.id} className="flex items-center gap-3 px-4 py-2.5">
@@ -761,7 +761,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                             />
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-semibold text-white truncate">{u.display_name || u.username}</p>
-                              <p className="text-xs text-white/40 truncate">@{u.username}</p>
+                              <p className="text-xs text-white/60 truncate">@{u.username}</p>
                             </div>
                             <Heart className="w-4 h-4 text-red-400 fill-red-400 flex-shrink-0" />
                           </div>
@@ -772,7 +772,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       </div>
                     ) : viewers.length === 0 ? (
-                      <p className="text-center text-sm text-white/40 py-6">Personne n'a encore vu ce Shake éphémère</p>
+                      <p className="text-center text-sm text-white/60 py-6">Personne n'a encore vu ce Shake éphémère</p>
                     ) : (
                       viewers.map((viewer: any) => (
                         <div key={viewer.id} className="flex items-center gap-3 px-4 py-2.5">
@@ -783,13 +783,13 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                           />
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-white truncate">{viewer.display_name || viewer.username}</p>
-                            <p className="text-xs text-white/40 truncate">@{viewer.username}</p>
+                            <p className="text-xs text-white/60 truncate">@{viewer.username}</p>
                           </div>
                           {likers?.some((l: any) => l.id === viewer.id) && (
                             <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 flex-shrink-0" />
                           )}
                           {viewer.viewed_at && (
-                            <span className="text-[10px] text-white/30 flex-shrink-0">
+                            <span className="text-[10px] text-white/60 flex-shrink-0">
                               {new Date(viewer.viewed_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           )}
@@ -831,7 +831,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                       onChange={e => setCommentText(e.target.value)}
                       placeholder="Répondre en message privé…"
                       enterKeyHint="send"
-                      className="flex-1 min-w-0 px-4 py-2.5 bg-white/15 backdrop-blur-md border border-white/20 rounded-full text-sm text-white placeholder-white/50 focus:outline-none focus:border-white/50"
+                      className="flex-1 min-w-0 px-4 py-2.5 bg-white/15 backdrop-blur-md border border-white/20 rounded-full text-sm text-white placeholder-white/65 focus:outline-none focus:border-white/50"
                       onKeyDown={e => {
                         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleComment(); }
                         if (e.key === 'Escape') setShowCommentInput(false);

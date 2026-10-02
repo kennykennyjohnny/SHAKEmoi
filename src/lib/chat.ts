@@ -6,6 +6,7 @@ export function circlePreviewText(circle: any, myId?: string): string {
   if (!m) return circle?.member_count ? `${circle.member_count} membre${circle.member_count > 1 ? 's' : ''}` : 'Cercle privé';
   const who = m.sender_id === myId ? 'Toi' : m.sender_username ? `@${m.sender_username}` : '';
   if (m.kind === 'rename') return `${who || 'Quelqu\'un'} a renommé le cercle`;
+  if (m.kind === 'photo') return `${who || 'Quelqu\'un'} a changé la photo du cercle`;
   if (m.deleted_at) return `${who ? `${who} : ` : ''}Message retiré`;
   const body = m.track_name ? `🎵 ${m.track_name}` : m.image_url ? '📷 Photo' : (m.text || '');
   return who ? `${who} : ${body}` : body;

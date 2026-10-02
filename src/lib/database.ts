@@ -1554,16 +1554,16 @@ export async function deleteCircle(circleId: string) {
   return { success: !error, error: error?.message };
 }
 
-export async function updateCirclePhoto(circleId: string, photoUrl: string) {
+/** Q7 : tout membre change la photo (fonction SQL set_circle_photo, comme le
+ *  renommage) ; avant, seul le créateur pouvait, et l'échec était silencieux. */
+export async function updateCirclePhoto(circleId: string, photoUrl: string | null) {
   try {
-    const { error } = await supabase
-      .from('circles')
-      .update({ photo_url: photoUrl })
-      .eq('id', circleId);
+    const { error } = await supabase.rpc('set_circle_photo', { p_circle_id: circleId, p_photo_url: photoUrl });
     if (error) throw error;
+    window.dispatchEvent(new CustomEvent('shakemoi:circles-changed'));
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message as string };
   }
 }
 

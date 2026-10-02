@@ -115,17 +115,17 @@ export function FollowListSheet({ userId, username, kind, myId, isOwn = false, o
             <div className="flex items-center gap-2 mb-2">
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-white">{TITLES[kind]}</h3>
-                {username && <p className="text-xs text-purple-300/60">@{username}</p>}
+                {username && <p className="text-xs text-purple-300/85">@{username}</p>}
               </div>
-              <button aria-label="Fermer" onClick={onClose} className="p-1.5 hover:bg-purple-900/40 rounded-full"><X className="w-5 h-5 text-purple-300/70" /></button>
+              <button aria-label="Fermer" onClick={onClose} className="p-1.5 hover:bg-purple-900/40 rounded-full"><X className="w-5 h-5 text-purple-300/90" /></button>
             </div>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/50" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/80" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Rechercher"
-                className="w-full pl-9 pr-3 py-2 bg-violet-950/40 border border-purple-500/25 rounded-xl text-base sm:text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-400"
+                className="w-full pl-9 pr-3 py-2 bg-violet-950/40 border border-purple-500/25 rounded-xl text-base sm:text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-400"
               />
             </div>
           </div>
@@ -137,7 +137,7 @@ export function FollowListSheet({ userId, username, kind, myId, isOwn = false, o
                   <img loading="lazy" src={avatarThumb(u.profile_album_cover_url, 128) || defaultAvatar(u.username)} alt="" className="w-11 h-11 rounded-full object-cover flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="font-semibold text-sm text-white truncate">{u.display_name || u.username}</p>
-                    <p className="text-xs text-purple-300/60 truncate flex items-center gap-1.5">
+                    <p className="text-xs text-purple-300/85 truncate flex items-center gap-1.5">
                       @{u.username}
                       {u.follows_me && u.id !== myId && <span className="px-1.5 py-0.5 rounded-md bg-purple-800/50 text-[10px] text-purple-100">Vous suit</span>}
                     </p>
@@ -171,7 +171,7 @@ export function FollowListSheet({ userId, username, kind, myId, isOwn = false, o
               </div>
             )}
             {!loading && !error && items.length === 0 && (
-              <p className="text-center text-sm text-purple-300/60 py-10">{query ? 'Personne ne correspond.' : 'Personne pour l’instant.'}</p>
+              <p className="text-center text-sm text-purple-300/85 py-10">{query ? 'Personne ne correspond.' : 'Personne pour l’instant.'}</p>
             )}
             {!loading && !error && !done && items.length > 0 && (
               <button onClick={() => load(false)} className="w-full mt-1 py-2 rounded-xl text-sm text-purple-200/80 hover:bg-purple-900/30">Voir plus</button>

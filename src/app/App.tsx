@@ -70,7 +70,10 @@ function screenFromPath(pathname: string): { view: View; options?: any; postId?:
   if (a === 'recherche' && !b) return { view: 'search' };
   if (a === 'profil' && !b) return { view: 'profile' };
   if (a === 'notifications' && !b) return { view: 'notifications' };
-  if (a === 'messages') return b && UUID_RE.test(b) ? { view: 'messages', options: { initialTab: 'dms', openPartnerId: b, nonce: 1 } } : { view: 'messages', options: { initialTab: 'dms' } };
+  // Q6 : /messages/<pseudo> (ou l'ancien /messages/<id>).
+  if (a === 'messages') return b && UUID_RE.test(b) ? { view: 'messages', options: { initialTab: 'dms', openPartnerId: b, nonce: 1 } }
+    : b && /^[a-z0-9._]{2,30}$/i.test(b) ? { view: 'messages', options: { initialTab: 'dms', openPartnerUsername: b.toLowerCase(), nonce: 1 } }
+    : { view: 'messages', options: { initialTab: 'dms' } };
   if (a === 'cercles') return b && UUID_RE.test(b)
     ? { view: 'messages', options: { initialTab: 'circles', openCircleId: b, openPlaylist: c === 'playlist', nonce: 1 } }
     : { view: 'messages', options: { initialTab: 'circles' } };
@@ -598,7 +601,7 @@ export default function App() {
             <Slogan />
           </p>
           <h1 className="text-lg font-bold">Cherche un son, partage-le à qui tu veux 🎧</h1>
-          <p className="text-xs text-purple-300/60 mt-1">
+          <p className="text-xs text-purple-300/85 mt-1">
             Pas besoin de compte. Crée-en un pour shaker et répondre à tes potes.
           </p>
         </div>
@@ -708,7 +711,7 @@ export default function App() {
 
             <div className="flex items-center gap-1.5">
               <button aria-label="Partager" onClick={() => setShowShareDialog(true)} className="p-2 hover:bg-violet-900/25 rounded-full transition-colors">
-                <Share2 className="w-5 h-5 text-purple-300/60" />
+                <Share2 className="w-5 h-5 text-purple-300/85" />
               </button>
 
               {currentUser && (
@@ -723,7 +726,7 @@ export default function App() {
                   }}
                   className="p-2 hover:bg-violet-900/25 rounded-full transition-colors relative"
                 >
-                  <Bell className={`w-5 h-5 ${currentView === 'notifications' ? 'text-purple-400' : 'text-purple-300/60'}`} />
+                  <Bell className={`w-5 h-5 ${currentView === 'notifications' ? 'text-purple-400' : 'text-purple-300/85'}`} />
                   {unreadNotifs > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-pink-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white min-w-[18px] px-1">
                       {unreadNotifs > 9 ? '9+' : unreadNotifs}
@@ -783,7 +786,7 @@ export default function App() {
                 aria-label={label}
                 aria-current={currentView === view ? 'page' : undefined}
                 className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all active:scale-90 relative ${
-                  currentView === view ? 'text-fuchsia-400 bg-fuchsia-500/15 shadow-lg shadow-fuchsia-500/10' : 'text-purple-300/60 hover:text-purple-200'
+                  currentView === view ? 'text-fuchsia-400 bg-fuchsia-500/15 shadow-lg shadow-fuchsia-500/10' : 'text-purple-300/85 hover:text-purple-200'
                 }`}
               >
                 <Icon className={`w-6 h-6 ${currentView === view ? 'drop-shadow-[0_0_6px_rgba(217,70,239,0.5)]' : ''}`} />
@@ -813,7 +816,7 @@ export default function App() {
               key={view}
               onClick={() => { if (goTab(view) && view === 'feed') setRefreshFeed(p => p + 1); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors relative ${
-                currentView === view ? 'bg-purple-500/10 text-purple-400' : 'text-purple-300/60 hover:bg-violet-900/25'
+                currentView === view ? 'bg-purple-500/10 text-purple-400' : 'text-purple-300/85 hover:bg-violet-900/25'
               }`}
             >
               <Icon className="w-5 h-5" />
@@ -846,7 +849,7 @@ export default function App() {
               <img loading="lazy" src={avatarThumb(currentUser.avatar)} alt="" className="w-10 h-10 rounded-full object-cover" />
               <div className="flex-1 min-w-0 text-left">
                 <p className="font-semibold text-sm truncate">{currentUser.displayName}</p>
-                <p className="text-xs text-purple-300/60 truncate">@{currentUser.username}</p>
+                <p className="text-xs text-purple-300/85 truncate">@{currentUser.username}</p>
               </div>
             </button>
           </div>

@@ -56,7 +56,7 @@ export function FollowStarter({ inviterId, onDone }: { inviterId?: string | null
               <img src={avatarThumb(p.avatar, 128) || defaultAvatar(p.username)} alt="" className="w-12 h-12 rounded-full object-cover" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{p.display_name || p.username}</p>
-                <p className="text-xs text-purple-300/70 truncate">{p._inviter ? 'T’a invité·e sur SHAKEmoi' : p.mutual || p.taste || p.circles ? suggestionReason(p) : `@${p.username}`}</p>
+                <p className="text-xs text-purple-300/90 truncate">{p._inviter ? 'T’a invité·e sur SHAKEmoi' : p.mutual || p.taste || p.circles ? suggestionReason(p) : `@${p.username}`}</p>
               </div>
               <button onClick={() => toggle(p)} disabled={busy === p.id}
                 className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1 ${on ? 'bg-purple-900/60 text-purple-100' : 'bg-gradient-to-r from-purple-600 to-pink-600'}`}>

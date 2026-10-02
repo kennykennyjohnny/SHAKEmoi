@@ -124,7 +124,7 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
             onClick={onClose}
             className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-purple-300/60" />
+            <X className="w-5 h-5 text-purple-300/85" />
           </button>
         </div>
 
@@ -159,7 +159,7 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
                   <Camera className="w-4 h-4" />
                   {loading ? 'Téléchargement...' : 'Choisir une photo'}
                 </button>
-                <p className="text-xs text-purple-400/50">
+                <p className="text-xs text-purple-300/80">
                   📸 Choisis une photo de ton téléphone
                 </p>
                 <div className="flex gap-2 flex-wrap">
@@ -189,13 +189,13 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
               Nom d'affichage
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/85" />
               <input
                 type="text"
                 required
                 value={formData.displayName}
                 onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-300/70 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Ton nom"
               />
             </div>
@@ -207,7 +207,7 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
               Nom d'utilisateur
             </label>
             <div className="relative">
-              <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
+              <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/85" />
               <input
                 type="text"
                 required
@@ -216,7 +216,7 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
                 autoCapitalize="none"
                 autoCorrect="off"
                 maxLength={20}
-                className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-300/70 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="username"
               />
             </div>
@@ -228,17 +228,17 @@ export function EditProfileDialog({ currentUser, onClose, onUpdateUser }: EditPr
               Bio
             </label>
             <div className="relative">
-              <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-purple-300/60" />
+              <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-purple-300/85" />
               <textarea
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                 rows={3}
                 maxLength={160}
-                className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg pl-10 pr-3 py-2 text-white placeholder-purple-300/70 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                 placeholder="Parle-nous de tes goûts musicaux..."
               />
             </div>
-            <p className="text-xs text-purple-400/50 mt-1 text-right">
+            <p className="text-xs text-purple-300/80 mt-1 text-right">
               {formData.bio.length}/160
             </p>
           </div>

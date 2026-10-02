@@ -73,7 +73,7 @@ export function DesktopInbox({ currentUser, onOpenConversation, onOpenCircle }: 
         {loading ? (
           <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 text-purple-400 animate-spin" /></div>
         ) : conversations.length === 0 ? (
-          <p className="text-xs text-purple-300/60 px-1">Pas encore de conversation.</p>
+          <p className="text-xs text-purple-300/85 px-1">Pas encore de conversation.</p>
         ) : (
           <div className="space-y-0.5">
             {conversations.slice(0, 12).map((c) => (
@@ -96,9 +96,9 @@ export function DesktopInbox({ currentUser, onOpenConversation, onOpenCircle }: 
                     <p className={`text-sm truncate flex-1 ${c.unreadCount > 0 ? 'font-bold text-white' : 'font-semibold text-white/90'}`}>
                       {c.partner?.display_name || c.partner?.username}
                     </p>
-                    <span className={`text-[10px] flex-shrink-0 ${c.unreadCount > 0 ? 'text-pink-300' : 'text-purple-300/50'}`}>{formatListTime(c.lastMessage?.created_at)}</span>
+                    <span className={`text-[10px] flex-shrink-0 ${c.unreadCount > 0 ? 'text-pink-300' : 'text-purple-300/80'}`}>{formatListTime(c.lastMessage?.created_at)}</span>
                   </div>
-                  <p className={`text-xs truncate ${c.unreadCount > 0 ? 'text-purple-100/90' : 'text-purple-300/60'}`}>{dmPreviewText(c.lastMessage, currentUser?.id)}</p>
+                  <p className={`text-xs truncate ${c.unreadCount > 0 ? 'text-purple-100/90' : 'text-purple-300/85'}`}>{dmPreviewText(c.lastMessage, currentUser?.id)}</p>
                 </div>
               </button>
             ))}
@@ -111,7 +111,7 @@ export function DesktopInbox({ currentUser, onOpenConversation, onOpenCircle }: 
           <Users className="w-4 h-4 text-fuchsia-400" /> Cercles
         </h2>
         {!loading && circles.length === 0 ? (
-          <p className="text-xs text-purple-300/60 px-1">Aucun cercle pour l'instant.</p>
+          <p className="text-xs text-purple-300/85 px-1">Aucun cercle pour l'instant.</p>
         ) : (
           <div className="space-y-0.5">
             {circles.map((g) => (
@@ -131,10 +131,10 @@ export function DesktopInbox({ currentUser, onOpenConversation, onOpenCircle }: 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2">
                     <p className={`text-sm truncate flex-1 ${g.unread_count > 0 ? 'font-bold text-white' : 'font-semibold text-white/90'}`}>{g.name}</p>
-                    <span className={`text-[10px] flex-shrink-0 ${g.unread_count > 0 ? 'text-pink-300' : 'text-purple-300/50'}`}>{formatListTime(g.last_activity_at)}</span>
+                    <span className={`text-[10px] flex-shrink-0 ${g.unread_count > 0 ? 'text-pink-300' : 'text-purple-300/80'}`}>{formatListTime(g.last_activity_at)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <p className={`text-xs truncate flex-1 ${g.unread_count > 0 ? 'text-purple-100/90' : 'text-purple-300/60'}`}>{circlePreviewText(g, currentUser?.id)}</p>
+                    <p className={`text-xs truncate flex-1 ${g.unread_count > 0 ? 'text-purple-100/90' : 'text-purple-300/85'}`}>{circlePreviewText(g, currentUser?.id)}</p>
                     {g.has_mention && <span className="w-[17px] h-[17px] bg-pink-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white flex-shrink-0">@</span>}
                     {g.unread_count > 0 && (
                       <span className={`min-w-[17px] h-[17px] px-1 rounded-full text-[9px] font-bold flex items-center justify-center flex-shrink-0 ${g.muted ? 'bg-purple-800/70 text-purple-200' : 'bg-pink-500 text-white'}`}>{g.unread_count > 9 ? '9+' : g.unread_count}</span>

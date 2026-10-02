@@ -77,7 +77,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-3" />
-        <p className="text-sm text-purple-400/50">Chargement des notifications...</p>
+        <p className="text-sm text-purple-300/80">Chargement des notifications...</p>
       </div>
     );
   }
@@ -89,7 +89,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
           <Bell className="w-10 h-10 text-purple-600" />
         </div>
         <h3 className="text-xl font-bold text-white mb-2">Aucune notification</h3>
-        <p className="text-sm text-purple-400/50 text-center">
+        <p className="text-sm text-purple-300/80 text-center">
           Les interactions avec tes shakes apparaîtront ici
         </p>
       </div>
@@ -143,7 +143,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
           <h1 className="text-2xl font-black text-white">Notifications</h1>
         </div>
         <button aria-label="Actualiser" onClick={loadNotifications} className="p-2 hover:bg-purple-900/30 rounded-full transition-colors">
-          <RefreshCw className="w-4 h-4 text-purple-400/60" />
+          <RefreshCw className="w-4 h-4 text-purple-300/80" />
         </button>
       </div>
 
@@ -153,7 +153,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
         {onOpenSettings && (
           <button onClick={onOpenSettings} className="w-full flex items-center justify-between px-4 py-2.5 text-xs text-purple-200/80 hover:bg-violet-900/30 transition-colors">
             Choisir ce que je reçois (likes, commentaires, messages…)
-            <ChevronRight className="w-4 h-4 text-purple-300/60" />
+            <ChevronRight className="w-4 h-4 text-purple-300/85" />
           </button>
         )}
       </div>
@@ -215,10 +215,10 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
                     @{notif.actor_username}
                   </button>
                   {' '}
-                  <span className="text-purple-200/70 text-xs">{notif.content}</span>
-                  {notif.post_track_name && <span className="text-purple-300/60 text-xs"> · {notif.post_track_name}{notif.post_artist ? ` — ${notif.post_artist}` : ''}</span>}
+                  <span className="text-purple-200/85 text-xs">{notif.content}</span>
+                  {notif.post_track_name && <span className="text-purple-300/85 text-xs"> · {notif.post_track_name}{notif.post_artist ? ` — ${notif.post_artist}` : ''}</span>}
                 </p>
-                <p className="text-[10px] text-purple-500/40 mt-0.5">{formatTimestamp(notif.created_at)}</p>
+                <p className="text-[10px] text-purple-300/75 mt-0.5">{formatTimestamp(notif.created_at)}</p>
               </div>
 
               {/* Follow-back button (prominent) */}

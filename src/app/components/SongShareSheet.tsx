@@ -122,10 +122,10 @@ export function SongShareSheet({ song, by, link, onClose }: Props) {
               : <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600" />}
             <div className="flex-1 min-w-0">
               <p className="font-bold truncate">{song.title}</p>
-              <p className="text-xs text-purple-300/70 truncate">{song.artist}</p>
+              <p className="text-xs text-purple-300/90 truncate">{song.artist}</p>
             </div>
             <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition-colors" aria-label="Fermer">
-              <X className="w-5 h-5 text-purple-300/70" />
+              <X className="w-5 h-5 text-purple-300/90" />
             </button>
           </div>
 
@@ -138,13 +138,13 @@ export function SongShareSheet({ song, by, link, onClose }: Props) {
               make={(canvas, onProgress) => createStoryVideo(canvas, { ...song, previewUrl, by, byAvatar }, url!, onProgress)}
               placeholder={song.cover
                 ? <img loading="lazy" src={song.cover} alt="" className="w-16 h-16 rounded-lg object-cover opacity-80" />
-                : <Clapperboard className="w-8 h-8 text-purple-300/60" />}
+                : <Clapperboard className="w-8 h-8 text-purple-300/85" />}
             />
           </div>
 
           {/* Partages rapides */}
           <div className="px-4 pb-2">
-            <p className="text-[11px] uppercase tracking-wider text-purple-300/50 font-semibold mb-2">Envoyer le lien</p>
+            <p className="text-[11px] uppercase tracking-wider text-purple-300/80 font-semibold mb-2">Envoyer le lien</p>
             <div className="grid grid-cols-6 gap-2">
               {quick.map(q => (
                 <button key={q.key} onClick={q.run} disabled={!url} className="flex flex-col items-center gap-1.5 disabled:opacity-50">
@@ -161,7 +161,7 @@ export function SongShareSheet({ song, by, link, onClose }: Props) {
               <span className="flex-1 truncate font-mono text-xs text-purple-100/80">
                 {url ? url.replace(/^https?:\/\/(www\.)?/, '') : 'Création du lien…'}
               </span>
-              {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-purple-300/70" />}
+              {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-purple-300/90" />}
             </button>
           </div>
         </motion.div>

@@ -24,7 +24,7 @@ export function TrendingBar({ limit = 10, onSeeAll }: { limit?: number; onSeeAll
     if (index === 0) return <Crown className="w-4 h-4 text-yellow-400" />;
     if (index === 1) return <Medal className="w-4 h-4 text-gray-300" />;
     if (index === 2) return <Award className="w-4 h-4 text-amber-600" />;
-    return <span className="text-[11px] font-bold text-purple-300/70 w-4 text-center">{index + 1}</span>;
+    return <span className="text-[11px] font-bold text-purple-300/90 w-4 text-center">{index + 1}</span>;
   };
 
   return (
@@ -33,7 +33,7 @@ export function TrendingBar({ limit = 10, onSeeAll }: { limit?: number; onSeeAll
         <Flame className="w-4 h-4 text-pink-500" />
         <h2 className="text-sm font-bold text-white">TOP des shakes</h2>
         {onSeeAll && (
-          <button onClick={onSeeAll} className="ml-auto text-[11px] text-purple-300/70 hover:text-white">Voir tout</button>
+          <button onClick={onSeeAll} className="ml-auto text-[11px] text-purple-300/90 hover:text-white">Voir tout</button>
         )}
       </div>
 
@@ -44,7 +44,7 @@ export function TrendingBar({ limit = 10, onSeeAll }: { limit?: number; onSeeAll
       ) : items.length === 0 ? (
         <div className="rounded-xl p-4 text-center border border-purple-800/20">
           <Music className="w-6 h-6 text-purple-600 mx-auto mb-1" />
-          <p className="text-xs text-purple-300/70">Pas encore de tendance</p>
+          <p className="text-xs text-purple-300/90">Pas encore de tendance</p>
         </div>
       ) : (
         <div className="space-y-1.5">
@@ -60,8 +60,8 @@ export function TrendingBar({ limit = 10, onSeeAll }: { limit?: number; onSeeAll
               {/* Toucher le titre ouvre le post complet (P2). */}
               <button onClick={() => openPost(post.id)} className="flex-1 min-w-0 text-left">
                 <p className="text-xs font-semibold text-white truncate hover:underline">{post.track_name}</p>
-                <p className="text-[11px] text-purple-300/60 truncate">{post.artist}</p>
-                <div className="flex items-center gap-2 text-[10px] text-purple-300/60">
+                <p className="text-[11px] text-purple-300/85 truncate">{post.artist}</p>
+                <div className="flex items-center gap-2 text-[10px] text-purple-300/85">
                   <span className="flex items-center gap-0.5 text-pink-400/80"><Heart className="w-2.5 h-2.5" />{post.likes_count || 0}</span>
                   <span className="flex items-center gap-0.5"><MessageCircle className="w-2.5 h-2.5" />{post.comments_count || 0}</span>
                 </div>
@@ -69,7 +69,7 @@ export function TrendingBar({ limit = 10, onSeeAll }: { limit?: number; onSeeAll
               <button
                 onClick={() => setSendSongTrack({ id: post.track_id, title: post.track_name, artist: post.artist, coverUrl: post.cover_url, spotifyUrl: post.spotify_url })}
                 aria-label="Envoyer à quelqu'un"
-                className="p-1.5 rounded-full text-purple-300/60 hover:text-white hover:bg-violet-900/40 opacity-70 group-hover:opacity-100"
+                className="p-1.5 rounded-full text-purple-300/85 hover:text-white hover:bg-violet-900/40 opacity-70 group-hover:opacity-100"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>

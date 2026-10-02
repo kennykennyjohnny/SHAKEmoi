@@ -163,7 +163,7 @@ export function ImageCropDialog({ file, title = 'Cadre ta photo', onCancel, onDo
             <ZoomIn className="w-4 h-4 text-purple-300" />
             <input type="range" min={1} max={5} step={0.01} value={z} onChange={(e) => zoomAround(parseFloat(e.target.value))} className="flex-1 accent-pink-500" aria-label="Zoom" />
           </div>
-          <p className="mt-2 text-[11px] text-purple-300/70 flex items-center justify-center gap-1.5"><Move className="w-3.5 h-3.5" /> Glisse pour placer · pince ou curseur pour zoomer</p>
+          <p className="mt-2 text-[11px] text-purple-300/90 flex items-center justify-center gap-1.5"><Move className="w-3.5 h-3.5" /> Glisse pour placer · pince ou curseur pour zoomer</p>
         </div>
       </div>
     </div>,

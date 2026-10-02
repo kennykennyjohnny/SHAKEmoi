@@ -135,7 +135,7 @@ export function CirclePlaylist({ circleId, name, photoUrl, subtitle, onBack, onC
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">{name}</p>
-          <p className="text-xs text-purple-300/70 truncate flex items-center gap-1"><ListMusic className="w-3 h-3" /> Playlist · {subtitle}</p>
+          <p className="text-xs text-purple-300/90 truncate flex items-center gap-1"><ListMusic className="w-3 h-3" /> Playlist · {subtitle}</p>
         </div>
         <button onClick={onChat} aria-label="Revenir à la conversation" title="Conversation" className="p-2 rounded-full text-purple-200 hover:bg-violet-900/25"><MessageCircle className="w-5 h-5" /></button>
       </div>
@@ -144,7 +144,7 @@ export function CirclePlaylist({ circleId, name, photoUrl, subtitle, onBack, onC
         {entries === null ? (
           <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-purple-400" /></div>
         ) : entries.length === 0 ? (
-          <div className="text-center py-16 text-sm text-purple-300/70">
+          <div className="text-center py-16 text-sm text-purple-300/90">
             <Music className="w-9 h-9 text-[#FFEFD5] mx-auto mb-2" />
             Aucun son partagé dans ce cercle pour l'instant. Envoie le premier depuis la conversation 🎧
           </div>
@@ -174,14 +174,14 @@ export function CirclePlaylist({ circleId, name, photoUrl, subtitle, onBack, onC
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-semibold truncate ${active ? 'text-pink-200' : 'text-white'}`}>{e.track_name}</p>
-                      <p className="text-xs text-purple-200/70 truncate">{e.artist}</p>
-                      <p className="text-[11px] text-purple-300/60 truncate">@{e.lastBy} · {formatRelative(e.lastAt)}{e.count > 1 ? ` · partagé ${e.count} fois` : ''}</p>
+                      <p className="text-xs text-purple-200/85 truncate">{e.artist}</p>
+                      <p className="text-[11px] text-purple-300/85 truncate">@{e.lastBy} · {formatRelative(e.lastAt)}{e.count > 1 ? ` · partagé ${e.count} fois` : ''}</p>
                     </div>
                   </button>
                 );
               })}
             </div>
-            <p className="text-[11px] text-purple-300/50 text-center mt-3">Appui long sur un son : voir le message d'origine.</p>
+            <p className="text-[11px] text-purple-300/80 text-center mt-3">Appui long sur un son : voir le message d'origine.</p>
           </>
         )}
       </div>
@@ -195,7 +195,7 @@ export function CirclePlaylist({ circleId, name, photoUrl, subtitle, onBack, onC
           {cur?.cover_url ? <img src={thumb(cur.cover_url, 128)} alt="" className="w-11 h-11 rounded-md object-cover" /> : <div className="w-11 h-11 rounded-md bg-violet-900/50 flex items-center justify-center"><Music className="w-4 h-4 text-purple-300" /></div>}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold truncate">{cur?.track_name || 'Rien en cours'}</p>
-            <p className="text-xs text-purple-300/70 truncate">{cur?.artist || 'Touche « Tout écouter »'}</p>
+            <p className="text-xs text-purple-300/90 truncate">{cur?.artist || 'Touche « Tout écouter »'}</p>
           </div>
           <button aria-label="Précédent" onClick={prev} disabled={current <= 0} className="p-2 rounded-full disabled:opacity-30"><SkipBack className="w-5 h-5 fill-white" /></button>
           <button aria-label={isPlaying ? 'Pause' : 'Lecture'} onClick={toggle} disabled={!entries?.length} className="p-3 rounded-full bg-white text-[#1E1440] disabled:opacity-40">

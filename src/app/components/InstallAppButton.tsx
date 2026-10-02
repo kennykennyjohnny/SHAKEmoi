@@ -102,7 +102,7 @@ export function InstallAppButton({ className = '', variant = 'pill' }: { classNa
           <button onClick={onClick} className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full bg-white text-[#1E1440] text-xs font-bold">
             <Download className="w-3.5 h-3.5" /> Télécharger l'app
           </button>
-          <button onClick={dismiss} aria-label="Masquer pendant 7 jours" className="flex-shrink-0 p-1 rounded-full text-purple-200/60 hover:text-white">
+          <button onClick={dismiss} aria-label="Masquer pendant 7 jours" className="flex-shrink-0 p-1 rounded-full text-purple-200/80 hover:text-white">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -148,7 +148,7 @@ export function InstallAppButton({ className = '', variant = 'pill' }: { classNa
                   </li>
                 ))}
               </ol>
-              {os === 'ios' && <p className="mt-4 text-xs text-purple-300/60">Sur iPhone, ça marche depuis Safari (et Chrome récent, via Partager).</p>}
+              {os === 'ios' && <p className="mt-4 text-xs text-purple-300/85">Sur iPhone, ça marche depuis Safari (et Chrome récent, via Partager).</p>}
             </motion.div>
           </motion.div>
         )}

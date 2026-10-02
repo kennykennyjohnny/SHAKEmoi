@@ -68,9 +68,9 @@ export function RecapCard({ user }: { user: any }) {
               {recap.shakes} Shake{recap.shakes > 1 ? 's' : ''} · {recap.likes} like{recap.likes > 1 ? 's' : ''} reçu{recap.likes > 1 ? 's' : ''}{recap.genre ? ` · ${recap.genre}` : ''}
             </p>
           </div>
-          <ChevronRight className="w-5 h-5 text-purple-200/70 flex-shrink-0" />
+          <ChevronRight className="w-5 h-5 text-purple-200/85 flex-shrink-0" />
         </button>
-        <button onClick={hide} aria-label="Masquer le récap" className="absolute top-2 right-2 p-1.5 rounded-full text-purple-200/60 hover:text-white hover:bg-white/10">
+        <button onClick={hide} aria-label="Masquer le récap" className="absolute top-2 right-2 p-1.5 rounded-full text-purple-200/80 hover:text-white hover:bg-white/10">
           <X className="w-4 h-4" />
         </button>
       </div>

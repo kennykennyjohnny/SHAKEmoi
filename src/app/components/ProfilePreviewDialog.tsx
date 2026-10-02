@@ -198,18 +198,18 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
             ) : profile && block === 'blocked_me' ? (
               <div className="py-16 text-center px-6">
                 <p className="text-lg font-semibold">Profil indisponible</p>
-                <p className="text-sm text-purple-300/70 mt-1">Ce profil n'est pas accessible.</p>
+                <p className="text-sm text-purple-300/90 mt-1">Ce profil n'est pas accessible.</p>
               </div>
             ) : profile && block === 'i_blocked' ? (
               <div className="py-16 text-center px-6">
                 <Ban className="w-10 h-10 text-pink-300 mx-auto mb-3" />
                 <p className="text-lg font-semibold">Tu as bloqué @{profile.username}</p>
-                <p className="text-sm text-purple-300/70 mt-1">Vous ne voyez plus vos contenus et ne pouvez plus vous écrire.</p>
+                <p className="text-sm text-purple-300/90 mt-1">Vous ne voyez plus vos contenus et ne pouvez plus vous écrire.</p>
                 <button onClick={toggleBlock} className="mt-5 px-5 py-2 rounded-full bg-purple-700/60 text-sm font-semibold">Débloquer</button>
               </div>
             ) : !profile ? (
               <div className="py-16 text-center">
-                <p className="text-purple-300/70">Profil introuvable</p>
+                <p className="text-purple-300/90">Profil introuvable</p>
                 <button onClick={onClose} className="mt-4 px-4 py-2 bg-purple-600 rounded-lg text-sm">Fermer</button>
               </div>
             ) : (
@@ -222,21 +222,21 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                         <span className="truncate">{displayName}</span>
                         <StreakBadge userId={profile.id} />
                       </h2>
-                      <p className="text-sm text-purple-400/80 mb-3">@{profile.username}</p>
+                      <p className="text-sm text-purple-300/90 mb-3">@{profile.username}</p>
                       <div className="flex items-center gap-5">
                         <div className="text-center">
                           <p className="font-bold text-white text-lg leading-tight">{stats.posts}</p>
-                          <p className="text-[10px] text-purple-400/60 uppercase tracking-wider">Shakes</p>
+                          <p className="text-[10px] text-purple-300/80 uppercase tracking-wider">Shakes</p>
                         </div>
                         <div className="w-px h-8 bg-purple-800/30" />
                         <button onClick={() => !onRequireAuth && setList('followers')} className="text-center hover:opacity-80">
                           <p className="font-bold text-white text-lg leading-tight">{stats.followers}</p>
-                          <p className="text-[10px] text-purple-400/60 uppercase tracking-wider">Abonnés</p>
+                          <p className="text-[10px] text-purple-300/80 uppercase tracking-wider">Abonnés</p>
                         </button>
                         <div className="w-px h-8 bg-purple-800/30" />
                         <button onClick={() => !onRequireAuth && setList('following')} className="text-center hover:opacity-80">
                           <p className="font-bold text-white text-lg leading-tight">{stats.following}</p>
-                          <p className="text-[10px] text-purple-400/60 uppercase tracking-wider">Suivis</p>
+                          <p className="text-[10px] text-purple-300/80 uppercase tracking-wider">Suivis</p>
                         </button>
                       </div>
                     </div>
@@ -256,10 +256,10 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                         <span className="text-xs text-purple-300/80">Compatibilité musicale</span>
                         {taste.status === 'ok'
                           ? <span className="text-sm font-bold text-pink-400">{taste.score} %</span>
-                          : <span className="text-[11px] text-purple-300/70">Pas encore assez de sons</span>}
+                          : <span className="text-[11px] text-purple-300/90">Pas encore assez de sons</span>}
                       </div>
-                      {taste.status === 'ok' && tasteExplanation(taste) && <p className="text-[11px] text-purple-200/70 mt-1">{tasteExplanation(taste)}</p>}
-                      {taste.status === 'not_enough' && <p className="text-[11px] text-purple-300/60 mt-1">Il faut au moins 5 sons partagés chacun (toi : {taste.mine}, @{profile.username} : {taste.theirs}).</p>}
+                      {taste.status === 'ok' && tasteExplanation(taste) && <p className="text-[11px] text-purple-200/85 mt-1">{tasteExplanation(taste)}</p>}
+                      {taste.status === 'not_enough' && <p className="text-[11px] text-purple-300/85 mt-1">Il faut au moins 5 sons partagés chacun (toi : {taste.mine}, @{profile.username} : {taste.theirs}).</p>}
                     </div>
                   )}
 
@@ -289,7 +289,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
 
                   {(stories.length > 0 || pinnedStories.length > 0) && (
                     <div className="mt-4">
-                      <p className="text-[11px] text-purple-300/60 uppercase tracking-wider mb-2">Shakes éphémères</p>
+                      <p className="text-[11px] text-purple-300/85 uppercase tracking-wider mb-2">Shakes éphémères</p>
                       <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {stories.map((story: any) => (
                           <button key={story.id} onClick={() => { setViewerList(stories); setActiveStory(story); }} className="flex-shrink-0 text-center w-16">
@@ -298,7 +298,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                                 <img loading="lazy" src={avatarThumb(story.image_url, 256) || story.cover_url || avatar} className="w-full h-full rounded-full object-cover" alt="" />
                               </div>
                             </div>
-                            <p className="text-[10px] text-purple-300/70 mt-1">En cours</p>
+                            <p className="text-[10px] text-purple-300/90 mt-1">En cours</p>
                           </button>
                         ))}
                         {pinnedStories.map((story: any) => (
@@ -308,7 +308,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                                 <img loading="lazy" src={avatarThumb(story.image_url, 256) || story.cover_url || avatar} className="w-full h-full rounded-full object-cover" alt="" />
                               </div>
                             </div>
-                            <p className="text-[10px] text-purple-300/70 mt-1 truncate">{story.track_name || 'À la une'}</p>
+                            <p className="text-[10px] text-purple-300/90 mt-1 truncate">{story.track_name || 'À la une'}</p>
                           </button>
                         ))}
                       </div>

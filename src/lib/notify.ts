@@ -100,7 +100,7 @@ export function isNotifTypeShown(type: string, prefs = getNotifPrefs()): boolean
 export async function showLocalNotification(body: string, tag?: string) {
   if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
   if (localStorage.getItem('shakemoi_push_enabled') !== 'true') return;
-  const options: NotificationOptions = { body, icon: '/icon-192.png', badge: '/favicon-32.png', tag };
+  const options: NotificationOptions = { body, badge: '/badge-96.png', tag }; // Q10 : logo une seule fois
   try {
     const reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : undefined;
     if (reg) { await reg.showNotification('SHAKEmoi', options); return; }

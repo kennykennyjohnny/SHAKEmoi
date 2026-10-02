@@ -52,6 +52,28 @@
   caret-color: auto;
 }
 
+/* Retour de Kenny (02/10) : « des curseurs qui se mettent partout ». Sur
+   téléphone, un appui long ou un double-tap (like) sélectionnait le texte :
+   poignées bleues, loupe, menu Copier. Sélection réservée aux champs et aux
+   textes faits pour être copiés (.select-text / .select-all : code de cercle,
+   lien). Copier un message passe par son menu. */
+@media (pointer: coarse) {
+  :where(body, body *) {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  :where(input, textarea, [contenteditable="true"], .select-text, .select-text *) {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
+}
+/* Contour de focus seulement au clavier (plus de cadre après un toucher). */
+:where(:focus:not(:focus-visible)) {
+  outline: none;
+}
+
 /* Micro-animations globales */
 @layer base {
   * {

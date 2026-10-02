@@ -52,7 +52,7 @@ export function ReshakeDialog({ shake, onClose, onConfirm }: ReshakeDialogProps)
             onClick={onClose}
             className="p-1.5 hover:bg-purple-900/40 rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-purple-300/60" />
+            <X className="w-5 h-5 text-purple-300/85" />
           </button>
         </div>
 
@@ -67,9 +67,9 @@ export function ReshakeDialog({ shake, onClose, onConfirm }: ReshakeDialogProps)
                 className="w-14 h-14 rounded-md object-cover"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-purple-300/60 mb-1">@{shake.user.username}</p>
+                <p className="text-xs text-purple-300/85 mb-1">@{shake.user.username}</p>
                 <h3 className="font-bold text-sm truncate">{shake.track.title}</h3>
-                <p className="text-xs text-purple-300/60 truncate">{shake.track.artist}</p>
+                <p className="text-xs text-purple-300/85 truncate">{shake.track.artist}</p>
               </div>
             </div>
             {shake.caption && (
@@ -86,11 +86,11 @@ export function ReshakeDialog({ shake, onClose, onConfirm }: ReshakeDialogProps)
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Pourquoi tu reshakes ce son ? 🎵"
-              className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg px-3 py-2 text-white placeholder-purple-400/40 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+              className="w-full bg-purple-950/40 border border-purple-800/30 rounded-lg px-3 py-2 text-white placeholder-purple-300/70 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
               rows={3}
               maxLength={280}
             />
-            <p className="text-xs text-purple-400/50 mt-1 text-right">
+            <p className="text-xs text-purple-300/80 mt-1 text-right">
               {comment.length}/280
             </p>
           </div>

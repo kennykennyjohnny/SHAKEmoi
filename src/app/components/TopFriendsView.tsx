@@ -59,7 +59,7 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
       <div className="px-4 pt-3 flex-shrink-0">
         <div className="relative grid grid-cols-2 border-b border-purple-500/20">
           {SCOPES.map((sc) => (
-            <button key={sc} onClick={() => setScope(sc)} className={`py-2.5 text-sm font-semibold transition-colors ${scope === sc ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}>
+            <button key={sc} onClick={() => setScope(sc)} className={`py-2.5 text-sm font-semibold transition-colors ${scope === sc ? 'text-white' : 'text-purple-300/80 hover:text-purple-200'}`}>
               {sc === 'friends' ? 'Amis' : 'Tout SHAKEMOI'}
             </button>
           ))}
@@ -73,7 +73,7 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
           <div className="flex bg-violet-950/25 rounded-full p-0.5 border border-purple-500/20">
             {([7, 30, 0] as const).map((p) => (
               <button key={p} onClick={() => setPeriod(p)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${period === p ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm' : 'text-purple-300/60 hover:text-white'}`}>
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${period === p ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm' : 'text-purple-300/85 hover:text-white'}`}>
                 {p === 7 ? '7 jours' : p === 30 ? '30 jours' : 'Depuis toujours'}
               </button>
             ))}
@@ -137,7 +137,7 @@ function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scop
   const label = period === 7 ? 'sur 7 jours' : period === 30 ? 'sur 30 jours' : 'depuis le début';
 
   if (loading && !data) {
-    return <div className="flex flex-col items-center justify-center py-24"><Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-3" /><p className="text-purple-300/60 text-sm">Calcul des tendances…</p></div>;
+    return <div className="flex flex-col items-center justify-center py-24"><Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-3" /><p className="text-purple-300/85 text-sm">Calcul des tendances…</p></div>;
   }
   if (error && !data) {
     return (
@@ -203,11 +203,11 @@ function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scop
             {data.artists.slice(0, 10).map((a: any, i: number) => (
               <div key={a.name + i} className="flex-shrink-0 w-24 text-center">
                 <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-violet-950/40">
-                  {a.cover ? <img loading="lazy" src={thumb(a.cover, 300)} alt="" className="w-full h-full object-cover" /> : <Music className="w-8 h-8 m-8 text-purple-300/50" />}
+                  {a.cover ? <img loading="lazy" src={thumb(a.cover, 300)} alt="" className="w-full h-full object-cover" /> : <Music className="w-8 h-8 m-8 text-purple-300/80" />}
                   <span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-black/60 text-[10px] font-bold flex items-center justify-center">{i + 1}</span>
                 </div>
                 <p className="text-xs font-semibold text-white truncate mt-1.5">{a.name}</p>
-                <p className="text-[10px] text-purple-300/60">{a.shakes} shake{a.shakes > 1 ? 's' : ''} · {a.people} pers.</p>
+                <p className="text-[10px] text-purple-300/85">{a.shakes} shake{a.shakes > 1 ? 's' : ''} · {a.people} pers.</p>
               </div>
             ))}
           </div>
@@ -225,12 +225,12 @@ function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scop
                 <div key={g.family} className="rounded-xl bg-violet-950/30 border border-purple-800/20 px-3 py-2.5">
                   <div className="flex items-center gap-2">
                     <p className="flex-1 text-sm font-semibold text-white">{g.family}</p>
-                    <p className="text-[11px] text-purple-300/70">{g.shakes} son{g.shakes > 1 ? 's' : ''} · {g.people} pers.</p>
+                    <p className="text-[11px] text-purple-300/90">{g.shakes} son{g.shakes > 1 ? 's' : ''} · {g.people} pers.</p>
                   </div>
                   <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
                     <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500" style={{ width: `${Math.round((g.shakes / max) * 100)}%` }} />
                   </div>
-                  {g.artists?.length > 0 && <p className="text-[11px] text-purple-300/60 mt-1.5 truncate">{g.artists.join(' · ')}</p>}
+                  {g.artists?.length > 0 && <p className="text-[11px] text-purple-300/85 mt-1.5 truncate">{g.artists.join(' · ')}</p>}
                 </div>
               );
             })}
@@ -250,7 +250,7 @@ function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scop
                   <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 text-[10px] font-bold flex items-center justify-center border border-[#1E1440]">{i + 1}</span>
                 </div>
                 <p className="text-[11px] font-semibold text-white truncate mt-1.5">@{u.username}</p>
-                <p className="text-[10px] text-purple-300/60">{u.shakes} shake{u.shakes > 1 ? 's' : ''}</p>
+                <p className="text-[10px] text-purple-300/85">{u.shakes} shake{u.shakes > 1 ? 's' : ''}</p>
               </button>
             ))}
           </div>
@@ -273,7 +273,7 @@ function SectionTitle({ icon, title, sub }: { icon: React.ReactNode; title: stri
   return (
     <div className="mb-3">
       <h2 className="text-base font-bold flex items-center gap-2">{icon}{title}</h2>
-      {sub && <p className="text-[11px] text-purple-300/60 mt-0.5">{sub}</p>}
+      {sub && <p className="text-[11px] text-purple-300/85 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -281,8 +281,8 @@ function SectionTitle({ icon, title, sub }: { icon: React.ReactNode; title: stri
 function Empty({ text }: { text: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-10 text-center rounded-2xl border border-purple-500/15">
-      <Music className="w-8 h-8 text-purple-400/50 mb-2" />
-      <p className="text-xs text-purple-300/70 max-w-xs">{text}</p>
+      <Music className="w-8 h-8 text-purple-300/80 mb-2" />
+      <p className="text-xs text-purple-300/90 max-w-xs">{text}</p>
     </div>
   );
 }
@@ -291,14 +291,14 @@ function SongRow({ rank, track, detail, onOpen, onApp, action }: { rank: number;
   const trackId = track.track_id || track.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] || null;
   return (
     <div className="rounded-xl border bg-violet-950/15 hover:bg-violet-950/25 border-purple-500/20 p-3 flex items-center gap-3">
-      <span className="text-sm font-bold text-purple-300/60 w-6 text-center flex-shrink-0">{rank}</span>
+      <span className="text-sm font-bold text-purple-300/85 w-6 text-center flex-shrink-0">{rank}</span>
       <SongCover songKey={`top-${track.key}`} title={track.track_name} artist={track.artist} cover={track.cover_url}
         previewUrl={track.preview_url} spotifyId={trackId} spotifyUrl={track.spotify_url} className="w-12 h-12" iconSize="sm" />
       {/* Toucher la ligne : le post (ou les posts) de ce son (P2). */}
       <button onClick={onOpen} className="flex-1 min-w-0 text-left">
         <h3 className="font-semibold text-sm text-white truncate">{track.track_name}</h3>
-        <p className="text-xs text-purple-200/60 truncate">{track.artist}</p>
-        <p className="text-xs text-purple-300/60 flex items-center gap-1 mt-0.5 truncate">{detail}</p>
+        <p className="text-xs text-purple-200/80 truncate">{track.artist}</p>
+        <p className="text-xs text-purple-300/85 flex items-center gap-1 mt-0.5 truncate">{detail}</p>
       </button>
       <button onClick={onApp} aria-label="Ouvrir dans mon appli" className="p-1.5 rounded-full bg-[#FFEFD5]/10 hover:bg-[#FFEFD5]/20 flex-shrink-0">
         <MyAppLogo className="w-4 h-4 text-[#FFEFD5]" />
@@ -324,8 +324,8 @@ function PodiumCard({ track, rank, barHeight, crown, onOpen }: { track: any; ran
       </div>
       <button onClick={onOpen} className={`w-full bg-gradient-to-t ${barGradient} border-t-2 ${rankBorderColor} flex flex-col items-center justify-start px-1.5 pt-2 pb-1 rounded-b-lg`} style={{ height: barHeight }}>
         <p className="text-[11px] font-bold text-white text-center leading-tight line-clamp-2 w-full">{track.track_name}</p>
-        <p className="text-[9px] text-purple-300/60 truncate w-full text-center mt-0.5">{track.artist}</p>
-        <span className="flex items-center gap-0.5 mt-1 text-[9px] text-purple-300/60 font-medium"><Repeat2 className="w-2.5 h-2.5" />{track.shakes}×</span>
+        <p className="text-[9px] text-purple-300/85 truncate w-full text-center mt-0.5">{track.artist}</p>
+        <span className="flex items-center gap-0.5 mt-1 text-[9px] text-purple-300/85 font-medium"><Repeat2 className="w-2.5 h-2.5" />{track.shakes}×</span>
       </button>
     </motion.div>
   );
@@ -353,7 +353,7 @@ function SongPostsSheet({ song, onClose }: { song: any; onClose: () => void }) {
             <img src={thumb(song.cover_url, 128)} alt="" className="w-12 h-12 rounded-lg object-cover" />
             <div className="flex-1 min-w-0">
               <p className="font-bold truncate">{song.track_name}</p>
-              <p className="text-xs text-purple-300/70 truncate">{song.artist}</p>
+              <p className="text-xs text-purple-300/90 truncate">{song.artist}</p>
             </div>
             <button aria-label="Fermer" onClick={onClose} className="p-1.5 rounded-full hover:bg-purple-900/40"><X className="w-5 h-5" /></button>
           </div>
@@ -364,10 +364,10 @@ function SongPostsSheet({ song, onClose }: { song: any; onClose: () => void }) {
                 <button key={p.id} onClick={() => { onClose(); openPost(p.id); }} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-purple-900/30 text-left">
                   <img src={avatarThumb(u?.profile_album_cover_url, 64) || defaultAvatar(u?.username)} alt="" className="w-9 h-9 rounded-full object-cover" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm"><span className="font-semibold">@{u?.username}</span> <span className="text-purple-300/70">{p.is_reshake ? 'a reshaké' : 'a shaké'}</span></p>
-                    {p.text && <p className="text-xs text-purple-200/70 truncate">« {p.text} »</p>}
+                    <p className="text-sm"><span className="font-semibold">@{u?.username}</span> <span className="text-purple-300/90">{p.is_reshake ? 'a reshaké' : 'a shaké'}</span></p>
+                    {p.text && <p className="text-xs text-purple-200/85 truncate">« {p.text} »</p>}
                   </div>
-                  <span className="text-[10px] text-purple-300/60 flex-shrink-0">{formatRelative(p.created_at)}</span>
+                  <span className="text-[10px] text-purple-300/85 flex-shrink-0">{formatRelative(p.created_at)}</span>
                 </button>
               );
             })}
@@ -405,7 +405,7 @@ function MyWrap({ period }: { period: Period }) {
     <div>
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl px-3.5 py-2.5">
         <span className="flex items-center gap-2 text-sm font-bold"><BarChart3 className="w-4 h-4 text-fuchsia-400" />{period === 7 ? 'Mon résumé de la semaine' : period === 30 ? 'Mon résumé du mois' : 'Mon résumé depuis le début'}</span>
-        {open ? <ChevronUp className="w-4 h-4 text-purple-400/60" /> : <ChevronDown className="w-4 h-4 text-purple-400/60" />}
+        {open ? <ChevronUp className="w-4 h-4 text-purple-300/80" /> : <ChevronDown className="w-4 h-4 text-purple-300/80" />}
       </button>
       <AnimatePresence>
         {open && (
@@ -427,7 +427,7 @@ function Stat({ icon, value, label, small }: { icon: React.ReactNode; value: any
     <div className="bg-violet-950/25 border border-purple-500/15 rounded-xl p-2.5">
       <div className="text-purple-300 mb-1">{icon}</div>
       <p className={`${small ? 'text-xs' : 'text-lg'} font-bold text-white truncate leading-tight`}>{value}</p>
-      <p className="text-[10px] text-purple-400/60">{label}</p>
+      <p className="text-[10px] text-purple-300/80">{label}</p>
     </div>
   );
 }

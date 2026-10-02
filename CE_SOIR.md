@@ -525,3 +525,48 @@ Légende : ✅ fait · 🟡 partiel · ⏭️ reporté à la prochaine session �
 | Bloqué par toi | 🟡 | Test Playwright ordinateur (P13) et tests connectés : **compte de test** à créer. Sentry (P16) : **clé**. Thèmes du Shake de la semaine (P23) : **décision**. Tests téléphone des vidéos (P20). Publication des pages légales (P30) : **ton OK**. Voir MATIN.md. |
 
 **Bilan de la nuit (sections P et N)** : P1 → P31 et N1 → N6 traités. Restent seulement les points bloqués ci-dessus (clé, compte de test, décision, ton OK, tests sur téléphone).
+
+---
+
+# Section Q — retours après les tests du 01/10 (session du 02/10)
+
+Légende : ✅ fait · 🟡 partiel · ⏭️ reporté · ⏳ pas encore traité
+
+## Étape 0 — restes P / N
+| # | Statut | Explication |
+|---|---|---|
+| Liste | ✅ | Relu `CE_SOIR.md` + `PROMPT_5` : P1 → P31 et N1 → N6 sont tous traités. Il ne reste que des points **bloqués par toi** (déjà dans `MATIN.md`) : clé Sentry (P16), compte de test (P13), clé GIF (M5), OK des pages légales (P30), thèmes du Shake de la semaine (P23), tests sur vrai téléphone (P7, P20). |
+| Patch de Jerry | ✅ | Revérifié dans la vraie base : plus de dossier `supabase/pending/`, `rename_circle` + message « a renommé le cercle » en place, likes de messages privés (`message_likes`) en place, règle de lecture des posts publics (Global ≠ Amis) en place. |
+| P24 → Q11 | ⏳ | Les sons épinglés (P24) existent en rubrique séparée : ils seront transformés au lot Q4 + Q11. |
+
+## Ton retour en reprenant : « beaucoup de texte illisible » et « des curseurs qui se mettent partout »
+| # | Statut | Explication |
+|---|---|---|
+| Texte illisible | ✅ | Mesuré : **~300 textes** de l'appli (dates, @pseudos, sous-titres, compteurs, textes d'aide, champs vides) étaient en violet transparent avec un contraste de **2 à 3,9 pour 1** sur le fond (il faut au moins 4,5). Tous remontés au-dessus de 4,5 : par exemple le gris-violet le plus utilisé (199 endroits) passe de 3,9 à 5,9. La hiérarchie reste (blanc = principal, violet clair = secondaire). |
+| Curseurs | ✅ | Sur téléphone, un appui long ou un **double-tap pour liker** sélectionnait le texte : poignées bleues, loupe, menu « Copier » qui apparaissaient partout. Maintenant la sélection n'existe que dans les champs où on écrit (et le code / lien d'un cercle, faits pour être copiés). Copier un message reste possible par son menu. Plus de cadre de focus après un toucher (seulement au clavier, sur ordinateur). |
+| Clavier qui s'ouvre tout seul | ✅ | L'onglet Recherche, « Envoyer à un ami », la fenêtre du Shake de la semaine (qui s'ouvre toute seule une fois par semaine) et « Signaler un bug » mettaient le curseur dans le champ et **ouvraient le clavier sans qu'on touche rien**. Sur téléphone, le champ attend maintenant qu'on le touche (sur ordinateur, rien ne change). |
+
+## Banc d'essai « connecté » (nouveau, sert à toute la section Q)
+Sans compte de test, je ne pouvais pas voir l'appli connectée. J'ai monté un **banc d'essai** : l'appli tourne en local avec une adresse de base **factice**, et Playwright répond à sa place avec des données d'exemple (Léa, Bapt, un cercle « Les potes », 40 messages avec photos et sons, des posts). **Rien ne touche la vraie base, aucun mot de passe.** Commande : `npm run test:mock`. Fichiers : `e2e/mock/backend.ts`, `playwright.mock.config.ts`, `e2e/*.mock.spec.ts`.
+
+## Lot Q1 — Q10, Q7, Q6, Q13, Q12
+| # | Statut | Explication |
+|---|---|---|
+| Q10 logo | ✅ | La grande image de droite (`icon` = le logo) est **retirée** de toutes les notifs (envoyées par le serveur et par l'appli). Nouvelle petite icône **`/badge-96.png`** : le S de SHAKEmoi **blanc sur fond transparent, 96×96** (avant : le favicon en couleur, qu'Android transforme en carré blanc). Généré par `scripts/make-badge.mjs`. |
+| Q10 textes | ✅ | Titre = **la personne** (son nom affiché, sinon son pseudo), texte court, plus jamais « SHAKEmoi » en titre. Exemples : **« Bapt » — « a aimé ton Shake · Lithe »** ; « Léa » — « s'est abonné·e à toi » ; « Léa et 3 autres » — « ont aimé ton Shake éphémère » ; message privé : « Bapt » — « 🎵 Fall Back — Lithe » ; cercle : « Les potes » — « Bapt : ça part ! » ; série : « Ta flamme est en jeu 🔥 » — « Série de 3 semaines · publie un Shake avant mardi matin » ; test : « C'est activé ! ». Fonction `push` redéployée (v4). |
+| Q10 vérif téléphone | 🟡 | Je n'ai pas de téléphone : **à toi** (test 1 plus bas). Ce que tu dois voir sur Android : le S blanc à gauche (barre d'état et notif), **plus rien à droite**. iPhone : iOS affiche toujours l'icône de l'appli installée à gauche (il ignore `icon` et `badge`), titre et texte comme ci-dessus. |
+| Q7 cause | ✅ | **Trouvée dans la vraie base** : la règle de modification des cercles est réservée au **créateur**. Quand un autre membre changeait la photo, la base modifiait 0 ligne **sans erreur** : la photo s'affichait sur le moment, puis disparaissait au rechargement. Cas réel : **@raph a mis 2 fois une photo sur « J B L »** (cercle créé par @kenny) le 01/10 → refusées en silence. La colonne `photo_url` existe bien, le stockage était OK (les 2 photos y sont), le cache n'y est pour rien (nom de fichier unique à chaque envoi). |
+| Q7 correctif | ✅ | Fonction `set_circle_photo` (comme `rename_circle`) : **tout membre** change la photo, et **seulement la photo** (adresse de notre stockage uniquement). Petit message dans la conversation « **Léa a changé la photo du cercle** » (aussi en aperçu dans la liste). Erreur claire si ça échoue, plus jamais silencieux. La nouvelle photo suit tout de suite : en-tête, infos, liste, colonne ordinateur (temps réel), page d'invitation. **Testé en base** (transaction annulée) : membre non créateur → OK + message ; non-membre → refusé ; adresse externe → refusée ; fabriquer le message à la main → refusé. |
+| Q7 bilan | ✅ | **19 cercles** : 1 avait une photo (« Jheje »), 18 n'en avaient pas. **1 photo perdue retrouvée** dans le stockage et remise : « J B L » (la dernière envoyée par @raph). Il restait aussi la photo d'un cercle supprimé depuis (rien à faire). ⚠️ La photo de « Jheje » est dans l'ancien espace privé : les membres la voient, mais pas la page d'invitation ; il suffit de la remettre une fois (déjà noté en B5). |
+| Q6 | ✅ | Adresse lisible **`/messages/<pseudo>`** (l'ancien `/messages/<id>` marche toujours), `/cercles/<id>`, `/cercles/<id>/playlist`, `/post/<id>`, `/profil`, `/u/<pseudo>`. **Test Playwright** (téléphone + ordinateur) : ouvrir une conversation → actualiser → on y est toujours, tout en bas ; pareil pour un cercle, le profil et un post. **6/6 OK.** |
+| Q13 cause | ✅ | **Reproduit sur le banc** : un cercle s'ouvrait **107 à 161 px au-dessus** du dernier message. Deux causes : (1) l'appli visait le séparateur « Non lus » (règle P12) au lieu du bas ; (2) on faisait défiler en bas **avant** que les photos aient leur taille, puis elles poussaient le contenu (un seul recalage après 0,2 s, trop tôt en 4G). |
+| Q13 correctif | ✅ | La conversation est **ancrée en bas** : à chaque changement de hauteur (photo, GIF, pochette qui finit de charger), elle se recale, **tant que tu n'as pas remonté toi-même** (dès que tu fais défiler, elle ne bouge plus ; revenir tout en bas réactive l'ancre). La liste n'apparaît **qu'une fois placée** : aucun défilement visible depuis le haut. Les photos ont une **taille fixe réservée** (rien ne saute). On arrive toujours sur le dernier message (Q13 remplace « on arrive sur les non-lus » ; le séparateur « Non lus » reste quand on remonte). Nouveau message reçu en bas → descend ; remonté → bouton « ↓ nouveaux messages ». Même chose après actualisation et en revenant d'une autre conversation. **Test Playwright** avec des photos chargées en retard (1,2 s) : dernier message visible, 0 px d'écart. |
+| Q12 | ✅ | Badge de la flamme (profil, aperçu de profil) : **pastille opaque sombre** avec contour, chiffre **blanc extra-gras 13 px** (avant 11 px sur fond transparent) → contraste > 12:1, même sur une pochette claire derrière. Flamme de l'en-tête : chiffre **toujours blanc** (avant violet pâle quand la flamme était grise, ~3:1), dans une pastille. Petite fenêtre au toucher : fond opaque, texte blanc / violet très clair. Flamme grise éclaircie pour rester visible. |
+
+**Tests (lot Q1)**
+1. **Notifs (Android, appli fermée)** : depuis un 2ᵉ compte, like un de tes Shakes → la notif montre le S blanc à gauche, **rien à droite**, titre = le prénom, texte « a aimé ton Shake · Titre ». Puis appli ouverte en arrière-plan : pareil. iPhone (appli installée) : décris-moi ce que tu vois.
+2. **Photo de cercle** : dans un cercle **que tu n'as pas créé** → infos → Photo → cadre → OK → « Photo enregistrée » + « Tu as changé la photo du cercle » dans la conversation. Actualise : la photo est toujours là, dans la liste aussi. Ouvre « J B L » : la photo de Raph est revenue.
+3. **Actualiser** : ouvre une conversation (l'adresse devient `/messages/pseudo`) → actualise → tu es toujours dedans, en bas. Pareil dans un cercle et sa playlist.
+4. **Ouvrir en bas** : ouvre une conversation avec des photos / GIF / sons → tu arrives directement sur le dernier message, sans voir défiler. Remonte un peu, fais-toi envoyer un message → bouton « ↓ 1 nouveau message ».
+5. **Flamme** : en-tête, ton profil, l'aperçu d'un ami qui a une série → le chiffre se lit bien ; touche-la → la petite fenêtre se lit bien.
+6. **Curseurs** : double-tape un message pour le liker, appuie longtemps sur un texte du fil → plus de poignées bleues ni de loupe. Va sur Recherche → le clavier ne s'ouvre plus tout seul.

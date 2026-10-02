@@ -80,7 +80,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-purple-300/60">Chargement du profil...</p>
+          <p className="text-purple-300/85">Chargement du profil...</p>
         </div>
       </div>
     );
@@ -118,23 +118,23 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
               <span className="truncate">{user.displayName}</span>
               <StreakBadge userId={user.id} />
             </h1>
-            <p className="text-sm text-purple-400/70 mb-3">@{user.username}</p>
+            <p className="text-sm text-purple-300/90 mb-3">@{user.username}</p>
 
             {/* Stats Row - clickable for own profile */}
             <div className="flex items-center gap-5">
               <div className="text-center">
                 <p className="font-bold text-white text-lg leading-tight">{stats.shakes}</p>
-                <p className="text-[10px] text-purple-400/50 uppercase tracking-wider">Shakes</p>
+                <p className="text-[10px] text-purple-300/80 uppercase tracking-wider">Shakes</p>
               </div>
               <div className="w-px h-8 bg-purple-800/30" />
               <button onClick={() => loadFollowersList('followers')} className="text-center hover:opacity-80 transition-opacity">
                 <p className="font-bold text-white text-lg leading-tight">{stats.followers}</p>
-                <p className="text-[10px] text-purple-400/50 uppercase tracking-wider">Abonnés</p>
+                <p className="text-[10px] text-purple-300/80 uppercase tracking-wider">Abonnés</p>
               </button>
               <div className="w-px h-8 bg-purple-800/30" />
               <button onClick={() => loadFollowersList('following')} className="text-center hover:opacity-80 transition-opacity">
                 <p className="font-bold text-white text-lg leading-tight">{stats.following}</p>
-                <p className="text-[10px] text-purple-400/50 uppercase tracking-wider">Suivis</p>
+                <p className="text-[10px] text-purple-300/80 uppercase tracking-wider">Suivis</p>
               </button>
             </div>
           </div>
@@ -142,7 +142,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
         {/* Bio */}
         {user.bio && (
-          <p className="text-sm text-purple-200/70 mt-3 leading-relaxed">{user.bio}</p>
+          <p className="text-sm text-purple-200/85 mt-3 leading-relaxed">{user.bio}</p>
         )}
 
         {/* Sons épinglés (P24) */}
@@ -150,7 +150,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
 
         {/* Stories : en cours, « À la une » (épinglées) et accès aux archives */}
         <div className="mt-4">
-          <p className="text-[11px] text-purple-300/60 uppercase tracking-wider mb-2">Shakes éphémères</p>
+          <p className="text-[11px] text-purple-300/85 uppercase tracking-wider mb-2">Shakes éphémères</p>
           <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {activeStories.map((story: any) => (
               <button key={story.id} onClick={() => { setStoryList(activeStories); setSelectedStory(story); }} className="flex-shrink-0 flex flex-col items-center gap-1 w-16">
@@ -290,7 +290,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                   Partager mon profil
                 </h2>
                 <button aria-label="Fermer" onClick={() => setShowShareProfile(false)} className="p-1.5 hover:bg-purple-900/40 rounded-full">
-                  <X className="w-5 h-5 text-purple-300/60" />
+                  <X className="w-5 h-5 text-purple-300/85" />
                 </button>
               </div>
 
@@ -307,19 +307,19 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
                   <div className="flex justify-center gap-6 mt-3">
                     <div className="text-center">
                       <p className="font-bold text-white">{stats.shakes}</p>
-                      <p className="text-[10px] text-purple-400/50">Shakes</p>
+                      <p className="text-[10px] text-purple-300/80">Shakes</p>
                     </div>
                     <div className="text-center">
                       <p className="font-bold text-white">{stats.followers}</p>
-                      <p className="text-[10px] text-purple-400/50">Abonnés</p>
+                      <p className="text-[10px] text-purple-300/80">Abonnés</p>
                     </div>
                   </div>
-                  <p className="text-xs text-purple-300/60 mt-3">shakemoi.fr</p>
+                  <p className="text-xs text-purple-300/85 mt-3">shakemoi.fr</p>
                 </div>
 
                 {/* Share link */}
                 <div className="bg-purple-950/40 border border-purple-800/30 rounded-xl p-3 mb-4">
-                  <p className="text-[10px] text-purple-400/50 mb-1">Mon lien de profil</p>
+                  <p className="text-[10px] text-purple-300/80 mb-1">Mon lien de profil</p>
                   <div className="flex items-center gap-2">
                     <p className="text-sm text-white font-mono flex-1 truncate">shakemoi.fr/u/{user.username}</p>
                     <button

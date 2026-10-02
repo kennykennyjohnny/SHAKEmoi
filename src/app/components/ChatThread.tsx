@@ -4,7 +4,7 @@
 // citation cliquable, @mentions (P28), « Vu » / « Vu par » (P12-4),
 // « … est en train d'écrire » (P12-5), sourdine (P12-6), séparateur « Non lus »
 // et bouton « ↓ nouveaux messages » (P12-7), sons partout (P12-9).
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Send, Search, Music, Loader2, X, Camera, Smile, Heart, Reply, Copy, Trash2, Bell, BellOff, ChevronDown, MoreHorizontal, Users, Flag } from 'lucide-react';
@@ -109,8 +109,24 @@ export function ChatThread({
   }, [chat.kind, chat.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------- Défilement ----------
+  // Q13 : la conversation est « ancrée » (en bas, ou sur le premier non-lu).
+  // Tant que la personne n'a pas fait défiler elle-même, chaque changement de
+  // hauteur (photo, GIF ou pochette qui finit de charger, nouveau message) la
+  // recale sur l'ancre : on arrive directement sur le dernier message.
+  const anchorRef = useRef<{ kind: 'bottom' } | { kind: 'el'; id: string } | null>({ kind: 'bottom' });
+  const userScrollAt = useRef(0);
+  const markUserScroll = () => { userScrollAt.current = Date.now(); };
+  const applyAnchor = () => {
+    const box = boxRef.current;
+    const a = anchorRef.current;
+    if (!box || !a) return;
+    if (a.kind === 'bottom') { box.scrollTop = box.scrollHeight; return; }
+    const el = document.getElementById(`msg-${a.id}`);
+    if (el) box.scrollTop += el.getBoundingClientRect().top - box.getBoundingClientRect().top - box.clientHeight / 3;
+  };
   const scrollToBottom = (smooth = false) => {
     const box = boxRef.current;
+    anchorRef.current = { kind: 'bottom' };
     if (box) box.scrollTo({ top: box.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
   };
   const onScroll = () => {
@@ -119,12 +135,27 @@ export function ChatThread({
     const bottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 80;
     setAtBottom(bottom);
     if (bottom) setNewCount(0);
+    // Geste de la personne : elle reprend la main (l'ancre ne bouge plus rien),
+    // sauf si elle revient tout en bas.
+    if (Date.now() - userScrollAt.current < 1200) {
+      const atEnd = box.scrollTop + box.clientHeight >= box.scrollHeight - 4;
+      anchorRef.current = atEnd ? { kind: 'bottom' } : null;
+    }
   };
+  // Contenu qui grandit (images chargées, nouveaux messages) : on recale.
+  const contentRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => applyAnchor());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // Clavier du téléphone : la zone visible rétrécit, on reste en bas.
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
-    const onResize = () => { if (atBottomRef.current) scrollToBottom(); };
+    const onResize = () => { if (atBottomRef.current) scrollToBottom(); else applyAnchor(); };
     vv.addEventListener('resize', onResize);
     return () => vv.removeEventListener('resize', onResize);
   }, []);
@@ -182,20 +213,18 @@ export function ChatThread({
     return () => { off = true; };
   }, [chat.kind, chat.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Première ouverture : on arrive sur les non-lus, sinon tout en bas.
-  const placedRef = useRef(false);
-  useEffect(() => { placedRef.current = false; }, [chat.kind, chat.id]);
-  useEffect(() => {
-    if (loading || placedRef.current) return;
-    placedRef.current = true;
-    requestAnimationFrame(() => {
-      const el = firstUnreadId ? document.getElementById(`msg-${firstUnreadId}`) : null;
-      if (el) el.scrollIntoView({ block: 'center' });
-      else scrollToBottom();
-      // Les images changent la hauteur après coup : on recale une fois.
-      setTimeout(() => { if (!firstUnreadId) scrollToBottom(); }, 200);
-    });
-  }, [loading, firstUnreadId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Première ouverture : TOUJOURS sur le dernier message, tout en bas (Q13,
+  // remplace « on arrive sur les non-lus » de P12 ; le séparateur « Non lus »
+  // reste en remontant), SANS défilement visible : la liste n'apparaît qu'une
+  // fois placée.
+  const [placed, setPlaced] = useState(false);
+  useEffect(() => { setPlaced(false); anchorRef.current = { kind: 'bottom' }; }, [chat.kind, chat.id]);
+  useLayoutEffect(() => {
+    if (loading || placed) return;
+    anchorRef.current = { kind: 'bottom' };
+    applyAnchor();
+    setPlaced(true);
+  }, [loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Arrivée depuis la playlist : on remonte jusqu'au message et on le surligne.
   useEffect(() => {
@@ -290,6 +319,7 @@ export function ChatThread({
   // Toucher une citation : on remonte jusqu'au message d'origine et on le surligne.
   const jumpTo = async (id: string) => {
     let tries = 0;
+    anchorRef.current = null;
     while (!messagesRef.current.some((m) => m.id === id) && tries < 6) {
       const older = await loadOlder();
       if (!older.length) break;
@@ -530,20 +560,22 @@ export function ChatThread({
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-sm truncate" data-testid="chat-title">{title}</p>
-            <p className={`text-xs truncate ${typingNames.length ? 'text-pink-300' : 'text-purple-300/70'}`}>
+            <p className={`text-xs truncate ${typingNames.length ? 'text-pink-300' : 'text-purple-300/90'}`}>
               {typingNames.length ? (isCircle ? `${typingNames.slice(0, 2).join(', ')} ${typingNames.length > 1 ? 'écrivent' : 'écrit'}…` : 'est en train d’écrire…') : subtitle}
             </p>
           </div>
         </button>
         <button onClick={toggleMute} aria-label={muted ? 'Réactiver les notifications' : 'Mettre en sourdine'} title={muted ? 'En sourdine' : 'Mettre en sourdine'}
-          className={`p-2 rounded-full ${muted ? 'text-pink-300 bg-pink-500/10' : 'text-purple-300/70 hover:bg-violet-900/25'}`}>
+          className={`p-2 rounded-full ${muted ? 'text-pink-300 bg-pink-500/10' : 'text-purple-300/90 hover:bg-violet-900/25'}`}>
           {muted ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
         </button>
         {headerActions}
       </div>
 
       {/* Messages */}
-      <div ref={boxRef} onScroll={onScroll} className="flex-1 overflow-y-auto overscroll-contain px-3 py-3 min-h-0">
+      <div ref={boxRef} data-chat-scroll onScroll={onScroll} onWheel={markUserScroll} onTouchMove={markUserScroll} onKeyDown={markUserScroll} onPointerDown={markUserScroll}
+        className="flex-1 overflow-y-auto overscroll-contain px-3 py-3 min-h-0">
+        <div ref={contentRef} className={placed || loading ? '' : 'invisible'}>
         {hasMore && (
           <div className="flex justify-center mb-2">
             <button onClick={() => loadOlder()} disabled={loadingOlder} className="px-3 py-1.5 rounded-full bg-violet-950/40 border border-purple-500/25 text-xs text-purple-200/80 disabled:opacity-50">
@@ -555,7 +587,7 @@ export function ChatThread({
         {loading ? (
           <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /></div>
         ) : !error && messages.length === 0 ? (
-          <div className="text-center py-14 text-purple-300/60 text-sm">
+          <div className="text-center py-14 text-purple-300/85 text-sm">
             <Music className="w-9 h-9 text-[#FFEFD5] mx-auto mb-2" />
             {isCircle ? 'Aucun message dans ce cercle. Envoie un mot ou un son !' : 'Dis bonjour ou envoie un son 🎧'}
           </div>
@@ -568,8 +600,18 @@ export function ChatThread({
             return (
               <div key={msg.id} id={`msg-${msg.id}`}>
                 {newDay && <DaySep ts={msg.created_at} />}
-                <p className="text-center text-[11px] text-purple-300/70 py-1.5">
+                <p className="text-center text-[11px] text-purple-300/90 py-1.5">
                   {mine ? 'Tu as' : `@${sender?.username || 'quelqu’un'} a`} renommé le cercle en « {msg.text} »
+                </p>
+              </div>
+            );
+          }
+          if (msg.kind === 'photo') {
+            return (
+              <div key={msg.id} id={`msg-${msg.id}`}>
+                {newDay && <DaySep ts={msg.created_at} />}
+                <p className="text-center text-[11px] text-purple-300/90 py-1.5">
+                  {mine ? 'Tu as' : `@${sender?.username || 'quelqu’un'} a`} {msg.text === 'removed' ? 'retiré' : 'changé'} la photo du cercle
                 </p>
               </div>
             );
@@ -626,7 +668,7 @@ export function ChatThread({
                     )}
 
                     {msg.deleted_at ? (
-                      <p className="px-3 py-2 text-sm italic text-purple-300/60">Message retiré</p>
+                      <p className="px-3 py-2 text-sm italic text-purple-300/85">Message retiré</p>
                     ) : (
                       <>
                         {/* Citation (P27) */}
@@ -641,7 +683,7 @@ export function ChatThread({
                               <span className="block text-[11px] font-semibold text-pink-300">
                                 {msg.reply.sender_id === me ? 'Toi' : `@${(membersById[msg.reply.sender_id] || (msg.reply.sender_id === chat.id ? { username: avatarName } : null))?.username || '…'}`}
                               </span>
-                              <span className={`block text-xs truncate ${msg.reply.deleted_at ? 'italic text-purple-300/60' : 'text-purple-100/80'}`}>{messageSnippet(msg.reply)}</span>
+                              <span className={`block text-xs truncate ${msg.reply.deleted_at ? 'italic text-purple-300/85' : 'text-purple-100/80'}`}>{messageSnippet(msg.reply)}</span>
                             </span>
                           </button>
                         )}
@@ -655,13 +697,14 @@ export function ChatThread({
                                 {msg.text ? (mine ? 'Tu as répondu à son Shake éphémère' : 'A répondu à ton Shake éphémère') : (mine ? 'Tu as aimé son Shake éphémère' : 'A aimé ton Shake éphémère')}
                               </p>
                               {msg.text ? <p className="text-purple-50 break-words">{msg.text.startsWith('💭') ? (msg.text.split(':\n')[1] || msg.text) : msg.text}</p> : <p className="text-lg leading-none">❤️</p>}
-                              {msg.story?.track_name && <p className="text-[10px] text-purple-300/60 mt-1 truncate">🎵 {msg.story.track_name}{msg.story.artist ? ` — ${msg.story.artist}` : ''}</p>}
+                              {msg.story?.track_name && <p className="text-[10px] text-purple-300/85 mt-1 truncate">🎵 {msg.story.track_name}{msg.story.artist ? ` — ${msg.story.artist}` : ''}</p>}
                             </div>
                           </div>
                         )}
                         {msg.image_url && (
                           <div className="p-1">
-                            <MediaImg src={msg.image_url} alt="" className="max-w-full max-h-64 min-w-[6rem] min-h-[6rem] rounded-xl object-cover" />
+                            {/* Q13 : taille fixe, réservée avant le chargement : rien ne bouge. */}
+                            <MediaImg src={msg.image_url} alt="" className="w-52 max-w-full h-60 rounded-xl object-cover bg-violet-950/50" />
                           </div>
                         )}
                         {msg.track_name && (
@@ -674,7 +717,7 @@ export function ChatThread({
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold truncate">{msg.track_name}</p>
-                              <p className="text-xs text-purple-200/70 truncate">{msg.artist}</p>
+                              <p className="text-xs text-purple-200/85 truncate">{msg.artist}</p>
                             </div>
                             <button data-no-gesture aria-label="Ouvrir dans mon appli de musique"
                               onClick={(e) => { e.stopPropagation(); const url = getPlatformUrl({ spotify_url: msg.spotify_url, apple_music_url: msg.apple_music_url, deezer_url: msg.deezer_url, youtube_url: msg.youtube_url, youtube_music_url: msg.youtube_music_url, tidal_url: msg.tidal_url, odesli_page_url: msg.odesli_page_url }, currentUser?.musicService || 'spotify', { title: msg.track_name, artist: msg.artist }); if (url) openExternal(url); }}
@@ -686,7 +729,7 @@ export function ChatThread({
                         {msg.text && !isStory && <p className={`px-3 ${msg.image_url || msg.track_name ? 'pb-1 pt-0.5 text-xs text-purple-100/90' : 'py-2 text-sm'} whitespace-pre-wrap break-words`}>{renderText(msg.text)}</p>}
                       </>
                     )}
-                    <p className={`px-3 pb-1.5 text-[10px] ${mine ? 'text-purple-300/60 text-right' : 'text-purple-400/50'}`}>
+                    <p className={`px-3 pb-1.5 text-[10px] ${mine ? 'text-purple-300/85 text-right' : 'text-purple-300/80'}`}>
                       {msg._status === 'sending' ? 'Envoi…' : formatTime(msg.created_at)}
                     </p>
                   </div>
@@ -702,11 +745,11 @@ export function ChatThread({
                     <div className="flex items-center gap-2 mt-1 text-[11px]">
                       <span className="text-pink-300">Pas envoyé</span>
                       <button onClick={() => msg._retry?.()} className="font-semibold text-white underline">Réessayer</button>
-                      <button onClick={() => setMessages((p) => p.filter((m) => m.id !== msg.id))} className="text-purple-300/70">Annuler</button>
+                      <button onClick={() => setMessages((p) => p.filter((m) => m.id !== msg.id))} className="text-purple-300/90">Annuler</button>
                     </div>
                   )}
                   {lastMine && msg.id === lastMine.id && (
-                    <button onClick={() => isCircle && seenBy.length && setShowSeen(true)} className="mt-0.5 text-[10px] text-purple-300/70">{seenLabel()}</button>
+                    <button onClick={() => isCircle && seenBy.length && setShowSeen(true)} className="mt-0.5 text-[10px] text-purple-300/90">{seenLabel()}</button>
                   )}
                 </div>
               </div>
@@ -714,6 +757,7 @@ export function ChatThread({
           );
         })}
         <div className="h-1" />
+        </div>
       </div>
 
       {/* ↓ nouveaux messages (P12-7) */}
@@ -734,13 +778,13 @@ export function ChatThread({
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-purple-500/25 bg-[#1E1440] max-h-60 overflow-y-auto flex-shrink-0">
             <div className="p-3">
               <div className="relative mb-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/70" />
-                <input autoFocus value={trackQuery} onChange={(e) => setTrackQuery(e.target.value)} placeholder="Rechercher un son à envoyer…" className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-base sm:text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/90" />
+                <input autoFocus value={trackQuery} onChange={(e) => setTrackQuery(e.target.value)} placeholder="Rechercher un son à envoyer…" className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-base sm:text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500" />
               </div>
               {trackResults.map((t: any) => (
                 <button key={t.id} onClick={() => { setPanel('none'); setTrackQuery(''); setTrackResults([]); send({ track: t }); }} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg">
                   <img src={t.cover} alt="" className="w-10 h-10 rounded-md object-cover" />
-                  <div className="flex-1 text-left min-w-0"><p className="text-sm font-medium truncate">{t.name}</p><p className="text-xs text-purple-200/70 truncate">{t.artist}</p></div>
+                  <div className="flex-1 text-left min-w-0"><p className="text-sm font-medium truncate">{t.name}</p><p className="text-xs text-purple-200/85 truncate">{t.artist}</p></div>
                   <Send className="w-4 h-4 text-purple-400" />
                 </button>
               ))}
@@ -751,8 +795,8 @@ export function ChatThread({
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="max-h-72 overflow-hidden border-t border-purple-500/25 bg-[#1E1440] flex flex-col flex-shrink-0">
             <div className="p-3 pb-0">
               <div className="relative mb-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
-                <input autoFocus value={gifQuery} onChange={(e) => setGifQuery(e.target.value)} placeholder="Rechercher un GIF…" className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-base sm:text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/85" />
+                <input autoFocus value={gifQuery} onChange={(e) => setGifQuery(e.target.value)} placeholder="Rechercher un GIF…" className="w-full pl-9 pr-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-lg text-base sm:text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500" />
               </div>
             </div>
             <div className="flex-1 overflow-y-auto px-3 pb-3">
@@ -787,7 +831,7 @@ export function ChatThread({
             <img src={photo.preview} alt="Aperçu" className="h-16 w-16 rounded-lg object-cover" />
             <button onClick={() => { URL.revokeObjectURL(photo.preview); setPhoto(null); }} aria-label="Retirer la photo" className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center"><X className="w-3 h-3" /></button>
           </div>
-          <p className="text-xs text-purple-300/70">Photo prête. Ajoute une légende si tu veux, puis envoie.</p>
+          <p className="text-xs text-purple-300/90">Photo prête. Ajoute une légende si tu veux, puis envoie.</p>
         </div>
       )}
 
@@ -798,7 +842,7 @@ export function ChatThread({
             <button key={m.id} onMouseDown={(e) => e.preventDefault()} onClick={() => pickMention(m)} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-violet-900/30 text-left">
               <img src={avatarThumb(m.profile_album_cover_url, 64) || defaultAvatar(m.username)} className="w-7 h-7 rounded-full object-cover" alt="" />
               <span className="text-sm font-medium">{m.display_name || m.username}</span>
-              <span className="text-xs text-purple-300/60">@{m.username}</span>
+              <span className="text-xs text-purple-300/85">@{m.username}</span>
             </button>
           ))}
         </div>
@@ -825,7 +869,7 @@ export function ChatThread({
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (mentionOptions.length) pickMention(mentionOptions[0]); else sendText(); } }}
             placeholder={photo ? 'Légende (facultatif)…' : isCircle ? 'Message… (@ pour mentionner)' : 'Envoie un message…'}
             enterKeyHint="send"
-            className="flex-1 min-w-0 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-base sm:text-sm text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-500"
+            className="flex-1 min-w-0 px-3 py-2 bg-violet-950/20 border border-purple-500/30 rounded-full text-base sm:text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500"
           />
           <button onClick={sendText} disabled={!text.trim() && !photo} aria-label="Envoyer" className="flex-shrink-0 p-2 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-40"><Send className="w-5 h-5" /></button>
         </div>
@@ -836,7 +880,7 @@ export function ChatThread({
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60" onClick={() => setMenuMsg(null)}>
           <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} onClick={(e) => e.stopPropagation()}
             className="w-full sm:max-w-sm bg-[#1D0F3D] rounded-t-3xl sm:rounded-2xl border-t sm:border border-purple-700/40 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-            <p className="px-3 pt-2 pb-2 text-xs text-purple-300/70 truncate">{messageSnippet(menuMsg) || 'Message'}</p>
+            <p className="px-3 pt-2 pb-2 text-xs text-purple-300/90 truncate">{messageSnippet(menuMsg) || 'Message'}</p>
             <MenuItem icon={<Reply className="w-4 h-4" />} label="Répondre" onClick={() => { setReplyTo(menuMsg); setMenuMsg(null); inputRef.current?.focus(); }} />
             {(menuMsg.text || menuMsg.track_name) && <MenuItem icon={<Copy className="w-4 h-4" />} label="Copier" onClick={() => doCopy(menuMsg)} />}
             <MenuItem icon={<Heart className={`w-4 h-4 ${liked.has(menuMsg.id) ? 'fill-pink-400 text-pink-400' : ''}`} />} label={liked.has(menuMsg.id) ? 'Retirer mon like' : 'Liker'} onClick={() => { toggleLike(menuMsg); setMenuMsg(null); }} />
@@ -861,12 +905,12 @@ export function ChatThread({
                 <img src={avatarThumb(u.profile_album_cover_url, 64) || defaultAvatar(u.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold truncate">{u.display_name || u.username}</p>
-                  <p className="text-xs text-purple-300/60">@{u.username}{u.at ? ` · ${formatTime(u.at)}` : ''}</p>
+                  <p className="text-xs text-purple-300/85">@{u.username}{u.at ? ` · ${formatTime(u.at)}` : ''}</p>
                 </div>
                 {likersOf && <Heart className="w-4 h-4 text-pink-400 fill-pink-400" />}
               </button>
             ))}
-            {likersOf && likersOf.users.length === 0 && <p className="text-sm text-purple-300/60 p-2">Personne pour l’instant.</p>}
+            {likersOf && likersOf.users.length === 0 && <p className="text-sm text-purple-300/85 p-2">Personne pour l’instant.</p>}
           </div>
         </div>,
         document.body,
@@ -878,7 +922,7 @@ export function ChatThread({
 function DaySep({ ts }: { ts: string }) {
   return (
     <div className="flex justify-center my-2">
-      <span className="px-2.5 py-0.5 rounded-full bg-violet-950/50 text-[11px] font-medium text-purple-300/70">{formatDayLabel(ts)}</span>
+      <span className="px-2.5 py-0.5 rounded-full bg-violet-950/50 text-[11px] font-medium text-purple-300/90">{formatDayLabel(ts)}</span>
     </div>
   );
 }

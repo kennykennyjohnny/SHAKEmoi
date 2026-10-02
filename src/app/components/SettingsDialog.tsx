@@ -155,7 +155,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
         <div className="px-4 py-3 border-b border-purple-800/20 flex items-center justify-between sticky top-0 bg-[#1D0F3D] z-10">
           <h2 className="text-lg font-bold text-white">Paramètres</h2>
           <button aria-label="Fermer" onClick={handleClose} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
-            <X className="w-6 h-6 text-purple-300/60" />
+            <X className="w-6 h-6 text-purple-300/85" />
           </button>
         </div>
 
@@ -180,12 +180,12 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
               </div>
               <div className="space-y-2 pt-2 border-t border-purple-800/30">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-purple-300/60">Email</span>
+                  <span className="text-sm text-purple-300/85">Email</span>
                   <span className="text-sm text-white font-medium truncate max-w-[200px]">{email || '—'}</span>
                 </div>
                 {currentUser?.bio && (
                   <div className="flex justify-between items-start">
-                    <span className="text-sm text-purple-300/60">Bio</span>
+                    <span className="text-sm text-purple-300/85">Bio</span>
                     <span className="text-sm text-white max-w-[200px] text-right">{currentUser.bio}</span>
                   </div>
                 )}
@@ -199,7 +199,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
               <Music2 className="w-4 h-4 text-purple-400" />
               <h3 className="text-sm font-semibold text-purple-200/80 uppercase tracking-wide">Appli d'écoute</h3>
             </div>
-            <p className="text-xs text-purple-400/50 mb-3">
+            <p className="text-xs text-purple-300/80 mb-3">
               Les sons s'ouvriront dans cette appli
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -228,7 +228,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
               className="mt-3 w-full flex items-center justify-between px-3 py-3 rounded-xl bg-purple-950/40 hover:bg-purple-900/40 text-sm text-white transition-colors"
             >
               <span className="flex items-center gap-2"><PlayCircle className="w-4 h-4 text-fuchsia-400" /> Revoir le tuto</span>
-              <ChevronRight className="w-4 h-4 text-purple-300/60" />
+              <ChevronRight className="w-4 h-4 text-purple-300/85" />
             </button>
           </div>
 
@@ -240,7 +240,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
             </div>
 
             <PushToggle />
-            <p className="text-xs text-purple-300/60 mt-3 mb-2 px-1">Ce que tu reçois (cloche et téléphone) :</p>
+            <p className="text-xs text-purple-300/85 mt-3 mb-2 px-1">Ce que tu reçois (cloche et téléphone) :</p>
             <NotifPrefsList />
           </div>
 
@@ -252,15 +252,15 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
             </div>
             <div className="bg-purple-950/40 rounded-xl p-3 space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-purple-300/60">Version</span>
+                <span className="text-sm text-purple-300/85">Version</span>
                 <span className="text-sm text-white">{__APP_VERSION__}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-purple-300/60">Plateforme</span>
+                <span className="text-sm text-purple-300/85">Plateforme</span>
                 <span className="text-sm text-white font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">SHAKEmoi</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-purple-300/60">Intégrations</span>
+                <span className="text-sm text-purple-300/85">Intégrations</span>
                 <span className="text-sm text-white text-right">{STREAMING_APPS.map(k => PLATFORM_LABELS[k]).join(', ')}</span>
               </div>
             </div>
@@ -270,20 +270,20 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
           <div className="bg-purple-950/40 rounded-xl divide-y divide-purple-800/20">
             <button onClick={() => setShowInvite(true)} className="w-full flex items-center justify-between px-3 py-3 text-sm text-white hover:bg-white/5 rounded-t-xl">
               <span className="flex items-center gap-2"><UserPlus className="w-4 h-4 text-fuchsia-400" /> Inviter des amis</span>
-              <ChevronRight className="w-4 h-4 text-purple-300/60" />
+              <ChevronRight className="w-4 h-4 text-purple-300/85" />
             </button>
             <button onClick={() => { onClose(); openBugReport(); }} className="w-full flex items-center justify-between px-3 py-3 text-sm text-white hover:bg-white/5">
               <span className="flex items-center gap-2"><Bug className="w-4 h-4 text-fuchsia-400" /> Signaler un bug</span>
-              <ChevronRight className="w-4 h-4 text-purple-300/60" />
+              <ChevronRight className="w-4 h-4 text-purple-300/85" />
             </button>
             <button onClick={() => { onClose(); openBlockedUsers(); }} className={`w-full flex items-center justify-between px-3 py-3 text-sm text-white hover:bg-white/5 ${admin ? '' : 'rounded-b-xl'}`}>
               <span className="flex items-center gap-2"><Ban className="w-4 h-4 text-fuchsia-400" /> Personnes bloquées</span>
-              <ChevronRight className="w-4 h-4 text-purple-300/60" />
+              <ChevronRight className="w-4 h-4 text-purple-300/85" />
             </button>
             {admin && (
               <button onClick={() => { onClose(); openAdmin(); }} className="w-full flex items-center justify-between px-3 py-3 text-sm text-white hover:bg-white/5 rounded-b-xl">
                 <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-emerald-300" /> Admin : bugs et signalements</span>
-                <ChevronRight className="w-4 h-4 text-purple-300/60" />
+                <ChevronRight className="w-4 h-4 text-purple-300/85" />
               </button>
             )}
           </div>
@@ -302,7 +302,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
                 className="flex items-center justify-between px-3 py-3 text-sm text-white hover:bg-white/5 rounded-t-xl"
               >
                 Politique de confidentialité
-                <ChevronRight className="w-4 h-4 text-purple-300/60" />
+                <ChevronRight className="w-4 h-4 text-purple-300/85" />
               </a>
               <button
                 onClick={handleDeleteAccount}
@@ -313,7 +313,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
                   {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   Supprimer mon compte
                 </span>
-                <ChevronRight className="w-4 h-4 text-red-300/50" />
+                <ChevronRight className="w-4 h-4 text-red-300/80" />
               </button>
             </div>
           </div>

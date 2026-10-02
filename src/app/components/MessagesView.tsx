@@ -33,7 +33,7 @@ const MSG_TABS = ['dms', 'circles'] as const;
 type MsgTab = typeof MSG_TABS[number];
 
 export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewOptions, inboxCounts }: MessagesViewProps) {
-  const { initialTab, openPartnerId = null, openPartner = null, openCircleId = null, openPlaylist = false, nonce = 0, reset = 0 } = viewOptions || {};
+  const { initialTab, openPartnerId = null, openPartnerUsername = null, openPartner = null, openCircleId = null, openPlaylist = false, nonce = 0, reset = 0 } = viewOptions || {};
   // Onglet gardé à l'actualisation et au retour (N2), sauf ouverture demandée.
   const [tab, setTabState] = useState<MsgTab>(() => {
     if (initialTab) return initialTab;
@@ -65,7 +65,7 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`relative py-2.5 text-sm font-semibold transition-colors ${tab === t ? 'text-white' : 'text-purple-300/50 hover:text-purple-200'}`}
+              className={`relative py-2.5 text-sm font-semibold transition-colors ${tab === t ? 'text-white' : 'text-purple-300/80 hover:text-purple-200'}`}
             >
               {t === 'dms' ? 'Messages' : 'Cercles'}
               {(t === 'dms' ? inboxCounts?.dms : inboxCounts?.circles) ? (
@@ -86,7 +86,7 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
       <div ref={swipe.ref} className="flex-1 min-h-0 overflow-hidden" {...swipe.handlers}>
         <div className="flex h-full" style={swipe.trackStyle}>
           <div className="w-full flex-shrink-0 flex flex-col min-h-0 overflow-hidden" aria-hidden={tab !== 'dms'}>
-            <DmsPanel currentUser={currentUser} onSubViewActive={setDmsSub} fabTrigger={fab.dms} openPartnerId={openPartnerId} openPartner={openPartner} openNonce={nonce} resetNonce={reset} />
+            <DmsPanel currentUser={currentUser} onSubViewActive={setDmsSub} fabTrigger={fab.dms} openPartnerId={openPartnerId} openPartnerUsername={openPartnerUsername} openPartner={openPartner} openNonce={nonce} resetNonce={reset} />
           </div>
           <div className="w-full flex-shrink-0 flex flex-col min-h-0 overflow-hidden" aria-hidden={tab !== 'circles'}>
             <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setCirclesSub} fabTrigger={fab.circles} openCircleId={openCircleId} openPlaylist={openPlaylist} openNonce={nonce} resetNonce={reset} />
@@ -144,17 +144,17 @@ function NewConvoSearch({ friends, onSelect, onClose }: { friends: any[]; onSele
     <div className="mb-4 bg-violet-950/20 rounded-xl border border-purple-500/25 p-3">
       <div className="flex items-center justify-between mb-2.5">
         <p className="text-sm font-semibold">Nouvelle conversation</p>
-        <button aria-label="Fermer" onClick={onClose}><X className="w-4 h-4 text-purple-300/60" /></button>
+        <button aria-label="Fermer" onClick={onClose}><X className="w-4 h-4 text-purple-300/85" /></button>
       </div>
       <div className="relative mb-2">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/85" />
         <input
           autoFocus
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Rechercher un utilisateur..."
-          className="w-full pl-9 pr-3 py-2 bg-violet-950/30 border border-purple-500/25 rounded-lg text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-500"
+          className="w-full pl-9 pr-3 py-2 bg-violet-950/30 border border-purple-500/25 rounded-lg text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500"
         />
         {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-purple-400 animate-spin" />}
       </div>
@@ -165,13 +165,13 @@ function NewConvoSearch({ friends, onSelect, onClose }: { friends: any[]; onSele
               <img loading="lazy" src={avatarThumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
               <div className="text-left min-w-0">
                 <p className="text-sm font-medium truncate">{f.display_name || f.username}</p>
-                <p className="text-xs text-purple-300/60">@{f.username}</p>
+                <p className="text-xs text-purple-300/85">@{f.username}</p>
               </div>
             </button>
           ))}
         </div>
       ) : (
-        <p className="text-xs text-purple-300/50 text-center py-3">{query ? 'Aucun résultat' : 'Aucun ami pour l\'instant'}</p>
+        <p className="text-xs text-purple-300/80 text-center py-3">{query ? 'Aucun résultat' : 'Aucun ami pour l\'instant'}</p>
       )}
     </div>
   );
@@ -179,7 +179,7 @@ function NewConvoSearch({ friends, onSelect, onClose }: { friends: any[]; onSele
 
 // ==================== DMs ====================
 
-function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, openPartner, openNonce, resetNonce }: { currentUser: any; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openPartnerId?: string | null; openPartner?: any; openNonce?: number; resetNonce?: number }) {
+function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, openPartnerUsername, openPartner, openNonce, resetNonce }: { currentUser: any; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openPartnerId?: string | null; openPartnerUsername?: string | null; openPartner?: any; openNonce?: number; resetNonce?: number }) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<{ partner: any; unread: number } | null>(null);
@@ -201,13 +201,13 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
   // une réponse plus lente ne peut plus ouvrir la mauvaise conversation.
   const openReq = useRef(0);
   useEffect(() => {
-    if (!openPartnerId) return;
+    if (!openPartnerId && !openPartnerUsername) return;
     const req = ++openReq.current;
-    if (openPartner?.id === openPartnerId) { openConversation(openPartner); return; }
-    supabase.from('users_profile').select('id, username, display_name, profile_album_cover_url')
-      .eq('id', openPartnerId).maybeSingle()
+    if (openPartnerId && openPartner?.id === openPartnerId) { openConversation(openPartner); return; }
+    const q = supabase.from('users_profile').select('id, username, display_name, profile_album_cover_url');
+    (openPartnerId ? q.eq('id', openPartnerId) : q.eq('username', openPartnerUsername!)).maybeSingle()
       .then(({ data }) => { if (data && req === openReq.current) openConversation(data); });
-  }, [openPartnerId, openNonce]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [openPartnerId, openPartnerUsername, openNonce]); // eslint-disable-line react-hooks/exhaustive-deps
   // « Messages » dans le menu : retour à la liste.
   useEffect(() => { if (resetNonce && active) closeConversation(); }, [resetNonce]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -229,7 +229,8 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
   }, [currentUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Retour système depuis une conversation : on revient à la liste.
-  useBackHandler(!!active, () => closeConversation(), active ? `/messages/${active.partner.id}` : undefined);
+  // Q6 : adresse lisible /messages/<pseudo>, relue au démarrage.
+  useBackHandler(!!active, () => closeConversation(), active ? `/messages/${active.partner.username || active.partner.id}` : undefined);
 
   const openConversation = (partner: any) => {
     const entry = conversations.find((c) => c.partnerId === partner.id);
@@ -288,11 +289,11 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
                 <div className="flex-1 text-left min-w-0">
                   <p className={`text-sm truncate flex items-center gap-1.5 ${unread ? 'font-bold text-white' : 'font-semibold text-white/90'}`}>
                     <span className="truncate">{c.partner?.display_name || c.partner?.username}</span>
-                    {c.muted && <BellOff className="w-3 h-3 text-purple-300/60 flex-shrink-0" />}
+                    {c.muted && <BellOff className="w-3 h-3 text-purple-300/85 flex-shrink-0" />}
                   </p>
-                  <p className={`text-xs truncate ${unread ? 'text-purple-200/80 font-medium' : 'text-purple-300/60'}`}>{c.unreadLikes > 0 && !c.unreadCount ? '❤️ a aimé ton message' : dmPreviewText(c.lastMessage, currentUser?.id)}</p>
+                  <p className={`text-xs truncate ${unread ? 'text-purple-200/80 font-medium' : 'text-purple-300/85'}`}>{c.unreadLikes > 0 && !c.unreadCount ? '❤️ a aimé ton message' : dmPreviewText(c.lastMessage, currentUser?.id)}</p>
                 </div>
-                <span className={`text-[10px] flex-shrink-0 ${unread ? 'text-pink-300 font-semibold' : 'text-purple-300/50'}`}>{formatListTime(c.lastMessage?.created_at)}</span>
+                <span className={`text-[10px] flex-shrink-0 ${unread ? 'text-pink-300 font-semibold' : 'text-purple-300/80'}`}>{formatListTime(c.lastMessage?.created_at)}</span>
               </button>
             );
           })}
@@ -300,8 +301,8 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
       ) : (
         <div className="text-center py-12">
           <Send className="w-10 h-10 text-purple-600 mx-auto mb-2" />
-          <p className="text-purple-200/70 text-sm">Aucune conversation</p>
-          <p className="text-purple-400/50 text-xs mt-1">Envoie un son à un ami !</p>
+          <p className="text-purple-200/85 text-sm">Aucune conversation</p>
+          <p className="text-purple-300/80 text-xs mt-1">Envoie un son à un ami !</p>
         </div>
       )}
     </div>
@@ -412,12 +413,12 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
                 <div className="flex items-baseline gap-2">
                   <p className={`text-sm truncate flex-1 flex items-center gap-1.5 ${c.unread_count > 0 && !c.muted ? 'font-bold text-white' : 'font-semibold'}`}>
                     <span className="truncate">{c.name}</span>
-                    {c.muted && <BellOff className="w-3 h-3 text-purple-300/60 flex-shrink-0" />}
+                    {c.muted && <BellOff className="w-3 h-3 text-purple-300/85 flex-shrink-0" />}
                   </p>
-                  <span className="text-[11px] text-purple-300/60 flex-shrink-0">{formatListTime(c.last_activity_at)}</span>
+                  <span className="text-[11px] text-purple-300/85 flex-shrink-0">{formatListTime(c.last_activity_at)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className={`text-xs truncate flex-1 ${c.unread_count > 0 && !c.muted ? 'text-white font-semibold' : 'text-purple-300/60'}`}>{c.unread_likes > 0 && !c.unread_count ? '❤️ On a aimé ton message' : circlePreviewText(c, currentUser?.id)}</p>
+                  <p className={`text-xs truncate flex-1 ${c.unread_count > 0 && !c.muted ? 'text-white font-semibold' : 'text-purple-300/85'}`}>{c.unread_likes > 0 && !c.unread_count ? '❤️ On a aimé ton message' : circlePreviewText(c, currentUser?.id)}</p>
                   {/* @ : on t'a mentionné (P28), même en sourdine. */}
                   {c.has_mention && (
                     <span className="w-5 h-5 rounded-full bg-pink-500 flex items-center justify-center flex-shrink-0" aria-label="On t'a mentionné"><AtSign className="w-3 h-3 text-white" /></span>
@@ -433,10 +434,10 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
       ) : (
         <div className="text-center py-16">
           <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-purple-900/40 to-pink-900/40 rounded-full flex items-center justify-center border border-purple-700/20">
-            <Users className="w-9 h-9 text-purple-400/60" />
+            <Users className="w-9 h-9 text-purple-300/80" />
           </div>
-          <p className="text-purple-200/70 text-sm font-medium">Aucun cercle</p>
-          <p className="text-purple-400/50 text-xs mt-1">Crée un espace privé avec tes amis</p>
+          <p className="text-purple-200/85 text-sm font-medium">Aucun cercle</p>
+          <p className="text-purple-300/80 text-xs mt-1">Crée un espace privé avec tes amis</p>
           <button onClick={() => { setShowCreate(true); onSubViewActive?.(true); }} className="mt-4 px-5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold hover:opacity-90">
             Créer un cercle
           </button>
@@ -518,7 +519,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
         </button>
         <div>
           <h2 className="font-bold text-lg">Nouveau cercle</h2>
-          <p className="text-xs text-purple-300/60">Étape {step}/3</p>
+          <p className="text-xs text-purple-300/85">Étape {step}/3</p>
         </div>
       </div>
 
@@ -537,12 +538,12 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
               <Users className="w-7 h-7 text-white" />
             </div>
             <h3 className="font-bold text-lg">Nomme ton cercle</h3>
-            <p className="text-sm text-purple-300/60 mt-1">Un espace privé pour partager de la musique</p>
+            <p className="text-sm text-purple-300/85 mt-1">Un espace privé pour partager de la musique</p>
           </div>
           <input
             autoFocus type="text" value={name} onChange={e => setName(e.target.value)}
             placeholder="Ex: Les potes du lycée, Crew 94..."
-            className="w-full px-4 py-3 bg-violet-950/20 border border-purple-500/30 rounded-xl text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-500 text-center text-lg font-medium"
+            className="w-full px-4 py-3 bg-violet-950/20 border border-purple-500/30 rounded-xl text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500 text-center text-lg font-medium"
             onKeyDown={e => e.key === 'Enter' && name.trim() && handleCreate()}
           />
           {createError && (
@@ -559,7 +560,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-3">
           <div className="text-center py-2">
             <h3 className="font-bold text-lg">Ajoute des amis</h3>
-            <p className="text-sm text-purple-300/60 mt-1">Qui intègre <span className="text-white font-medium">{createdCircle?.name}</span> ?</p>
+            <p className="text-sm text-purple-300/85 mt-1">Qui intègre <span className="text-white font-medium">{createdCircle?.name}</span> ?</p>
           </div>
 
           {selectedFriends.length > 0 && (
@@ -568,15 +569,15 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
                 <span key={f.id} className="flex items-center gap-1 bg-purple-600/20 border border-purple-500/30 rounded-full px-2.5 py-1 text-xs">
                   <img loading="lazy" src={avatarThumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-4 h-4 rounded-full object-cover" alt="" />
                   @{f.username}
-                  <button aria-label="Retirer" onClick={() => toggleFriend(f)} className="text-purple-300/60 hover:text-pink-400 ml-0.5"><X className="w-3 h-3" /></button>
+                  <button aria-label="Retirer" onClick={() => toggleFriend(f)} className="text-purple-300/85 hover:text-pink-400 ml-0.5"><X className="w-3 h-3" /></button>
                 </span>
               ))}
             </div>
           )}
 
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/60" />
-            <input type="text" value={friendSearch} onChange={e => setFriendSearch(e.target.value)} placeholder="Rechercher un ami..." className="w-full pl-9 pr-3 py-2.5 bg-violet-950/20 border border-purple-500/30 rounded-xl text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300/85" />
+            <input type="text" value={friendSearch} onChange={e => setFriendSearch(e.target.value)} placeholder="Rechercher un ami..." className="w-full pl-9 pr-3 py-2.5 bg-violet-950/20 border border-purple-500/30 rounded-xl text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500" />
           </div>
 
           <div className="space-y-1 max-h-56 overflow-y-auto">
@@ -587,7 +588,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
                   <img loading="lazy" src={avatarThumb(f.profile_album_cover_url) || defaultAvatar(f.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
                   <div className="flex-1 text-left min-w-0">
                     <p className="text-sm font-medium">{f.display_name || f.username}</p>
-                    <p className="text-xs text-purple-300/60">@{f.username}</p>
+                    <p className="text-xs text-purple-300/85">@{f.username}</p>
                   </div>
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selected ? 'bg-purple-500 border-purple-500' : 'border-purple-600/40'}`}>
                     {selected && <Check className="w-3 h-3 text-white" />}
@@ -595,11 +596,11 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
                 </button>
               );
             })}
-            {friends.length === 0 && <p className="text-center text-xs text-purple-300/60 py-4">Aucun ami à ajouter</p>}
+            {friends.length === 0 && <p className="text-center text-xs text-purple-300/85 py-4">Aucun ami à ajouter</p>}
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button onClick={() => setStep(3)} className="flex-1 py-3 bg-violet-950/20 border border-purple-500/25 rounded-xl text-sm text-purple-300/60 hover:text-white transition-colors">
+            <button onClick={() => setStep(3)} className="flex-1 py-3 bg-violet-950/20 border border-purple-500/25 rounded-xl text-sm text-purple-300/85 hover:text-white transition-colors">
               Passer
             </button>
             <button onClick={handleAddMembers} disabled={addingMembers || selectedFriends.length === 0} className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 text-sm">
@@ -617,7 +618,7 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
               <Check className="w-9 h-9 text-fuchsia-400" />
             </div>
             <h3 className="font-bold text-xl text-fuchsia-400">Cercle créé !</h3>
-            <p className="text-sm text-purple-300/60 mt-1">
+            <p className="text-sm text-purple-300/85 mt-1">
               <span className="text-white font-semibold">{createdCircle?.name}</span> est prêt
               {selectedFriends.length > 0 && ` · ${selectedFriends.length} membre${selectedFriends.length > 1 ? 's' : ''} ajouté${selectedFriends.length > 1 ? 's' : ''}`}
             </p>
@@ -626,14 +627,14 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
           {/* Invite Code — big and prominent */}
           {createdCircle?.invite_code && (
             <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-xl p-4 text-center">
-              <p className="text-xs text-purple-300/60 mb-1 font-medium uppercase tracking-wider">Code du cercle</p>
+              <p className="text-xs text-purple-300/85 mb-1 font-medium uppercase tracking-wider">Code du cercle</p>
               <p className="text-3xl font-black tracking-[0.3em] text-white font-mono select-all">{createdCircle.invite_code}</p>
-              <p className="text-xs text-purple-300/60 mt-2">Tes amis peuvent chercher ce code dans l'onglet Recherche pour rejoindre</p>
+              <p className="text-xs text-purple-300/85 mt-2">Tes amis peuvent chercher ce code dans l'onglet Recherche pour rejoindre</p>
             </div>
           )}
 
           <div className="bg-violet-950/20 border border-purple-500/25 rounded-xl p-4 text-left">
-            <p className="text-xs text-purple-300/60 mb-2 font-medium uppercase tracking-wider">Lien d'invitation</p>
+            <p className="text-xs text-purple-300/85 mb-2 font-medium uppercase tracking-wider">Lien d'invitation</p>
             <p className="text-xs font-mono text-white/70 break-all leading-relaxed mb-3 select-all">{shareLink}</p>
             <button onClick={copyLink} className={`w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all ${copied ? 'bg-fuchsia-500/20 border border-fuchsia-500/30 text-fuchsia-400' : 'bg-purple-600/20 border border-purple-500/30 text-purple-300 hover:bg-purple-600/30'}`}>
               {copied ? <><Check className="w-4 h-4" /> Copié !</> : <><Copy className="w-4 h-4" /> Copier le lien</>}
@@ -711,7 +712,7 @@ function CircleView({ circle, currentUser, onBack, startOnPlaylist = false }: { 
             <button aria-label="Playlist du cercle" title="Playlist" onClick={() => setView('playlist')} className="p-2 rounded-full text-purple-200 hover:text-white hover:bg-violet-900/25">
               <ListMusic className="w-4 h-4" />
             </button>
-            <button aria-label="Infos du cercle" onClick={() => setShowInfo(true)} className="p-2 rounded-full text-purple-300/70 hover:text-white hover:bg-violet-900/25">
+            <button aria-label="Infos du cercle" onClick={() => setShowInfo(true)} className="p-2 rounded-full text-purple-300/90 hover:text-white hover:bg-violet-900/25">
               <Settings className="w-4 h-4" />
             </button>
           </>
@@ -798,8 +799,9 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
       const r = await updateCirclePhoto(circle.id, publicUrl);
       if (!r.success) throw new Error(r.error);
       onPhoto(publicUrl);
-    } catch {
-      setMsg(isOwner ? 'La photo n’a pas pu être changée. Réessaie.' : 'Seul le créateur du cercle peut changer la photo.');
+      setMsg('Photo enregistrée');
+    } catch (e: any) {
+      setMsg(friendlyError(e?.message, 'La photo n’a pas pu être enregistrée. Vérifie ta connexion et réessaie.'));
     }
     setUploading(false);
   };
@@ -851,7 +853,7 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-5">
             <div className="flex flex-col items-center gap-2">
-              <button onClick={() => isOwner ? photoRef.current?.click() : setMsg('Seul le créateur du cercle peut changer la photo.')} className="relative w-24 h-24 rounded-full overflow-hidden" aria-label="Photo du cercle">
+              <button onClick={() => !uploading && photoRef.current?.click()} className="relative w-24 h-24 rounded-full overflow-hidden" aria-label="Photo du cercle">
                 {circle.photo_url ? <MediaImg src={circle.photo_url} width={256} className="w-full h-full object-cover" alt="" />
                   : <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center"><Users className="w-9 h-9 text-white" /></div>}
                 <span className="absolute bottom-0 inset-x-0 py-1 bg-black/50 text-[10px] flex items-center justify-center gap-1">
@@ -863,7 +865,7 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
             </div>
 
             <div>
-              <p className="text-[11px] text-purple-300/60 uppercase tracking-wider mb-1">Nom du cercle</p>
+              <p className="text-[11px] text-purple-300/85 uppercase tracking-wider mb-1">Nom du cercle</p>
               <div className="flex gap-2">
                 <input value={nameDraft} onChange={(e) => { setNameDraft(e.target.value); setMsg(null); }} onKeyDown={(e) => { if (e.key === 'Enter') saveName(); }} maxLength={40}
                   className="flex-1 min-w-0 bg-violet-950/40 border border-purple-500/30 rounded-lg px-3 py-2 text-base sm:text-sm text-white focus:outline-none focus:border-pink-400/60" />
@@ -871,27 +873,27 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
                   {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Enregistrer'}
                 </button>
               </div>
-              <p className="text-[11px] text-purple-300/50 mt-1">Tous les membres peuvent renommer le cercle.</p>
+              <p className="text-[11px] text-purple-300/80 mt-1">Tous les membres peuvent renommer le cercle.</p>
             </div>
 
             {msg && <p className="text-xs text-pink-200 bg-pink-500/10 border border-pink-500/20 rounded-lg px-3 py-2">{msg}</p>}
 
             <div className="bg-purple-900/20 border border-purple-500/20 rounded-xl p-3">
-              <p className="text-[11px] text-purple-300/60 uppercase tracking-wider mb-2">Lien d'invitation</p>
+              <p className="text-[11px] text-purple-300/85 uppercase tracking-wider mb-2">Lien d'invitation</p>
               <div className="flex items-center gap-2">
                 <p className="flex-1 min-w-0 text-xs font-mono text-purple-100 truncate">{link.replace(/^https?:\/\//, '')}</p>
                 <button onClick={share} className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 ${copied ? 'bg-fuchsia-500' : 'bg-purple-600'}`}>
                   {copied ? <><Check className="w-3.5 h-3.5" /> Copié</> : <><Copy className="w-3.5 h-3.5" /> Partager</>}
                 </button>
               </div>
-              {code && <p className="text-[11px] text-purple-300/60 mt-2">Code : <span className="font-mono font-bold tracking-widest text-white select-all">{code}</span></p>}
+              {code && <p className="text-[11px] text-purple-300/85 mt-2">Code : <span className="font-mono font-bold tracking-widest text-white select-all">{code}</span></p>}
               <button onClick={regenerate} disabled={regenerating} className="mt-2 text-xs font-semibold text-pink-300 hover:text-pink-200 disabled:opacity-50">
                 {regenerating ? 'Génération…' : 'Générer un nouveau lien'}
               </button>
             </div>
 
             <div>
-              <p className="text-[11px] text-purple-300/60 uppercase tracking-wider mb-2">Membres ({members.length})</p>
+              <p className="text-[11px] text-purple-300/85 uppercase tracking-wider mb-2">Membres ({members.length})</p>
               <div className="space-y-1">
                 {sorted.map((m) => (
                   <div key={m.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-purple-900/25">
@@ -899,21 +901,21 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
                       <img src={avatarThumb(m.profile_album_cover_url, 64) || defaultAvatar(m.username)} className="w-9 h-9 rounded-full object-cover" alt="" />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">{m.display_name || m.username}{m.id === currentUser?.id ? ' (toi)' : ''}</p>
-                        <p className="text-xs text-purple-300/60 truncate">@{m.username}</p>
+                        <p className="text-xs text-purple-300/85 truncate">@{m.username}</p>
                       </div>
                     </button>
                     {m.id === circle.created_by
                       ? <span className="px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-[10px] font-semibold text-fuchsia-200">Créateur</span>
                       : <span className="px-2 py-0.5 rounded-md bg-purple-800/40 text-[10px] text-purple-200">Membre</span>}
                     {isOwner && m.id !== currentUser?.id && (
-                      <button aria-label={`Retirer @${m.username}`} onClick={() => remove(m)} className="p-1.5 rounded-full text-purple-300/60 hover:text-pink-300"><X className="w-4 h-4" /></button>
+                      <button aria-label={`Retirer @${m.username}`} onClick={() => remove(m)} className="p-1.5 rounded-full text-purple-300/85 hover:text-pink-300"><X className="w-4 h-4" /></button>
                     )}
                   </div>
                 ))}
               </div>
               <div className="relative mt-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-purple-300/60" />
-                <input value={searchQ} onChange={(e) => setSearchQ(e.target.value)} placeholder="Ajouter quelqu'un…" className="w-full pl-8 pr-3 py-2 bg-violet-950/20 border border-purple-500/25 rounded-lg text-base sm:text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-purple-300/85" />
+                <input value={searchQ} onChange={(e) => setSearchQ(e.target.value)} placeholder="Ajouter quelqu'un…" className="w-full pl-8 pr-3 py-2 bg-violet-950/20 border border-purple-500/25 rounded-lg text-base sm:text-sm text-white placeholder-purple-300/70 focus:outline-none focus:border-purple-500" />
               </div>
               {searchRes.filter((u) => !members.some((m: any) => m.id === u.id)).slice(0, 5).map((u) => (
                 <button key={u.id} onClick={() => add(u)} className="w-full flex items-center gap-2 p-2 hover:bg-violet-900/25 rounded-lg text-sm">
