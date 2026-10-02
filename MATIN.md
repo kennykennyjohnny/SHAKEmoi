@@ -1,4 +1,63 @@
-# MATIN — bilan de la nuit (29 → 30/09/2026)
+# MATIN — bilan de la session du 01 → 02/10/2026 (prompt 5 : sections P et N)
+
+Tout est en ligne sur **shakemoi.fr** (branche `main`, déployé par Vercel). Build et contrôle des types verts avant chaque envoi. Détail ligne par ligne, avec les tests de chaque lot, dans `CE_SOIR.md`.
+
+## En bref — ce qui est en ligne
+1. **Notifications push qui marchent appli fermée** (P7) : likes, commentaires, abonnements, messages, cercles, @mentions, likes de messages, rappel de série, « a rejoint grâce à toi ». Interrupteur en haut des notifications, réglages respectés, conversations en sourdine. Clés de chiffrement générées et rangées dans le coffre Supabase : **rien à configurer**.
+2. **Profils** : fil complet d'un ami, aperçu presque plein écran + profil complet, pochette → post complet, abonnés en commun, listes d'abonnés des autres (P1 à P4).
+3. **Messagerie** : un seul écran pour privés et cercles, double-tap pour liker, répondre à un message, @mentions, retirer un message, renommer un cercle, glisser Messages ↔ Cercles, colonne ordinateur fiable (P5, P8 à P13, P26 à P28).
+4. **TOP** Amis / Tout SHAKEMOI, « Depuis toujours », calculé en base, + **Genres du moment** (P14).
+5. **Sécurité / stores** : bloquer (imposé en base), signaler, « Signaler un bug », page Admin, Sentry prêt (P15 à P17).
+6. **Séries** en semaines (bug corrigé, recalculées), flamme violette, flamme de l'en-tête, rappel du lundi ; sons épinglés ; **playlist du cercle** avec lecture enchaînée (P21 à P24).
+7. **Compatibilité musicale refaite** (genres, artistes proches, explication), **suggestions** d'amis, **inviter des amis** (lien + QR), « Suis 3 personnes » à la fin du tuto (P18, P19, P25, P29).
+8. **Vidéos de partage refaites** (1080×1920, 17 s, couleurs de la pochette, QR, lien copié pour Insta/TikTok, < 8 Mo) + **récap de la semaine** (P20).
+9. **Section N** : compteurs de commentaires (base juste, appli corrigée), photos HEIC converties, **une adresse par écran + retour qui suit l'historique + onglets gardés en mémoire**, aperçu de l'auteur depuis une story, titre + artiste partout.
+10. **P31** : « Shake éphémère » partout ; **lien de cercle par code régénérable** (anciens liens invalides). **P30** : brouillon légal (non publié).
+
+## Commits de la session
+`a10dde1` étape 0 (patch de Jerry) · `b3ff85a` P7/P6 push · `2e9f858` P1/P2 · `1123a50` P3/P4 · `73792ba` messagerie unifiée · `b46910a` P11/P13 · `4db5735` P14 · `8397b54` P15-P17 · `5d4d1b6` P21-P24 · `0709821` P25/P18/P19/P29 · `12233c8` P20 · `dac9452` N3/N5 · `39c1749` N2 · `8444af5` N1/N4 · `b4067c3` P31 · `72cae56` P30 · `4183641` P14 genres + audit.
+
+## À tester (20 minutes, sur ton téléphone)
+1. **Notifs** : Notifications → interrupteur en haut → « Activer » → notif de test. Ferme l'appli ; depuis un 2ᵉ compte, like un de tes shakes → notif « @x a aimé ton shake », la toucher ouvre le post.
+2. **Adresses / retour** : va sur ton profil, actualise → tu y restes. Messages → une conversation → actualise → elle est rouverte. Retour Android : la liste, puis le fil, puis l'appli se ferme.
+3. **Onglets** : descends loin dans le fil → TOP → Accueil : même endroit. Retouche Accueil : remonte en haut.
+4. **Story** : ouvre celle d'un ami, touche son avatar → pause + aperçu ; glisse l'aperçu vers le bas → la story reprend avec le son.
+5. **Vidéo de partage** (iPhone puis Android) : un post → Partager → Créer la vidéo (écran allumé 17 s) → « Story Insta / TikTok » → Instagram : la vidéo avec le son, et « Lien copié » → sticker Lien. Puis « WhatsApp, SMS… » : la vidéo + le lien cliquable.
+6. **Récap** : mardi après 11 h, carte « Ton récap de la semaine est prêt » en haut du fil (si tu as publié la semaine d'avant).
+7. **Compatibilité** : aperçu de @raph → « 88 % » + l'explication. Recherche (champ vide) → suggestions.
+8. **Inviter** : Profil → Inviter → QR → scanne avec un autre téléphone → page « Kenny t'invite » avec 3 sons.
+9. **Cercle** : infos → « Générer un nouveau lien » → l'ancien lien dit « Ce lien n'est plus valide ».
+10. **HEIC** : sur Android, publie une photo d'iPhone (HEIC) en Shake éphémère → « Conversion de la photo… » puis elle s'affiche partout.
+11. **Flamme** : ton profil et l'en-tête ; Paramètres → Notifications → « Rappel de série ».
+12. **Bloquer / signaler** : depuis un 2ᵉ compte (voir CE_SOIR lot 7).
+
+## Ce que tu dois configurer toi-même (clic par clic)
+1. **Sentry (P16)** — 10 min : voir `CE_SOIR.md` → « P16 — Ce qu'il te faut faire » (compte sentry.io région EU → projet React `shakemoi` → DSN + jeton → 4 variables dans Vercel `VITE_SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` → Redeploy → Admin → « Test Sentry »).
+2. **Clé GIF** (M5) : **klipy.com** → « Developers » / « Get API key » → crée un compte et une appli « SHAKEmoi » → copie la clé → **Vercel** → projet `shak-emoi-aipt` → Settings → Environment Variables → `KLIPY_API_KEY` = la clé (Production + Preview) → Deployments → dernier → « ⋯ » → Redeploy. (À défaut : developers.giphy.com → Create an App → API → `GIPHY_API_KEY`.)
+3. **Compte de test** (tests Playwright connectés, P13) : crée un compte dédié dans l'appli (ex. `test.shakemoi+e2e@…`), suis-le avec 3 amis et mets-le dans 2 cercles, puis crée le fichier `.env.local` à la racine du projet avec `E2E_EMAIL=…` et `E2E_PASSWORD=…` (jamais ton vrai compte). Dis-le-moi : je lancerai les tests.
+4. **Supprimer les 2 vieilles fonctions Supabase** : supabase.com → projet → **Edge Functions** → `make-server-7dbfc935` → ⋯ → **Delete** ; pareil pour `calculate-compatibility` (remplacée par le calcul en base de P25).
+5. **Leaked password protection** : supabase.com → projet → **Authentication** → **Sign In / Providers** (ou *Policies / Passwords*) → active « **Prevent use of leaked passwords** » → Save.
+6. **Recompression des avatars** (script 3) : dans le dossier du projet, clé dans Supabase → Project Settings → **API** → `service_role` (secret) :
+   ```
+   $env:SUPABASE_SERVICE_ROLE_KEY="ta_cle"; node scripts/recompress-avatars.mjs --apply
+   ```
+7. **Clés VAPID des notifications** : **rien à faire**, elles sont créées et rangées automatiquement dans le coffre Supabase (jamais dans le code).
+
+## En attente de ta décision / de ton OK
+1. **Pages légales (P30)** : relis `docs/legal_brouillon.md`, complète les **[À COMPLÉTER]** (éditeur, adresse, durées, régions Vercel / Sentry), puis dis « OK publie ».
+2. **Thèmes du Shake de la semaine (P23)** : aujourd'hui il n'y a pas de thème en base. Si tu en veux : une petite table « thème de la semaine » + un écran Admin pour le saisir.
+3. **Section Q** (le texte que tu as collé en reprenant la session) : je l'ai lu ; il demande de finir P et N d'abord, c'est fait. Dis-moi si je la lance telle quelle. Note : Q11 change la décision P24 (sons épinglés → Shakes épinglés dans la grille).
+4. Décidés et appliqués depuis la dernière fois : vocabulaire « Shake éphémère » ✅, lien de cercle régénérable ✅, anciennes interactions sur des reshakes → on n'y touche pas ✅.
+
+## Pas fait / limites connues
+- Tests sur téléphone réel impossibles de mon côté : vidéos (P20), notifications (P7), installation (PWA) → tests ci-dessus.
+- Tests connectés dans le navigateur impossibles sans compte de test (N2 testé avec une maquette des onglets).
+- Playlist du cercle écran verrouillé : dépend du navigateur (Safari peut bloquer l'enchaînement).
+- Commentaire d'une personne bloquée : caché mais compté (très rare).
+
+---
+
+# Nuit précédente (29 → 30/09) — pour mémoire
 
 Tout est en ligne sur **shakemoi.fr** (branche `main`, déployé par Vercel). Build et contrôle des types verts avant chaque envoi. Détail ligne par ligne dans `CE_SOIR.md`.
 
