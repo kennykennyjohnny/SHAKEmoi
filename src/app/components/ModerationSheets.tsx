@@ -8,6 +8,7 @@ import { REPORT_REASONS, reportContent, submitBugReport, getMyBlocks, unblockUse
 import { useBackHandler } from '../../lib/navigation';
 import { avatarThumb, defaultAvatar } from '../../lib/media';
 import { IS_TOUCH } from '../../lib/useMediaQuery';
+import { tween } from '../../lib/motion';
 
 function Sheet({ title, icon, onClose, children }: { title: string; icon?: ReactNode; onClose: () => void; children: ReactNode }) {
   useBackHandler(true, onClose);
@@ -15,7 +16,7 @@ function Sheet({ title, icon, onClose, children }: { title: string; icon?: React
     <>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[65] bg-black/70" onClick={onClose} />
       <div className="fixed inset-0 z-[65] flex items-end sm:items-center justify-center pointer-events-none">
-        <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={{ type: 'tween', duration: 0.2 }}
+        <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={tween()}
           className="pointer-events-auto w-full sm:max-w-md max-h-[90dvh] bg-[#1D0F3D] rounded-t-3xl sm:rounded-2xl border-t sm:border border-purple-700/40 flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]"
           role="dialog" aria-label={title}>
           <div className="flex items-center gap-2 px-4 py-3 border-b border-purple-800/30">

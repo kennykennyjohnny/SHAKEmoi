@@ -84,6 +84,15 @@ export function ProfileGrid({ userId, currentUser, isOwn = false, onDeleted, ref
   }, [tab, state, loadMore]);
 
   const current = state[tab];
+  // Q2 : le post ouvert connaît la liste (ordre de la grille) pour passer au
+  // suivant / précédent ; un reshake ouvre le post d'origine.
+  const openId = (p: any) => (p.is_reshake ? p.original_post_id : p.id);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const thumbEl = (id: string) => gridRef.current?.querySelector<HTMLElement>(`[data-thumb="${CSS.escape(id)}"]`) || null;
+  const thumbRect = (id: string) => {
+    const r = thumbEl(id)?.getBoundingClientRect();
+    return r && r.bottom > 0 && r.top < window.innerHeight ? r : null;
+  };
 
   const handleDelete = async (postId: string) => {
     const wasShake = state.shakes.items.some((p: any) => p.id === postId);
@@ -134,14 +143,15 @@ export function ProfileGrid({ userId, currentUser, isOwn = false, onDeleted, ref
 
       <div className="p-3">
         {current.items.length > 0 && (
-          <div className="grid grid-cols-3 gap-1.5">
+          <div ref={gridRef} className="grid grid-cols-3 gap-1.5">
             {current.items.map((p: any) => {
               const shown = p.is_reshake ? p.original_post : p;
               const cover = shown?.cover_url || shown?.image_url;
               return (
                 <button
                   key={p.id}
-                  onClick={() => setOpenPostId(p.is_reshake ? p.original_post_id : p.id)}
+                  data-thumb={openId(p)}
+                  onClick={() => setOpenPostId(openId(p))}
                   aria-label={`${shown?.track_name || 'Shake'}${shown?.artist ? ` — ${shown.artist}` : ''}`}
                   className="relative aspect-square rounded-lg overflow-hidden bg-violet-950/40 active:scale-[0.97] transition-transform"
                 >
@@ -195,7 +205,12 @@ export function ProfileGrid({ userId, currentUser, isOwn = false, onDeleted, ref
           <PostDetailModal
             postId={openPostId}
             currentUser={currentUser}
-            onClose={() => setOpenPostId(null)}
+            list={current.items.map(openId)}
+            onNeedMore={() => { if (!current.done && !current.loading) loadMore(tab); }}
+            // La grille garde la vignette du post affiché à l'écran : on y revient au bon endroit.
+            onIndexChange={(id) => thumbEl(id)?.scrollIntoView({ block: 'nearest' })}
+            originRect={thumbRect}
+            onClose={(lastId) => { if (lastId) thumbEl(lastId)?.scrollIntoView({ block: 'nearest' }); setOpenPostId(null); }}
             onDeletePost={isOwn ? handleDelete : undefined}
             onUpdated={handleUpdated}
           />

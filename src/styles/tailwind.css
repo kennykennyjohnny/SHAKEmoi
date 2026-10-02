@@ -116,4 +116,14 @@
 
 /* N2 : apparition douce d'un onglet (les onglets restent montés). */
 @keyframes tab-enter { from { opacity: 0; } to { opacity: 1; } } /* pas de transform : les éléments « fixed » des vues resteraient décalés */
-.tab-enter { animation: tab-enter 0.15s ease-out; }
+.tab-enter { animation: tab-enter 0.18s cubic-bezier(.2,.8,.2,1); }
+
+/* Q3 : « réduire les animations » du téléphone : plus de mouvement décoratif. */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.recap-fill), *::before, *::after { /* la barre de temps du récap reste (ce n'est pas un mouvement) */
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -5,6 +5,7 @@ import { X, Pin, Loader2, Archive, Music2 } from 'lucide-react';
 import { getMyStoryArchive, setStoryPinned } from '../../lib/database';
 import { useBackHandler } from '../../lib/navigation';
 import { StoryViewerDialog } from './StoryViewerDialog';
+import { tween } from '../../lib/motion';
 
 // SHAKEMOI - Archives de ses stories (expirées comprises) : on les revoit et
 // on épingle celles qu'on veut garder « À la une » sur son profil.
@@ -61,7 +62,7 @@ export function StoryArchiveDialog({ currentUser, onClose, onChanged }: Props) {
         <motion.div
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+          transition={tween()}
           onClick={e => e.stopPropagation()}
           className="w-full sm:max-w-lg h-[90dvh] sm:h-[80dvh] flex flex-col bg-[#1E1440] border border-purple-500/25 rounded-t-3xl sm:rounded-3xl text-white overflow-hidden"
         >

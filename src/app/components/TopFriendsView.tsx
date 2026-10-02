@@ -15,7 +15,7 @@ import { openExternal } from '../../lib/platforms';
 import { MyAppLogo } from './PlatformLogo';
 import { useSwipeTabs } from '../../lib/useSwipeTabs';
 import { avatarThumb, defaultAvatar, thumb } from '../../lib/media';
-import { openPost, openProfile } from '../../lib/appNav';
+import { openPost, openPostInList, openProfile } from '../../lib/appNav';
 import { formatRelative } from '../../lib/dates';
 import { useBackHandler } from '../../lib/navigation';
 import { profileProps } from '../../lib/profileCache';
@@ -114,10 +114,13 @@ function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scop
   // L'onglet visible se charge tout de suite ; l'autre dès qu'on y va.
   useEffect(() => { if (visible || loadedOnce) load(); }, [period, visible]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const openSong = (t: any) => {
+  const openSong = (t: any, list?: any[]) => {
     const ids: string[] = t.post_ids || (t.post_id ? [t.post_id] : []);
-    if (ids.length <= 1 && t.post_id) openPost(t.post_id);
-    else setSongSheet(t);
+    if (ids.length <= 1 && t.post_id) {
+      // Q2 : glisser pour passer aux autres sons du même classement, dans l'ordre.
+      const order = (list || []).map((x: any) => x.post_id).filter(Boolean);
+      if (order.length > 1) openPostInList(t.post_id, order); else openPost(t.post_id);
+    } else setSongSheet(t);
   };
   const openInApp = (t: any) => {
     const url = getPlatformUrl({ spotify_url: t.spotify_url, apple_music_url: t.apple_music_url, deezer_url: t.deezer_url, youtube_url: t.youtube_url, youtube_music_url: t.youtube_music_url, tidal_url: t.tidal_url, odesli_page_url: t.odesli_page_url },
@@ -162,16 +165,16 @@ function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scop
           <>
             <div className="bg-gradient-to-b from-violet-950/30 to-violet-950/10 rounded-2xl border border-purple-500/15 overflow-hidden">
               <div className="flex items-end justify-center gap-2 px-3 pt-3">
-                {top3[1] ? <PodiumCard track={top3[1]} rank={2} barHeight={96} onOpen={() => openSong(top3[1])} /> : <div className="w-[96px]" />}
-                {top3[0] && <PodiumCard track={top3[0]} rank={1} barHeight={128} onOpen={() => openSong(top3[0])} crown />}
-                {top3[2] ? <PodiumCard track={top3[2]} rank={3} barHeight={68} onOpen={() => openSong(top3[2])} /> : <div className="w-[96px]" />}
+                {top3[1] ? <PodiumCard track={top3[1]} rank={2} barHeight={96} onOpen={() => openSong(top3[1], shakedList)} /> : <div className="w-[96px]" />}
+                {top3[0] && <PodiumCard track={top3[0]} rank={1} barHeight={128} onOpen={() => openSong(top3[0], shakedList)} crown />}
+                {top3[2] ? <PodiumCard track={top3[2]} rank={3} barHeight={68} onOpen={() => openSong(top3[2], shakedList)} /> : <div className="w-[96px]" />}
               </div>
             </div>
             {rest.length > 0 && (
               <div className="space-y-2 mt-3">
                 {rest.map((t, i) => (
                   <SongRow key={t.key} rank={i + 4} track={t} detail={<><Users className="w-2.5 h-2.5" /> {t.shakes} fois · {sharersText(t.sharers)}</>}
-                    onOpen={() => openSong(t)} onApp={() => openInApp(t)}
+                    onOpen={() => openSong(t, shakedList)} onApp={() => openInApp(t)}
                     action={shaked.has(t.key) ? <span className="text-[10px] text-fuchsia-400 font-semibold">Shaké !</span> : (
                       <button onClick={() => shake(t)} disabled={shaking === t.key} className="px-2.5 py-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-[10px] font-bold flex items-center gap-1 disabled:opacity-50">
                         {shaking === t.key ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />} Shake
@@ -190,7 +193,7 @@ function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scop
           <SectionTitle icon={<Heart className="w-4 h-4 text-pink-400" />} title="Sons les plus likés" sub={label} />
           <div className="space-y-2">
             {data.liked.slice(0, 5).map((t: any, i: number) => (
-              <SongRow key={t.key} rank={i + 1} track={t} detail={<><Heart className="w-2.5 h-2.5 text-pink-400" /> {t.likes} like{t.likes > 1 ? 's' : ''}</>} onOpen={() => openSong(t)} onApp={() => openInApp(t)} />
+              <SongRow key={t.key} rank={i + 1} track={t} detail={<><Heart className="w-2.5 h-2.5 text-pink-400" /> {t.likes} like{t.likes > 1 ? 's' : ''}</>} onOpen={() => openSong(t, data.liked.slice(0, 5))} onApp={() => openInApp(t)} />
             ))}
           </div>
         </section>

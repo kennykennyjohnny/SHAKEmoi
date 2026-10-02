@@ -18,6 +18,7 @@ import { useMediaQuery } from '../lib/useMediaQuery';
 import { lazyView, preloadViews, ViewSpinner } from '../lib/lazyView';
 import { getCurrentUser, getUserProfile, getUserNotifications, hasShakeToday, followUser, getInboxCounts, getCurrentShakeWeekStart, getStoryById } from '../lib/database';
 import { useBackHandler, setBasePath, TabActiveContext } from '../lib/navigation';
+import { takePostList } from '../lib/appNav';
 import { parseRoute, type Route } from '../lib/links';
 import { Slogan } from './components/Slogan';
 import { InstallAppButton } from './components/InstallAppButton';
@@ -129,6 +130,7 @@ export default function App() {
   const [viewOptions, setViewOptions] = useState<any>(() => initialScreen?.options ?? {});
   const [profilePreview, setProfilePreview] = useState<{ userId: string; username: string } | null>(null);
   const [notifPostId, setNotifPostId] = useState<string | null>(() => initialScreen?.postId ?? null);
+  const [notifPostList, setNotifPostList] = useState<string[] | undefined>(undefined);
   const [notifStory, setNotifStory] = useState<{ story: any; likes: boolean } | null>(null);
   // Feuilles globales de modération (P15 / P17) et page admin.
   const [reportTarget, setReportTarget] = useState<{ kind: any; id: string } | null>(null);
@@ -370,7 +372,7 @@ export default function App() {
   const openTarget = async (target: string) => {
     const [kind, id] = target.split(':');
     if (!id) return;
-    if (kind === 'post') setNotifPostId(id);
+    if (kind === 'post') { setNotifPostList(takePostList(id)); setNotifPostId(id); }
     else if (kind === 'dm') { setViewOptions({ initialTab: 'dms', openPartnerId: id, nonce: Date.now() }); setCurrentView('messages'); }
     else if (kind === 'circle') { setViewOptions({ initialTab: 'circles', openCircleId: id, nonce: Date.now() }); setCurrentView('messages'); }
     else if (kind === 'profile') setProfilePreview({ userId: id, username: '' });
@@ -940,7 +942,8 @@ export default function App() {
           <PostDetailModal
             postId={notifPostId}
             currentUser={currentUser}
-            onClose={() => setNotifPostId(null)}
+            list={notifPostList}
+            onClose={() => { setNotifPostId(null); setNotifPostList(undefined); }}
           />
         )}
       </AnimatePresence>

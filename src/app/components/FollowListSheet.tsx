@@ -11,6 +11,7 @@ import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { useBackHandler } from '../../lib/navigation';
 import { openProfile } from '../../lib/appNav';
 import { profileProps } from '../../lib/profileCache';
+import { tween } from '../../lib/motion';
 
 export type FollowListKind = 'followers' | 'following' | 'mutual';
 
@@ -108,7 +109,7 @@ export function FollowListSheet({ userId, username, kind, myId, isOwn = false, o
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
         <motion.div
           initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
-          transition={{ type: 'tween', duration: 0.2 }}
+          transition={tween()}
           className="pointer-events-auto w-full sm:max-w-md h-[85dvh] sm:h-[75dvh] bg-[#1D0F3D] rounded-t-3xl sm:rounded-2xl border-t sm:border border-purple-700/40 flex flex-col overflow-hidden"
           role="dialog" aria-label={TITLES[kind]}
         >

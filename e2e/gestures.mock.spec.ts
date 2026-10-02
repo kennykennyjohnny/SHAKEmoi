@@ -1,27 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mockBackend, LEA } from './mock/backend';
+import { swipe } from './mock/touch';
 
 // Q1 : l'aperçu de profil se ferme en le glissant vers le bas (seulement si le
 // contenu est tout en haut), sinon il revient en place.
-
-/** Glissé tactile (événements touch réels) sur un élément, en n étapes. */
-export async function swipe(page: Page, selector: string, from: { x: number; y: number }, to: { x: number; y: number }, steps = 12, stepMs = 12) {
-  await page.evaluate(async ({ selector, from, to, steps, stepMs }) => {
-    const el = document.querySelector(selector) as HTMLElement;
-    const target = document.elementFromPoint(from.x, from.y) || el;
-    const mk = (x: number, y: number) => new Touch({ identifier: 1, target, clientX: x, clientY: y });
-    const fire = (type: string, x: number, y: number) => {
-      const t = mk(x, y);
-      target.dispatchEvent(new TouchEvent(type, { bubbles: true, cancelable: true, touches: type === 'touchend' ? [] : [t], targetTouches: type === 'touchend' ? [] : [t], changedTouches: [t] }));
-    };
-    fire('touchstart', from.x, from.y);
-    for (let i = 1; i <= steps; i++) {
-      await new Promise((r) => setTimeout(r, stepMs));
-      fire('touchmove', from.x + ((to.x - from.x) * i) / steps, from.y + ((to.y - from.y) * i) / steps);
-    }
-    fire('touchend', to.x, to.y);
-  }, { selector, from, to, steps, stepMs });
-}
 
 const openPreview = async (page: Page) => {
   await page.evaluate((id) => { window.dispatchEvent(new CustomEvent('shakemoi:open', { detail: `profile:${id}` })); }, LEA);
@@ -61,7 +43,7 @@ test.describe('glisser pour fermer', () => {
 
     // Geste rapide et court : fermé aussi.
     d = await openPreview(page);
-    await swipe(page, sel, { x: 200, y: 450 }, { x: 200, y: 560 }, 4, 8);
+    await swipe(page, sel, { x: 200, y: 450 }, { x: 200, y: 570 }, 3, 4);
     await expect(page.getByRole('dialog', { name: /Profil de/ })).toHaveCount(0);
   });
 });

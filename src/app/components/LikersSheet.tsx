@@ -8,6 +8,7 @@ import { useBackHandler } from '../../lib/navigation';
 import { defaultAvatar, avatarThumb } from '../../lib/media';
 import { openProfile } from '../../lib/appNav';
 import { profileProps } from '../../lib/profileCache';
+import { tween } from '../../lib/motion';
 // SHAKEMOI - Qui a liké ce shake (visible par l'auteur du post).
 // Même feuille partout : fil, profil, détail d'un post.
 
@@ -38,7 +39,7 @@ export function LikersSheet({ postId, onClose, onOpenProfile }: Props) {
       <motion.div
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+        transition={tween()}
         onClick={e => e.stopPropagation()}
         className="w-full sm:max-w-md bg-[#1D0F3D] rounded-t-2xl sm:rounded-2xl border border-purple-800/30 overflow-hidden max-h-[70dvh] flex flex-col pb-[env(safe-area-inset-bottom)]"
       >

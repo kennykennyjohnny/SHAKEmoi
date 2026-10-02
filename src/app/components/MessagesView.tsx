@@ -19,6 +19,7 @@ import { ListMusic } from 'lucide-react';
 import { circlePreviewText, dmPreviewText } from '../../lib/chat';
 import { useSwipeTabs } from '../../lib/useSwipeTabs';
 import { profileProps } from '../../lib/profileCache';
+import { tween } from '../../lib/motion';
 
 interface MessagesViewProps {
   currentUser: any;
@@ -682,19 +683,23 @@ function CircleView({ circle, currentUser, onBack, startOnPlaylist = false }: { 
   useBackHandler(showInfo, () => setShowInfo(false));
 
   const memberLabel = `${members.length || circle.member_count || 0} membre${(members.length || circle.member_count) > 1 ? 's' : ''}`;
-  if (view === 'playlist') {
-    return (
-      <CirclePlaylist
-        circleId={circle.id} name={name} photoUrl={photoUrl} subtitle={memberLabel}
-        onBack={() => onBack()}
-        onChat={() => setView('chat')}
-        onOpenMessage={(id) => { setJumpId(id); setView('chat'); }}
-      />
-    );
-  }
-
   return (
-    <>
+    <div className="relative flex-1 flex flex-col min-h-0 overflow-hidden">
+      {/* Q3 : la playlist glisse par-dessus la conversation (même courbe que
+          partout) ; la conversation reste en place dessous, au même endroit. */}
+      <AnimatePresence initial={false}>
+        {view === 'playlist' && (
+          <motion.div key="playlist" className="absolute inset-0 z-30 bg-[#1E1440] flex flex-col"
+            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={tween()}>
+            <CirclePlaylist
+              circleId={circle.id} name={name} photoUrl={photoUrl} subtitle={memberLabel}
+              onBack={() => onBack()}
+              onChat={() => setView('chat')}
+              onOpenMessage={(id) => { setJumpId(id); setView('chat'); }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <ChatThread
         key={circle.id}
         jumpToId={jumpId}
@@ -734,7 +739,7 @@ function CircleView({ circle, currentUser, onBack, startOnPlaylist = false }: { 
           />
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }
 
@@ -845,7 +850,7 @@ function CircleInfoSheet({ circle, currentUser, members, isOwner, onClose, onRen
     <>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/70" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
-        <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={{ type: 'tween', duration: 0.2 }}
+        <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={tween()}
           className="pointer-events-auto w-full sm:max-w-md h-[90dvh] sm:h-[80dvh] bg-[#1D0F3D] rounded-t-3xl sm:rounded-2xl border-t sm:border border-purple-700/40 flex flex-col overflow-hidden"
           role="dialog" aria-label="Infos du cercle">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-purple-800/30">

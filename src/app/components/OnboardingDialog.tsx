@@ -3,6 +3,7 @@ import { ChevronRight, ChevronLeft, Heart, MessageCircle, Music, Play, Repeat2, 
 import { motion, AnimatePresence } from 'motion/react';
 import { PLATFORM_LABELS, STREAMING_APPS, type PlatformKey } from '../../lib/platforms';
 import { PlatformLogo } from './PlatformLogo';
+import { tween } from '../../lib/motion';
 
 // SHAKEMOI - Tuto de bienvenue (O1/O2) : plein écran, une idée par écran,
 // glisser pour avancer, barre de progression, « Passer ». Dernier écran :
@@ -249,7 +250,7 @@ export function OnboardingDialog({ initialService, replay, onComplete, onClose }
               initial={{ opacity: 0, x: dir * 60 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: dir * -60 }}
-              transition={{ duration: 0.28, ease: 'easeOut' }}
+              transition={tween()}
               className="flex flex-col items-center text-center max-w-sm w-full"
             >
               <div className="h-64 flex items-center justify-center mb-8">{STEPS[step].visual}</div>
@@ -262,7 +263,7 @@ export function OnboardingDialog({ initialService, replay, onComplete, onClose }
               initial={{ opacity: 0, x: dir * 60 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: dir * -60 }}
-              transition={{ duration: 0.28, ease: 'easeOut' }}
+              transition={tween()}
               className="w-full max-w-md overflow-y-auto overscroll-contain py-2"
             >
               <h2 className="text-3xl font-black text-center leading-tight mb-2 tracking-tight">Tu écoutes où ?</h2>

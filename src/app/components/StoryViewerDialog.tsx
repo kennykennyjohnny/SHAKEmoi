@@ -13,6 +13,7 @@ import { openExternal } from '../../lib/platforms';
 import { thumb, defaultAvatar, avatarThumb } from '../../lib/media';
 import { MyAppLogo } from './PlatformLogo';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
+import { tween } from '../../lib/motion';
 interface StoryViewerDialogProps {
   open: boolean;
   story: any | null;
@@ -720,7 +721,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                   initial={{ y: '100%' }}
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
-                  transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+                  transition={tween()}
                   className="absolute bottom-0 left-0 right-0 z-30 bg-black/80 backdrop-blur-xl rounded-t-2xl max-h-[55%] flex flex-col"
                   onClick={(e) => e.stopPropagation()}
                 >

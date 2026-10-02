@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { resolvePreviewUrl } from '../../lib/preview';
 import { PUBLIC_ORIGIN } from '../../lib/links';
 import { useBackHandler } from '../../lib/navigation';
+import { tween } from '../../lib/motion';
 
 // SHAKEMOI - Feuille de partage d'un son : vidéo story (Insta, TikTok, Snap,
 // WhatsApp…) + partages rapides. Même feuille partout (recherche, feed, profil,
@@ -111,7 +112,7 @@ export function SongShareSheet({ song, by, link, onClose }: Props) {
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 40, opacity: 0 }}
-          transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+          transition={tween()}
           onClick={e => e.stopPropagation()}
           className="w-full sm:max-w-md max-h-[92dvh] overflow-y-auto bg-[#1E1440] border border-purple-500/25 rounded-t-3xl sm:rounded-3xl text-white pb-[max(1rem,env(safe-area-inset-bottom))]"
         >

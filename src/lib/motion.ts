@@ -75,10 +75,11 @@ export function useDragToClose(opts: {
       st.dy = Math.max(0, dy);
       set(st.dy, false);
     };
-    const onEnd = () => {
+    const onEnd = (e: TouchEvent) => {
       const s = st;
       st = null;
       if (!s || s.lock !== 'drag') return;
+      if (e.type === 'touchcancel') { set(0, true); return; }
       const h = panel.offsetHeight || window.innerHeight;
       const v = s.dy / Math.max(1, Date.now() - s.t); // px/ms
       if (s.dy > Math.min(160, h * 0.25) || (v > 0.6 && s.dy > 30)) {

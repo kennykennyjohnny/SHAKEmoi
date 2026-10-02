@@ -591,3 +591,33 @@ Sans compte de test, je ne pouvais pas voir l'appli connectée. J'ai monté un *
 3. Ferme puis rouvre le même profil : instantané.
 4. Profil d'un ami avec beaucoup de Shakes : 12 pochettes d'abord, la suite arrive en descendant.
 5. Regarde les autres fenêtres (commentaires, likes, abonnés, infos du cercle, flamme) : tout le texte est blanc / violet clair, rien en noir.
+
+## Lot Q3 — Q2 (post suivant / précédent) + Q3 (transitions)
+| # | Statut | Explication |
+|---|---|---|
+| Q2 glisser | ✅ | Post ouvert depuis une **grille de profil** (le mien, un ami, l'aperçu) ou le **TOP** : **glisser à gauche / à droite** passe au post suivant / précédent **de la même liste, dans l'ordre de la grille**. Le post suit le doigt (même mécanique, même courbe et même durée que Messages ↔ Cercles) ; relâcher avant un quart de l'écran annule. |
+| Q2 flèches | ✅ | Petites flèches sur les côtés (discrètes sur téléphone, plus grandes et plus contrastées sur ordinateur) + **flèches du clavier** (et Échap pour fermer). Pas de flèche gauche sur le 1er post, pas de droite sur le dernier. |
+| Q2 instantané | ✅ | **Trois posts montés côte à côte** (précédent, affiché, suivant) : le suivant est déjà chargé (post, likes, commentaires, réponses en musique) ; un cran plus loin est préchargé en mémoire. Revenir sur un post déjà vu est immédiat (gardé 1 min). La grille charge la page suivante quand on approche du bout. |
+| Q2 son | ✅ | Le son du post quitté **s'arrête** ; celui du nouveau post **ne démarre pas tout seul** (règle M2). |
+| Q2 chiffres | ✅ | Commentaires, likes, reshakes, « qui a liké », partage, envoyer à un ami : tout suit le post affiché (chaque post a ses propres données). L'adresse suit aussi (`/post/<id>`). |
+| Q2 bout | ✅ | Au bout de la liste, **pas de boucle** : le post bouge un peu (résistance) et revient. |
+| Q2 retour | ✅ | Le retour (ou la croix) ferme le post et ramène **à la grille, sur la vignette du dernier post vu** (la grille suit pendant qu'on fait défiler les posts). |
+| Q2 fermer en glissant | ✅ | **Glisser vers le bas** (depuis la pochette, ou n'importe où si le contenu est tout en haut) : le post **suit le doigt et rétrécit**, le fond s'éclaircit et la grille réapparaît (capture `e2e/screens/q2-glisser-bas.png`). Au-delà du seuil (ou geste rapide) : **la pochette revient se poser sur sa vignette** ; sinon le post revient en place **avec un petit rebond**. Le défilement des commentaires n'est pas gêné. |
+| Q2 ouverture | ✅ | L'inverse : le post **s'agrandit depuis sa vignette**. Même courbe et même durée que la fermeture et que Messages ↔ Cercles. Ouvert sans vignette (fil, notification) : il apparaît en douceur. |
+| Q2 directions | ✅ | La direction est décidée **dès les 10 premiers pixels** : franchement horizontal = post voisin, vers le bas = fermer, vers le haut = faire défiler. Jamais les deux à la fois. Un appel ou une notif qui interrompt le geste : tout revient en place. |
+| Q2 téléphone | ✅ | Sur téléphone, le post ouvert prend **tout l'écran** (avant : une carte avec des marges) : plus de place pour la pochette et un geste plus naturel, comme la galerie photo. Sur ordinateur : fenêtre centrée comme avant. |
+| Q2 tests | ✅ | **Playwright** (vrais événements tactiles sur téléphone, souris + clavier sur ordinateur) : flèches, clavier, glisser à gauche / à droite, résistance au 1er post, geste interrompu → revient, glisser vers le bas → fermé et vignette du dernier post vu à l'écran, retour → fermé. |
+| Q3 référence | ✅ | **Messages ↔ Cercles n'a pas bougé** (mêmes valeurs, juste rangées dans `lib/motion.ts`). Cette mécanique (`useSwipeTabs`) est le composant réutilisable des onglets glissables ; le TOP l'utilise déjà, le Classement (Q4) l'utilisera. |
+| Q3 partout | ✅ | **Une seule courbe et une seule durée par défaut pour toute l'appli** (0,28 s, celles de Messages ↔ Cercles) : toutes les ouvertures / fermetures de fenêtres qui n'avaient pas de réglage propre la prennent automatiquement. |
+| Q3 revue | ✅ | Ce qui détonnait, et ce qui est corrigé : **fenêtres du bas** (likes, partage, archives, vues d'un Shake éphémère, abonnés, infos du cercle, signaler) : 3 « ressorts » de raideurs différentes + des fondus de 0,2 s → même courbe ; **tuto** : changement d'écran en 0,28 s « ease-out » → même courbe ; **changement d'onglet du bas** : fondu 0,15 s → 0,18 s même courbe (fondu seulement : un glissement décalerait les boutons fixes) ; **playlist du cercle** : apparaissait d'un coup → glisse par-dessus la conversation (qui reste en place dessous) ; **aperçu de profil** et **post** : refaits (Q1, Q2). Gardés tels quels : les petites animations décoratives (cœur du double-tap, pop des icônes du tuto, vinyle), et l'ouverture d'une conversation, instantanée comme WhatsApp. |
+| Q3 accessibilité | ✅ | « **Réduire les animations** » du téléphone respecté partout (animations de l'appli et effets CSS ; la barre de temps du récap reste). Uniquement `transform` / `opacity`, déplacement direct pendant les gestes (pas de recalcul React à chaque image), aucune bibliothèque ajoutée. |
+
+**Tests (lot Q3)**
+1. Ton profil → touche une pochette → le post s'agrandit depuis la vignette. Glisse à gauche : le post suivant arrive tout de suite (pochette, likes, commentaires à lui). Glisse à droite : le précédent. Sur le 1er post, glisse à droite : ça résiste.
+2. Lance le son d'un post, passe au suivant : le son s'arrête, le nouveau ne démarre pas tout seul.
+3. Passe 5 ou 6 posts, puis glisse vers le bas : le post rétrécit, la grille réapparaît, et la pochette se pose sur sa vignette (la grille est au bon endroit). Glisse un tout petit peu vers le bas et lâche : petit rebond.
+4. Dans un post, descends dans les commentaires puis remonte : ça défile normalement, sans fermer.
+5. Même chose depuis le profil d'un ami et depuis le TOP (sons les plus shakés / likés).
+6. Ordinateur : flèches sur les côtés et flèches du clavier ; Échap ferme.
+7. Un cercle → icône Playlist : la playlist glisse depuis la droite ; la bulle (ou retour) la referme, la conversation est restée au même endroit.
+8. Réglages du téléphone → Accessibilité → « Réduire les animations » : l'appli ne fait plus que des apparitions directes.

@@ -13,6 +13,19 @@ export const openConversation = (userId: string) => openTarget(`dm:${userId}`);
 export const openCircle = (circleId: string) => openTarget(`circle:${circleId}`);
 export const openPost = (postId: string) => openTarget(`post:${postId}`);
 
+// Q2 : un post ouvert depuis une liste (TOP…) connaît la liste, pour passer au
+// suivant / précédent dans le même ordre.
+let pendingList: { id: string; list: string[] } | null = null;
+export function openPostInList(postId: string, list: string[]) {
+  pendingList = { id: postId, list };
+  openPost(postId);
+}
+export function takePostList(postId: string): string[] | undefined {
+  const l = pendingList && pendingList.id === postId ? pendingList.list : undefined;
+  pendingList = null;
+  return l;
+}
+
 /** Feuilles globales de modération (P15 / P17), ouvertes depuis n'importe quel écran. */
 export function openReport(kind: 'user' | 'post' | 'comment' | 'message' | 'circle_message' | 'story', id: string) {
   window.dispatchEvent(new CustomEvent('shakemoi:report', { detail: { kind, id } }));

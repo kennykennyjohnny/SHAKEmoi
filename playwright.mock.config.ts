@@ -6,6 +6,7 @@ export default defineConfig({
   testDir: './e2e',
   testMatch: /.*\.mock\.spec\.ts/,
   timeout: 45_000,
+  retries: 1, // gestes chronométrés : une machine chargée peut fausser une vitesse
   reporter: [['list']],
   use: { baseURL: 'http://localhost:5199', locale: 'fr-FR', screenshot: 'only-on-failure' },
   webServer: {
