@@ -1,4 +1,59 @@
-# MATIN — bilan de la session du 01 → 02/10/2026 (prompt 5 : sections P et N)
+# MATIN — bilan de la session du 02/10/2026 (section Q)
+
+Tout est en ligne sur **shakemoi.fr** (`main`, déployé par Vercel) : 6 lots, build + contrôle des types verts avant chaque envoi, **21 tests Playwright « connecté »** (sur base simulée) + **10/10 sur le site en ligne**. Détail ligne par ligne et tests de chaque lot : `CE_SOIR.md` → « Section Q ». Conception de Découvrir : `docs/reco.md`. Captures : `docs/captures/`.
+
+## Étape 0 (P / N)
+Rien d'ouvert hors ce qui t'attend (clé Sentry, compte de test, clé GIF, OK pages légales, thèmes P23, tests téléphone) ; patch de Jerry revérifié en base. P24 a été transformé par Q11.
+
+## En bref — ce qui est en ligne
+1. **Ton retour « texte illisible / curseurs partout »** : ~300 textes remontés au-dessus du contraste 4,5:1 ; **cause principale trouvée** : tout ce qui s'ouvre par-dessus l'appli (aperçu de profil, feuilles) héritait d'un **texte noir** (vieux thème clair) → couleurs de base passées en sombre. Plus de sélection de texte (poignées bleues, loupe) au double-tap / appui long, plus de clavier qui s'ouvre tout seul.
+2. **Q10** notifs : un seul logo (nouveau badge S blanc), titres = la personne (« Bapt — a aimé ton Shake · Lithe »).
+3. **Q7** photo de cercle : la cause (seul le créateur avait le droit, échec silencieux) ; tout membre peut, message « a changé la photo », photo perdue de « J B L » remise.
+4. **Q6 / Q13** : `/messages/<pseudo>` ; actualiser reste sur la conversation ; elle s'ouvre **directement en bas**, même quand les photos chargent tard (cause reproduite et corrigée).
+5. **Q12** flamme lisible partout.
+6. **Q1 / Q5** aperçu de profil : lisible, **glisser vers le bas pour fermer**, **une seule requête** + affichage immédiat + préchargement au toucher + cache. Mesuré : 14 → 2-4 requêtes ; complet ~800 → ~300-500 ms ; réouverture ~40 ms.
+7. **Q2** post suivant / précédent (glisser, flèches, clavier), **fermer en glissant vers le bas vers la vignette**, ouverture depuis la vignette.
+8. **Q3** une seule courbe / durée partout (celle de Messages ↔ Cercles, qui n'a pas bougé), « réduire les animations » respecté.
+9. **Q4** Classement : **Amis | Global | Découvrir**. **Q11** Shakes épinglés en haut de la grille (rubrique sons épinglés retirée ; « EKKO » repris).
+10. **Q8 Découvrir** : moteur de recommandation complet (profil de goût unique partagé avec la compatibilité, écoutes, catalogue Deezer en tâche planifiée, raisons, Shaker / Pas pour moi, Tout écouter, nouvelle série en tirant). **Q9** « Choisis au moins 3 artistes » (tuto + Paramètres → « Mes artistes préférés »).
+11. **Q14** nouveau tuto : 6 vrais bouts d'appli, 3 gestes à faire, puis appli d'écoute → 3 artistes → 3 personnes.
+
+## Commits de la session
+`e557b76` Q10/Q7/Q6/Q13/Q12 + lisibilité · `ef6d6af` Q1/Q5 · `4b606fd` Q2/Q3 · `0e35dde` Q4/Q11 · `f620500` Q8/Q9 · `f2394b0` Q14 · (+ ce bilan).
+
+## À tester (25 minutes, sur ton téléphone)
+1. **Lisibilité** : ouvre un aperçu de profil, des commentaires, les likes, les infos d'un cercle → plus aucun texte noir ; double-tape un message → plus de poignées bleues.
+2. **Notifs** (Android, appli fermée) : un like depuis un 2ᵉ compte → S blanc à gauche, rien à droite, « Prénom — a aimé ton Shake · Titre ». Sur iPhone : décris-moi ce que tu vois.
+3. **Photo de cercle** dans un cercle que tu n'as pas créé → elle reste après actualisation ; « J B L » a retrouvé la photo de Raph.
+4. **Conversation** avec photos : on arrive tout en bas, sans défilement ; actualise : tu y restes.
+5. **Aperçu de profil** : s'affiche tout de suite, glisse-le vers le bas pour le fermer.
+6. **Post** depuis ta grille : glisse à gauche / droite, puis vers le bas → il retourne sur sa vignette.
+7. **Classement** → Découvrir : écoute, Shaker, ✕, tire pour une nouvelle série. Dis-moi si les recos (et celles de tes potes, `CE_SOIR.md`) sonnent juste.
+8. **Paramètres** → « Mes artistes préférés », puis « Revoir le tuto » (6 écrans + artistes).
+9. **Épingler** : appui long sur une de tes pochettes.
+
+## Ce que tu dois configurer toi-même (clic par clic)
+1. **Clé Last.fm (gratuite, 5 min)** — le moteur marche déjà sans (mode réduit : Deezer + potes) ; la clé ajoute « titres similaires » :
+   1. Va sur **last.fm/join** et crée un compte (ou connecte-toi).
+   2. Va sur **last.fm/api/account/create** : *Application name* `SHAKEmoi`, *Application description* « Recommandations musicales », *Callback URL* vide, *Application homepage* `https://www.shakemoi.fr` → **Submit**.
+   3. Copie la ligne **API key** (pas le « Shared secret »).
+   4. **supabase.com** → projet → **Edge Functions** → **Secrets** (ou *Project Settings → Edge Functions*) → **Add new secret** : nom `LASTFM_API_KEY`, valeur = la clé → **Save**. (Rien à mettre dans Vercel : c'est la fonction `reco-catalog` de Supabase qui l'utilise.)
+   5. C'est tout : le prochain passage du catalogue (toutes les 20 min) l'utilise. Pour forcer : Supabase → SQL Editor → `select public.run_reco_catalog();`
+2. **Sentry, clé GIF, compte de test, 2 vieilles fonctions à supprimer, Leaked password protection, recompression des avatars** : toujours en attente, mêmes étapes que dans la section « Session précédente » ci-dessous (inchangées). Le compte de test permettrait de compléter le banc simulé par de vrais tests connectés.
+
+## En attente de ta décision / de ton OK
+1. **Découvrir — évaluation** : le moteur fait mieux que « les tendances pour tout le monde » sur l'**artiste** (22 % contre 16 %) et la **famille** (88 % contre 81 %), mais **pas nettement sur le son exact** (2 contre 3 sur 32) — avec nos données, presque aucun son caché n'était devinable (`docs/reco.md` § 7). Je propose de **juger sur l'usage réel** dans 2-3 semaines (requête prête dans `CE_SOIR.md`) et sur **ton avis** sur les top 10 de 5 comptes (`CE_SOIR.md`).
+2. Pages légales (P30), thèmes du Shake de la semaine (P23) : inchangé.
+
+## Pas fait / limites connues
+- Pas de téléphone ni de compte de test : tout le « connecté » est vérifié sur un **banc d'essai** (l'appli en local, base simulée, vrais clics / vrais gestes tactiles), pas sur ton vrai compte. Notifs et rendu iPhone : à toi.
+- « Bapt / Léa » des captures = données d'exemple du banc.
+- Le geste « glisser vers le bas » du post et de l'aperçu est tactile (téléphone) ; sur ordinateur : croix, Échap, flèches.
+- HOUDI n'a pas de fiche Deezer exploitable (mauvais homonyme) : ses titres n'arrivent dans Découvrir que par les potes.
+
+---
+
+# Session précédente (01 → 02/10/2026, prompt 5 : sections P et N) — pour mémoire
 
 Tout est en ligne sur **shakemoi.fr** (branche `main`, déployé par Vercel). Build et contrôle des types verts avant chaque envoi. Détail ligne par ligne, avec les tests de chaque lot, dans `CE_SOIR.md`.
 
