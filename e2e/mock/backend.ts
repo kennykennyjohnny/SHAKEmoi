@@ -175,6 +175,9 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
           })) });
         }
         case 'save_artist_picks': return json((body.p_picks || []).length);
+        case 'get_weekly_recap':
+          return json({ week: 40, start: iso(60 * 24 * 10), end: iso(60 * 24 * 3), shakes: 3, likes: 7, streak: 2, genre: 'Rap', match: null,
+            top: [{ id: 'p1', title: 'Meuda', artist: 'Tiakola', cover: cover(1), preview_url: null, track_id: null, spotify_url: null, likes: 4 }] });
         case 'get_taste':
           return json({ status: 'ok', score: 88, families: ['Rap', 'Afro'], artists: ['Tiakola', 'SDM'], close: [], mine: 12, theirs: 15 });
         case 'get_mutual_followers':

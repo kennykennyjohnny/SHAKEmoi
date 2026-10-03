@@ -29,8 +29,9 @@ export function weekLabel(r: WeeklyRecap): string {
   return `du ${sameMonth ? a.split(' ')[0] : a} au ${b}`;
 }
 
-/** Carte discrète en haut du fil, toute la semaine (croix pour la masquer). */
-export function RecapCard({ user }: { user: any }) {
+/** Carte discrète en haut du fil, toute la semaine (croix pour la masquer).
+ *  `always` (onglet TOP) : toujours là, sans croix, même sans récap cette semaine. */
+export function RecapCard({ user, always = false }: { user: any; always?: boolean }) {
   const [recap, setRecap] = useState<WeeklyRecap | null>(cache && cache.userId === user.id ? cache.recap : null);
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -45,7 +46,18 @@ export function RecapCard({ user }: { user: any }) {
     try { setHidden(localStorage.getItem(HIDDEN_KEY) === String(recap.week)); } catch { /* stockage bloqué */ }
   }, [recap]);
 
-  if (!hasContent(recap) || hidden) return null;
+  if (always && !hasContent(recap)) {
+    return (
+      <div className="rounded-2xl border border-fuchsia-500/25 bg-gradient-to-br from-purple-700/25 to-pink-600/15 p-3.5 flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center flex-shrink-0"><FlameIcon className="w-6 h-6" /></div>
+        <div className="min-w-0">
+          <p className="font-bold text-sm">Ton récap de la semaine</p>
+          <p className="text-xs text-purple-100">Publie un Shake cette semaine : ton récap arrive mardi 🎧</p>
+        </div>
+      </div>
+    );
+  }
+  if (!hasContent(recap) || (hidden && !always)) return null;
 
   const hide = () => {
     setHidden(true);
@@ -63,16 +75,16 @@ export function RecapCard({ user }: { user: any }) {
             {recap.streak > 0 && <span className="absolute -bottom-1 -right-1 bg-[#1E1440] rounded-full p-0.5"><FlameIcon className="w-4 h-4" /></span>}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm">Ton récap de la semaine est prêt 🎧</p>
+            <p className="font-bold text-sm">{always ? 'Ton récap de la semaine 🎧' : 'Ton récap de la semaine est prêt 🎧'}</p>
             <p className="text-xs text-purple-100/75 truncate">
               {recap.shakes} Shake{recap.shakes > 1 ? 's' : ''} · {recap.likes} like{recap.likes > 1 ? 's' : ''} reçu{recap.likes > 1 ? 's' : ''}{recap.genre ? ` · ${recap.genre}` : ''}
             </p>
           </div>
           <ChevronRight className="w-5 h-5 text-purple-200/85 flex-shrink-0" />
         </button>
-        <button onClick={hide} aria-label="Masquer le récap" className="absolute top-2 right-2 p-1.5 rounded-full text-purple-200/80 hover:text-white hover:bg-white/10">
+        {!always && <button onClick={hide} aria-label="Masquer le récap" className="absolute top-2 right-2 p-1.5 rounded-full text-purple-200/80 hover:text-white hover:bg-white/10">
           <X className="w-4 h-4" />
-        </button>
+        </button>}
       </div>
       {open && <RecapViewer recap={recap} user={user} onClose={() => setOpen(false)} />}
     </>

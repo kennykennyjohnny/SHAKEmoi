@@ -39,3 +39,16 @@ test('Choisis tes artistes', async ({ page }) => {
   await page.getByRole('button', { name: 'Enregistrer' }).last().click();
   await expect(page.getByRole('heading', { name: 'Mes artistes préférés' })).toHaveCount(0);
 });
+
+// Récap de la semaine : toujours visible en haut du TOP, sur chaque onglet.
+test('récap de la semaine dans le TOP', async ({ page }) => {
+  await mockBackend(page);
+  await page.goto('/top');
+  await expect(page.getByText('Ton récap de la semaine 🎧')).toBeVisible();
+  await page.getByRole('button', { name: 'Découvrir', exact: true }).click();
+  await expect(page.getByText('Ton récap de la semaine 🎧')).toBeVisible();
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `e2e/screens/recap-top-${test.info().project.name}.png` });
+  await page.getByText('Ton récap de la semaine 🎧').click();
+  await expect(page.getByRole('button', { name: /Partager/ }).first()).toBeVisible();
+});

@@ -711,3 +711,10 @@ Captures de chaque écran (banc d'essai, téléphone 390 px) : **`docs/captures/
 1. Paramètres → « Revoir le tuto » : 6 écrans ; touche la pochette du 1er (l'extrait joue), double-tape le post du 2e (cœur), publie au 5e (la flamme s'allume).
 2. Glisse vers la gauche / la droite pour avancer / revenir ; « Passer » saute à « Tu écoutes où ? ».
 3. Après l'appli d'écoute : « Choisis au moins 3 artistes », puis (nouveau compte) « Suis au moins 3 personnes ».
+
+## Retouche (03/10) — récap de la semaine dans le TOP
+| # | Statut | Explication |
+|---|---|---|
+| Récap toujours visible | ✅ | La carte « **Ton récap de la semaine 🎧** » (Shakes, likes reçus, genre, flamme) est maintenant **en haut de l'onglet TOP, au-dessus des onglets Amis / Global / Découvrir** : visible tout le temps, **sans croix**. La toucher ouvre le récap en plein écran (façon story) avec « Partager » (vidéo). S'il n'y a pas encore de récap (rien publié la semaine d'avant) : « Publie un Shake cette semaine : ton récap arrive mardi 🎧 ». La carte du fil reste aussi (avec sa croix). Test Playwright : visible sur Amis et Découvrir, ouverture du récap. |
+
+**Test** : onglet TOP → la carte du récap est en haut ; change d'onglet (Global, Découvrir) → elle reste ; touche-la → le récap s'ouvre.

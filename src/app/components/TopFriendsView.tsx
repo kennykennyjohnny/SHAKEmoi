@@ -22,6 +22,7 @@ import { formatRelative } from '../../lib/dates';
 import { useBackHandler } from '../../lib/navigation';
 import { profileProps } from '../../lib/profileCache';
 import { DiscoverPanel } from './DiscoverPanel';
+import { RecapCard } from './WeeklyRecap';
 
 interface TopFriendsViewProps {
   currentUser: any;
@@ -63,6 +64,8 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
     <div className="w-full max-w-2xl mx-auto flex-1 flex flex-col min-h-0 overflow-hidden">
       {/* Onglets (on glisse ou on touche) + période */}
       <div className="px-4 pt-3 flex-shrink-0">
+        {/* Récap de la semaine : toujours là dans le TOP (pas de croix, quel que soit l'onglet). */}
+        {currentUser && <div className="mb-3"><RecapCard user={currentUser} always /></div>}
         <div className="border-b border-purple-500/20 flex justify-center">
           <div className="relative grid grid-cols-3 w-full max-w-[21rem]">
             {SCOPES.map((sc) => (
