@@ -718,3 +718,12 @@ Captures de chaque écran (banc d'essai, téléphone 390 px) : **`docs/captures/
 | Récap toujours visible | ✅ | La carte « **Ton récap de la semaine 🎧** » (Shakes, likes reçus, genre, flamme) est maintenant **en haut de l'onglet TOP, au-dessus des onglets Amis / Global / Découvrir** : visible tout le temps, **sans croix**. La toucher ouvre le récap en plein écran (façon story) avec « Partager » (vidéo). S'il n'y a pas encore de récap (rien publié la semaine d'avant) : « Publie un Shake cette semaine : ton récap arrive mardi 🎧 ». La carte du fil reste aussi (avec sa croix). Test Playwright : visible sur Amis et Découvrir, ouverture du récap. |
 
 **Test** : onglet TOP → la carte du récap est en haut ; change d'onglet (Global, Découvrir) → elle reste ; touche-la → le récap s'ouvre.
+
+## Correctif (03/10) — Découvrir et « Choisis 3 artistes » ne marchaient pas en vrai
+| # | Statut | Explication |
+|---|---|---|
+| Cause | ✅ | **Trouvée dans les journaux de la base** : 15 erreurs « DELETE requires a WHERE clause » cette nuit. Les connexions de l'appli chargent une protection (`safeupdate`) qui refuse tout `DELETE` / `UPDATE` sans condition ; la fonction qui reconstruit le profil de goût (appelée par Découvrir et par l'enregistrement des artistes) en faisait un, et le classement en faisait deux. **Mes tests ne l'avaient pas vu** : ils passaient par une connexion sans cette protection, et le banc d'essai simule la base. |
+| Correctif | ✅ | Les 5 requêtes concernées ont leur condition (`WHERE true`). Vérifié : **plus aucun** `DELETE`/`UPDATE` sans condition dans toutes les fonctions de la base. Testé comme l'appli (compte connecté, délai max 8 s) : Découvrir **1,1 s, 20 sons** ; enregistrement de 3 artistes **1,2 s**. |
+| Inscription | ✅ | **« Suis au moins 3 personnes » retiré** : après « Choisis 3 artistes », on arrive directement sur le fil (la personne qui t'a invité reste suivie automatiquement, comme avant). |
+
+**Test** : Classement → Découvrir : la liste s'affiche. Paramètres → « Mes artistes préférés » : choisis-en 3 → Enregistrer → ça se ferme sans erreur. « Revoir le tuto » : après les artistes, retour au fil.

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { mockBackend } from './mock/backend';
 
 // Q14 : le nouveau tuto (6 écrans concrets, 3 gestes à faire), puis la
-// configuration : appli d'écoute → 3 artistes (Q9) → 3 personnes (P29).
+// configuration : appli d'écoute → 3 artistes (Q9) → le fil.
 test('nouveau tuto, de bout en bout', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'téléphone');
   await mockBackend(page, { newUser: true });
@@ -60,6 +60,8 @@ test('nouveau tuto, de bout en bout', async ({ page, isMobile }) => {
   await shot('8-artistes');
   await page.getByRole('button', { name: /Continuer · 3/ }).click();
 
-  await expect(page.getByText(/Suis au moins 3 personnes/)).toBeVisible();
-  await shot('9-suis');
+  // Plus de « Suis au moins 3 personnes » (retiré le 03/10) : on arrive sur le fil.
+  await expect(page.getByRole('heading', { name: 'Choisis au moins 3 artistes que tu aimes' })).toHaveCount(0);
+  await expect(page.getByText(/Suis au moins 3 personnes/)).toHaveCount(0);
+  await shot('9-fil');
 });

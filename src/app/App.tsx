@@ -32,7 +32,6 @@ import { setSentryUser } from '../lib/sentry';
 import { ReportSheet, BugReportSheet, BlockedUsersSheet } from './components/ModerationSheets';
 import { AdminView } from './components/AdminView';
 import { HeaderFlame, StreakSheet } from './components/Streak';
-import { FollowStarter } from './components/FollowStarter';
 import { ArtistPicker } from './components/ArtistPicker';
 import { acceptInvite } from '../lib/social';
 
@@ -141,11 +140,8 @@ export default function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   // P23 : petite fenêtre de la flamme (série, temps restant, publier).
   const [showStreak, setShowStreak] = useState(false);
-  // P29 : « Suis au moins 3 personnes » à la fin du tuto (nouveau compte).
-  const [showStarter, setShowStarter] = useState(false);
-  // Q9 : « Choisis au moins 3 artistes » entre l'appli d'écoute et « Suis 3 personnes ».
+  // Q9 : « Choisis au moins 3 artistes » après l'appli d'écoute, puis le fil.
   const [showArtists, setShowArtists] = useState(false);
-  const [inviterId, setInviterId] = useState<string | null>(null);
   useEffect(() => {
     const onReport = (e: Event) => setReportTarget((e as CustomEvent).detail);
     const onBug = () => setShowBug(true);
@@ -445,8 +441,7 @@ export default function App() {
     if (ref) {
       try {
         const inviter = await acceptInvite(ref);
-        if (inviter) setInviterId(inviter);
-        else {
+        if (!inviter) {
           const refId = await resolveUserId(ref);
           if (refId && refId !== user.id) await followUser(refId);
         }
@@ -927,8 +922,8 @@ export default function App() {
         {showBlocked && <BlockedUsersSheet onClose={() => setShowBlocked(false)} />}
       </AnimatePresence>
       {showAdmin && <AdminView onClose={() => setShowAdmin(false)} />}
-      {showArtists && currentUser && <ArtistPicker onDone={() => { setShowArtists(false); setShowStarter(true); }} />}
-      {showStarter && currentUser && <FollowStarter inviterId={inviterId} onDone={() => { setShowStarter(false); setRefreshFeed(p => p + 1); }} />}
+      {/* Kenny (03/10) : plus de « Suis au moins 3 personnes » à l'inscription : on arrive sur le fil après les artistes. */}
+      {showArtists && currentUser && <ArtistPicker onDone={() => { setShowArtists(false); setRefreshFeed(p => p + 1); }} />}
       {showStreak && currentUser && <StreakSheet userId={currentUser.id} onClose={() => setShowStreak(false)} onPublish={() => setShowCreateShake(true)} />}
       {/* Story ouverte depuis une notification (M10) */}
       {notifStory && (

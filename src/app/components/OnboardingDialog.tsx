@@ -16,7 +16,7 @@ import { thumb } from '../../lib/media';
 // geste soi-même (toucher la pochette, double-tap, publier) : c'est validé
 // d'un « Bien joué », mais « Suivant » reste toujours là. Puis la
 // configuration : l'appli d'écoute (O1) ; ensuite l'appli enchaîne sur
-// « Choisis 3 artistes » (Q9) et « Suis 3 personnes » (P29), pour arriver sur
+// « Choisis 3 artistes » (Q9) puis le fil (« Suis 3 personnes » retiré le 03/10), pour arriver sur
 // un fil déjà rempli. Passer, barre de progression, glisser, flèches du
 // clavier, rejouable depuis les paramètres (replay : choix pré-rempli).
 
