@@ -146,6 +146,8 @@ export interface PreviewState {
   key: string | null;   // identifiant du son en cours (id de post / story)
   playing: boolean;     // true seulement si le son sort vraiment
   muted: boolean;       // lecture en cours mais sans son (stories façon Insta)
+  /** R7 : le navigateur a refusé la lecture automatique (il faut un toucher). */
+  blocked: boolean;
 }
 
 let audio: HTMLAudioElement | null = null;
@@ -153,6 +155,7 @@ let currentKey: string | null = null;
 let currentUrl: string | null = null;   // extrait réellement chargé pour currentKey
 let playing = false;
 let muted = false;
+let blocked = false;
 // Son des stories : actif par défaut (c'est une app de musique). Si on le
 // coupe, le choix vaut pour les stories suivantes jusqu'au rechargement.
 let sessionUnmuted = true;
@@ -286,7 +289,7 @@ export function seekPreview(fraction: number) {
 }
 
 export function getPreviewState(): PreviewState {
-  return { key: currentKey, playing, muted };
+  return { key: currentKey, playing, muted, blocked };
 }
 
 /** L'utilisateur a-t-il déjà activé le son des stories dans cette session ? */
@@ -306,7 +309,7 @@ export function isPreviewPlaying(key: string): boolean {
   return currentKey === key && playing;
 }
 
-export function playPreview(key: string, url: string, opts?: { muted?: boolean }) {
+export function playPreview(key: string, url: string, opts?: { muted?: boolean; keepVolume?: boolean }) {
   const el = ensureAudio();
   if (currentKey !== key || currentUrl !== url || !el.src || el.src === SILENCE) {
     el.src = url;
@@ -317,12 +320,58 @@ export function playPreview(key: string, url: string, opts?: { muted?: boolean }
   // le son (comportement Instagram) ; ailleurs le son est direct.
   muted = opts?.muted ?? false;
   el.muted = muted;
-  el.play().catch(() => {
-    // Autoplay refusé par le navigateur : l'UI retombe sur "play".
+  if (!opts?.keepVolume) el.volume = 0.9;
+  blocked = false;
+  el.play().catch((err) => {
+    // Autoplay refusé par le navigateur : l'UI retombe sur "play" (et, pour
+    // les Shakes éphémères, sur « Toucher pour le son »).
+    if (currentKey === key && err?.name === 'NotAllowedError') blocked = true;
     playing = false;
     emit();
   });
   emit();
+}
+
+// ---- R7 / R6 : enchaîner avec un fondu (~400 ms : 180 ms de sortie, 220 ms
+// d'entrée). Sur iPhone le volume est imposé par le système : le fondu y est
+// simplement absent, l'enchaînement reste.
+let fadeTimer: ReturnType<typeof setInterval> | null = null;
+function ramp(el: HTMLAudioElement, to: number, ms: number, done?: () => void) {
+  if (fadeTimer) clearInterval(fadeTimer);
+  const from = el.volume, start = Date.now();
+  fadeTimer = setInterval(() => {
+    const k = Math.min(1, (Date.now() - start) / ms);
+    try { el.volume = from + (to - from) * k; } catch { /* iPhone */ }
+    if (k >= 1) { clearInterval(fadeTimer!); fadeTimer = null; done?.(); }
+  }, 20);
+}
+export function crossfadeTo(key: string, url: string, opts?: { muted?: boolean }) {
+  const el = ensureAudio();
+  const start = () => {
+    try { el.volume = 0; } catch { /* iPhone */ }
+    playPreview(key, url, { ...opts, keepVolume: true });
+    ramp(el, 0.9, 220);
+  };
+  if (playing && !el.muted && currentKey !== key) ramp(el, 0, 180, start);
+  else start();
+}
+
+// ---- R7 : ouvrir un Shake éphémère met en pause ce qui jouait (playlist,
+// file d'écoute) ; le fermer le reprend là où il en était.
+export interface PlaybackSnapshot { key: string; url: string; time: number }
+export function suspendPlayback(except?: (key: string) => boolean): PlaybackSnapshot | null {
+  if (!audio || !currentKey || !currentUrl || !playing || except?.(currentKey)) return null;
+  const snap = { key: currentKey, url: currentUrl, time: audio.currentTime || 0 };
+  audio.pause();
+  return snap;
+}
+export function resumePlayback(snap: PlaybackSnapshot | null) {
+  if (!snap) return;
+  const el = ensureAudio();
+  const same = currentKey === snap.key && currentUrl === snap.url;
+  playPreview(snap.key, snap.url);
+  if (same) return;
+  el.addEventListener('loadedmetadata', () => { try { el.currentTime = snap.time; } catch { /* rien */ } }, { once: true });
 }
 
 /** Bascule lecture/pause. `url` n'est requis que pour un son pas encore chargé. */

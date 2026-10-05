@@ -62,6 +62,22 @@ export const posts: any[] = [];
 });
 const withUser = (p: any) => ({ ...p, user: profiles[p.user_id], original_post: null });
 
+// R7 : deux Shakes éphémères de Léa (avec un vrai petit son) et un sans son.
+export const stories = [0, 1, 2].map((i) => ({
+  id: `00000000-0000-4000-b000-00000000000${i}`, user_id: LEA, created_at: iso(120 - i * 30), expires_at: new Date(Date.now() + 20 * 3600_000).toISOString(),
+  track_name: i < 2 ? `Story ${i + 1}` : null, artist: i < 2 ? 'Tiakola' : null, track_id: null, cover_url: i < 2 ? cover(i + 7) : null,
+  preview_url: i < 2 ? `${MOCK_HOST}/audio/${i}.wav` : null, image_url: null, text: i === 2 ? 'Sans son' : null, likes_count: 0, is_pinned: false,
+  bg_color: '#7B2CBF', user: { id: LEA, username: 'lea', display_name: 'Léa', profile_album_cover_url: null },
+}));
+/** 3 s de son (un la très doux) : assez pour que le navigateur joue « vraiment ». */
+function wav(seconds = 3, rate = 8000) {
+  const n = seconds * rate, b = Buffer.alloc(44 + n);
+  b.write('RIFF', 0); b.writeUInt32LE(36 + n, 4); b.write('WAVEfmt ', 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22);
+  b.writeUInt32LE(rate, 24); b.writeUInt32LE(rate, 28); b.writeUInt16LE(1, 32); b.writeUInt16LE(8, 34); b.write('data', 36); b.writeUInt32LE(n, 40);
+  for (let i = 0; i < n; i++) b[44 + i] = 128 + Math.round(8 * Math.sin((2 * Math.PI * 440 * i) / rate));
+  return b;
+}
+
 const circle = { id: CIRCLE, name: 'Les potes', created_by: LEA, invite_code: 'ABCD2345', created_at: iso(50_000), photo_url: null };
 function circleMessages() {
   return dmMessages(LEA).map((m, i) => ({
@@ -78,6 +94,8 @@ export interface MockOptions {
   counter?: { n: number };
   /** Nouveau compte : le tuto s'ouvre au démarrage. */
   newUser?: boolean;
+  /** R7 : des Shakes éphémères (Léa) dans la barre. */
+  stories?: boolean;
   /** Visiteur sans compte (R8) : pas de session ; /auth/v1/signup en crée une. */
   visitor?: boolean;
   /** Journal des appels (R8) : « rpc nom {corps} », « signup {corps} ». */
@@ -122,6 +140,7 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
 
     // Images : SVG de la bonne taille, après un délai éventuel.
+    if (p.startsWith('/audio/')) return route.fulfill({ status: 200, contentType: 'audio/wav', headers: { 'access-control-allow-origin': '*' }, body: wav() });
     if (p.startsWith('/img/')) {
       const [, , size, color] = p.split('/');
       const [w, h] = size.split('x').map(Number);
@@ -255,6 +274,7 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
           return one([['Meuda', 'Tiakola', 'Rap'], ['Djadja', 'Aya Nakamura', 'Afro'], ['Espresso', 'Sabrina Carpenter', 'Pop'], ['Snooze', 'SZA', 'R&B / Soul']]
             .map(([title, artist, fam], i) => ({ title, artist, cover_url: cover(i + 1), preview_url: img(10, 10), sources: { [`chart:${fam}`]: 1 } })));
         case 'circles': return one([circle]);
+        case 'stories': return opts.stories ? one(stories) : one([]);
         case 'shake_du_jour': return one([{ id: 'sdj' }]);
         case 'circle_members': return one([ME, LEA, BAPT].map((id) => ({ circle_id: CIRCLE, user_id: id, user: profiles[id], joined_at: iso(1000), role: id === LEA ? 'owner' : 'member' })));
         default:

@@ -9,6 +9,7 @@
 // Q5 : ce qu'on connaît déjà s'affiche tout de suite (avatar, nom, @), le reste
 // arrive en UNE requête (get_profile_header), préchargée dès le toucher, et
 // gardée une minute (rouvrir est instantané, puis rafraîchi en fond).
+import { openStorySound, prefetchStorySound } from '../../lib/storySound';
 import { X, UserPlus, UserCheck, ArrowLeft, Maximize2, MessageCircle, MoreHorizontal, Ban, Flag, Bug } from 'lucide-react';
 import { blockUser, unblockUser, type BlockStatus } from '../../lib/moderation';
 import { openReport, openBugReport } from '../../lib/appNav';
@@ -301,7 +302,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                       <p className="text-[11px] text-purple-200 uppercase tracking-wider mb-2">Shakes éphémères</p>
                       <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {stories.map((story: any) => (
-                          <button key={story.id} onClick={() => { setViewerList(stories); setActiveStory(story); }} className="flex-shrink-0 text-center w-16">
+                          <button key={story.id} onPointerDown={() => prefetchStorySound(story)} onClick={() => { openStorySound(story); setViewerList(stories); setActiveStory(story); }} className="flex-shrink-0 text-center w-16">
                             <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
                               <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
                                 <img loading="lazy" src={avatarThumb(story.image_url, 256) || story.cover_url || avatar} className="w-full h-full rounded-full object-cover" alt="" />
@@ -311,7 +312,7 @@ export function ProfilePreviewDialog({ userId, username, onClose, onRequireAuth,
                           </button>
                         ))}
                         {pinnedStories.map((story: any) => (
-                          <button key={story.id} onClick={() => { setViewerList(pinnedStories); setActiveStory(story); }} className="flex-shrink-0 text-center w-16">
+                          <button key={story.id} onPointerDown={() => prefetchStorySound(story)} onClick={() => { openStorySound(story); setViewerList(pinnedStories); setActiveStory(story); }} className="flex-shrink-0 text-center w-16">
                             <div className="w-16 h-16 rounded-full p-[2px] bg-purple-700/50">
                               <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
                                 <img loading="lazy" src={avatarThumb(story.image_url, 256) || story.cover_url || avatar} className="w-full h-full rounded-full object-cover" alt="" />

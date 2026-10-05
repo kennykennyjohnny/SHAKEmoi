@@ -1,4 +1,5 @@
 import { Archive, Pin, Settings, Edit3, X, Share2, Copy, Check } from 'lucide-react';
+import { openStorySound, prefetchStorySound } from '../../lib/storySound';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { ProfileGrid } from './ProfileGrid';
@@ -149,7 +150,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
           <p className="text-[11px] text-purple-300/85 uppercase tracking-wider mb-2">Shakes éphémères</p>
           <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {activeStories.map((story: any) => (
-              <button key={story.id} onClick={() => { setStoryList(activeStories); setSelectedStory(story); }} className="flex-shrink-0 flex flex-col items-center gap-1 w-16">
+              <button key={story.id} onPointerDown={() => prefetchStorySound(story)} onClick={() => { openStorySound(story); setStoryList(activeStories); setSelectedStory(story); }} className="flex-shrink-0 flex flex-col items-center gap-1 w-16">
                 <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400">
                   <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
                     <img loading="lazy"
@@ -163,7 +164,7 @@ export function ProfileView({ user, onUpdateUser }: ProfileViewProps) {
               </button>
             ))}
             {pinnedStories.map((story: any) => (
-              <button key={story.id} onClick={() => { setStoryList(pinnedStories); setSelectedStory(story); }} className="flex-shrink-0 flex flex-col items-center gap-1 w-16">
+              <button key={story.id} onPointerDown={() => prefetchStorySound(story)} onClick={() => { openStorySound(story); setStoryList(pinnedStories); setSelectedStory(story); }} className="flex-shrink-0 flex flex-col items-center gap-1 w-16">
                 <div className="relative w-16 h-16 rounded-full p-[2px] bg-purple-700/50">
                   <div className="w-full h-full rounded-full bg-[#1E1440] p-[2px]">
                     <img loading="lazy"

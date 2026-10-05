@@ -1,4 +1,5 @@
 import { formatPostDate } from '../../lib/dates';
+import { openStorySound, prefetchStorySound } from '../../lib/storySound';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
@@ -95,7 +96,7 @@ export function StoryArchiveDialog({ currentUser, onClose, onChanged }: Props) {
                       const visual = s.image_url || s.cover_url;
                       return (
                         <div key={s.id} className="relative aspect-[9/16] rounded-xl overflow-hidden bg-[#2A1852] group">
-                          <button onClick={() => setViewing(s)} className="absolute inset-0 w-full h-full" aria-label="Voir le Shake éphémère">
+                          <button onPointerDown={() => prefetchStorySound(s)} onClick={() => { openStorySound(s); setViewing(s); }} className="absolute inset-0 w-full h-full" aria-label="Voir le Shake éphémère">
                             {visual
                               ? <img loading="lazy" src={visual} alt="" className={`w-full h-full object-cover ${expired ? 'opacity-80' : ''}`} />
                               : <span className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-700 to-pink-700"><Music2 className="w-8 h-8 text-white/70" /></span>}

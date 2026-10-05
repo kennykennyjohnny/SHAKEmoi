@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers, getStoryLikes, markStoryAsViewed } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
-import { resolvePreviewUrl, playPreview, stopPreview, togglePreview, onPreviewChange, getPreviewState, getSpotifyTrackTitle, setMuted } from '../../lib/preview';
+import { resolvePreviewUrl, playPreview, togglePreview, onPreviewChange, getPreviewState, getSpotifyTrackTitle, setMuted, crossfadeTo, isSessionUnmuted, stopPreview } from '../../lib/preview';
+import { prefetchStorySound, ensureStorySoundSession, closeStorySound, isStoryKey } from '../../lib/storySound';
 import { useBackHandler } from '../../lib/navigation';
 import { StoryBackdrop } from './StoryBackdrop';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -208,24 +209,47 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     return () => { cancelled = true; };
   }, [story?.id, open]);
 
+  // R7 : le son part tout seul à l'ouverture (exception à M2 : c'est le principe
+  // de la story). Ce qui jouait avant (playlist, file) est mis en pause et
+  // reprend à la fermeture. Le bouton « son coupé » vaut pour toute la session.
+  useEffect(() => {
+    if (!open) return;
+    ensureStorySoundSession();
+    return () => closeStorySound();
+  }, [open]);
+
   const [storyPreviewUrl, setStoryPreviewUrl] = useState<string | null>(null);
+  // Pause demandée à la main sur CETTE story (toucher la pochette) : on ne relance pas.
+  const userPausedRef = useRef(false);
   useEffect(() => {
     setStoryPreviewUrl(null);
+    userPausedRef.current = false;
     if (!open || !story) return;
     // Le titre peut arriver après coup (oEmbed Spotify) : on attend de
     // l'avoir, sinon impossible de retrouver l'extrait.
     const title = story.track_name || fetchedTitle;
-    // L'id Spotify suffit : pas besoin d'attendre le titre (anciennes stories).
-    if (!title && !story.track_id) return;
+    // Story sans son : on coupe celui de la story précédente.
+    if (!title && !story.track_id && !(story as any).preview_url) {
+      const k = getPreviewState().key;
+      if (k && isStoryKey(k)) stopPreview();
+      return;
+    }
     let cancelled = false;
-    // M2 : l'extrait est préparé mais ne démarre jamais tout seul :
-    // on touche la pochette pour l'écouter (même règle partout).
-    resolvePreviewUrl(title || '', title ? story.artist || '' : '', (story as any).preview_url, story.track_id).then(url => {
-      if (cancelled || !url) return;
+    const key = `story-${story.id}`;
+    prefetchStorySound({ ...story, track_name: title }).then(url => {
+      if (cancelled) return;
       setStoryPreviewUrl(url);
+      if (!url || userPausedRef.current) return;
+      const st = getPreviewState();
+      // Déjà lancé par le toucher d'ouverture : on ne recommence pas.
+      if (st.key === key && (st.playing || st.blocked)) return;
+      crossfadeTo(key, url, { muted: !isSessionUnmuted() });
     });
-    return () => { cancelled = true; stopPreview(); };
-  }, [story?.id, open]);
+    // La suivante est préparée tout de suite (enchaînement sans attente).
+    const next = storyList[currentIdx + 1];
+    if (next) prefetchStorySound(next);
+    return () => { cancelled = true; };
+  }, [story?.id, open, fetchedTitle]);
 
   // État réel du son pour afficher le bon bouton play/pause sur la pochette.
   const [preview, setPreview] = useState(getPreviewState());
@@ -245,6 +269,23 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
       if (getPreviewState().key === storyKey && !getPreviewState().playing) togglePreview(storyKey, storyPreviewUrl);
     }
   }, [appHidden]);
+
+  // Appui long (story figée) : le son se met en pause, et reprend au relâchement.
+  const resumeAfterHoldRef = useRef(false);
+  useEffect(() => {
+    if (!open || !storyKey) return;
+    const state = getPreviewState();
+    if (isPaused && state.key === storyKey && state.playing) {
+      // Seulement un VRAI appui long : un simple toucher ne coupe pas le son.
+      const t = setTimeout(() => {
+        if (getPreviewState().key === storyKey && getPreviewState().playing) { resumeAfterHoldRef.current = true; togglePreview(storyKey); }
+      }, 250);
+      return () => clearTimeout(t);
+    } else if (!isPaused && resumeAfterHoldRef.current) {
+      resumeAfterHoldRef.current = false;
+      if (getPreviewState().key === storyKey && !getPreviewState().playing) togglePreview(storyKey, storyPreviewUrl);
+    }
+  }, [isPaused]);
 
   const resumeAfterPreviewRef = useRef(false);
   useEffect(() => {
@@ -303,7 +344,11 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
       if (!state.playing) togglePreview(storyKey, storyPreviewUrl);
       return;
     }
-    if (storyPreviewUrl) { togglePreview(storyKey, storyPreviewUrl); return; }
+    if (storyPreviewUrl) {
+      userPausedRef.current = state.key === storyKey && state.playing;
+      togglePreview(storyKey, storyPreviewUrl);
+      return;
+    }
     const url = await resolvePreviewUrl(trackTitle || '', trackArtist || '', (story as any).preview_url, story?.track_id);
     if (url) { setStoryPreviewUrl(url); playPreview(storyKey, url); }
     else openInApp(); // aucun extrait nulle part : on l'écoute sur la plateforme (M1)
@@ -472,6 +517,16 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
               if (info.offset.y > 120 || info.velocity.y > 700) onClose();
             }}
           >
+            {/* R7 : le navigateur a refusé le son automatique → un gros bouton. */}
+            {storyPreviewUrl && preview.key === storyKey && preview.blocked && (
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); playPreview(storyKey, storyPreviewUrl, { muted: false }); setMuted(false); }}
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40 whitespace-nowrap px-6 py-4 rounded-full bg-black/70 backdrop-blur text-white text-base font-bold shadow-2xl border border-white/20 min-h-[56px]"
+              >
+                🔊 Toucher pour le son
+              </button>
+            )}
             {/* Photo : plein cadre, comme une story Instagram */}
             {story.image_url && <StoryPhoto key={story.id} url={story.image_url} onReady={() => setMediaReady(true)} />}
 

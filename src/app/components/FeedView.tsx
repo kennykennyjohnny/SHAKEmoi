@@ -3,6 +3,7 @@ import { SuggestionsCarousel } from './SuggestionsCarousel';
 import { getPostCounts } from '../../lib/database';
 import { RecapCard } from './WeeklyRecap';
 import { PostDate } from './PostDate';
+import { openStorySound, prefetchStorySound } from '../../lib/storySound';
 import { createPortal } from 'react-dom';
 import { Heart, MessageCircle, Repeat2, Play, Pause, MoreHorizontal, Loader2, Send, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Copy, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -959,6 +960,9 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   // d'un ami au suivant suit ce qu'on voit à l'écran.
   const trayOrderRef = useRef<string[]>([]);
 
+  // R7 : extraits des Shakes éphémères de la barre préparés dès qu'ils s'affichent.
+  useEffect(() => { stories.slice(0, 12).forEach((st: any) => prefetchStorySound(st)); }, [stories]);
+
   const openStory = (story: any) => {
     const uid = story.user?.id || story.user_id;
     // Toujours dans l'ordre chronologique : la plus ancienne d'abord, la
@@ -973,6 +977,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     const toOpen = uid === currentUser?.id
       ? sorted[0]
       : sorted.find((s: any) => !storyViewedMap[s.id]) || sorted[0];
+    // R7 : le son part DANS ce toucher (l'iPhone l'exige), extrait préparé à l'avance.
+    openStorySound(toOpen);
     setActiveStory(toOpen);
     setStoryViewedMap(prev => ({ ...prev, [toOpen.id]: true }));
     if (toOpen.user_id !== currentUser?.id) db.markStoryAsViewed(toOpen.id).catch(() => {}); // la base refuse la vue de ses propres Shakes
@@ -1220,6 +1226,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                   return (
                     <button
                       key={user?.id || firstStory.user_id}
+                      aria-label={`Shakes éphémères de ${user?.display_name || user?.username || ''}`}
+                      onPointerDown={() => group.forEach((st: any) => prefetchStorySound(st))}
                       onClick={() => { trayOrderRef.current = trayOrder; openStory(firstStory); }}
                       className="flex-shrink-0 flex flex-col items-center gap-1.5 group active:scale-95 transition-transform"
                     >
