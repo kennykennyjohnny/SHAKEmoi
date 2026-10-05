@@ -1,0 +1,70 @@
+# R10 — Sauvegarde nocturne chiffrée de la base (+ fichiers le dimanche), avec
+# test de restauration à chaque fois. Détails et restauration : docs/restauration.md.
+#
+# ⚠️ Dépôt public : aucun secret ici, aucune donnée dans les journaux, aucun
+# artefact. Les secrets sont dans GitHub → Settings → Secrets and variables → Actions.
+# En cas d'échec, GitHub envoie un e-mail, et la page Admin affiche l'alerte.
+name: Sauvegarde
+
+on:
+  schedule:
+    - cron: '17 2 * * *' # chaque nuit à 02:17 UTC (04:17 à Paris l'été)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "normal = vraie sauvegarde ; essai = base d'exemple, sans secrets"
+        type: choice
+        options: [normal, essai]
+        default: normal
+      fichiers:
+        description: 'Copier aussi les fichiers (photos), même si ce n’est pas dimanche'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sauvegarde
+  cancel-in-progress: false
+
+jobs:
+  sauvegarde:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/backup
+          persist-credentials: false
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Outils (age, psql)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq age postgresql-client >/dev/null
+
+      - name: Sauvegarde + test de restauration
+        env:
+          MODE: ${{ inputs.mode || 'normal' }}
+          WITH_FILES: ${{ inputs.fichiers && 'true' || 'auto' }}
+          SUPABASE_REF: vbjmhtwrfboqziwibsut
+          SUPABASE_REGION: eu-west-1
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_AGE_KEY: ${{ secrets.BACKUP_AGE_KEY }}
+          B2_KEY_ID: ${{ secrets.B2_KEY_ID }}
+          B2_APP_KEY: ${{ secrets.B2_APP_KEY }}
+          B2_BUCKET: ${{ secrets.B2_BUCKET }}
+          B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+          SUPABASE_S3_KEY_ID: ${{ secrets.SUPABASE_S3_KEY_ID }}
+          SUPABASE_S3_SECRET: ${{ secrets.SUPABASE_S3_SECRET }}
+        run: bash scripts/backup/backup.sh
+
+      - name: Signaler l'échec sur la page Admin
+        if: failure() && (inputs.mode || 'normal') == 'normal'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          [ -n "$SUPABASE_DB_URL" ] || exit 0
+          psql "$SUPABASE_DB_URL" -X -q -c "insert into public.backup_runs(kind, ok, message) values ('db', false, 'échec : voir GitHub → Actions → Sauvegarde')" || true
