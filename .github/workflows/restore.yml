@@ -1,0 +1,50 @@
+# R10 — Restauration d'une sauvegarde dans un projet Supabase NEUF (à la main, en
+# cas de catastrophe). Mode d'emploi pas à pas : docs/restauration.md.
+# Garde-fous : il faut taper RESTAURER, la cible doit être une base vide, et
+# différente de la base actuelle.
+name: Restauration
+
+on:
+  workflow_dispatch:
+    inputs:
+      archive:
+        description: 'Archive de la base, ex. daily/db-2026-10-05.tar.gz.age'
+        required: true
+      fichiers:
+        description: 'Archive des fichiers (facultatif), ex. weekly/files-2026-10-04.tar.age'
+        required: false
+      confirmation:
+        description: 'Tape RESTAURER'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  restaurer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/backup
+          persist-credentials: false
+      - name: Outils (age, psql)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq age postgresql-client >/dev/null
+      - name: Restauration
+        env:
+          CONFIRM: ${{ inputs.confirmation }}
+          ARCHIVE: ${{ inputs.archive }}
+          OLD_REF: vbjmhtwrfboqziwibsut
+          FILES_ARCHIVE: ${{ inputs.fichiers }}
+          RESTORE_DB_URL: ${{ secrets.RESTORE_DB_URL }}
+          RESTORE_REF: ${{ secrets.RESTORE_REF }}
+          RESTORE_S3_KEY_ID: ${{ secrets.RESTORE_S3_KEY_ID }}
+          RESTORE_S3_SECRET: ${{ secrets.RESTORE_S3_SECRET }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_AGE_KEY: ${{ secrets.BACKUP_AGE_KEY }}
+          B2_KEY_ID: ${{ secrets.B2_KEY_ID }}
+          B2_APP_KEY: ${{ secrets.B2_APP_KEY }}
+          B2_BUCKET: ${{ secrets.B2_BUCKET }}
+          B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+        run: bash scripts/backup/restore.sh

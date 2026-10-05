@@ -37,7 +37,7 @@ fail() { echo "::error::$*"; exit 1; }
 COUNT_SQL="select table_schema||'.'||table_name, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I.%I', table_schema, table_name), false, true, '')))[1]::text
   from information_schema.tables
   where table_type = 'BASE TABLE' and table_schema in ('public','auth','storage')
-    and table_name not in ('backup_runs','schema_migrations','migrations')
+    and table_name not in ('backup_runs','schema_migrations','migrations','buckets_vectors','vector_indexes','s3_multipart_uploads','s3_multipart_uploads_parts','buckets_analytics')
   order by 1"
 count_rows() { psql "$1" -X -q -At -F $'\t' -c "$COUNT_SQL"; }
 
@@ -98,7 +98,8 @@ say "1. Copie de la base"
 DUMP="$WORK/db"; mkdir -p "$DUMP"
 supabase db dump --db-url "$DB_URL" -f "$DUMP/roles.sql" --role-only >/dev/null
 supabase db dump --db-url "$DB_URL" -f "$DUMP/schema.sql" >/dev/null
-supabase db dump --db-url "$DB_URL" -f "$DUMP/data.sql" --data-only --use-copy >/dev/null
+# Tables internes du stockage (non utilisées, et protégées : la restauration les refuse).
+supabase db dump --db-url "$DB_URL" -f "$DUMP/data.sql" --data-only --use-copy \n  -x storage.buckets_vectors -x storage.vector_indexes -x storage.s3_multipart_uploads -x storage.s3_multipart_uploads_parts -x storage.buckets_analytics >/dev/null
 # Hors du dump standard : les tâches planifiées (pg_cron) et les secrets du coffre
 # (clés VAPID des notifications…), prêts à rejouer.
 psql "$DB_URL" -X -q -At -c "select format('select cron.schedule(%L, %L, %L);', jobname, schedule, command) from cron.job order by jobid" > "$DUMP/cron_jobs.sql" 2>/dev/null || echo "-- pas de pg_cron" > "$DUMP/cron_jobs.sql"
