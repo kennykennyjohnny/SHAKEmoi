@@ -3,7 +3,7 @@
 // avec statut et actions rapides.
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Bug, Flag, Loader2, RefreshCw, EyeOff, Check, Zap } from 'lucide-react';
+import { ArrowLeft, Bug, Flag, Loader2, RefreshCw, EyeOff, Check, Zap, DatabaseBackup } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { formatRelative } from '../../lib/dates';
 import { useBackHandler } from '../../lib/navigation';
@@ -76,6 +76,7 @@ export function AdminView({ onClose }: { onClose: () => void }) {
         </button>
         <button aria-label="Actualiser" onClick={load} className="p-2 rounded-full hover:bg-purple-900/40"><RefreshCw className="w-4 h-4" /></button>
       </div>
+      <BackupStatus />
       <div className="grid grid-cols-2 border-b border-purple-800/30">
         <button onClick={() => setTab('bugs')} className={`py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5 ${tab === 'bugs' ? 'text-white border-b-2 border-pink-500' : 'text-purple-300/85'}`}><Bug className="w-4 h-4" /> Bugs {newBugs ? `(${newBugs})` : ''}</button>
         <button onClick={() => setTab('reports')} className={`py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5 ${tab === 'reports' ? 'text-white border-b-2 border-pink-500' : 'text-purple-300/85'}`}><Flag className="w-4 h-4" /> Signalements {newReports ? `(${newReports})` : ''}</button>
@@ -133,5 +134,29 @@ export function AdminView({ onClose }: { onClose: () => void }) {
       </div>
     </div>,
     document.body,
+  );
+}
+
+// R10 : état des sauvegardes nocturnes (écrit par la tâche GitHub « Sauvegarde »).
+// Rouge si la dernière a échoué ou si la dernière réussie date de plus de 36 h.
+function BackupStatus() {
+  const [st, setSt] = useState<any | null | undefined>(undefined);
+  useEffect(() => { supabase.rpc('admin_backup_status').then(({ data, error }) => setSt(error ? null : data), () => setSt(null)); }, []);
+  if (st === undefined || st === null) return null;
+  const ok = st.last_ok;
+  const ageH = ok ? (Date.now() - new Date(ok.created_at).getTime()) / 3600000 : Infinity;
+  const failed = st.last && !st.last.ok;
+  const bad = failed || ageH > 36;
+  const mb = (b?: number | null) => (b ? `${(b / 1048576).toFixed(1).replace('.', ',')} Mo` : null);
+  return (
+    <div role={bad ? 'alert' : undefined} className={`mx-3 mt-2 px-3 py-2 rounded-xl text-xs flex items-start gap-2 ${bad ? 'bg-red-900/50 border border-red-400/50 text-red-50' : 'bg-emerald-900/30 border border-emerald-400/30 text-emerald-50'}`}>
+      <DatabaseBackup className="w-4 h-4 flex-shrink-0 mt-px" />
+      <p className="leading-snug">
+        {!ok ? 'Aucune sauvegarde réussie pour l’instant : configure-la (docs/restauration.md).'
+          : <>Dernière sauvegarde {formatRelative(ok.created_at)} · {ok.tables} tables, {Number(ok.rows_total).toLocaleString('fr-FR')} lignes{mb(ok.db_bytes) ? ` · ${mb(ok.db_bytes)}` : ''} · {ok.restore_ok ? 'restaurable ✓' : 'restauration non testée'}</>}
+        {failed && <><br />⚠️ Le dernier passage a échoué {formatRelative(st.last.created_at)} : GitHub → Actions → Sauvegarde.</>}
+        {!failed && ok && ageH > 36 && <><br />⚠️ Plus de 36 h sans sauvegarde : regarde GitHub → Actions → Sauvegarde.</>}
+      </p>
+    </div>
   );
 }

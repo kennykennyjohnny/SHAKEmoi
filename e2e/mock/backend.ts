@@ -78,6 +78,10 @@ export interface MockOptions {
   counter?: { n: number };
   /** Nouveau compte : le tuto s'ouvre au démarrage. */
   newUser?: boolean;
+  /** Visiteur sans compte (R8) : pas de session ; /auth/v1/signup en crée une. */
+  visitor?: boolean;
+  /** Journal des appels (R8) : « rpc nom {corps} », « signup {corps} ». */
+  calls?: string[];
 }
 
 /** Pose la fausse session et branche la fausse base sur la page. */
@@ -89,13 +93,13 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
     access_token: jwt, token_type: 'bearer', expires_in: 7200, expires_at: now + 7200, refresh_token: 'mock-refresh',
     user: { id: ME, aud: 'authenticated', role: 'authenticated', email: 'testeur@example.test', app_metadata: {}, user_metadata: {}, created_at: iso(100_000) },
   };
-  await page.addInitScript(([s]) => {
+  await page.addInitScript(([s, visitor]) => {
     try {
-      localStorage.setItem('sb-mock-auth-token', s as string);
+      if (!visitor) localStorage.setItem('sb-mock-auth-token', s as string);
       localStorage.setItem('shakemoi_profile_completed', 'true');
       localStorage.setItem('shakemoi_install_dismissed', String(Date.now()));
     } catch { /* rien */ }
-  }, [JSON.stringify(session)]);
+  }, [JSON.stringify(session), opts.visitor ? '1' : ''] as const);
 
   const unhandled = new Set<string>();
   // Relais Vercel (/api/…) : n'existent pas avec vite en local → simulés.
@@ -125,6 +129,10 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
       if (d) await new Promise((r) => setTimeout(r, d));
       return route.fulfill({ status: 200, contentType: 'image/svg+xml', body: `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="#${color}"/></svg>` });
     }
+    if (p.startsWith('/auth/v1/signup')) {
+      opts.calls?.push(`signup ${decodeURIComponent(url.search)} ${JSON.stringify(req.postDataJSON?.() || {})}`);
+      return json(session);
+    }
     if (p.startsWith('/auth/v1/user')) return json(session.user);
     if (p.startsWith('/auth/v1/')) return json({});
     if (p.startsWith('/realtime/')) return route.abort();
@@ -140,7 +148,11 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
     if (p.startsWith('/rest/v1/rpc/')) {
       const fn = p.slice('/rest/v1/rpc/'.length);
       const body = req.postDataJSON?.() || {};
+      opts.calls?.push(`rpc ${fn} ${JSON.stringify(body)}`);
       switch (fn) {
+        case 'username_available': return json(true);
+        case 'accept_invite': return json(LEA);
+        case 'get_invite_card': return json(null);
         case 'get_conversations':
           return json([LEA, BAPT].map((id, i) => ({ partner_id: id, other_id: id, partner: profiles[id], last_message: { ...dmMessages(id)[39 - i], created_at: iso(5 + i * 30) }, unread_count: i === 0 ? 2 : 0, unread_likes: 0, muted: false })));
         case 'get_my_circles':
@@ -202,7 +214,7 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
         case 'users_profile': {
           const id = eqParam('id');
           const inList = (url.searchParams.get('id') || '').match(/^in\.\((.*)\)$/)?.[1]?.split(',').map((x) => x.replace(/"/g, ''));
-          if (id === ME && opts.newUser) return one([{ ...profiles[ME], onboarding_completed_at: null }]);
+          if (id === ME && (opts.newUser || opts.visitor)) return one([{ ...profiles[ME], onboarding_completed_at: null }]);
           if (id) return one(profiles[id] ? [profiles[id]] : []);
           if (inList) return one(inList.map((x) => profiles[x]).filter(Boolean));
           const u = eqParam('username') || (url.searchParams.get('username') || '').replace(/^ilike\./, '');

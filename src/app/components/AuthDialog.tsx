@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mail, Lock, User as UserIcon, Loader2, AlertCircle, UserPlus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { getReferrer } from '../../lib/referral';
 import { Logo } from './Logo';
 import { Slogan } from './Slogan';
 import { friendlyError } from '../../lib/errors';
@@ -13,10 +14,12 @@ interface AuthDialogProps {
   referrer?: string | null;
   /** Pourquoi on demande un compte (ex. « pour suivre @x »), affiché en tête. */
   reason?: string | null;
+  /** R8 : « S'inscrire » / « Rejoindre » ouvrent directement l'inscription. */
+  initialMode?: 'login' | 'signup';
 }
 
-export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
-  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
+export function AuthDialog({ onComplete, referrer, reason, initialMode = 'login' }: AuthDialogProps) {
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>(initialMode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -85,6 +88,7 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
         const ruleError = usernameError(username);
         if (ruleError) throw new Error(ruleError);
         const { data: free } = await supabase.rpc('username_available', { p_username: username });
+        const ref = referrer || getReferrer();
         if (free === false) throw new Error('Ce pseudo est déjà pris');
 
         // G4 : le profil est créé par la base EN MÊME TEMPS que le compte
@@ -92,7 +96,12 @@ export function AuthDialog({ onComplete, referrer, reason }: AuthDialogProps) {
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: formData.email.trim(),
           password: formData.password,
-          options: { data: { username, display_name: formData.displayName.trim() || username } },
+          // R8 : le parrain voyage avec le compte (la base enregistre l'invitation
+          // à la création), et le lien du mail de confirmation le rapporte.
+          options: {
+            data: { username, display_name: formData.displayName.trim() || username, ...(ref ? { referrer: ref } : {}) },
+            emailRedirectTo: `${window.location.origin}${ref ? `/?ref=${encodeURIComponent(ref)}` : '/'}`,
+          },
         });
 
         if (authError) {

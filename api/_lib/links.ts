@@ -136,10 +136,12 @@ const NEUTRAL_SONG: LinkMeta = {
 async function inviteMeta(username: string, circle: { name: string } | null): Promise<LinkMeta | null> {
   const user = USERNAME.test(username) ? await userByUsername(username) : null;
   if (!user) return null;
+  // R8 : le prénom affiché (« Kenny t'invite »), comme sur la page d'arrivée.
+  const who = user.display_name?.trim() || `@${user.username}`;
   return {
     title: circle
-      ? `@${user.username} t'invite dans le cercle ${circle.name}`
-      : `@${user.username} t'invite sur SHAKEmoi`,
+      ? `${who} t'invite dans le cercle ${circle.name}`
+      : `${who} t'invite sur SHAKEmoi`,
     description: circle
       ? 'Rejoins le cercle pour partager vos sons entre vous.'
       : 'Viens partager tes sons avec tes amis, quelle que soit leur plateforme.',

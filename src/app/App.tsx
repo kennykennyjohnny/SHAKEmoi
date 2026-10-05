@@ -34,6 +34,8 @@ import { AdminView } from './components/AdminView';
 import { HeaderFlame, StreakSheet } from './components/Streak';
 import { ArtistPicker } from './components/ArtistPicker';
 import { acceptInvite } from '../lib/social';
+import { getReferrer, rememberReferrer, clearReferrer, withRef } from '../lib/referral';
+import { InAppBanner } from './components/InAppBanner';
 
 // Écrans chargés à la demande (perf 4G), préchargés ensuite en arrière-plan.
 const ProfileView = lazyView(() => import('./components/ProfileView'), (m) => m.ProfileView, ViewSpinner);
@@ -87,6 +89,7 @@ function screenFromPath(pathname: string): { view: View; options?: any; postId?:
 const PENDING_CIRCLE_KEY = 'shakemoi_pending_circle';
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState<any>(null);
   // N2 : l'écran vient de l'adresse (/top, /messages/<id>, /cercles/<id>…).
   const [initialScreen] = useState(() => screenFromPath(window.location.pathname));
   const [currentView, setCurrentView] = useState<View>(initialScreen?.view ?? 'feed');
@@ -94,8 +97,11 @@ export default function App() {
   const [visited, setVisited] = useState<View[]>(() => [initialScreen?.view ?? 'feed']);
   useEffect(() => {
     setVisited((v) => (v.includes(currentView) ? v : [...v, currentView]));
-    setBasePath(VIEW_PATHS[currentView]);
-  }, [currentView]);
+    // R8 : pour un visiteur, on ne réécrit PAS l'adresse (/i/<pseudo>, /s/…,
+    // ?ref=) : c'est elle que « Ouvrir dans Chrome / Safari » emporte depuis
+    // Instagram. Avant, /i/kenny devenait / dès le chargement → invitation perdue.
+    if (currentUser) setBasePath(VIEW_PATHS[currentView]);
+  }, [currentView, !!currentUser]);
   const mainRef = useRef<HTMLElement>(null);
   /** Toucher l'onglet déjà ouvert : remonte en haut (N2). */
   const scrollViewToTop = (view: View) => {
@@ -112,7 +118,6 @@ export default function App() {
   };
   const [showCreateShake, setShowCreateShake] = useState(false);
   const [showEphemeralShake, setShowEphemeralShake] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const isXl = useMediaQuery('(min-width: 1280px)');
@@ -159,6 +164,9 @@ export default function App() {
     };
   }, []);
   const [referrer, setReferrer] = useState<string | null>(null);
+  // « S'inscrire » / « Rejoindre » ouvrent l'inscription, « Se connecter » la connexion.
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const openAuth = (mode: 'login' | 'signup') => { setAuthMode(mode); setShowAuth(true); };
   // Session vérifiée (connecté ou non) : évite de traiter un membre en visiteur.
   const [authReady, setAuthReady] = useState(false);
   // Lien d'arrivée (/s, /p, /u, /i, /c, /m ou ancien format), voir lib/links.
@@ -172,7 +180,8 @@ export default function App() {
   // Page publique /confidentialite (politique de confidentialité).
   const [showPrivacy, setShowPrivacy] = useState(() => /^\/confidentialite\/?$/.test(window.location.pathname));
   const leaveRoute = () => {
-    window.history.replaceState({}, document.title, '/');
+    // R8 : un visiteur garde son parrain dans l'adresse (?ref=<pseudo>).
+    window.history.replaceState({}, document.title, currentUser ? '/' : withRef('/'));
     setRoute(null);
   };
 
@@ -216,10 +225,9 @@ export default function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const storedRef = localStorage.getItem('shakemoi_referrer');
-      if (storedRef) setReferrer(storedRef);
-
       const { data: { session } } = await supabase.auth.getSession();
+      // R8 : parrain lu dans l'adresse (/i/, /u/, ?ref=) ou le stockage (visiteur).
+      if (!session) setReferrer(getReferrer());
       if (session) {
         const profile = await getUserProfile(session.user.id);
         if (profile) {
@@ -252,7 +260,7 @@ export default function App() {
       // profil ou d'invitation affiche la page de la personne (ProfileLanding),
       // qui devient son parrain : il la suivra à l'inscription.
       else if (route?.type === 'profile' || route?.type === 'invite') {
-        localStorage.setItem('shakemoi_referrer', route.id);
+        rememberReferrer(route.id);
         setReferrer(route.id);
       }
       setAuthReady(true);
@@ -267,16 +275,21 @@ export default function App() {
     // connecté serait traité comme un visiteur le temps de charger sa session.
     if (!route || !authReady) return;
     if (route.type === 'conversation') {
-      leaveRoute();
-      if (currentUser) { setViewOptions({ initialTab: 'dms' }); setCurrentView('messages'); }
-      else setShowAuth(true);
+      // R8 : un visiteur garde /m dans l'adresse (sortie du navigateur d'Instagram).
+      if (currentUser) { leaveRoute(); setViewOptions({ initialTab: 'dms' }); setCurrentView('messages'); }
+      else { setRoute(null); openAuth('login'); }
       return;
     }
     if (!currentUser) return;
     if (route.type === 'profile' || route.type === 'invite') {
       const username = route.id;
       leaveRoute();
-      resolveUserId(username).then((id) => { if (id) setProfilePreview({ userId: id, username }); });
+      // R8 : déjà connecté·e (inscription faite ailleurs, ou retour du mail de
+      // confirmation) : la base accepte l'invitation si le compte est récent
+      // (abonnement mutuel + notif), puis on ouvre le profil (bouton Suivre).
+      const accept = route.type === 'invite' ? acceptInvite(username).catch(() => null) : Promise.resolve(null);
+      accept.finally(() => { if (route.type === 'invite') clearReferrer(); });
+      Promise.all([accept, resolveUserId(username)]).then(([, id]) => { if (id) setProfilePreview({ userId: id, username }); });
     }
   }, [route, currentUser, authReady]);
 
@@ -437,7 +450,7 @@ export default function App() {
 
     // Arrivée par une invitation (P19) : on se suit mutuellement, l'inviteur
     // est prévenu ; compte plus ancien : on suit simplement la personne.
-    const ref = localStorage.getItem('shakemoi_referrer');
+    const ref = getReferrer();
     if (ref) {
       try {
         const inviter = await acceptInvite(ref);
@@ -448,7 +461,7 @@ export default function App() {
       } catch (err) {
         console.error('Auto-follow referrer error:', err);
       }
-      localStorage.removeItem('shakemoi_referrer');
+      clearReferrer();
       setReferrer(null);
     }
   };
@@ -495,13 +508,16 @@ export default function App() {
       );
     }
     return (
+      <>
+      <InAppBanner />
       <ProfileLanding
         username={route.id}
-        onSignUp={() => { leaveRoute(); setShowAuth(true); }}
-        onLogin={() => { leaveRoute(); setShowAuth(true); }}
+        onSignUp={() => { leaveRoute(); openAuth('signup'); }}
+        onLogin={() => { leaveRoute(); openAuth('login'); }}
         onExplore={leaveRoute}
         invite={route.type === 'invite'}
       />
+      </>
     );
   }
 
@@ -517,6 +533,8 @@ export default function App() {
       );
     }
     return (
+      <>
+      {!currentUser && <InAppBanner />}
       <CircleInviteView
         code={route.id}
         currentUser={currentUser}
@@ -527,10 +545,12 @@ export default function App() {
         }}
         onSignUp={() => {
           localStorage.setItem(PENDING_CIRCLE_KEY, route.id);
-          leaveRoute();
-          setShowAuth(true);
+          // R8 : l'adresse /c/<code> reste (sortie du navigateur d'Instagram).
+          setRoute(null);
+          openAuth('signup');
         }}
       />
+      </>
     );
   }
 
@@ -538,21 +558,24 @@ export default function App() {
   // monde (connecté ou non). Seul le bloc « compte » change.
   if (route?.type === 'song' || route?.type === 'post') {
     return (
+      <>
+      {!currentUser && <InAppBanner />}
       <SongLanding
         source={route.type === 'song' ? { type: 'song', slug: route.id } : { type: 'post', id: route.id }}
         currentUser={currentUser}
-        onSignUp={() => { leaveRoute(); setShowAuth(true); }}
-        onLogin={() => { leaveRoute(); setShowAuth(true); }}
+        onSignUp={() => { leaveRoute(); openAuth('signup'); }}
+        onLogin={() => { leaveRoute(); openAuth('login'); }}
         onOpenApp={() => { leaveRoute(); setCurrentView('feed'); }}
         onSearch={() => { leaveRoute(); setCurrentView('search'); }}
         onSharer={(username) => {
           // Visiteur : la personne qui partage devient son parrain, suivie
           // automatiquement à l'inscription (handleAuthComplete).
           if (currentUser) return;
-          localStorage.setItem('shakemoi_referrer', username);
+          rememberReferrer(username);
           setReferrer(username);
         }}
       />
+      </>
     );
   }
   if (showOnboarding) {
@@ -573,6 +596,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <div className="h-[100dvh] w-screen bg-[#1E1440] text-white overflow-hidden flex flex-col">
+        <div className="flex-shrink-0"><InAppBanner /></div>
         <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/80 sticky top-0 z-40 flex-shrink-0 pt-[env(safe-area-inset-top)]">
           <div className="px-4 py-2 flex items-center justify-between gap-3">
             {/* M9 : le logo ramène à l'accueil. */}
@@ -581,13 +605,13 @@ export default function App() {
             </a>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowAuth(true)}
+                onClick={() => openAuth('login')}
                 className="px-2.5 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap text-purple-200/80 hover:text-white hover:bg-violet-900/30 transition-colors"
               >
                 Se connecter
               </button>
               <button
-                onClick={() => setShowAuth(true)}
+                onClick={() => openAuth('signup')}
                 className="px-3.5 py-1.5 whitespace-nowrap bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-bold hover:opacity-90 transition-opacity"
               >
                 S'inscrire
@@ -634,7 +658,7 @@ export default function App() {
                 <X className="w-5 h-5" />
               </button>
               <div onClick={(e) => e.stopPropagation()}>
-                <AuthDialog onComplete={handleAuthComplete} referrer={referrer} reason={authReason} />
+                <AuthDialog onComplete={handleAuthComplete} referrer={referrer} reason={authReason} initialMode={authMode} />
               </div>
             </motion.div>
           )}
