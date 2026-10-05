@@ -973,7 +973,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       : sorted.find((s: any) => !storyViewedMap[s.id]) || sorted[0];
     setActiveStory(toOpen);
     setStoryViewedMap(prev => ({ ...prev, [toOpen.id]: true }));
-    db.markStoryAsViewed(toOpen.id).catch(() => {});
+    if (toOpen.user_id !== currentUser?.id) db.markStoryAsViewed(toOpen.id).catch(() => {}); // la base refuse la vue de ses propres Shakes
   };
 
   // Circle chat: track search debounce
@@ -1689,7 +1689,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
         onNavigate={(s) => {
           setActiveStory(s);
           setStoryViewedMap(prev => ({ ...prev, [s.id]: true }));
-          db.markStoryAsViewed(s.id).catch(() => {});
+          if (s.user_id !== currentUser?.id) db.markStoryAsViewed(s.id).catch(() => {});
         }}
         onGroupEnd={() => {
           // Ami suivant, dans l'ordre de la barre au moment de l'ouverture.

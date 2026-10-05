@@ -46,10 +46,25 @@ start_local() {
   mkdir -p "$WORK/local" && cd "$WORK/local"
   [ -f supabase/config.toml ] || supabase init --force >/dev/null
   sed -i -E 's/^major_version = .*/major_version = 17/' supabase/config.toml
-  supabase start -x studio,imgproxy,edge-runtime,logflare,vector,realtime,supavisor,postgres-meta,mailpit >/dev/null
-  cd - >/dev/null
+  # Le registre d'images limite parfois le débit : jusqu'à 3 essais.
+  local i
+  for i in 1 2 3; do
+    if supabase start -x studio,imgproxy,edge-runtime,logflare,vector,realtime,supavisor,postgres-meta,mailpit >/dev/null 2>"$WORK/start.err"; then cd - >/dev/null; return 0; fi
+    echo "   démarrage de la base locale : essai $i raté, on recommence"; tail -n 3 "$WORK/start.err"; sleep $((i * 20))
+  done
+  fail "La base locale ne démarre pas"
 }
 stop_local() { (cd "$WORK/local" && supabase stop --no-backup >/dev/null 2>&1) || true; }
+
+# Restauration (même procédure que docs/restauration.md) : les rôles à part (certains
+# réglages de rôles réservés sont refusés, sans conséquence), puis structure +
+# données en UNE transaction, déclencheurs coupés pendant les données.
+restore_into() { # url, dossier
+  psql "$1" -X -q -f "$2/roles.sql" >/dev/null 2>"$WORK/roles.err" || true
+  [ -s "$WORK/roles.err" ] && echo "   rôles : $(grep -c ERROR "$WORK/roles.err") réglage(s) ignoré(s)"
+  psql "$1" -X -q --single-transaction -v ON_ERROR_STOP=1 \
+    -f "$2/schema.sql" -c 'SET session_replication_role = replica' -f "$2/data.sql" >/dev/null
+}
 
 # --- 0. Vérifications ----------------------------------------------------------
 if [ "$MODE" = "essai" ]; then
@@ -151,8 +166,7 @@ say "5. Test de restauration dans une base vide"
 R="$WORK/restore"; mkdir -p "$R"
 age -d -i "$KEYFILE" "$WORK/back.age" | tar -C "$R" -xzf -
 stop_local; rm -rf "$WORK/local"; start_local
-psql "$LOCAL_DB" -X -q --single-transaction -v ON_ERROR_STOP=1 \
-  -f "$R/roles.sql" -f "$R/schema.sql" -c 'SET session_replication_role = replica' -f "$R/data.sql" >/dev/null
+restore_into "$LOCAL_DB" "$R"
 count_rows "$LOCAL_DB" > "$R/counts_restored.tsv"
 # Écart toléré : quelques lignes écrites entre la copie et le comptage.
 DIFF=$(join -t $'\t' -a1 -e MISSING -o 0,1.2,2.2 <(sort "$R/counts.tsv") <(sort "$R/counts_restored.tsv") \

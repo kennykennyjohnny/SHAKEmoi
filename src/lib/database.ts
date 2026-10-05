@@ -755,7 +755,7 @@ export async function followUser(targetUserId: string) {
       .select('id')
       .eq('follower_id', user.id)
       .eq('following_id', targetUserId)
-      .single();
+      .maybeSingle();
 
     // Déjà abonné·e : rien à faire, ce n'est pas une erreur.
     if (existing) return { success: true };
@@ -826,7 +826,7 @@ export async function isFollowing(targetUserId: string): Promise<boolean> {
       .select('id')
       .eq('follower_id', user.id)
       .eq('following_id', targetUserId)
-      .single();
+      .maybeSingle();
 
     return !!data;
   } catch (error) {
