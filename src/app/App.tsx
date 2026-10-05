@@ -36,6 +36,7 @@ import { ArtistPicker } from './components/ArtistPicker';
 import { acceptInvite } from '../lib/social';
 import { getReferrer, rememberReferrer, clearReferrer, withRef } from '../lib/referral';
 import { InAppBanner } from './components/InAppBanner';
+import { GlobalPlayerBar } from './components/GlobalPlayerBar';
 
 // Écrans chargés à la demande (perf 4G), préchargés ensuite en arrière-plan.
 const ProfileView = lazyView(() => import('./components/ProfileView'), (m) => m.ProfileView, ViewSpinner);
@@ -75,8 +76,9 @@ function screenFromPath(pathname: string): { view: View; options?: any; postId?:
   if (a === 'profil' && !b) return { view: 'profile' };
   if (a === 'notifications' && !b) return { view: 'notifications' };
   // Q6 : /messages/<pseudo> (ou l'ancien /messages/<id>).
-  if (a === 'messages') return b && UUID_RE.test(b) ? { view: 'messages', options: { initialTab: 'dms', openPartnerId: b, nonce: 1 } }
-    : b && /^[a-z0-9._]{2,30}$/i.test(b) ? { view: 'messages', options: { initialTab: 'dms', openPartnerUsername: b.toLowerCase(), nonce: 1 } }
+  // R3 : /messages/<pseudo>/playlist.
+  if (a === 'messages') return b && UUID_RE.test(b) ? { view: 'messages', options: { initialTab: 'dms', openPartnerId: b, openPlaylist: c === 'playlist', nonce: 1 } }
+    : b && /^[a-z0-9._]{2,30}$/i.test(b) ? { view: 'messages', options: { initialTab: 'dms', openPartnerUsername: b.toLowerCase(), openPlaylist: c === 'playlist', nonce: 1 } }
     : { view: 'messages', options: { initialTab: 'dms' } };
   if (a === 'cercles') return b && UUID_RE.test(b)
     ? { view: 'messages', options: { initialTab: 'circles', openCircleId: b, openPlaylist: c === 'playlist', nonce: 1 } }
@@ -391,6 +393,11 @@ export default function App() {
     else if (kind === 'circle') { setViewOptions({ initialTab: 'circles', openCircleId: id, nonce: Date.now() }); setCurrentView('messages'); }
     else if (kind === 'profile') setProfilePreview({ userId: id, username: '' });
     else if (kind === 'notifications') setCurrentView('notifications');
+    // R5 : toucher la barre de lecture ramène à la source de la file.
+    else if (kind === 'view') setCurrentView(id as View);
+    else if (kind === 'discover') { try { localStorage.setItem('shakemoi_top_scope', 'discover'); } catch { /* rien */ } window.dispatchEvent(new CustomEvent('shakemoi:top-scope', { detail: 'discover' })); setCurrentView('top'); }
+    else if (kind === 'dm-playlist') { setViewOptions({ initialTab: 'dms', openPartnerId: id, openPlaylist: true, nonce: Date.now() }); setCurrentView('messages'); }
+    else if (kind === 'circle-playlist') { setViewOptions({ initialTab: 'circles', openCircleId: id, openPlaylist: true, nonce: Date.now() }); setCurrentView('messages'); }
     else if (kind === 'streak') setShowStreak(true);
     else if (kind === 'story') {
       const s = await getStoryById(id);
@@ -726,7 +733,7 @@ export default function App() {
       </aside>}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="relative flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="border-b border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/80 sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
           <div className="px-4 py-2 flex items-center justify-between">
@@ -777,8 +784,8 @@ export default function App() {
         {/* A5 : proposer d'installer l'appli, en haut de l'accueil */}
         {currentView === 'feed' && <InstallAppButton variant="banner" className="flex-shrink-0" />}
 
-        {/* Content */}
-        <main className="flex-1 overflow-hidden flex flex-col min-h-0">
+        {/* Content (R5 : place laissée à la barre de lecture) */}
+        <main className="flex-1 overflow-hidden flex flex-col min-h-0" style={{ paddingBottom: 'var(--player-pad, 0px)' }}>
           {VIEWS.filter((v) => v === currentView || (KEEP_ALIVE.includes(v) && visited.includes(v))).map((v) => (
             <TabActiveContext.Provider key={v} value={v === currentView}>
               <div
@@ -791,6 +798,9 @@ export default function App() {
             </TabActiveContext.Provider>
           ))}
         </main>
+
+        {/* R5 : le lecteur de toute l'appli (file en cours), au-dessus des onglets. */}
+        <GlobalPlayerBar />
 
         {/* Bottom Navigation Mobile — Feed, Top, Search, DMs, Profile */}
         <nav className="fixed bottom-0 left-0 right-0 lg:hidden border-t border-violet-900/30 backdrop-blur-lg bg-[#1E1440]/95 z-40">

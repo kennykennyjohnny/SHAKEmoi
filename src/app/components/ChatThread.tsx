@@ -13,6 +13,8 @@ import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
 import { SongCover } from './SongCover';
+import { PlayQueueContext } from '../../lib/player';
+import { chatTrackId, chatSource } from './ChatPlaylist';
 import { MediaImg, thumb, defaultAvatar, avatarThumb } from '../../lib/media';
 import { searchGifs, GIF_ERROR_TEXT } from '../../lib/gifs';
 import { formatDayLabel, isSameDay, formatTime, formatCalendarDate } from '../../lib/dates';
@@ -44,6 +46,8 @@ interface ChatThreadProps {
   headerActions?: ReactNode;
   /** Ouvrir la conversation sur ce message (depuis la playlist du cercle, P21). */
   jumpToId?: string | null;
+  /** R3 : « Envoyer un son » depuis la playlist vide : ouvre l'envoi de son. */
+  openTrackNonce?: number;
 }
 
 const isTemp = (m: any) => String(m.id).startsWith('temp-');
@@ -51,7 +55,7 @@ const INTERACTIVE = 'button, a, input, textarea, [data-no-gesture]';
 
 export function ChatThread({
   chat, currentUser, title, avatarUrl, avatarName, circlePhoto, subtitle, members = [], isCircleOwner = false,
-  initialUnread = 0, onBack, onHeaderClick, headerActions, jumpToId,
+  initialUnread = 0, onBack, onHeaderClick, headerActions, jumpToId, openTrackNonce = 0,
 }: ChatThreadProps) {
   const me = currentUser?.id as string;
   const isCircle = chat.kind === 'circle';
@@ -80,6 +84,18 @@ export function ChatThread({
   const [text, setText] = useState('');
   const [caret, setCaret] = useState(0);
   const [panel, setPanel] = useState<'none' | 'track' | 'gif'>('none');
+  useEffect(() => { if (openTrackNonce) setPanel('track'); }, [openTrackNonce]);
+  // R6 : une pochette de bulle joue dans la file de la conversation (ses sons,
+  // du plus ancien au plus récent), qui est aussi sa playlist (R3).
+  const queueMsgsRef = useRef<any[]>([]);
+  queueMsgsRef.current = messages;
+  const queueCtx = useMemo(() => ({
+    tracks: () => queueMsgsRef.current.filter((m) => m.track_name && !m.deleted_at && !isTemp(m)).map((m) => ({
+      id: chatTrackId(chat.kind, m.id), title: m.track_name, artist: m.artist || '', cover: m.cover_url, previewUrl: m.preview_url,
+      spotifyId: m.track_id || m.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] || null,
+    })),
+    source: chatSource(chat.kind, chat.id, title),
+  }), [chat.kind, chat.id, title]);
   const [trackQuery, setTrackQuery] = useState('');
   const [trackResults, setTrackResults] = useState<any[]>([]);
   const [gifQuery, setGifQuery] = useState('');
@@ -546,6 +562,7 @@ export function ChatThread({
   };
 
   return (
+    <PlayQueueContext.Provider value={queueCtx}>
     <div className="flex flex-col flex-1 overflow-hidden min-h-0 relative">
       {/* En-tête */}
       <div className="px-3 py-2.5 border-b border-purple-500/25 flex items-center gap-2.5 flex-shrink-0 bg-[#1E1440]/95 backdrop-blur-sm">
@@ -711,7 +728,7 @@ export function ChatThread({
                         {msg.track_name && (
                           <div className="p-2 flex gap-2 items-center min-w-[13rem]">
                             <SongCover
-                              songKey={`${chat.kind}-${msg.id}`}
+                              songKey={chatTrackId(chat.kind, msg.id)}
                               title={msg.track_name} artist={msg.artist} cover={msg.cover_url}
                               previewUrl={msg.preview_url} spotifyId={msg.track_id || msg.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]} spotifyUrl={msg.spotify_url}
                               className="w-12 h-12"
@@ -917,6 +934,7 @@ export function ChatThread({
         document.body,
       )}
     </div>
+    </PlayQueueContext.Provider>
   );
 }
 

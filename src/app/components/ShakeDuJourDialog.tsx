@@ -134,7 +134,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
                   >
                     <div className="p-2.5 flex items-center gap-3">
                       <SongCover
-                        songKey={`sdj-${track.id}`}
+                        songKey={`sdj-${track.id}`} standalone
                         title={track.title} artist={track.artist} cover={track.coverUrl}
                         previewUrl={track.previewUrl} spotifyId={track.id} spotifyUrl={track.spotifyUrl}
                         className="w-12 h-12"
@@ -161,7 +161,7 @@ export function ShakeDuJourDialog({ onComplete, onSkip }: ShakeDuJourDialogProps
             <div className="space-y-3">
               <div className="bg-purple-950/40 rounded-xl border border-yellow-500/30 p-3">
                 <div className="flex gap-3">
-                  <SongCover songKey={`sdj-${selectedTrack.id}`} title={selectedTrack.title} artist={selectedTrack.artist} cover={selectedTrack.coverUrl} previewUrl={selectedTrack.previewUrl} spotifyId={selectedTrack.id} spotifyUrl={selectedTrack.spotifyUrl} className="w-16 h-16" />
+                  <SongCover songKey={`sdj-${selectedTrack.id}`} standalone title={selectedTrack.title} artist={selectedTrack.artist} cover={selectedTrack.coverUrl} previewUrl={selectedTrack.previewUrl} spotifyId={selectedTrack.id} spotifyUrl={selectedTrack.spotifyUrl} className="w-16 h-16" />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">{selectedTrack.title}</p>
                     <p className="text-xs text-purple-300/85 truncate">{selectedTrack.artist}</p>

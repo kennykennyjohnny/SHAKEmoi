@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { QueueScope, reactionTracks, REPLIES_SOURCE } from './QueueScope';
 import { formatPostDate } from '../../lib/dates';
 import { X, Send, Loader2, Music, Search, Trash2 } from 'lucide-react';
 import { SongCover } from './SongCover';
@@ -277,7 +278,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
                       {r.text && <span className="text-xs text-purple-300/85 ml-1">"{r.text}"</span>}
                     </div>
                     <div className="flex gap-2 items-center">
-                      <SongCover songKey={`reaction-${r.id}`} title={r.track_name} artist={r.artist} cover={r.cover_url} previewUrl={r.preview_url} spotifyId={r.track_id} spotifyUrl={r.spotify_url} className="w-10 h-10" rounded="rounded-md" iconSize="sm" />
+                      <QueueScope tracks={() => reactionTracks(musicReactions)} source={REPLIES_SOURCE}><SongCover songKey={`reaction-${r.id}`} title={r.track_name} artist={r.artist} cover={r.cover_url} previewUrl={r.preview_url} spotifyId={r.track_id} spotifyUrl={r.spotify_url} className="w-10 h-10" rounded="rounded-md" iconSize="sm" /></QueueScope>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{r.track_name}</p>
                         <p className="text-xs text-purple-300/85 truncate">{r.artist}</p>

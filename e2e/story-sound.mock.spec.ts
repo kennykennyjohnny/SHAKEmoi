@@ -18,7 +18,7 @@ test('son automatique, enchaînement, sans son, reprise à la fermeture', async 
   await setup(page);
   // Un son jouait avant (une playlist, par ex.).
   await page.getByRole('button', { name: /Shakes éphémères de Léa/ }).hover();
-  await page.evaluate(async (u) => { (await import('/src/lib/preview.ts')).playPreview('playlist-x', u); }, `${MOCK_HOST}/audio/9.wav`);
+  await page.evaluate(async (u) => { (await import('/src/lib/preview.ts')).playPreview('playlist-x', u); }, `${MOCK_HOST}/audio/long-9.wav`);
   await expect.poll(async () => (await state(page)).playing).toBe(true);
 
   await page.getByRole('button', { name: /Shakes éphémères de Léa/ }).click();

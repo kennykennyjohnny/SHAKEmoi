@@ -9,9 +9,12 @@
 // pochette revient se poser sur sa vignette ; l'ouverture fait l'inverse.
 // La direction du geste est décidée dès les premiers pixels (pas de mélange).
 // Q3 : même courbe et même durée que Messages ↔ Cercles (lib/motion).
-import { useState, useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
+import { QueueScope, reactionTracks, REPLIES_SOURCE } from './QueueScope';
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
+import { supabase } from '../../lib/supabase';
 import { createPortal } from 'react-dom';
 import { PostDate } from './PostDate';
+import { PlayQueueContext, trackFromPost, type PlayerTrack } from '../../lib/player';
 import { X, Heart, MessageCircle, Send, Trash2, Share2, Music, Search, Repeat2, Flag, Pin, PinOff, ChevronLeft, ChevronRight, Loader2, MoreHorizontal } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import { togglePinPost, getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment, reshakePost, unreshakePost, hasReshaked } from '../../lib/database';
@@ -104,7 +107,7 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost, on
   const closeAnimated = () => {
     if (closing.current) return;
     closing.current = true;
-    stopPreview();
+    // R5 : fermer le post ne coupe plus le son : la barre de lecture prend le relais.
     const card = cardRef.current;
     const bd = backdropRef.current;
     const slot = trackRef.current?.children[1] as HTMLElement | undefined;
@@ -291,7 +294,13 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost, on
   const slots: (string | null)[] = [ids[idx - 1] ?? null, currentId, ids[idx + 1] ?? null];
   const multi = ids.length > 1;
 
+  // R6 : la pochette joue dans la file de la liste d'origine (grille, classement…).
+  const idsRef = useRef(ids);
+  idsRef.current = ids;
+  const queueCtx = useMemo(() => ({ tracks: () => postListTracks(idsRef.current), source: { kind: 'post' as const, label: 'Ces Shakes', target: 'post:{post}', postList: idsRef.current } }), [ids.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
+    <PlayQueueContext.Provider value={queueCtx}>
     <div className="fixed inset-0 z-50">
       <div ref={backdropRef} className="absolute inset-0 bg-black/85 backdrop-blur-sm" onClick={closeAnimated} />
       <div className="absolute inset-0 flex items-center justify-center sm:p-4 pointer-events-none">
@@ -325,7 +334,26 @@ export function PostDetailModal({ postId, currentUser, onClose, onDeletePost, on
         </div>
       </div>
     </div>
+    </PlayQueueContext.Provider>
   );
+}
+
+/** Les sons d'une liste de posts (dans l'ordre), pour la file du lecteur. */
+async function postListTracks(ids: string[]): Promise<PlayerTrack[]> {
+  const missing = ids.filter((id) => !cache.get(id));
+  const rows = new Map<string, any>();
+  if (missing.length) {
+    const { data } = await supabase.from('posts')
+      .select('id, is_reshake, original_post_id, track_name, artist, cover_url, album_cover_url, preview_url, track_id, spotify_url')
+      .in('id', missing.slice(0, 200));
+    (data || []).forEach((p: any) => rows.set(p.id, p));
+  }
+  return ids.map((id) => {
+    const p = cache.get(id)?.post || rows.get(id);
+    if (!p) return null;
+    const pid = p.is_reshake && p.original_post_id ? p.original_post_id : p.id;
+    return trackFromPost({ ...p, id: pid }, `post-${pid}`);
+  }).filter(Boolean) as PlayerTrack[];
 }
 
 /** Les fenêtres ouvertes depuis un post sortent de la piste animée. */
@@ -536,13 +564,19 @@ function PostBody({ postId, active, currentUser, onClose, onDeletePost, onUpdate
         {/* Header */}
         <div className="px-4 py-3 border-b border-purple-500/20 flex items-center gap-3 flex-shrink-0">
           {/* L'auteur : ouvre son profil par-dessus (le retour ramène ici). */}
-          <button {...profileProps({ ...post.user, id: post.user_id || post.user?.id })} onClick={() => openProfile(post.user_id || post.user?.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
-            <img loading="lazy" src={avatar} alt="" className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-700/30" />
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <button {...profileProps({ ...post.user, id: post.user_id || post.user?.id })} onClick={() => openProfile(post.user_id || post.user?.id)} aria-label={`Profil de ${userName}`} className="flex-shrink-0">
+              <img loading="lazy" src={avatar} alt="" className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-700/30" />
+            </button>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm text-white truncate">{userName}</p>
-              <p className="text-xs text-purple-200 truncate">@{post.user?.username}</p>
+              <button {...profileProps({ ...post.user, id: post.user_id || post.user?.id })} onClick={() => openProfile(post.user_id || post.user?.id)} className="block max-w-full font-bold text-sm text-white truncate text-left">{userName}</button>
+              {/* R1 : la date, discrète, dans l'en-tête (« @lea · il y a 3 h ») ; un toucher = date complète. */}
+              <p className="text-xs text-purple-200 truncate" data-post-date>
+                @{post.user?.username}<span aria-hidden> · </span>
+                <PostDate ts={post.created_at} className="text-[11px] text-purple-300/90" />
+              </p>
             </div>
-          </button>
+          </div>
 
           {!isOwner && currentUser && (
             <button aria-label="Signaler ce shake" onClick={() => openReport('post', post.id)} className="p-2 hover:bg-purple-900/40 rounded-full transition-colors">
@@ -596,17 +630,14 @@ function PostBody({ postId, active, currentUser, onClose, onDeletePost, onUpdate
         </div>
 
         {/* R1 : la date du post (et du reshake), au-dessus de la pochette ; un toucher = date complète. */}
-        <div className="px-4 py-1.5 text-xs text-purple-200 flex flex-wrap items-center gap-x-1.5 border-b border-purple-500/10 flex-shrink-0" data-post-date>
-          {reshakeInfo ? (
-            <>
-              <Repeat2 className="w-3.5 h-3.5 text-fuchsia-400" aria-hidden />
-              <span>Reshaké par @{reshakeInfo.by?.username}</span>
-              <PostDate ts={reshakeInfo.at} />
-              <span aria-hidden>·</span>
-              <PostDate ts={post.created_at} prefix="publié à l'origine " />
-            </>
-          ) : <PostDate ts={post.created_at} prefix="Publié " />}
-        </div>
+        {/* Reshake : petite ligne, la date d'origine est dans l'en-tête. */}
+        {reshakeInfo && (
+          <div className="px-4 py-1.5 text-[11px] border-b border-purple-500/10 text-purple-300/90 flex flex-wrap items-center gap-x-1 flex-shrink-0">
+            <Repeat2 className="w-3 h-3 text-fuchsia-400" aria-hidden />
+            <span>Reshaké par @{reshakeInfo.by?.username}</span>
+            <PostDate ts={reshakeInfo.at} />
+          </div>
+        )}
 
         {/* Scrollable content */}
         <div data-post-scroll className="flex-1 overflow-y-auto overscroll-contain">
@@ -759,7 +790,7 @@ function PostBody({ postId, active, currentUser, onClose, onDeletePost, onUpdate
                       {r.text && <span className="text-xs text-purple-200 ml-1">"{r.text}"</span>}
                     </div>
                     <div className="flex gap-2 items-center">
-                      <SongCover songKey={`reaction-${r.id}`} title={r.track_name} artist={r.artist} cover={r.cover_url} previewUrl={r.preview_url} spotifyId={r.track_id} spotifyUrl={r.spotify_url} className="w-10 h-10" rounded="rounded-md" iconSize="sm" />
+                      <QueueScope tracks={() => reactionTracks(musicReactions)} source={REPLIES_SOURCE}><SongCover songKey={`reaction-${r.id}`} title={r.track_name} artist={r.artist} cover={r.cover_url} previewUrl={r.preview_url} spotifyId={r.track_id} spotifyUrl={r.spotify_url} className="w-10 h-10" rounded="rounded-md" iconSize="sm" /></QueueScope>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{r.track_name}</p>
                         <p className="text-xs text-purple-200 truncate">{r.artist}</p>

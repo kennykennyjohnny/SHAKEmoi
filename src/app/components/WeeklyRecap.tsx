@@ -1,6 +1,7 @@
 // P20 : récap de la semaine. Une carte dans le fil (« Ton récap de la semaine
 // est prêt ») ouvre le récap en plein écran façon story, sur plusieurs écrans,
 // et le dernier propose la vidéo à partager (même moteur que les sons).
+import { QueueScope } from './QueueScope';
 import { formatCalendarDate } from '../../lib/dates';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -172,7 +173,7 @@ export function RecapViewer({ recap, user, onClose }: { recap: WeeklyRecap; user
                 <div className="space-y-3">
                   {recap.top.map((s, k) => (
                     <div key={s.id} className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/10">
-                      <SongCover songKey={`recap-${s.id}`} title={s.title} artist={s.artist} cover={s.cover} previewUrl={s.preview_url} spotifyId={s.track_id} spotifyUrl={s.spotify_url} className="w-16 h-16 flex-shrink-0" rounded="rounded-xl" iconSize="sm" />
+                      <QueueScope tracks={() => recap.top.map((x: any) => ({ id: `recap-${x.id}`, title: x.title, artist: x.artist, cover: x.cover, previewUrl: x.preview_url, spotifyId: x.track_id || null, postId: x.id }))} source={{ kind: 'recap', label: 'Ton récap de la semaine' }}><SongCover songKey={`recap-${s.id}`} title={s.title} artist={s.artist} cover={s.cover} previewUrl={s.preview_url} spotifyId={s.track_id} spotifyUrl={s.spotify_url} className="w-16 h-16 flex-shrink-0" rounded="rounded-xl" iconSize="sm" /></QueueScope>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-black text-pink-300">#{k + 1}</p>
                         <p className="font-semibold truncate">{s.title}</p>

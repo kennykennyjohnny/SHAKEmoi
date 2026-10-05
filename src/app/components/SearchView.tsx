@@ -3,7 +3,8 @@ import { Search as SearchIcon, Play, Pause, User, Music, Loader2, Sparkles, User
 import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
 import { searchUsers, createPost, searchCircles, joinCircleByCode, followUser, followErrorMessage, unfollowUser, getFollowingIds } from '../../lib/database';
-import { resolvePreviewUrl, playPreview, togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
+import { togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
+import { playQueue, type PlayerTrack } from '../../lib/player';
 import { createSongShare } from '../../lib/shares';
 import { openExternal } from '../../lib/platforms';
 import { SongShareSheet } from './SongShareSheet';
@@ -170,15 +171,16 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
   // Extrait 30s : même comportement que le feed et les stories (pas d'embed).
   const [preview, setPreview] = useState(getPreviewState());
   useEffect(() => onPreviewChange(() => setPreview(getPreviewState())), []);
-  useEffect(() => () => stopPreview(), []);
+  // Seulement un son de la recherche : la file de l'appli (R5) continue ailleurs.
+  useEffect(() => () => { if (getPreviewState().key?.startsWith('search-')) stopPreview(); }, []);
 
   const toggleTrackPreview = async (track: any) => {
     const key = `search-${track.id}`;
     if (getPreviewState().key === key) { togglePreview(key); return; }
-    // Id Spotify → extrait exact (Deezer par ISRC) ; sans extrait : Spotify (M1).
-    const url = await resolvePreviewUrl(track.title, track.artist || track.artists || '', track.previewUrl, track.id);
-    if (url) playPreview(key, url);
-    else openExternal(track.spotifyUrl || `https://open.spotify.com/track/${track.id}`);
+    // R6 : les résultats forment une file ; sans extrait : Spotify (M1).
+    const tracks: PlayerTrack[] = trackResults.map((t: any) => ({ id: `search-${t.id}`, title: t.title, artist: t.artist || t.artists || '', cover: t.coverUrl || t.cover || t.album_cover_url || null, previewUrl: t.previewUrl, spotifyId: t.id }));
+    const ok = await playQueue(tracks, tracks.findIndex((t) => t.id === key), { kind: 'search', label: 'Recherche', target: 'view:search' });
+    if (!ok) openExternal(track.spotifyUrl || `https://open.spotify.com/track/${track.id}`);
   };
 
   // Partage : on crée un vrai lien vers la page du son (marche sans compte)

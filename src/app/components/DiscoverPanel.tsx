@@ -15,7 +15,8 @@ import { thumb } from '../../lib/media';
 import { getPlatformUrl } from '../../lib/odesli';
 import { openExternal } from '../../lib/platforms';
 import { MyAppLogo } from './PlatformLogo';
-import { useQueuePlayer, MiniPlayer } from './QueuePlayer';
+import { usePlayer, playQueue, togglePlayer, current as currentTrack, onTrackStart, onTrackFull, type PlayerTrack } from '../../lib/player';
+import { getPreviewState, onPreviewChange } from '../../lib/preview';
 
 interface RecoItem {
   rank: number;
@@ -82,11 +83,28 @@ export function DiscoverPanel({ visible, currentUser, onRefreshFeed }: { visible
 
   const rows: Row[] = (items || []).map((i) => ({ ...i, key: i.song_key, track_name: i.track.title, artist: i.track.artist, cover_url: i.track.cover_url, preview_url: i.track.preview_url }));
   const ev = (r: Row, event: string) => logEvent([{ song_key: r.song_key, track_name: r.track_name, artist: r.artist, event, rank: r.rank, reason_kind: r.reason_kind }]);
-  const q = useQueuePlayer(rows, 'disc', {
-    album: 'Découvrir',
-    onStart: (r) => ev(r as Row, 'play'),
-    onEnded: (r) => ev(r as Row, 'play_full'),
-  });
+  // R5 : Découvrir joue dans LE lecteur de l'appli (la lecture continue ailleurs).
+  const tracks: PlayerTrack[] = rows.map((r) => ({ id: `disc-${r.key}`, title: r.track_name, artist: r.artist, cover: r.cover_url, previewUrl: r.preview_url, spotifyId: null }));
+  const source = { kind: 'discover' as const, label: 'Découvrir', target: 'discover:1' };
+  const rowsRef = useRef<Row[]>([]);
+  rowsRef.current = rows;
+  useEffect(() => {
+    const find = (id: string) => rowsRef.current.find((x) => `disc-${x.key}` === id);
+    const a = onTrackStart((t, s) => { const r = s?.kind === 'discover' ? find(t.id) : null; if (r) ev(r, 'play'); });
+    const b = onTrackFull((t, s) => { const r = s?.kind === 'discover' ? find(t.id) : null; if (r) ev(r, 'play_full'); });
+    return () => { a(); b(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const player = usePlayer();
+  const [, setTick] = useState(0);
+  useEffect(() => onPreviewChange(() => setTick((n) => n + 1)), []);
+  const curId = player.active ? currentTrack()?.id : null;
+  const q = {
+    current: tracks.findIndex((t) => t.id === curId),
+    loadingIdx: player.loading ? tracks.findIndex((t) => t.id === curId) : null,
+    isPlaying: !!curId && getPreviewState().key === curId && getPreviewState().playing,
+    playAt: (i: number) => { playQueue(tracks, i, source); },
+    toggle: () => togglePlayer(),
+  };
 
   const shake = async (r: Row) => {
     setShaking(r.key);
@@ -219,12 +237,6 @@ export function DiscoverPanel({ visible, currentUser, onRefreshFeed }: { visible
         </>
       )}
 
-      {/* Mini-lecteur (Tout écouter) */}
-      {q.current >= 0 && (
-        <div className="sticky bottom-0 -mx-4 mt-2">
-          <MiniPlayer q={q} count={rows.length} />
-        </div>
-      )}
     </div>
   );
 }

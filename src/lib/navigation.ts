@@ -18,10 +18,14 @@ interface Handler {
   id: number;
   fn: () => void;
   path?: string;
+  order: number;
 }
 
 const handlers: Handler[] = [];
 let counter = 0;
+// Ordre des vues (création) : une vue enfant passe toujours après sa parente,
+// même quand elles se réenregistrent ensemble (retour sur un onglet, R5).
+let orderCounter = 0;
 let poppingFromBrowser = false;
 let initialized = false;
 // Quand on ferme une vue depuis l'UI, on consomme nous-mêmes l'entrée
@@ -77,16 +81,20 @@ export function useBackHandler(active: boolean, onBack: () => void, path?: strin
   const pathRef = useRef(path);
   pathRef.current = path;
   const entry = useRef<Handler | null>(null);
+  const order = useRef(0);
+  if (!order.current) order.current = ++orderCounter;
   const tabActive = useContext(TabActiveContext);
   const on = active && tabActive;
 
   useEffect(() => {
     if (!on || typeof window === 'undefined') return;
     init();
-    const h: Handler = { id: ++counter, fn: () => fnRef.current(), path: pathRef.current };
+    const h: Handler = { id: ++counter, fn: () => fnRef.current(), path: pathRef.current, order: order.current };
     entry.current = h;
     handlers.push(h);
+    handlers.sort((a, b) => a.order - b.order);
     window.history.pushState({ shakemoi: h.id }, '', h.path ?? undefined);
+    syncUrl(); // l'adresse est celle de la vue du dessus
 
     return () => {
       entry.current = null;

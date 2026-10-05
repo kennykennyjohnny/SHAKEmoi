@@ -127,3 +127,9 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* R5 : titre qui défile dans la barre de lecture (s'il dépasse). */
+@keyframes marquee {
+  0%, 15% { transform: translateX(0); }
+  85%, 100% { transform: translateX(var(--marquee, 0)); }
+}

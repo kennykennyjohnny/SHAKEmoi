@@ -4,9 +4,10 @@
 //   Spotify, jamais de lecture automatique) ;
 // - un seul son à la fois dans toute l'appli (lecteur global de lib/preview) ;
 // - pas d'extrait nulle part (M1) : petit bouton « Écouter sur <mon appli> » (O1).
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Play, Pause, Loader2 } from 'lucide-react';
-import { resolvePreviewUrl, togglePreview, playPreview, getPreviewState, onPreviewChange, setPreviewMeta } from '../../lib/preview';
+import { togglePreview, getPreviewState, onPreviewChange, resolvePreviewUrl, playPreview } from '../../lib/preview';
+import { playQueue, PlayQueueContext, type PlayerTrack } from '../../lib/player';
 import { openExternal, PLATFORM_LABELS, searchUrl } from '../../lib/platforms';
 import { MyAppLogo, useMyStreamingApp } from './PlatformLogo';
 import { thumb } from '../../lib/media';
@@ -26,6 +27,8 @@ export interface SongCoverProps {
   rounded?: string;
   /** Taille de l'icône lecture. */
   iconSize?: 'sm' | 'md' | 'lg';
+  /** Essai de son (composeur, tuto…) : joue sans passer par la file de l'appli. */
+  standalone?: boolean;
 }
 
 function usePreviewState() {
@@ -36,9 +39,11 @@ function usePreviewState() {
 
 export function SongCover({
   songKey, title, artist, cover, previewUrl, spotifyId, spotifyUrl,
-  className = 'w-12 h-12', rounded = 'rounded-lg', iconSize = 'md',
+  className = 'w-12 h-12', rounded = 'rounded-lg', iconSize = 'md', standalone = false,
 }: SongCoverProps) {
   const state = usePreviewState();
+  // R6 : la file de l'écran (fil, profil, classement…) ; sinon ce son seul.
+  const queueCtx = useContext(PlayQueueContext);
   const myApp = useMyStreamingApp();
   const [loading, setLoading] = useState(false);
   const [noPreview, setNoPreview] = useState(false);
@@ -52,10 +57,21 @@ export function SongCover({
     e.preventDefault();
     if (isCurrent) { togglePreview(songKey); return; }
     setLoading(true);
-    const url = await resolvePreviewUrl(title || '', artist || '', previewUrl, trackId).catch(() => null);
+    if (standalone) {
+      const url = await resolvePreviewUrl(title || '', artist || '', previewUrl, trackId).catch(() => null);
+      setLoading(false);
+      if (url) playPreview(songKey, url);
+      setNoPreview(!url);
+      return;
+    }
+    // R5 / R6 : tout passe par le lecteur de l'appli, dans la file de l'écran.
+    const self: PlayerTrack = { id: songKey, title: title || '', artist: artist || '', cover, previewUrl, spotifyId: trackId };
+    let tracks = queueCtx ? await Promise.resolve(queueCtx.tracks()).catch(() => []) : [];
+    let idx = tracks.findIndex((t) => t.id === songKey);
+    if (idx < 0) { tracks = [self]; idx = 0; }
+    const ok = await playQueue(tracks, idx, tracks.length > 1 && queueCtx ? queueCtx.source : { kind: 'single', label: title || 'Son' });
     setLoading(false);
-    if (url) { setNoPreview(false); if (title) setPreviewMeta(songKey, { title, artist: artist || '', source: songKey.split('-')[0] }); playPreview(songKey, url); }
-    else setNoPreview(true);
+    setNoPreview(!ok);
   };
 
   const openSpotify = (e: React.MouseEvent) => {

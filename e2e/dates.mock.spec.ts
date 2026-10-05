@@ -42,11 +42,11 @@ test('post ouvert : date qui suit le pager, toucher = date complète', async ({ 
   await thumb.click();
   const active = page.locator('[role="dialog"][aria-label="Shake"] [aria-hidden="false"]');
   const date = active.locator('[data-post-date] button').first();
-  await expect(date).toHaveText('Publié il y a 1 h');
+  await expect(date).toHaveText('il y a 1 h');
   await date.click();
-  await expect(date).toHaveText(/^Publié le \d{1,2} [a-zéû]+ \d{4} à \d{2}:\d{2}$/);
+  await expect(date).toHaveText(/^\d{1,2} [a-zéû]+ \d{4} à \d{2}:\d{2}$/);
   await page.screenshot({ path: 'docs/captures/R/r1-date-post.png' });
   await page.keyboard.press('ArrowRight');
   await expect(active.locator('h3')).toHaveText('Titre 2');
-  await expect(active.locator('[data-post-date] button').first()).toHaveText('Publié il y a 2 h');
+  await expect(active.locator('[data-post-date] button').first()).toHaveText('il y a 2 h');
 });

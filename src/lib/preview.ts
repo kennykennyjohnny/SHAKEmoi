@@ -163,6 +163,20 @@ const listeners = new Set<() => void>();
 // Fin d'un extrait (playlist du cercle, P21 : on enchaîne le suivant).
 const endedListeners = new Set<(key: string) => void>();
 const progressListeners = new Set<() => void>();
+const errorListeners = new Set<(key: string) => void>();
+/** R6 : un extrait n'a pas pu être lu. */
+export function onPreviewError(cb: (key: string) => void): () => void {
+  errorListeners.add(cb);
+  return () => { errorListeners.delete(cb); };
+}
+
+// R6 : l'extrait suivant est chargé à l'avance (enchaînement sans blanc).
+let preloader: HTMLAudioElement | null = null;
+export function preloadPreview(url: string | null) {
+  if (!url || typeof Audio === 'undefined') return;
+  if (!preloader) { preloader = new Audio(); preloader.preload = 'auto'; preloader.muted = true; }
+  if (preloader.src !== url) { preloader.src = url; try { preloader.load(); } catch { /* rien */ } }
+}
 export function onPreviewProgress(cb: () => void): () => void {
   progressListeners.add(cb);
   return () => { progressListeners.delete(cb); };
@@ -227,6 +241,13 @@ function ensureAudio(): HTMLAudioElement {
     // Progression (barre du mini-lecteur) : canal à part, pour ne pas
     // redessiner toutes les pochettes 4 fois par seconde.
     audio.ontimeupdate = () => progressListeners.forEach((l) => l());
+    // R6 : extrait illisible (lien mort, format refusé) → le lecteur passe au suivant.
+    audio.onerror = () => {
+      const k = currentKey;
+      if (!k || !audio?.src || audio.src === SILENCE) return;
+      playing = false; emit();
+      errorListeners.forEach((l) => l(k));
+    };
   }
   return audio;
 }

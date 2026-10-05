@@ -6,6 +6,7 @@
 // (get_top) : sons les plus shakés (posts + reshakes), sons les plus likés,
 // artistes, personnes les plus actives. Jamais de post privé ni de cercle.
 import { useState, useEffect } from 'react';
+import { PlayQueueContext, type PlayerTrack } from '../../lib/player';
 import { createPortal } from 'react-dom';
 import { SongCover } from './SongCover';
 import { TrendingUp, Users, Loader2, Music, Crown, Repeat2, BarChart3, ChevronDown, ChevronUp, Sparkles, Heart, Mic2, Flame, X, RefreshCw } from 'lucide-react';
@@ -56,6 +57,13 @@ export function TopFriendsView({ currentUser, onRefreshFeed }: TopFriendsViewPro
     // Gardé à l'actualisation et à la réouverture de l'appli (Q4). Amis par défaut.
     try { const v = localStorage.getItem(SCOPE_KEY); return v === 'all' || v === 'discover' ? v : 'friends'; } catch { return 'friends'; }
   });
+  // R5 : la barre de lecture ramène sur Découvrir.
+  useEffect(() => {
+    const on = (e: Event) => setScopeState((e as CustomEvent).detail as Scope);
+    window.addEventListener('shakemoi:top-scope', on);
+    return () => window.removeEventListener('shakemoi:top-scope', on);
+  }, []);
+
   const setPeriod = (p: Period) => { setPeriodState(p); try { sessionStorage.setItem(PERIOD_KEY, String(p)); } catch { /* pas grave */ } };
   const setScope = (s: Scope) => { setScopeState(s); try { localStorage.setItem(SCOPE_KEY, s); } catch { /* pas grave */ } };
   const swipe = useSwipeTabs(SCOPES, scope, setScope);
@@ -166,7 +174,18 @@ function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scop
     );
   }
 
+  // R6 : les pochettes du classement jouent dans la file du classement, dans l'ordre.
+  const topTracks = (): PlayerTrack[] => {
+    const seen = new Set<string>();
+    return [...shakedList, ...((data?.liked as any[]) || [])].filter((t) => t?.key && !seen.has(t.key) && seen.add(t.key)).map((t) => ({
+      id: `top-${t.key}`, title: t.track_name, artist: t.artist, cover: t.cover_url, previewUrl: t.preview_url,
+      spotifyId: t.track_id || t.spotify_url?.match(/track[/:]([A-Za-z0-9]{22})/)?.[1] || null, postId: t.post_id || null,
+    }));
+  };
+  const topSource = { kind: 'top' as const, label: scope === 'friends' ? 'Classement Amis' : 'Classement Global', target: 'view:top' };
+
   return (
+    <PlayQueueContext.Provider value={{ tracks: topTracks, source: topSource }}>
     <div className="space-y-6 pb-4">
       {scope === 'friends' && <MyWrap period={period} />}
 
@@ -279,6 +298,7 @@ function TopPanel({ scope, period, visible, currentUser, onRefreshFeed }: { scop
         {songSheet && <SongPostsSheet song={songSheet} onClose={() => setSongSheet(null)} />}
       </AnimatePresence>
     </div>
+    </PlayQueueContext.Provider>
   );
 }
 

@@ -14,7 +14,7 @@ import { formatListTime } from '../../lib/dates';
 import { openProfile } from '../../lib/appNav';
 import { ChatThread } from './ChatThread';
 import { ImageCropDialog } from './ImageCropDialog';
-import { CirclePlaylist } from './CirclePlaylist';
+import { ChatPlaylist } from './ChatPlaylist';
 import { ListMusic } from 'lucide-react';
 import { circlePreviewText, dmPreviewText } from '../../lib/chat';
 import { useSwipeTabs } from '../../lib/useSwipeTabs';
@@ -88,7 +88,7 @@ export function MessagesView({ currentUser, onOpenCircle, onCircleCreated, viewO
       <div ref={swipe.ref} className="flex-1 min-h-0 overflow-hidden" {...swipe.handlers}>
         <div className="flex h-full" style={swipe.trackStyle}>
           <div className="w-full flex-shrink-0 flex flex-col min-h-0 overflow-hidden" aria-hidden={tab !== 'dms'}>
-            <DmsPanel currentUser={currentUser} onSubViewActive={setDmsSub} fabTrigger={fab.dms} openPartnerId={openPartnerId} openPartnerUsername={openPartnerUsername} openPartner={openPartner} openNonce={nonce} resetNonce={reset} />
+            <DmsPanel currentUser={currentUser} onSubViewActive={setDmsSub} fabTrigger={fab.dms} openPartnerId={openPartnerId} openPartnerUsername={openPartnerUsername} openPartner={openPartner} openPlaylist={openPlaylist} openNonce={nonce} resetNonce={reset} />
           </div>
           <div className="w-full flex-shrink-0 flex flex-col min-h-0 overflow-hidden" aria-hidden={tab !== 'circles'}>
             <CirclesPanel currentUser={currentUser} onOpenCircle={onOpenCircle} onCircleCreated={onCircleCreated} onSubViewActive={setCirclesSub} fabTrigger={fab.circles} openCircleId={openCircleId} openPlaylist={openPlaylist} openNonce={nonce} resetNonce={reset} />
@@ -181,10 +181,10 @@ function NewConvoSearch({ friends, onSelect, onClose }: { friends: any[]; onSele
 
 // ==================== DMs ====================
 
-function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, openPartnerUsername, openPartner, openNonce, resetNonce }: { currentUser: any; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openPartnerId?: string | null; openPartnerUsername?: string | null; openPartner?: any; openNonce?: number; resetNonce?: number }) {
+function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, openPartnerUsername, openPartner, openPlaylist = false, openNonce, resetNonce }: { currentUser: any; onSubViewActive?: (active: boolean) => void; fabTrigger?: number; openPartnerId?: string | null; openPartnerUsername?: string | null; openPartner?: any; openPlaylist?: boolean; openNonce?: number; resetNonce?: number }) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState<{ partner: any; unread: number } | null>(null);
+  const [active, setActive] = useState<{ partner: any; unread: number; playlist?: boolean } | null>(null);
   const [showNewConvo, setShowNewConvo] = useState(false);
   const [friends, setFriends] = useState<any[]>([]);
   const [listError, setListError] = useState<string | null>(null);
@@ -205,10 +205,10 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
   useEffect(() => {
     if (!openPartnerId && !openPartnerUsername) return;
     const req = ++openReq.current;
-    if (openPartnerId && openPartner?.id === openPartnerId) { openConversation(openPartner); return; }
+    if (openPartnerId && openPartner?.id === openPartnerId) { openConversation(openPartner, openPlaylist); return; }
     const q = supabase.from('users_profile').select('id, username, display_name, profile_album_cover_url');
     (openPartnerId ? q.eq('id', openPartnerId) : q.eq('username', openPartnerUsername!)).maybeSingle()
-      .then(({ data }) => { if (data && req === openReq.current) openConversation(data); });
+      .then(({ data }) => { if (data && req === openReq.current) openConversation(data, openPlaylist); });
   }, [openPartnerId, openPartnerUsername, openNonce]); // eslint-disable-line react-hooks/exhaustive-deps
   // « Messages » dans le menu : retour à la liste.
   useEffect(() => { if (resetNonce && active) closeConversation(); }, [resetNonce]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -234,9 +234,9 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
   // Q6 : adresse lisible /messages/<pseudo>, relue au démarrage.
   useBackHandler(!!active, () => closeConversation(), active ? `/messages/${active.partner.username || active.partner.id}` : undefined);
 
-  const openConversation = (partner: any) => {
+  const openConversation = (partner: any, playlist = false) => {
     const entry = conversations.find((c) => c.partnerId === partner.id);
-    setActive({ partner, unread: entry?.unreadCount || 0 });
+    setActive({ partner, unread: entry?.unreadCount || 0, playlist });
     setShowNewConvo(false);
     onSubViewActive?.(true);
     // Ouvrir la conversation la marque lue (A3).
@@ -249,21 +249,7 @@ function DmsPanel({ currentUser, onSubViewActive, fabTrigger, openPartnerId, ope
   };
 
   if (active) {
-    const p = active.partner;
-    return (
-      <ChatThread
-        key={p.id}
-        chat={{ kind: 'dm', id: p.id }}
-        currentUser={currentUser}
-        title={p.display_name || p.username}
-        subtitle={`@${p.username}`}
-        avatarUrl={p.profile_album_cover_url}
-        avatarName={p.username}
-        initialUnread={active.unread}
-        onBack={closeConversation}
-        onHeaderClick={() => openProfile(p.id)}
-      />
-    );
+    return <DmView key={`${active.partner.id}-${active.playlist ? 'p' : 'c'}`} partner={active.partner} unread={active.unread} startOnPlaylist={!!active.playlist} currentUser={currentUser} onBack={closeConversation} />;
   }
 
   return (
@@ -383,7 +369,7 @@ function CirclesPanel({ currentUser, onCircleCreated, onSubViewActive, fabTrigge
   if (selectedCircleId) {
     const circle = circles.find(c => c.id === selectedCircleId);
     if (circle) {
-      return <CircleView circle={circle} currentUser={currentUser} startOnPlaylist={openPlaylist && circle.id === openCircleId} onBack={(left?: boolean) => { setSelectedCircleId(null); onSubViewActive?.(false); load(!left); }} />;
+      return <CircleView circle={circle} currentUser={currentUser} startOnPlaylist={openPlaylist && circle.id === openCircleId} playlistNonce={openNonce} onBack={(left?: boolean) => { setSelectedCircleId(null); onSubViewActive?.(false); load(!left); }} />;
     }
   }
 
@@ -652,9 +638,56 @@ function CreateCircleFlow({ currentUser, onDone, onCreated, onBack }: { currentU
   );
 }
 
+// ==================== Une conversation privée (+ sa playlist, R3) ====================
+
+function DmView({ partner: p, unread, startOnPlaylist, currentUser, onBack }: { partner: any; unread: number; startOnPlaylist: boolean; currentUser: any; onBack: () => void }) {
+  const [view, setView] = useState<'chat' | 'playlist'>(startOnPlaylist ? 'playlist' : 'chat');
+  const [jumpId, setJumpId] = useState<string | null>(null);
+  const [sendNonce, setSendNonce] = useState(0);
+  useBackHandler(view === 'playlist', () => setView('chat'), `/messages/${p.username || p.id}/playlist`);
+  const name = p.display_name || p.username;
+  return (
+    <div className="relative flex-1 flex flex-col min-h-0 overflow-hidden">
+      <AnimatePresence initial={false}>
+        {view === 'playlist' && (
+          <motion.div key="playlist" className="absolute inset-0 z-30 bg-[#1E1440] flex flex-col"
+            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={tween()}>
+            <ChatPlaylist
+              kind="dm" id={p.id} name={name} photoUrl={p.profile_album_cover_url} avatarName={p.username} subtitle={`@${p.username}`} currentUserId={currentUser?.id}
+              onBack={onBack}
+              onChat={() => setView('chat')}
+              onOpenMessage={(id) => { setJumpId(id); setView('chat'); }}
+              onSendFirst={() => { setView('chat'); setSendNonce((n) => n + 1); }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <ChatThread
+        key={p.id}
+        jumpToId={jumpId}
+        openTrackNonce={sendNonce}
+        chat={{ kind: 'dm', id: p.id }}
+        currentUser={currentUser}
+        title={name}
+        subtitle={`@${p.username}`}
+        avatarUrl={p.profile_album_cover_url}
+        avatarName={p.username}
+        initialUnread={unread}
+        onBack={onBack}
+        onHeaderClick={() => openProfile(p.id)}
+        headerActions={
+          <button aria-label="Playlist de la conversation" title="Playlist" onClick={() => setView('playlist')} className="w-10 h-10 flex items-center justify-center rounded-full text-purple-200 hover:text-white hover:bg-violet-900/25">
+            <ListMusic className="w-4 h-4" />
+          </button>
+        }
+      />
+    </div>
+  );
+}
+
 // ==================== Un cercle : conversation + infos ====================
 
-function CircleView({ circle, currentUser, onBack, startOnPlaylist = false }: { circle: any; currentUser: any; onBack: (left?: boolean) => void; startOnPlaylist?: boolean }) {
+function CircleView({ circle, currentUser, onBack, startOnPlaylist = false, playlistNonce = 0 }: { circle: any; currentUser: any; onBack: (left?: boolean) => void; startOnPlaylist?: boolean; playlistNonce?: number }) {
   const [name, setName] = useState<string>(circle.name);
   const [photoUrl, setPhotoUrl] = useState<string | null>(circle.photo_url || null);
   const [members, setMembers] = useState<any[]>([]);
@@ -663,7 +696,10 @@ function CircleView({ circle, currentUser, onBack, startOnPlaylist = false }: { 
   // P21 : la playlist remplace la conversation (même en-tête) ; le retour y revient.
   const [view, setView] = useState<'chat' | 'playlist'>(startOnPlaylist ? 'playlist' : 'chat');
   const [jumpId, setJumpId] = useState<string | null>(null);
+  const [sendNonce, setSendNonce] = useState(0);
   useBackHandler(view === 'playlist', () => setView('chat'), `/cercles/${circle.id}/playlist`);
+  // R5 : la barre de lecture ramène sur la playlist même si le cercle était déjà ouvert.
+  useEffect(() => { if (startOnPlaylist && playlistNonce) setView('playlist'); }, [playlistNonce]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMembers = async () => setMembers(await getCircleMembers(circle.id));
   useEffect(() => { loadMembers(); }, [circle.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -691,11 +727,12 @@ function CircleView({ circle, currentUser, onBack, startOnPlaylist = false }: { 
         {view === 'playlist' && (
           <motion.div key="playlist" className="absolute inset-0 z-30 bg-[#1E1440] flex flex-col"
             initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={tween()}>
-            <CirclePlaylist
-              circleId={circle.id} name={name} photoUrl={photoUrl} subtitle={memberLabel}
+            <ChatPlaylist
+              kind="circle" id={circle.id} name={name} photoUrl={photoUrl} subtitle={memberLabel} currentUserId={currentUser?.id}
               onBack={() => onBack()}
               onChat={() => setView('chat')}
               onOpenMessage={(id) => { setJumpId(id); setView('chat'); }}
+              onSendFirst={() => { setView('chat'); setSendNonce((n) => n + 1); }}
             />
           </motion.div>
         )}
@@ -703,6 +740,7 @@ function CircleView({ circle, currentUser, onBack, startOnPlaylist = false }: { 
       <ChatThread
         key={circle.id}
         jumpToId={jumpId}
+        openTrackNonce={sendNonce}
         chat={{ kind: 'circle', id: circle.id }}
         currentUser={currentUser}
         title={name}

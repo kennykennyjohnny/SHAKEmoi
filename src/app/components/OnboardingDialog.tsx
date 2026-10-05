@@ -79,7 +79,7 @@ function DemoShare({ tracks, done, setDone }: { tracks: DemoTrack[]; done: boole
           {found && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="overflow-hidden">
               <div className="flex flex-col items-center pt-3">
-                <SongCover songKey="tuto-share" title={t.title} artist={t.artist} cover={t.cover} previewUrl={t.preview}
+                <SongCover standalone songKey="tuto-share" title={t.title} artist={t.artist} cover={t.cover} previewUrl={t.preview}
                   className="w-40 h-40" rounded="rounded-2xl" iconSize="lg" />
                 <p className="mt-2 font-bold text-white">{t.title}</p>
                 <p className="text-xs text-purple-200">{t.artist}</p>

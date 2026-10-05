@@ -6,7 +6,7 @@ import { spotify } from '../../lib/spotify';
 import { supabase } from '../../lib/supabase';
 import { compressImage, ensureDecodableImage, extFor } from '../../lib/media';
 import { SongCover } from './SongCover';
-import { stopPreview } from '../../lib/preview';
+import { stopPreview, getPreviewState } from '../../lib/preview';
 import { STORY_THEMES, getCoverPalette, themeCss, autoBackgroundCss, type StoryTheme, type Palette } from '../../lib/storyTheme';
 import { StoryComposerPreview, composeStoryImage, defaultTransform, type PhotoTransform } from './StoryComposerPreview';
 import { useCoverPalette } from './StoryBackdrop';
@@ -79,7 +79,12 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
   };
 
   // L'aperçu écouté pendant la création s'arrête quand on ferme.
-  useEffect(() => { if (!open) stopPreview(); return () => stopPreview(); }, [open]);
+  // Seulement les essais du composeur : la file de l'appli (R5) continue.
+  useEffect(() => {
+    const stopMine = () => { if (getPreviewState().key?.startsWith('compose-')) stopPreview(); };
+    if (!open) stopMine();
+    return stopMine;
+  }, [open]);
 
   // Debounce search
   useEffect(() => {
@@ -376,7 +381,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                   <div className="bg-gradient-to-br from-purple-900/40 to-pink-900/40 rounded-xl p-3 flex gap-3 items-center border border-purple-500/20 mb-3">
                     {/* M2 : écouter l'aperçu de ce qu'on va publier. */}
                     <SongCover
-                      songKey={`compose-${selectedTrack.id}`}
+                      songKey={`compose-${selectedTrack.id}`} standalone
                       title={selectedTrack.title} artist={selectedTrack.artist} cover={selectedTrack.coverUrl}
                       previewUrl={selectedTrack.previewUrl} spotifyId={selectedTrack.id} spotifyUrl={selectedTrack.spotifyUri}
                       className="w-16 h-16" rounded="rounded"
@@ -482,7 +487,7 @@ export function UnifiedComposerDialog({ open, onClose, onCreated, currentUser, i
                           >
                             {/* Pochette = écouter ; le reste de la ligne = choisir. */}
                             <SongCover
-                              songKey={`compose-${track.id}`}
+                              songKey={`compose-${track.id}`} standalone
                               title={track.title} artist={track.artist} cover={track.coverUrl}
                               previewUrl={track.previewUrl} spotifyId={track.id} spotifyUrl={track.spotifyUri}
                               className="w-12 h-12" rounded="rounded"

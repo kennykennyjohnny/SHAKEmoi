@@ -7,6 +7,7 @@ import { likeStory, unlikeStory, hasLikedStory, commentOnStory, getStoryViewers,
 import { supabase } from '../../lib/supabase';
 import { resolvePreviewUrl, playPreview, togglePreview, onPreviewChange, getPreviewState, getSpotifyTrackTitle, setMuted, crossfadeTo, isSessionUnmuted, stopPreview } from '../../lib/preview';
 import { prefetchStorySound, ensureStorySoundSession, closeStorySound, isStoryKey } from '../../lib/storySound';
+import { setPlayerHidden } from '../../lib/player';
 import { useBackHandler } from '../../lib/navigation';
 import { StoryBackdrop } from './StoryBackdrop';
 import { getPlatformUrl } from '../../lib/odesli';
@@ -215,7 +216,8 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
   useEffect(() => {
     if (!open) return;
     ensureStorySoundSession();
-    return () => closeStorySound();
+    setPlayerHidden('story', true); // R5 : plein écran, la barre se retire
+    return () => { closeStorySound(); setPlayerHidden('story', false); };
   }, [open]);
 
   const [storyPreviewUrl, setStoryPreviewUrl] = useState<string | null>(null);

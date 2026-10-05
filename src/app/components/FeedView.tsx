@@ -3,6 +3,14 @@ import { SuggestionsCarousel } from './SuggestionsCarousel';
 import { getPostCounts } from '../../lib/database';
 import { RecapCard } from './WeeklyRecap';
 import { PostDate } from './PostDate';
+import { playQueue, subscribePlayer, getPlayer, current as currentTrack, type PlayerTrack } from '../../lib/player';
+import { prefersReducedMotion } from '../../lib/motion';
+
+/** Un post du fil → un son de la file (R6). */
+const feedTrack = (x: any): PlayerTrack => ({
+  id: x.id, title: x.track.title, artist: x.track.artist, cover: x.track.coverUrl, previewUrl: x.track.previewUrl,
+  spotifyId: x.track.spotifyUri || (/^[A-Za-z0-9]{22}$/.test(x.track.id) ? x.track.id : null), postId: x.sourcePostId || x.id,
+});
 import { openStorySound, prefetchStorySound } from '../../lib/storySound';
 import { createPortal } from 'react-dom';
 import { Heart, MessageCircle, Repeat2, Play, Pause, MoreHorizontal, Loader2, Send, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Copy, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
@@ -11,7 +19,7 @@ import * as db from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { spotify } from '../../lib/spotify';
 import { getPlatformUrl } from '../../lib/odesli';
-import { resolvePreviewUrl, playPreview, stopPreview, togglePreview, onPreviewChange, getPreviewState } from '../../lib/preview';
+import { stopPreview, togglePreview, onPreviewChange, getPreviewState } from '../../lib/preview';
 import { ReshakeDialog } from './ReshakeDialog';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
@@ -545,7 +553,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
       if (document.activeElement?.tagName === 'IFRAME') stopPreview();
     };
     window.addEventListener('blur', onBlur);
-    return () => { window.removeEventListener('blur', onBlur); stopPreview(); };
+    // R5 : la lecture continue quand on quitte le fil (lecteur de l'appli).
+    return () => { window.removeEventListener('blur', onBlur); };
   }, []);
   const [likersPostId, setLikersPostId] = useState<string | null>(null);
 
@@ -940,12 +949,11 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     if (getPreviewState().key === shake.id) { togglePreview(shake.id); return; }
     activePlayerIdRef.current = shake.id;
     setActivePlayerId(shake.id);
-    // Id Spotify : extrait exact via l'ISRC (Deezer), même si le titre diffère (M1).
-    const spotifyRef = shake.track.spotifyUri || (/^[A-Za-z0-9]{22}$/.test(shake.track.id) ? shake.track.id : null);
-    const url = await resolvePreviewUrl(shake.track.title, shake.track.artist, shake.track.previewUrl, spotifyRef);
+    // R6 : le fil est une file : à la fin du son, le post suivant enchaîne.
+    const tracks = shakesRef.current.filter((x) => x.track?.title).map(feedTrack);
+    const ok = await playQueue(tracks, tracks.findIndex((t) => t.id === shake.id), { kind: 'feed', label: 'Fil', target: 'view:feed' });
     if (activePlayerIdRef.current !== shake.id) return;
-    if (url) playPreview(shake.id, url);
-    else {
+    if (!ok) {
       // Aucun extrait nulle part : proposition propre d'écouter sur Spotify.
       setReshakeNotice(null);
       setNoPreviewShake(shake);
@@ -955,6 +963,39 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   const [noPreviewShake, setNoPreviewShake] = useState<Shake | null>(null);
 
   const handlePlayTrack = (shake: Shake) => { handleTogglePreview(shake); };
+
+  // R6 : lecture enchaînée dans le fil : la carte du son en cours s'allume et,
+  // si on suivait (carte précédente à l'écran, pas de défilement depuis 2,5 s),
+  // le fil glisse jusqu'au post suivant (sans animation si « réduire les animations »).
+  const shakesRef = useRef<Shake[]>([]);
+  shakesRef.current = shakes;
+  const lastScrollRef = useRef(0);
+  useEffect(() => {
+    const onScroll = () => { lastScrollRef.current = Date.now(); };
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => window.removeEventListener('scroll', onScroll, { capture: true } as any);
+  }, []);
+  useEffect(() => {
+    let prevId: string | null = null;
+    return subscribePlayer(() => {
+      const p = getPlayer();
+      const t = p.active && p.source?.kind === 'feed' ? currentTrack() : null;
+      const id = t?.id || null;
+      if (id === prevId) return;
+      const before = prevId;
+      prevId = id;
+      if (!id) return;
+      activePlayerIdRef.current = id;
+      setActivePlayerId(id);
+      if (!before || Date.now() - lastScrollRef.current < 2500) return;
+      const prevEl = document.querySelector(`[data-shake-id="${CSS.escape(before)}"]`);
+      const nextEl = document.querySelector(`[data-shake-id="${CSS.escape(id)}"]`);
+      if (!prevEl || !nextEl) return;
+      const r = prevEl.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) return; // on ne suivait pas
+      nextEl.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    });
+  }, []);
 
   // Ordre des groupes dans la barre, figé à l'ouverture : l'enchaînement
   // d'un ami au suivant suit ce qu'on voit à l'écran.
@@ -1353,6 +1394,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
             return (
               <Fragment key={shake.id}>
               <motion.article
+                data-shake-id={shake.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}

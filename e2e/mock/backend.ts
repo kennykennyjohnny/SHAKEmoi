@@ -38,7 +38,7 @@ function dmMessages(partner: string) {
     // Des photos et des sons (pochettes) répartis, dont les DERNIERS messages :
     // ce sont eux qui poussaient la conversation vers le bas en se chargeant (Q13).
     if (i % 9 === 4 || i === 38) { m.text = null; m.image_url = img(800, 1000, 'E91E80', 1200); }
-    if (i % 11 === 5 || i === 39) { m.text = null; m.track_name = `Son ${i}`; m.artist = 'Artiste'; m.cover_url = cover(i); m.track_id = `trk${i}`; }
+    if (i % 11 === 5 || i === 39) { m.text = null; m.track_name = `Son ${i}`; m.artist = `Artiste ${i}`; m.cover_url = cover(i); m.track_id = null; m.preview_url = `${MOCK_HOST}/audio/m${i}.wav`; }
     list.push(m);
   }
   return list;
@@ -140,7 +140,8 @@ export async function mockBackend(page: Page, opts: MockOptions = {}) {
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
 
     // Images : SVG de la bonne taille, après un délai éventuel.
-    if (p.startsWith('/audio/')) return route.fulfill({ status: 200, contentType: 'audio/wav', headers: { 'access-control-allow-origin': '*' }, body: wav() });
+    // « /audio/long-… » : 20 s (un son qui ne doit pas finir pendant le test).
+    if (p.startsWith('/audio/')) return route.fulfill({ status: 200, contentType: 'audio/wav', headers: { 'access-control-allow-origin': '*' }, body: wav(p.includes('/long-') ? 20 : 3) });
     if (p.startsWith('/img/')) {
       const [, , size, color] = p.split('/');
       const [w, h] = size.split('x').map(Number);

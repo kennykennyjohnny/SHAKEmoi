@@ -1,4 +1,5 @@
 import { X, Music2, Check, LogOut, User, Bell, Info, Shield, Trash2, ChevronRight, Loader2, PlayCircle } from 'lucide-react';
+import { getAutoplay, setAutoplay } from '../../lib/player';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 
@@ -38,6 +39,7 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
   useBackHandler(true, onClose);
   const [musicService, setMusicService] = useState<MusicPlatform>(() => savedPlatform(currentUser));
   const [initialMusicService, setInitialMusicService] = useState<MusicPlatform>(() => savedPlatform(currentUser));
+  const [autoplay, setAutoplayState] = useState(getAutoplay());
   // « Revoir le tuto » : s'ouvre par-dessus, on revient ici à la fin (O1).
   const [replay, setReplay] = useState(false);
   // Q9 : « Mes artistes préférés » (et l'étape du tuto rejoué).
@@ -242,6 +244,11 @@ export function SettingsDialog({ currentUser, onClose, onSave, onLogout }: Setti
               <span className="flex items-center gap-2"><Heart className="w-4 h-4 text-fuchsia-400" /> Mes artistes préférés</span>
               <ChevronRight className="w-4 h-4 text-purple-300/85" />
             </button>
+            {/* R6 : à la fin d'un son, le suivant de la file démarre tout seul. */}
+            <label className="mt-2 w-full flex items-center justify-between gap-3 px-3 py-3 rounded-xl bg-purple-950/40 text-sm text-white cursor-pointer">
+              <span className="flex items-center gap-2"><PlayCircle className="w-4 h-4 text-fuchsia-400" /> Enchaîner les sons</span>
+              <input type="checkbox" className="w-5 h-5 accent-fuchsia-500" checked={autoplay} onChange={(e) => { setAutoplay(e.target.checked); setAutoplayState(e.target.checked); }} />
+            </label>
           </div>
 
           {/* Notifications */}
