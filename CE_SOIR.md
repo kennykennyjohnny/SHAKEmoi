@@ -775,3 +775,34 @@ Règles de la section : chaque migration / fonction en base est **appelée au mo
 | Tests | ✅ | `e2e/invite.mock.spec.ts` : 12 tests (Instagram Android / iPhone, Chrome, navigateur neuf, inscription avec parrain, ouverture du lien dans un autre navigateur, déjà connecté, 5 adresses). |
 
 **Test téléphone (5 min, avec un 2ᵉ téléphone ou un ami)** : 1) Mets `shakemoi.fr/i/kenny` dans une story ou un DM Instagram. 2) Sur l'autre téléphone, ouvre-le depuis Instagram : bandeau « Tu es dans le navigateur d'Instagram ». 3) Android : « Ouvrir dans Chrome » ; iPhone : ••• → « Ouvrir dans le navigateur externe ». 4) « Kenny t'invite » s'affiche encore → Rejoindre → inscription. 5) Tu reçois « … a rejoint SHAKEmoi grâce à toi » et vous vous suivez tous les deux.
+
+## Lot R1 (suite) — R1 : une seule date partout
+
+| Point | Statut | Détail |
+|---|---|---|
+| Une seule fonction | ✅ | `formatPostDate` (`src/lib/dates.ts`) : « à l'instant », « il y a 5 min », « il y a 3 h », « hier », « il y a 4 j », « 12 septembre », « 12 septembre 2025 ». L'ancienne `formatRelative` (« 3h », « 2j », « 12 sept. ») est supprimée. |
+| Post ouvert | ✅ | Ligne « Publié il y a 3 h » sous l'en-tête, qui suit le post suivant / précédent ; **toucher → « Publié le 12 septembre 2025 à 21:14 »** (survol sur ordinateur). Rien sur les vignettes de la grille. |
+| Reshake | ✅ | Fil : « Reshaké par @bapt · il y a 3 h » + à côté de l'auteur « publié le 12 septembre ». Post ouvert : « Reshaké par @bapt il y a 3 h · publié à l'origine le 12 septembre ». |
+| Partout | ✅ | Fil, post, commentaires, notifications, Shakes éphémères (« @lea · il y a 2 h » dans l'en-tête, vues), archive, playlist du cercle, classement, récap (« du 22 au 28 septembre »), « Vu le 12 septembre », page Admin. Seuls restent à part : l'heure des messages (« 14:32 », « Hier », « lun. », règle C5) et le titre de mois de l'archive. |
+| Tests | ✅ | `e2e/dates.mock.spec.ts` (tous les cas, dont « hier » et l'autre année ; date du post qui suit le pager ; toucher = date complète). Capture : `docs/captures/R/r1-date-post.png`. |
+
+**Test téléphone** : ouvre un post de ta grille → « Publié il y a … » ; touche-le → date et heure ; glisse au suivant → la date change.
+
+## Lot R1 (suite) — R7 : le son des Shakes éphémères démarre tout seul
+
+| Point | Statut | Détail |
+|---|---|---|
+| Son à l'ouverture | ✅ | Exception à M2 (c'est le principe de la story). L'extrait est **cherché à l'avance** (dès que la barre s'affiche : 12 premières stories ; et au moment où le doigt se pose sur la bulle) et **lancé dans le toucher qui ouvre la story** — condition de l'iPhone. Branché sur la barre du fil, le profil, l'aperçu de profil et l'archive. |
+| Story suivante | ✅ | Démarre toute seule avec un **fondu** (~400 ms) ; la suivante est préparée pendant qu'on regarde l'actuelle. Story sans son → silence (le son précédent s'arrête). |
+| Son coupé | ✅ | Le bouton haut-parleur vaut pour toute la session. |
+| Repli | ✅ | Si le navigateur refuse la lecture automatique : gros bouton **« 🔊 Toucher pour le son »** au centre (capture `docs/captures/R/r7-toucher-pour-le-son.png`). |
+| Pauses | ✅ | Appui long (≥ 250 ms : un simple toucher ne coupe plus le son), appli masquée, aperçu du profil de l'auteur → pause, puis reprise. |
+| Ce qui jouait avant | ✅ | Ouvrir une story met en pause la playlist / la file ; la fermer la **reprend là où elle en était**. |
+| Tests | ✅ | `e2e/story-sound.mock.spec.ts` (6) : son auto, enchaînement, story sans son, reprise de la « playlist » à la fermeture, son coupé gardé, repli quand le navigateur refuse. |
+
+**Ce qui marche où (à confirmer sur tes téléphones)** :
+- **Android Chrome / appli installée** : son dès l'ouverture, enchaînement, fondu. Attendu sans réserve (lecture lancée dans le toucher, puis même élément audio).
+- **iPhone Safari / appli installée** : son dès l'ouverture (lancé dans le toucher) et enchaînement (même élément audio, déjà « débloqué »). **Pas de fondu** : sur iPhone le volume est imposé par le système (le passage est net). Si iOS refuse quand même (mode économie d'énergie, story ouverte depuis une notification) : le bouton « Toucher pour le son » apparaît.
+- Le **bouton silencieux** de l'iPhone coupe le son des pages web : vérifie qu'il n'est pas activé.
+
+**Test téléphone** : 1) Lance la playlist d'un cercle. 2) Touche la bulle d'un ami dans le fil : le son de sa story part tout de suite, la playlist s'est tue. 3) Laisse défiler : la story suivante enchaîne son son. 4) Reste appuyé : tout se fige, son compris ; relâche. 5) Coupe le son, passe à la suivante : toujours coupé. 6) Ferme : la playlist reprend où elle était.
