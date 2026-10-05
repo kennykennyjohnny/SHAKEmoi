@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { formatRelative } from '../../lib/dates';
+import { formatPostDate } from '../../lib/dates';
 import { X, Send, Loader2, Music, Search, Trash2 } from 'lucide-react';
 import { SongCover } from './SongCover';
 import { motion } from 'motion/react';
@@ -143,7 +143,7 @@ export function CommentsDialog({ postId, onClose, onCommentAdded, onCommentDelet
   };
 
   // Même format de date partout (lib/dates).
-  const formatTime = (ts: string) => formatRelative(ts);
+  const formatTime = (ts: string) => formatPostDate(ts);
 
   return (
     <motion.div

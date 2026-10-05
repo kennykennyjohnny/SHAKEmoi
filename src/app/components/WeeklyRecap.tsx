@@ -1,6 +1,7 @@
 // P20 : récap de la semaine. Une carte dans le fil (« Ton récap de la semaine
 // est prêt ») ouvre le récap en plein écran façon story, sur plusieurs écrans,
 // et le dernier propose la vidéo à partager (même moteur que les sons).
+import { formatCalendarDate } from '../../lib/dates';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
@@ -23,7 +24,7 @@ function hasContent(r: WeeklyRecap | null): r is WeeklyRecap {
 }
 
 export function weekLabel(r: WeeklyRecap): string {
-  const f = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+  const f = (d: string) => formatCalendarDate(d);
   const [a, b] = [f(r.start), f(r.end)];
   const sameMonth = new Date(r.start).getMonth() === new Date(r.end).getMonth();
   return `du ${sameMonth ? a.split(' ')[0] : a} au ${b}`;

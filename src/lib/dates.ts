@@ -41,22 +41,41 @@ export function formatDayLabel(ts: string | Date): string {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
+/** « 12 septembre », ou « 12 septembre 2025 » si ce n'est pas cette année. */
+export function formatCalendarDate(ts: string | Date): string {
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('fr-FR', d.getFullYear() === new Date().getFullYear()
+    ? { day: 'numeric', month: 'long' }
+    : { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 /**
- * Date relative, la même partout (fil, notifications, commentaires, profil…) :
- * « À l'instant », « 5min », « 3h », « 2j », puis « 12 sept. » (année si besoin).
+ * R1 : LA date des posts, la même partout (fil, post, Shakes éphémères,
+ * commentaires, notifications, profil, playlists, classement, admin) :
+ * « à l'instant », « il y a 5 min », « il y a 3 h », « hier », « il y a 4 j »,
+ * puis « 12 septembre » (« 12 septembre 2025 » une autre année).
+ * (Les messages gardent leur format d'heure : « 14:32 », « Hier », « lun. ».)
  */
-export function formatRelative(ts?: string | Date | null): string {
-  if (!ts || ts === 'now') return "À l'instant";
+export function formatPostDate(ts?: string | Date | null): string {
+  if (!ts || ts === 'now') return "à l'instant";
   const date = new Date(ts);
   if (isNaN(date.getTime())) return '';
   const mins = Math.floor((Date.now() - date.getTime()) / 60000);
-  if (mins < 1) return "À l'instant";
-  if (mins < 60) return `${mins}min`;
+  if (mins < 1) return "à l'instant";
+  if (mins < 60) return `il y a ${mins} min`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}j`;
-  return date.toLocaleDateString('fr-FR', date.getFullYear() === new Date().getFullYear()
-    ? { day: 'numeric', month: 'short' }
-    : { day: 'numeric', month: 'short', year: 'numeric' });
+  if (hours < 24) return `il y a ${hours} h`;
+  const days = Math.max(1, daysAgo(date));
+  if (days === 1) return 'hier';
+  if (days < 7) return `il y a ${days} j`;
+  return formatCalendarDate(date);
+}
+
+/** Date complète, au toucher : « 12 septembre 2025 à 21:14 ». */
+export function formatPostDateFull(ts?: string | Date | null): string {
+  if (!ts) return '';
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return '';
+  return `${d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })} à ${formatTime(d)}`;
 }

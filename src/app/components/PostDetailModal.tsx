@@ -11,7 +11,7 @@
 // Q3 : même courbe et même durée que Messages ↔ Cercles (lib/motion).
 import { useState, useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { formatRelative } from '../../lib/dates';
+import { PostDate } from './PostDate';
 import { X, Heart, MessageCircle, Send, Trash2, Share2, Music, Search, Repeat2, Flag, Pin, PinOff, ChevronLeft, ChevronRight, Loader2, MoreHorizontal } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import { togglePinPost, getPostById, likePost, unlikePost, hasLikedPost, getPostComments, addComment, getMusicReactions, addMusicReaction, deleteComment, reshakePost, unreshakePost, hasReshaked } from '../../lib/database';
@@ -51,7 +51,7 @@ interface PostDetailModalProps {
 }
 
 // ---------- Données d'un post (avec un petit cache : revenir est instantané) ----------
-interface PostData { post: any; liked: boolean; reshaked: boolean; comments: any[]; reactions: any[]; at: number }
+interface PostData { post: any; liked: boolean; reshaked: boolean; comments: any[]; reactions: any[]; at: number; reshake?: { at: string; by: any } | null }
 const cache = new Map<string, PostData>();
 const inflight = new Map<string, Promise<PostData | null>>();
 
@@ -63,16 +63,21 @@ function loadPostData(id: string, force = false): Promise<PostData | null> {
   if (running && !force) return running;
   const p = (async () => {
     let post = await getPostById(id);
-    if (post?.is_reshake && post.original_post_id) post = await getPostById(post.original_post_id);
+    // R1 : on garde la date et l'auteur du reshake (« Reshaké par @x il y a 3 h »).
+    let reshake: PostData['reshake'] = null;
+    if (post?.is_reshake && post.original_post_id) {
+      reshake = { at: post.created_at, by: Array.isArray(post.user) ? post.user[0] : post.user };
+      post = await getPostById(post.original_post_id);
+    }
     if (!post) return null;
     const pid = post.id;
     const [liked, reshaked, comments, reactions] = await Promise.all([
       hasLikedPost(pid).catch(() => false), hasReshaked(pid).catch(() => false),
       getPostComments(pid).catch(() => []), getMusicReactions(pid).catch(() => []),
     ]);
-    const d: PostData = { post, liked, reshaked, comments, reactions, at: Date.now() };
+    const d: PostData = { post, liked, reshaked, comments, reactions, at: Date.now(), reshake };
     cache.set(id, d);
-    if (pid !== id) cache.set(pid, d);
+    if (pid !== id) cache.set(pid, { ...d, reshake: null });
     return d;
   })().finally(() => inflight.delete(id));
   inflight.set(id, p);
@@ -333,6 +338,7 @@ function PostBody({ postId, active, currentUser, onClose, onDeletePost, onUpdate
 }) {
   const initial = cache.get(postId);
   const [post, setPost] = useState<any>(initial?.post || null);
+  const [reshakeInfo, setReshakeInfo] = useState<PostData['reshake']>(initial?.reshake || null);
   const [loading, setLoading] = useState(!initial);
   const [missing, setMissing] = useState(false);
   const [showShare, setShowShare] = useState(false);
@@ -365,6 +371,7 @@ function PostBody({ postId, active, currentUser, onClose, onDeletePost, onUpdate
   const apply = (d: PostData | null) => {
     if (!d) { setMissing(true); setLoading(false); return; }
     setPost(d.post);
+    setReshakeInfo(d.reshake || null);
     setLikeCount(d.post.likes_count || d.post.likes || 0);
     setReshakeCount(d.post.reshakes_count || 0);
     setIsLiked(d.liked);
@@ -491,7 +498,6 @@ function PostBody({ postId, active, currentUser, onClose, onDeletePost, onUpdate
   };
 
   // Même format de date partout (lib/dates).
-  const formatTime = (ts: string) => formatRelative(ts);
 
   const trackId = post?.track_id || (post?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1]) || null;
   const coverUrl = post?.cover_url || post?.track_cover_url;
@@ -534,7 +540,7 @@ function PostBody({ postId, active, currentUser, onClose, onDeletePost, onUpdate
             <img loading="lazy" src={avatar} alt="" className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-700/30" />
             <div className="flex-1 min-w-0">
               <p className="font-bold text-sm text-white truncate">{userName}</p>
-              <p className="text-xs text-purple-200">@{post.user?.username}</p>
+              <p className="text-xs text-purple-200 truncate">@{post.user?.username}</p>
             </div>
           </button>
 
@@ -587,6 +593,19 @@ function PostBody({ postId, active, currentUser, onClose, onDeletePost, onUpdate
             </div>
           )}
           {closeBtn}
+        </div>
+
+        {/* R1 : la date du post (et du reshake), au-dessus de la pochette ; un toucher = date complète. */}
+        <div className="px-4 py-1.5 text-xs text-purple-200 flex flex-wrap items-center gap-x-1.5 border-b border-purple-500/10 flex-shrink-0" data-post-date>
+          {reshakeInfo ? (
+            <>
+              <Repeat2 className="w-3.5 h-3.5 text-fuchsia-400" aria-hidden />
+              <span>Reshaké par @{reshakeInfo.by?.username}</span>
+              <PostDate ts={reshakeInfo.at} />
+              <span aria-hidden>·</span>
+              <PostDate ts={post.created_at} prefix="publié à l'origine " />
+            </>
+          ) : <PostDate ts={post.created_at} prefix="Publié " />}
         </div>
 
         {/* Scrollable content */}
@@ -700,7 +719,7 @@ function PostBody({ postId, active, currentUser, onClose, onDeletePost, onUpdate
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <button {...profileProps({ ...c.user, id: c.user_id || c.user?.id })} onClick={() => openProfile(c.user_id || c.user?.id)} className="font-semibold text-xs text-white hover:underline">@{c.user?.username || 'inconnu'}</button>
-                        <span className="text-[10px] text-purple-300/85">{formatTime(c.created_at)}</span>
+                        <PostDate ts={c.created_at} className="text-[10px] text-purple-300/85" />
                         {currentUser?.id && c.user_id !== currentUser.id && (
                           <button onClick={() => openReport('comment', c.id)} aria-label="Signaler le commentaire" className="ml-auto p-1 text-purple-300/85 hover:text-pink-300">
                             <Flag className="w-3 h-3" />

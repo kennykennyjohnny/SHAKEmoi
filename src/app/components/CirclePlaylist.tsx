@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, MessageCircle, Play, Pause, Loader2, Users, Music, ListMusic } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { MediaImg, thumb } from '../../lib/media';
-import { formatRelative } from '../../lib/dates';
+import { formatPostDate } from '../../lib/dates';
 import { useQueuePlayer, MiniPlayer } from './QueuePlayer';
 
 interface Entry {
@@ -111,7 +111,7 @@ export function CirclePlaylist({ circleId, name, photoUrl, subtitle, onBack, onC
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-semibold truncate ${active ? 'text-pink-200' : 'text-white'}`}>{e.track_name}</p>
                       <p className="text-xs text-purple-200/85 truncate">{e.artist}</p>
-                      <p className="text-[11px] text-purple-300/85 truncate">@{e.lastBy} · {formatRelative(e.lastAt)}{e.count > 1 ? ` · partagé ${e.count} fois` : ''}</p>
+                      <p className="text-[11px] text-purple-300/85 truncate">@{e.lastBy} · {formatPostDate(e.lastAt)}{e.count > 1 ? ` · partagé ${e.count} fois` : ''}</p>
                     </div>
                   </button>
                 );

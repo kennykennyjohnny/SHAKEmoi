@@ -1,3 +1,4 @@
+import { formatPostDate } from '../../lib/dates';
 import { X, Heart, MessageCircle, Trash2, ChevronLeft, ChevronRight, Send, Eye, Hourglass, Play, Pause, Pin, Volume2, VolumeX, Flag, ImageOff } from 'lucide-react';
 import { openReport } from '../../lib/appNav';
 import { motion, AnimatePresence } from 'motion/react';
@@ -513,7 +514,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                     {user ? (user.display_name || user.username) : ' '}
                   </p>
                   <div className="flex items-center gap-1.5">
-                    {user?.username && <p className="text-[10px] text-white/60 truncate">@{user.username}</p>}
+                    {user?.username && <p className="text-[10px] text-white/85 truncate drop-shadow">@{user.username}{story?.created_at ? ` · ${formatPostDate(story.created_at)}` : ''}</p>}
                   </div>
                 </div>
               </button>
@@ -791,7 +792,7 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                           )}
                           {viewer.viewed_at && (
                             <span className="text-[10px] text-white/60 flex-shrink-0">
-                              {new Date(viewer.viewed_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                              {formatPostDate(viewer.viewed_at)}
                             </span>
                           )}
                         </div>

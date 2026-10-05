@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Bug, Flag, Loader2, RefreshCw, EyeOff, Check, Zap, DatabaseBackup } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { formatRelative } from '../../lib/dates';
+import { formatPostDate } from '../../lib/dates';
 import { useBackHandler } from '../../lib/navigation';
 import { openProfile } from '../../lib/appNav';
 import { sendTestError, sentryEnabled } from '../../lib/sentry';
@@ -90,7 +90,7 @@ export function AdminView({ onClose }: { onClose: () => void }) {
             <div key={b.id} className={`rounded-xl border p-3 ${b.status === 'nouveau' ? 'border-pink-500/40 bg-pink-500/5' : 'border-purple-700/30 bg-violet-950/30'}`}>
               <div className="flex items-center gap-2 text-xs text-purple-300/90 mb-1.5">
                 <button onClick={() => b.user_id && openProfile(b.user_id)} className="font-semibold text-purple-100">{who(b.user_id)}</button>
-                <span>· {formatRelative(b.created_at)}</span>
+                <span>· {formatPostDate(b.created_at)}</span>
                 <span className="ml-auto">{b.info?.telephone} · {b.info?.navigateur}{b.info?.appli_installee ? ' · appli' : ''}</span>
               </div>
               <p className="text-sm whitespace-pre-wrap break-words">{b.text}</p>
@@ -110,7 +110,7 @@ export function AdminView({ onClose }: { onClose: () => void }) {
               <div className="flex flex-wrap items-center gap-x-2 text-xs text-purple-300/90 mb-1.5">
                 <span className="px-1.5 py-0.5 rounded bg-purple-800/60 text-purple-100">{r.target_kind}</span>
                 <span className="font-semibold text-pink-200">{reasonLabel(r.reason)}</span>
-                <span>· par {who(r.reporter_id)} · {formatRelative(r.created_at)}</span>
+                <span>· par {who(r.reporter_id)} · {formatPostDate(r.created_at)}</span>
                 <span className="ml-auto">{r.status === 'nouveau' ? 'Nouveau' : r.status === 'masque' ? 'Masqué' : 'Ignoré'}</span>
               </div>
               <p className="text-xs text-purple-200/80">Visé : <button onClick={() => r.target_user_id && openProfile(r.target_user_id)} className="font-semibold text-white underline">{who(r.target_user_id)}</button></p>
@@ -153,8 +153,8 @@ function BackupStatus() {
       <DatabaseBackup className="w-4 h-4 flex-shrink-0 mt-px" />
       <p className="leading-snug">
         {!ok ? 'Aucune sauvegarde réussie pour l’instant : configure-la (docs/restauration.md).'
-          : <>Dernière sauvegarde {formatRelative(ok.created_at)} · {ok.tables} tables, {Number(ok.rows_total).toLocaleString('fr-FR')} lignes{mb(ok.db_bytes) ? ` · ${mb(ok.db_bytes)}` : ''} · {ok.restore_ok ? 'restaurable ✓' : 'restauration non testée'}</>}
-        {failed && <><br />⚠️ Le dernier passage a échoué {formatRelative(st.last.created_at)} : GitHub → Actions → Sauvegarde.</>}
+          : <>Dernière sauvegarde {formatPostDate(ok.created_at)} · {ok.tables} tables, {Number(ok.rows_total).toLocaleString('fr-FR')} lignes{mb(ok.db_bytes) ? ` · ${mb(ok.db_bytes)}` : ''} · {ok.restore_ok ? 'restaurable ✓' : 'restauration non testée'}</>}
+        {failed && <><br />⚠️ Le dernier passage a échoué {formatPostDate(st.last.created_at)} : GitHub → Actions → Sauvegarde.</>}
         {!failed && ok && ageH > 36 && <><br />⚠️ Plus de 36 h sans sauvegarde : regarde GitHub → Actions → Sauvegarde.</>}
       </p>
     </div>

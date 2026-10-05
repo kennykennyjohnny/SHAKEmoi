@@ -1,6 +1,6 @@
 import { Heart, MessageCircle, UserPlus, UserCheck, Music, Repeat2, Loader2, Bell, Users, RefreshCw, ChevronRight } from 'lucide-react';
 import { PushToggle } from './PushToggle';
-import { formatRelative } from '../../lib/dates';
+import { formatPostDate } from '../../lib/dates';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { getUserNotifications, followUser, followErrorMessage, unfollowUser, getFollowingIds } from '../../lib/database';
@@ -131,7 +131,7 @@ export function NotificationsView({ currentUser, onNavigateToPost, onNavigateToP
   };
 
   // Même format de date partout (lib/dates).
-  const formatTimestamp = (ts: string) => formatRelative(ts);
+  const formatTimestamp = (ts: string) => formatPostDate(ts);
 
   return (
     <div className="w-full max-w-2xl mx-auto px-3 py-5 flex-1 overflow-y-auto pb-[var(--nav-h)] lg:pb-4">

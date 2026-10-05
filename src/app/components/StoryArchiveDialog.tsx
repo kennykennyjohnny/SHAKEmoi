@@ -1,3 +1,4 @@
+import { formatPostDate } from '../../lib/dates';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
@@ -101,7 +102,7 @@ export function StoryArchiveDialog({ currentUser, onClose, onChanged }: Props) {
                             <span className="absolute inset-x-0 bottom-0 p-1.5 pt-6 bg-gradient-to-t from-black/80 to-transparent text-left">
                               <span className="block text-[10px] font-bold truncate">{s.track_name || 'Shake éphémère'}</span>
                               <span className="block text-[9px] text-white/60">
-                                {new Date(s.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                                {formatPostDate(s.created_at)}
                                 {!expired && ' · en cours'}
                               </span>
                             </span>

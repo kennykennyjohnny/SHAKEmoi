@@ -18,7 +18,7 @@ import { MyAppLogo } from './PlatformLogo';
 import { useSwipeTabs } from '../../lib/useSwipeTabs';
 import { avatarThumb, defaultAvatar, thumb } from '../../lib/media';
 import { openPost, openPostInList, openProfile } from '../../lib/appNav';
-import { formatRelative } from '../../lib/dates';
+import { formatPostDate } from '../../lib/dates';
 import { useBackHandler } from '../../lib/navigation';
 import { profileProps } from '../../lib/profileCache';
 import { DiscoverPanel } from './DiscoverPanel';
@@ -385,7 +385,7 @@ function SongPostsSheet({ song, onClose }: { song: any; onClose: () => void }) {
                     <p className="text-sm"><span className="font-semibold">@{u?.username}</span> <span className="text-purple-300/90">{p.is_reshake ? 'a reshaké' : 'a shaké'}</span></p>
                     {p.text && <p className="text-xs text-purple-200/85 truncate">« {p.text} »</p>}
                   </div>
-                  <span className="text-[10px] text-purple-300/85 flex-shrink-0">{formatRelative(p.created_at)}</span>
+                  <span className="text-[10px] text-purple-300/85 flex-shrink-0">{formatPostDate(p.created_at)}</span>
                 </button>
               );
             })}

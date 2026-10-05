@@ -15,7 +15,7 @@ import { openExternal } from '../../lib/platforms';
 import { SongCover } from './SongCover';
 import { MediaImg, thumb, defaultAvatar, avatarThumb } from '../../lib/media';
 import { searchGifs, GIF_ERROR_TEXT } from '../../lib/gifs';
-import { formatDayLabel, isSameDay, formatTime } from '../../lib/dates';
+import { formatDayLabel, isSameDay, formatTime, formatCalendarDate } from '../../lib/dates';
 import { MyAppLogo } from './PlatformLogo';
 import { openProfile, openReport } from '../../lib/appNav';
 import { setActiveChat, getActiveChat } from '../../lib/activeChat';
@@ -535,7 +535,7 @@ export function ChatThread({
     }
     if (!dmSeen) return 'Envoyé';
     const d = new Date(partnerReadAt!);
-    return isSameDay(d, new Date()) ? `Vu à ${formatTime(d)}` : `Vu le ${d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`;
+    return isSameDay(d, new Date()) ? `Vu à ${formatTime(d)}` : `Vu le ${formatCalendarDate(d)}`;
   };
 
   const toggleMute = async () => {

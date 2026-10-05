@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, Fragment } from 'react';
 import { SuggestionsCarousel } from './SuggestionsCarousel';
 import { getPostCounts } from '../../lib/database';
 import { RecapCard } from './WeeklyRecap';
-import { formatRelative } from '../../lib/dates';
+import { PostDate } from './PostDate';
 import { createPortal } from 'react-dom';
 import { Heart, MessageCircle, Repeat2, Play, Pause, MoreHorizontal, Loader2, Send, X, Music, Search, Camera, Smile, ArrowLeft, Settings, Link2, Copy, LogOut, Check, Share2, Edit3, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -474,6 +474,8 @@ interface Shake {
   comments: number;
   reshakes: number;
   timestamp: string;
+  /** R1 : date du post d'origine (reshake). */
+  originalTimestamp?: string | null;
   isLiked?: boolean;
   isReshaked?: boolean;
   isOwn?: boolean;
@@ -760,6 +762,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
           comments: displayStatsSource?.comments_count || 0,
           reshakes: displayStatsSource?.reshakes_count || 0,
           timestamp: post.created_at,
+          originalTimestamp: isReshake && originalPost?.created_at ? originalPost.created_at : null,
           isLiked,
           isReshaked: reshakedIds.has(sourcePostId),
           // On ne reshake pas son propre shake (F1).
@@ -929,7 +932,6 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   };
 
   // Même format de date partout (lib/dates).
-  const formatTimestamp = (ts: string) => formatRelative(ts);
 
   // Un clic = play/pause de l'extrait 30s. Plus d'embed Spotify à ouvrir :
   // le bouton « Écouter » envoie vers l'app de musique de l'utilisateur.
@@ -1287,7 +1289,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                 <div className={`flex-1 min-w-0 max-w-[85%] ${isMe ? 'items-end' : ''}`}>
                   <div className={`flex items-center gap-1.5 mb-0.5 ${isMe ? 'justify-end' : ''}`}>
                     <span className="font-semibold text-xs text-white/90">{shake.user.displayName}</span>
-                    <span className="text-[10px] text-purple-300/80">{formatTimestamp(shake.timestamp)}</span>
+                    <PostDate ts={shake.timestamp} className="text-[10px] text-purple-300/80" />
                   </div>
                   <div className={`rounded-2xl px-3 py-2 ${
                     isMe
@@ -1366,6 +1368,8 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                     >
                       @{shake.reshakeFrom.username}
                     </button>
+                    <span className="text-purple-300/80">·</span>
+                    <PostDate ts={shake.timestamp} className="text-purple-300/85" />
                   </div>
                 )}
                 {shake.reshakeFrom && shake.reshakeComment && (
@@ -1393,7 +1397,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
                       </button>
                       <span className="text-purple-300/85 text-xs">@{shake.user.username}</span>
                       <span className="text-purple-300/80 text-xs">·</span>
-                      <span className="text-purple-300/85 text-xs">{formatTimestamp(shake.timestamp)}</span>
+                      <PostDate ts={shake.originalTimestamp || shake.timestamp} prefix={shake.originalTimestamp ? 'publié ' : ''} className="text-purple-300/85 text-xs" />
                     </div>
                   </div>
 
