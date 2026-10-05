@@ -727,3 +727,51 @@ Captures de chaque écran (banc d'essai, téléphone 390 px) : **`docs/captures/
 | Inscription | ✅ | **« Suis au moins 3 personnes » retiré** : après « Choisis 3 artistes », on arrive directement sur le fil (la personne qui t'a invité reste suivie automatiquement, comme avant). |
 
 **Test** : Classement → Découvrir : la liste s'affiche. Paramètres → « Mes artistes préférés » : choisis-en 3 → Enregistrer → ça se ferme sans erreur. « Revoir le tuto » : après les artistes, retour au fil.
+
+
+# Section R — peaufinage (05/10/2026)
+
+Règles de la section : chaque migration / fonction en base est **appelée au moins une fois sur la vraie base** après application (en tant que vrai utilisateur, avec les mêmes limites que l'appli : rôle `authenticated`, 8 s, dans une transaction annulée) ; quand un problème est signalé, on cherche **tous les cas de même nature**.
+
+## Étape 0a — R10, partie sauvegarde (avant toute migration)
+
+| Point | Statut | Détail |
+|---|---|---|
+| Ce que Supabase sauvegarde | ⚠️ rien | Projet en **offre gratuite** : aucune sauvegarde accessible (réservées au Pro et plus ; la doc recommande aux projets gratuits leurs propres copies). Base 27 Mo, fichiers 41 Mo (30 fichiers, 5 espaces). |
+| Sauvegarde nocturne | ✅ prête, ⏳ secrets | `.github/workflows/backup.yml` + `scripts/backup/backup.sh` : chaque nuit 02:17 UTC, rôles + structure + données (comptes compris) + tâches planifiées + secrets du coffre (clés des notifications) ; fichiers le dimanche. |
+| Dépôt public | ✅ | Chiffrement **age** avant toute sortie ; envoi sur **Backblaze B2** privé (choisi : pas de carte bancaire, contrairement à R2) ; rien dans le dépôt, aucun artefact, journaux = totaux seulement ; tout secret dans GitHub → Secrets. |
+| Rotation | ✅ | 7 nuits (`daily/`) + 8 dimanches (`weekly/`, base et fichiers). |
+| Test de restauration | ✅ mécanique / ⏳ vraies données | **À chaque passage** : retéléchargement de l'archive, déchiffrement, restauration dans une base Supabase vide lancée sur la machine de GitHub, comptage table par table. **Essai réel sur GitHub (mode essai, base d'exemple) : 502 lignes sur 502, en 125 s** ([run 37366829706](https://github.com/kennykennyjohnny/SHAKEmoi/actions/runs/37366829706)). Deux problèmes trouvés et corrigés en route : un réglage de rôle réservé refusé (rôles restaurés à part) et des tables internes du stockage protégées (exclues : on n'utilise que `buckets` / `objects`). Avec les vraies données : automatique dès que Kenny a posé les 8 secrets. |
+| Alerte | ✅ | E-mail de GitHub en cas d'échec + **bandeau sur la page Admin** (table `backup_runs`, fonction `admin_backup_status`, vérifiées sur la vraie base : l'admin voit, un autre compte ne voit rien) ; rouge si échec ou plus de 36 h sans sauvegarde réussie. |
+| Restauration | ✅ | `docs/restauration.md` (clic par clic : mise en place, récupérer un fichier, tout remettre dans un projet neuf) + tâche **Restauration** (`restore.yml`) : taper RESTAURER, refuse une base non vide ou la base actuelle, remplace l'ancienne adresse du projet, recompte, remet les fichiers. |
+| Pour Kenny | ⏳ | ~20 min : compte Backblaze, clé age, chaîne de connexion, clés S3 Supabase, 8 secrets GitHub (`docs/restauration.md`). Tant que ce n'est pas fait, la tâche de nuit échoue et GitHub envoie un e-mail : c'est voulu (pas de sauvegarde = alerte). |
+
+## Étape 0b — la section Q vérifiée en vrai
+
+| Point | Résultat | Détail |
+|---|---|---|
+| En ligne | ✅ | Le site sert la dernière version (« Mes artistes préférés », récap TOP, plus de « Suis 3 personnes ») ; 10/10 tests sur le site en ligne. |
+| Découvrir (Q8) | ✅ | `get_my_recos` appelé en tant que Kenny : 20 sons en 1,3 s (calcul), 8 ms ensuite ; série suivante OK. |
+| Mes artistes préférés (Q9) | ✅ | `save_artist_picks` (3 artistes) : OK en 1,4 s, recalcule les recos. |
+| Shakes épinglés (Q11) | ✅ | `pin_post` / `unpin_post` OK. |
+| Photo de cercle (Q7) | ✅ | Par un membre **non créateur** : photo changée + message « a changé la photo ». |
+| Aperçu de profil (Q5) | ✅ | `get_profile_header` : 16 ms. |
+| Même nature que le bug du 03/10 | ✅ | Toutes les fonctions de la base passées au crible : plus aucun DELETE / UPDATE sans WHERE (refusés par la vraie base). |
+| **Bug trouvé : calculs de goût** | ✅ corrigé | Les tâches de 02:30 (`shakemoi-taste` et `shakemoi-reco-nightly`) recalculaient les goûts **en même temps** → « duplicate key user_taste_pkey », échec les nuits du 04 et du 05/10 ; même risque si quelqu'un ouvre Découvrir pendant la tâche. Verrous + tables de travail nettoyées + tâche de nuit à 02:45. Rappelé sur la vraie base : `compute_taste_all`, `compute_recos_all`, `get_my_recos`, `save_artist_picks` → OK. |
+| Erreurs dans les journaux (24 h) | ✅ corrigé | 406 sur `follows` (vérification « je suis abonné ? » qui exigeait une ligne) → `maybeSingle` ; 403 sur `story_views` (l'appli enregistrait une « vue » de ses propres Shakes éphémères, refusée par la base) → plus envoyé. |
+| Banc d'essai | ✅ | 34 tests OK ; « glisser pour fermer l'aperçu de profil » est instable quand la machine est chargée (4 échecs sur 8 aussi sur la version d'avant : timing des gestes simulés, pas l'appli). |
+
+## Lot R1 — R8 : le lien d'invitation depuis Instagram
+
+**Cause exacte (reproduite)** : au chargement, l'appli recale l'adresse sur l'onglet affiché (`/`) — **même pour un visiteur**. Donc `shakemoi.fr/i/kenny` devenait `shakemoi.fr/` en une fraction de seconde. Dans le navigateur d'Instagram, l'invitation tenait encore (mémorisée dans ce navigateur), mais dès que la personne faisait « Ouvrir dans Chrome / Safari » (ou rouvrait le lien plus tard), c'est l'adresse `/` qui partait : **plus d'invitation**. Le navigateur d'Instagram ne partage rien (ni stockage, ni session) avec le vrai navigateur. Test qui le montrait : « adresse après chargement : reçu `/` ». Vérifié aussi : la redirection `shakemoi.fr` → `www` garde bien le chemin et `?ref=` ; le service worker et l'appli installée ne touchent pas à l'adresse ; les aperçus WhatsApp / Instagram lisent bien les balises.
+
+| Point | Statut | Détail |
+|---|---|---|
+| Adresse gardée | ✅ | Visiteur : l'adresse du lien reste (`/i/`, `/s/`, `/p/`, `/u/`, `/c/<code>`, `/m` — testé un par un). Après « Rejoindre » : `/?ref=kenny`. |
+| Parrain par 3 chemins | ✅ | Adresse (`?ref=`), stockage (30 jours), **compte** : envoyé à l'inscription (`options.data.referrer`) et **la base enregistre l'invitation elle-même à la création du compte** (abonnement mutuel + notif), même si l'appli ne va pas au bout. Vérifié sur la vraie base (inscription simulée puis annulée). Le lien du mail de confirmation rapporte `?ref=`. |
+| Déjà connecté | ✅ | Le lien accepte l'invitation (si le compte est récent) puis ouvre le profil avec « Suivre ». |
+| Bandeau navigateur intégré | ✅ | Instagram, Facebook, TikTok, Snapchat, LinkedIn, X : Android → **Ouvrir dans Chrome** (lien `intent://…`, invitation comprise) ; iPhone → « Touche ••• puis Ouvrir dans le navigateur externe » + **Copier le lien** (avec `?ref=`). Pas de bandeau dans un vrai navigateur (WhatsApp ouvre Chrome). Captures : `docs/captures/R/r8-bandeau-android.png`, `r8-bandeau-iphone.png`. |
+| Même nature | ✅ | « Rejoindre » et « S'inscrire » ouvraient la **connexion** au lieu de l'inscription → corrigé partout. Invitation de cercle : `/c/<code>` reste dans l'adresse. Aperçu du lien : « Kenny t'invite sur SHAKEmoi » (prénom, plus « @kenny »). |
+| Tests | ✅ | `e2e/invite.mock.spec.ts` : 12 tests (Instagram Android / iPhone, Chrome, navigateur neuf, inscription avec parrain, ouverture du lien dans un autre navigateur, déjà connecté, 5 adresses). |
+
+**Test téléphone (5 min, avec un 2ᵉ téléphone ou un ami)** : 1) Mets `shakemoi.fr/i/kenny` dans une story ou un DM Instagram. 2) Sur l'autre téléphone, ouvre-le depuis Instagram : bandeau « Tu es dans le navigateur d'Instagram ». 3) Android : « Ouvrir dans Chrome » ; iPhone : ••• → « Ouvrir dans le navigateur externe ». 4) « Kenny t'invite » s'affiche encore → Rejoindre → inscription. 5) Tu reçois « … a rejoint SHAKEmoi grâce à toi » et vous vous suivez tous les deux.
