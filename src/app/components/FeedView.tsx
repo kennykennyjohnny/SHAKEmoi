@@ -950,8 +950,11 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     activePlayerIdRef.current = shake.id;
     setActivePlayerId(shake.id);
     // R6 : le fil est une file : à la fin du son, le post suivant enchaîne.
-    const tracks = shakesRef.current.filter((x) => x.track?.title).map(feedTrack);
-    const ok = await playQueue(tracks, tracks.findIndex((t) => t.id === shake.id), { kind: 'feed', label: 'Fil', target: 'view:feed' });
+    let tracks = shakesRef.current.filter((x) => x.track?.title).map(feedTrack);
+    let at = tracks.findIndex((t) => t.id === shake.id);
+    // Son touché absent de la file (titre manquant…) : il joue seul, jamais le 1er du fil.
+    if (at < 0) { tracks = [feedTrack(shake)]; at = 0; }
+    const ok = await playQueue(tracks, at, { kind: 'feed', label: 'Fil', target: 'view:feed' });
     if (activePlayerIdRef.current !== shake.id) return;
     if (!ok) {
       // Aucun extrait nulle part : proposition propre d'écouter sur Spotify.
