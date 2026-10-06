@@ -80,6 +80,17 @@ test('enchaînement : un son illisible est sauté (et seulement là)', async ({ 
   await expect.poll(async () => (await state(page)).key, { timeout: 12000 }).toBe('post-b');
 });
 
+test('son touché absent de la file : jamais le 1er son à sa place', async ({ page }) => {
+  await mockBackend(page);
+  await page.goto('/');
+  const ok = await page.evaluate(async () => {
+    const pl = await import('/src/lib/player.ts');
+    return pl.playQueue([{ id: 'post-0', title: 'Son 0', artist: 'A', previewUrl: 'https://mock.shakemoi.test/audio/z0.wav' }], -1, { kind: 'feed', label: 'Fil' });
+  });
+  expect(ok).toBe(false);
+  expect((await state(page)).key).toBeNull();
+});
+
 async function searchAndTap(page: Page) {
   await page.route(`${MOCK}/functions/v1/spotify-proxy`, (route) => route.fulfill({
     status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' },

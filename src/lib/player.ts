@@ -170,10 +170,12 @@ function finish() {
  */
 export async function playQueue(tracks: PlayerTrack[], start: number, source: PlayerSource): Promise<boolean> {
   const list = tracks.filter((t) => t && t.id);
-  if (!list.length) return false;
+  // Son touché introuvable dans la file : on ne lance surtout pas le 1er à sa place.
+  const at = list.indexOf(tracks[start]);
+  if (at < 0) return false;
   const changed = !st.active || st.source?.label !== source.label || st.source?.kind !== source.kind;
   set({ queue: list, source, ended: false });
-  const ok = await playIndex(Math.max(0, Math.min(start, list.length - 1)), { skip: false });
+  const ok = await playIndex(at, { skip: false });
   if (ok && changed && list.length > 1) showToast(`Lecture · ${source.label}`);
   if (!ok && !getPreviewState().playing) set({ active: st.active && getPreviewState().key != null });
   return ok;
