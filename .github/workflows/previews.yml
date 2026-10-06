@@ -1,0 +1,33 @@
+# Correctif 06/10 (S1 / S6) : diagnostic chiffré des extraits, son par son,
+# lancé depuis une machine GitHub (accès à Deezer, iTunes et au site en ligne).
+# Résultat : résumé de la tâche + SQL de réparation en pièce jointe.
+name: Extraits — diagnostic
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Paramètre v= envoyé par l'appli (2 = avant correctif, 3 = après)"
+        default: '3'
+  push:
+    branches: ['claude/**']
+    paths: ['scripts/diag-previews.mjs', '.github/workflows/previews.yml']
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Diagnostic
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/diag-previews.mjs --limit 150 --version "${{ github.event.inputs.version || '2' }}" --sql reparation-extraits.sql
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reparation-extraits
+          path: reparation-extraits.sql
