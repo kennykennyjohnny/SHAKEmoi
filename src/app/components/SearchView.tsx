@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { spotify } from '../../lib/spotify';
 import { searchUsers, createPost, searchCircles, joinCircleByCode, followUser, followErrorMessage, unfollowUser, getFollowingIds } from '../../lib/database';
 import { togglePreview, stopPreview, onPreviewChange, getPreviewState } from '../../lib/preview';
-import { playQueue, type PlayerTrack } from '../../lib/player';
+import { playQueue, onTrackFailed, getPlayer, type PlayerTrack } from '../../lib/player';
 import { createSongShare } from '../../lib/shares';
-import { openExternal } from '../../lib/platforms';
+import { openExternal, PLATFORM_LABELS, searchUrl } from '../../lib/platforms';
+import { MyAppLogo, useMyStreamingApp } from './PlatformLogo';
 import { SongShareSheet } from './SongShareSheet';
 import { ProfilePreviewDialog } from './ProfilePreviewDialog';
 import { SendSongDialog } from './SendSongDialog';
@@ -174,13 +175,28 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
   // Seulement un son de la recherche : la file de l'appli (R5) continue ailleurs.
   useEffect(() => () => { if (getPreviewState().key?.startsWith('search-')) stopPreview(); }, []);
 
+  // Correctif 06/10 (S5) : un son sans extrait n'ouvre PLUS l'appli de
+  // streaming tout seul ; le résultat affiche le bouton « Écouter sur <mon appli> »
+  // (comme les pochettes, O1), et c'est seulement ce bouton qui ouvre l'appli.
+  const myApp = useMyStreamingApp();
+  const [noPreviewId, setNoPreviewId] = useState<string | null>(null);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  useEffect(() => onTrackFailed((id) => { if (id.startsWith('search-')) setNoPreviewId(id.slice('search-'.length)); }), []);
   const toggleTrackPreview = async (track: any) => {
     const key = `search-${track.id}`;
-    if (getPreviewState().key === key) { togglePreview(key); return; }
-    // R6 : les résultats forment une file ; sans extrait : Spotify (M1).
+    if (getPreviewState().key === key && getPlayer().failedId !== key) { togglePreview(key); return; }
+    setNoPreviewId(null);
+    setLoadingId(track.id);
+    // R6 : les résultats forment une file.
     const tracks: PlayerTrack[] = trackResults.map((t: any) => ({ id: `search-${t.id}`, title: t.title, artist: t.artist || t.artists || '', cover: t.coverUrl || t.cover || t.album_cover_url || null, previewUrl: t.previewUrl, spotifyId: t.id }));
     const ok = await playQueue(tracks, tracks.findIndex((t) => t.id === key), { kind: 'search', label: 'Recherche', target: 'view:search' });
-    if (!ok) openExternal(track.spotifyUrl || `https://open.spotify.com/track/${track.id}`);
+    setLoadingId((id) => (id === track.id ? null : id));
+    if (!ok) setNoPreviewId(track.id);
+  };
+  const listenInMyApp = (track: any) => {
+    openExternal(myApp === 'spotify'
+      ? track.spotifyUrl || `https://open.spotify.com/track/${track.id}`
+      : searchUrl(myApp, track.title, track.artist || track.artists || ''));
   };
 
   // Partage : on crée un vrai lien vers la page du son (marche sans compte)
@@ -316,7 +332,9 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                         <div className={`absolute inset-0 flex items-center justify-center rounded-lg transition-opacity ${
                           isSounding ? 'bg-black/45 opacity-100' : 'bg-black/50 opacity-0 group-hover:opacity-100'
                         }`}>
-                          {isSounding ? (
+                          {loadingId === track.id ? (
+                            <Loader2 className="w-4 h-4 text-white animate-spin" />
+                          ) : isSounding ? (
                             <Pause className="w-4 h-4 text-white fill-white" />
                           ) : (
                             <Play className="w-4 h-4 text-white fill-white" />
@@ -327,6 +345,15 @@ export function SearchView({ currentUser, onRefreshFeed, onRequireAuth }: Search
                         <h3 className="font-semibold text-sm text-white truncate">{track.title}</h3>
                         <p className="text-xs text-purple-300/85 truncate">{track.artists || track.artist}</p>
                       </div>
+                      {noPreviewId === track.id && (
+                        <button
+                          type="button"
+                          onClick={() => listenInMyApp(track)}
+                          className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white text-[#1E1440] text-[11px] font-bold shadow-lg"
+                        >
+                          <MyAppLogo className="w-3 h-3" /> Écouter sur {PLATFORM_LABELS[myApp]}
+                        </button>
+                      )}
                     </div>
 
                     {/* Row 2: action buttons — Partager aussi grand et clair que Shake */}

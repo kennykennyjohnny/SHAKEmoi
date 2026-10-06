@@ -353,8 +353,12 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
     }
     const url = await resolvePreviewUrl(trackTitle || '', trackArtist || '', (story as any).preview_url, story?.track_id);
     if (url) { setStoryPreviewUrl(url); playPreview(storyKey, url); }
-    else openInApp(); // aucun extrait nulle part : on l'écoute sur la plateforme (M1)
+    // Aucun extrait nulle part : plus jamais d'ouverture automatique de l'appli
+    // de streaming (correctif 06/10, S5) ; le bouton dédié est proposé.
+    else { setNoSound(true); setTimeout(() => setNoSound(false), 4000); }
   };
+  const [noSound, setNoSound] = useState(false);
+  useEffect(() => { setNoSound(false); }, [story?.id]);
 
   const loadViewers = async () => {
     if (!story || loadingViewers) return;
@@ -527,6 +531,15 @@ export function StoryViewerDialog({ open, story, onClose, currentUser, stories, 
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40 whitespace-nowrap px-6 py-4 rounded-full bg-black/70 backdrop-blur text-white text-base font-bold shadow-2xl border border-white/20 min-h-[56px]"
               >
                 🔊 Toucher pour le son
+              </button>
+            )}
+            {noSound && (
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); setNoSound(false); openInApp(); }}
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40 whitespace-nowrap inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white text-[#1E1440] text-sm font-bold shadow-2xl min-h-[48px]"
+              >
+                <MyAppLogo className="w-4 h-4" /> Pas d'extrait · Ouvrir dans mon appli
               </button>
             )}
             {/* Photo : plein cadre, comme une story Instagram */}

@@ -3,7 +3,7 @@ import { SuggestionsCarousel } from './SuggestionsCarousel';
 import { getPostCounts } from '../../lib/database';
 import { RecapCard } from './WeeklyRecap';
 import { PostDate } from './PostDate';
-import { playQueue, subscribePlayer, getPlayer, current as currentTrack, type PlayerTrack } from '../../lib/player';
+import { playQueue, subscribePlayer, getPlayer, onTrackFailed, current as currentTrack, type PlayerTrack } from '../../lib/player';
 import { prefersReducedMotion } from '../../lib/motion';
 
 /** Un post du fil → un son de la file (R6). */
@@ -946,7 +946,7 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
   // Un clic = play/pause de l'extrait 30s. Plus d'embed Spotify à ouvrir :
   // le bouton « Écouter » envoie vers l'app de musique de l'utilisateur.
   const handleTogglePreview = async (shake: Shake) => {
-    if (getPreviewState().key === shake.id) { togglePreview(shake.id); return; }
+    if (getPreviewState().key === shake.id && getPlayer().failedId !== shake.id) { togglePreview(shake.id); return; }
     activePlayerIdRef.current = shake.id;
     setActivePlayerId(shake.id);
     // R6 : le fil est une file : à la fin du son, le post suivant enchaîne.
@@ -961,6 +961,15 @@ export function FeedView({ currentUser, refreshFeed, circles = [], currentFeedId
     }
   };
   const [noPreviewShake, setNoPreviewShake] = useState<Shake | null>(null);
+  // Correctif 06/10 : l'extrait touché ne se lit pas, même après réparation →
+  // même proposition « Écouter sur <mon appli> » (jamais de saut au suivant).
+  useEffect(() => onTrackFailed((id) => {
+    const shake = shakesRef.current.find((x) => x.id === id);
+    if (!shake) return;
+    setReshakeNotice(null);
+    setNoPreviewShake(shake);
+    setTimeout(() => setNoPreviewShake(s => (s?.id === id ? null : s)), 5000);
+  }), []);
 
   const handlePlayTrack = (shake: Shake) => { handleTogglePreview(shake); };
 

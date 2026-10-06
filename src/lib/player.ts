@@ -8,8 +8,9 @@ import { createContext, useSyncExternalStore } from 'react';
 import {
   resolvePreviewUrl, playPreview, crossfadeTo, togglePreview, stopPreview, getPreviewState,
   onPreviewChange, onPreviewEnded, onPreviewProgress, onPreviewError, getPreviewProgress,
-  seekPreview, setPreviewMeta, preloadPreview,
+  seekPreview, setPreviewMeta, preloadPreview, getCurrentPreviewUrl,
 } from './preview';
+import { repairPreview } from './previewRepair';
 import { songKeyOf } from './listenLog';
 import { thumb } from './media';
 
@@ -52,9 +53,12 @@ export interface PlayerState {
   toast: string | null;
   /** Écrans plein écran qui masquent la barre (story, tuto…). */
   hidden: boolean;
+  /** Correctif 06/10 : son touché dont l'extrait ne se lit pas, même après
+   *  réparation → l'écran affiche « Écouter sur <mon appli> ». */
+  failedId: string | null;
 }
 
-let st: PlayerState = { queue: [], index: -1, source: null, active: false, loading: false, ended: false, toast: null, hidden: false };
+let st: PlayerState = { queue: [], index: -1, source: null, active: false, loading: false, ended: false, toast: null, hidden: false, failedId: null };
 const subs = new Set<() => void>();
 const set = (patch: Partial<PlayerState>) => { st = { ...st, ...patch }; subs.forEach((f) => f()); };
 export const getPlayer = () => st;
@@ -93,6 +97,13 @@ let advancing = false;
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
 let endTimer: ReturnType<typeof setTimeout> | null = null;
 const urlCache = new Map<string, string | null>();
+// Son lancé par un toucher (pas par l'enchaînement) : jamais sauté sur erreur.
+let explicitId: string | null = null;
+// Une seule réparation par lancement d'un son.
+const repaired = new Set<string>();
+const failCbs = new Set<(id: string) => void>();
+/** Un son touché ne se lit pas, même réparé : l'écran propose « Écouter sur… ». */
+export function onTrackFailed(cb: (id: string) => void) { failCbs.add(cb); return () => { failCbs.delete(cb); }; }
 
 async function urlOf(t: PlayerTrack): Promise<string | null> {
   if (urlCache.has(t.id)) return urlCache.get(t.id)!;
@@ -116,7 +127,9 @@ async function playIndex(i: number, opts: { skip: boolean; fade?: boolean; tries
   if (i < 0 || i >= st.queue.length || tries > st.queue.length) { finish(); return false; }
   const my = ++req;
   const t = st.queue[i];
-  set({ index: i, loading: true, ended: false, active: true });
+  explicitId = opts.skip ? null : t.id;
+  repaired.delete(t.id);
+  set({ index: i, loading: true, ended: false, active: true, failedId: null });
   if (endTimer) { clearTimeout(endTimer); endTimer = null; }
   const url = await urlOf(t);
   if (my !== req) return false; // un autre son a été demandé entre-temps
@@ -247,9 +260,30 @@ if (typeof window !== 'undefined') {
     if (st.index + 1 < st.queue.length) playIndex(nextIndex(st.index), { skip: true });
     else finish();
   });
-  onPreviewError((k) => {
+  // Correctif 06/10 (S3) : extrait illisible → on l'oublie, on relance une fois
+  // la résolution sans cache, et on joue ce qu'on trouve. Toujours rien : sur un
+  // toucher, « Écouter sur <mon appli> » (jamais de saut) ; dans l'enchaînement,
+  // le suivant.
+  onPreviewError(async (k) => {
     const t = current();
-    if (t && k === t.id && st.active) { urlCache.delete(t.id); nextTrack(); }
+    if (!t || k !== t.id || !st.active) return;
+    const bad = getCurrentPreviewUrl();
+    urlCache.delete(t.id);
+    if (bad && !repaired.has(t.id)) {
+      repaired.add(t.id);
+      const my = ++req;
+      set({ loading: true });
+      const url = await repairPreview(t.id, { title: t.title, artist: t.artist, spotifyId: t.spotifyId }, bad);
+      if (my !== req) return; // un autre son a été demandé entre-temps
+      set({ loading: false });
+      if (url) { urlCache.set(t.id, url); playPreview(t.id, url); return; }
+    }
+    if (explicitId === t.id) {
+      set({ failedId: t.id, loading: false });
+      failCbs.forEach((f) => { try { f(t.id); } catch { /* rien */ } });
+      return;
+    }
+    nextTrack();
   });
   // Un son lancé AILLEURS (hors file, hors Shake éphémère) : la file s'arrête,
   // la barre disparaît — jamais deux lecteurs ni de barre « fantôme ».

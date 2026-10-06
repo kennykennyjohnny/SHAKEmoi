@@ -7,11 +7,13 @@
 // toujours le bon bouton play/pause — l'embed Spotify, lui, a son propre état
 // qu'on ne peut pas piloter depuis la page.
 
-import { resolveLinks } from './platforms';
+import { resolveLinks, forgetLinksPreview } from './platforms';
 
 // v2 : les anciens « pas d'extrait » (null) sont réessayés avec la nouvelle source.
 // v3 : chaîne Spotify → Deezer (adresse stable) → iTunes (M1).
-const CACHE_KEY = 'shakemoi_preview_cache_v3';
+// v4 (correctif 06/10) : repart de zéro ; une adresse illisible est oubliée (forgetPreview).
+const CACHE_KEY = 'shakemoi_preview_cache_v4';
+try { localStorage.removeItem('shakemoi_preview_cache_v3'); localStorage.removeItem('shakemoi_preview_cache_v2'); } catch { /* rien */ }
 
 function readCache(): Record<string, string | null> {
   try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}'); } catch { return {}; }
@@ -89,19 +91,31 @@ export async function resolvePreviewUrl(
   existing?: string | null,
   /** Id (ou lien) Spotify : retrouve l'extrait exact (via l'ISRC) même quand
    *  la recherche par titre échoue (classique, titres longs) ou que le titre manque. */
-  spotifyId?: string | null
+  spotifyId?: string | null,
+  /** S3 : `fresh` ignore l'adresse en base et tous les caches (réparation) ;
+   *  `exclude` = adresse qui vient d'échouer, à ne pas renvoyer. */
+  opts?: { fresh?: boolean; exclude?: string | null }
 ): Promise<string | null> {
+  const fresh = !!opts?.fresh;
+  const bad = (u: string | null | undefined) => !u || u.includes('dzcdn.net') || (!!opts?.exclude && u === opts.exclude);
   // Ancien extrait Deezer signé enregistré avant ce soir : il a expiré.
-  if (existing && !existing.includes('dzcdn.net')) return existing;
+  if (!fresh && existing && !bad(existing) && !deadUrls.has(existing)) return existing;
   if (!trackName && !spotifyId) return null;
   const key = (spotifyId ? `spotify::${spotifyId}` : `${trackName}::${artist}`).toLowerCase();
   const cache = readCache();
-  if (cache[key]) return cache[key];
+  if (!fresh && cache[key] && !bad(cache[key]) && !deadUrls.has(cache[key]!)) return cache[key];
 
   const resolved = await resolveLinks(
     spotifyId ? { spotifyUrl: spotifyId, title: trackName || null, artist: artist || null } : { title: trackName, artist },
+    { fresh },
   ).catch(() => null);
-  let url = resolved?.preview && !resolved.preview.includes('dzcdn.net') ? resolved.preview : null;
+  let url = resolved?.preview && !bad(resolved.preview) ? resolved.preview : null;
+  // Même adresse que celle qui a échoué : en réparation, on la réessaie une
+  // fois quand même (l'adresse stable Deezer va chercher un extrait neuf ; un
+  // raté passager de Deezer n'est plus gardé en cache).
+  if (!url && fresh && opts?.exclude && resolved?.preview === opts.exclude && opts.exclude.includes('/api/preview')) {
+    url = `${opts.exclude}&r=${Date.now()}`;
+  }
 
   if (!url && trackName) {
     // Catalogue français d'abord (l'app est FR), puis international.
@@ -111,10 +125,45 @@ export async function resolvePreviewUrl(
     if (!url) url = await searchItunesPreview(`${cleaned || trackName} ${artist}`, trackName, artist, 'US');
   }
 
+  if (url && bad(url)) url = null;
   // Seules les trouvailles sont gardées : un échec est réessayé la fois suivante.
-  if (url) { cache[key] = url; writeCache(cache); }
+  if (url && !url.includes('&r=')) { cache[key] = url; writeCache(cache); }
   return url;
 }
+
+// Adresses qui viennent d'échouer (S3) : plus rejouées depuis la base tant que
+// la réparation n'y est pas écrite (gardées 7 jours sur le téléphone).
+const DEAD_KEY = 'shakemoi_dead_previews_v1';
+const deadUrls: Set<string> = (() => {
+  try {
+    const m: Record<string, number> = JSON.parse(localStorage.getItem(DEAD_KEY) || '{}');
+    return new Set(Object.keys(m).filter((u) => Date.now() - m[u] < 7 * 864e5));
+  } catch { return new Set<string>(); }
+})();
+function saveDead(url: string) {
+  try {
+    const m: Record<string, number> = JSON.parse(localStorage.getItem(DEAD_KEY) || '{}');
+    m[url] = Date.now();
+    const keys = Object.keys(m);
+    if (keys.length > 300) delete m[keys[0]];
+    localStorage.setItem(DEAD_KEY, JSON.stringify(m));
+  } catch { /* rien */ }
+}
+
+/** S3 : un extrait ne se lit pas → on l'oublie partout sur le téléphone. */
+export function forgetPreview(url: string) {
+  if (!url) return;
+  deadUrls.add(url);
+  saveDead(url);
+  const cache = readCache();
+  let changed = false;
+  for (const k of Object.keys(cache)) if (cache[k] === url) { delete cache[k]; changed = true; }
+  if (changed) writeCache(cache);
+  forgetLinksPreview(url);
+}
+
+/** Adresse de l'extrait en cours (pour savoir laquelle a échoué). */
+export function getCurrentPreviewUrl(): string | null { return currentUrl; }
 
 // Titre d'un son à partir de son id Spotify, via l'oEmbed public (sans clé,
 // CORS ouvert). Sert aux stories créées avant que le titre soit enregistré :

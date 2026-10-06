@@ -32,7 +32,7 @@ for (const s of sounds) {
   if (s.id) p.set('spotify', s.id);
   if (s.t) p.set('title', s.t);
   if (s.a) p.set('artist', s.a);
-  p.set('v', '2');
+  p.set('v', '3');
   let r = null;
   try { r = await (await fetch(`${ORIGIN}/api/links?${p}`, { signal: AbortSignal.timeout(15000) })).json(); } catch { /* réseau */ }
   const url = r?.preview || null;
