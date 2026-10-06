@@ -3,6 +3,12 @@
   "functions": {
     "api/og.ts": {
       "includeFiles": "public/{fonts/*.woff,favicon.png,shakemoi-logo.png}"
+    },
+    "api/links.ts": {
+      "maxDuration": 15
+    },
+    "api/preview.ts": {
+      "maxDuration": 10
     }
   },
   "headers": [

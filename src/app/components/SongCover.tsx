@@ -7,7 +7,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { Play, Pause, Loader2 } from 'lucide-react';
 import { togglePreview, getPreviewState, onPreviewChange, resolvePreviewUrl, playPreview } from '../../lib/preview';
-import { playQueue, PlayQueueContext, type PlayerTrack } from '../../lib/player';
+import { playQueue, PlayQueueContext, usePlayer, type PlayerTrack } from '../../lib/player';
 import { openExternal, PLATFORM_LABELS, searchUrl } from '../../lib/platforms';
 import { MyAppLogo, useMyStreamingApp } from './PlatformLogo';
 import { thumb } from '../../lib/media';
@@ -47,6 +47,8 @@ export function SongCover({
   const myApp = useMyStreamingApp();
   const [loading, setLoading] = useState(false);
   const [noPreview, setNoPreview] = useState(false);
+  // Correctif 06/10 : l'extrait s'est révélé illisible même après réparation.
+  const failed = usePlayer().failedId === songKey;
   const isCurrent = state.key === songKey;
   const isPlaying = isCurrent && state.playing;
   const trackId = spotifyId || spotifyUrl?.match(/track[/:]([A-Za-z0-9]{22})/)?.[1] || null;
@@ -55,7 +57,7 @@ export function SongCover({
   const onClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (isCurrent) { togglePreview(songKey); return; }
+    if (isCurrent && !failed) { togglePreview(songKey); return; }
     setLoading(true);
     if (standalone) {
       const url = await resolvePreviewUrl(title || '', artist || '', previewUrl, trackId).catch(() => null);
@@ -108,7 +110,7 @@ export function SongCover({
           </span>
         )}
       </button>
-      {noPreview && (
+      {(noPreview || failed) && (
         <button
           type="button"
           onClick={openSpotify}

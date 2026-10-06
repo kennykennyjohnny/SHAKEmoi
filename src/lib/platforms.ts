@@ -122,54 +122,101 @@ export interface ResolvedLinks {
   exact: Record<'spotify' | 'apple_music' | 'deezer' | 'youtube_music' | 'youtube', boolean>;
 }
 
-// v2 : les extraits Deezer passent par une adresse stable (M1) ; l'ancien
-// cache gardait « pas d'extrait » pour ces sons.
-const CACHE_KEY = 'shakemoi_links_cache_v2';
+// v3 (correctif 06/10) : une réponse SANS extrait n'est plus jamais gardée
+// (avant, un raté passager de Deezer / iTunes devenait un son muet à vie sur
+// le téléphone) ; les anciennes clés sont effacées.
+const CACHE_KEY = 'shakemoi_links_cache_v3';
 const memory = new Map<string, Promise<ResolvedLinks | null>>();
+try {
+  localStorage.removeItem('shakemoi_links_cache_v2');
+  localStorage.removeItem('shakemoi_links_cache_v1');
+} catch { /* stockage indisponible */ }
+
+// 4 résolutions à la fois au plus : la barre des Shakes éphémères en prépare
+// 12 d'un coup (R7), et une rafale fait tomber Deezer en limite de débit.
+let running = 0;
+const waiting: (() => void)[] = [];
+async function slot<T>(fn: () => Promise<T>): Promise<T> {
+  if (running >= 4) await new Promise<void>((r) => waiting.push(r));
+  running++;
+  try { return await fn(); } finally { running--; waiting.shift()?.(); }
+}
+
+function readLinksCache(): Record<string, ResolvedLinks> {
+  try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}'); } catch { return {}; }
+}
 
 /**
  * Complète les liens d'un son via /api/links (mis en cache : navigateur +
  * CDN). Ne jette jamais : null si la résolution échoue.
+ * `fresh` : ignore tous les caches (téléphone et CDN) — réparation d'un extrait
+ * illisible (S3).
  */
-export function resolveLinks(q: { title?: string | null; artist?: string | null; spotifyUrl?: string | null; isrc?: string | null }): Promise<ResolvedLinks | null> {
+export function resolveLinks(
+  q: { title?: string | null; artist?: string | null; spotifyUrl?: string | null; isrc?: string | null },
+  opts?: { fresh?: boolean },
+): Promise<ResolvedLinks | null> {
   const params = new URLSearchParams();
   if (q.spotifyUrl) params.set('spotify', q.spotifyUrl);
   if (q.title) params.set('title', q.title);
   if (q.artist) params.set('artist', q.artist);
   if (q.isrc) params.set('isrc', q.isrc);
   if (!params.toString()) return Promise.resolve(null);
-  // Nouvelle chaîne d'extraits (M1) : ignore les anciennes réponses en cache CDN.
-  params.set('v', '2');
+  // v=3 : ignore tout ce qui est encore en cache CDN (dont les échecs gardés
+  // une semaine par l'ancienne version de /api/links).
+  params.set('v', '3');
   const key = params.toString();
+  const fresh = !!opts?.fresh;
 
-  const hit = memory.get(key);
+  const hit = !fresh && memory.get(key);
   if (hit) return hit;
 
   const p = (async () => {
+    if (!fresh) {
+      const cached = readLinksCache()[key];
+      if (cached?.preview) return cached;
+    }
     try {
-      const cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
-      if (cache[key]) return cache[key] as ResolvedLinks;
-    } catch { /* stockage indisponible */ }
-    try {
-      const res = await fetch(`${PUBLIC_ORIGIN}/api/links?${key}`);
-      if (!res.ok) return null;
-      const data = (await res.json()) as ResolvedLinks;
-      try {
-        const cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
-        const keys = Object.keys(cache);
-        if (keys.length > 200) delete cache[keys[0]];
-        // Extrait Deezer = URL signée qui expire : on ne le garde pas.
-        // Ancienne réponse encore en cache CDN : extrait Deezer signé (expire) → non gardé.
-        cache[key] = data.preview?.includes('dzcdn.net') ? { ...data, preview: null } : data;
-        localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-      } catch { /* pas grave */ }
+      const url = `${PUBLIC_ORIGIN}/api/links?${key}${fresh ? `&fresh=${Date.now()}` : ''}`;
+      const data = await slot(async () => {
+        const res = await fetch(url, fresh ? { cache: 'no-store' } : undefined);
+        return res.ok ? ((await res.json()) as ResolvedLinks) : null;
+      });
+      if (!data) return null;
+      // Ancienne réponse encore en cache CDN : extrait Deezer signé (expire) → ignoré.
+      if (data.preview?.includes('dzcdn.net')) data.preview = null;
+      // Seules les réponses AVEC extrait sont gardées sur le téléphone.
+      if (data.preview) {
+        try {
+          const cache = readLinksCache();
+          const keys = Object.keys(cache);
+          if (keys.length > 200) delete cache[keys[0]];
+          cache[key] = data;
+          localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+        } catch { /* pas grave */ }
+      }
       return data;
     } catch {
       return null;
     }
   })();
   memory.set(key, p);
+  // Sans extrait : oublié de la mémoire aussi, le prochain toucher réessaie.
+  p.then((d) => { if (!d?.preview && memory.get(key) === p) memory.delete(key); });
   return p;
+}
+
+/** Oublie un extrait (illisible) de tous les caches de liens du téléphone. */
+export function forgetLinksPreview(url: string) {
+  // Mémoire de la session : vidée en entier (simples promesses ; le stockage
+  // et le CDN répondent vite pour les autres sons).
+  memory.clear();
+  try {
+    const cache = readLinksCache();
+    let changed = false;
+    for (const k of Object.keys(cache)) if (cache[k]?.preview === url) { delete cache[k]; changed = true; }
+    if (changed) localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+  } catch { /* rien */ }
 }
 
 /** Fusionne liens enregistrés + liens résolus (les exacts l'emportent). */
